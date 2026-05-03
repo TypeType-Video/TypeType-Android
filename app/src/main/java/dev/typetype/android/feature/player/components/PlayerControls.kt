@@ -28,11 +28,13 @@ import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 import androidx.media3.ui.compose.state.rememberSeekBackButtonState
 import androidx.media3.ui.compose.state.rememberSeekForwardButtonState
 import dev.typetype.android.R
+import dev.typetype.android.domain.stream.SponsorBlockSegment
 
 @Composable
 fun PlayerControls(
     player: Player,
     onNavigateBack: () -> Unit,
+    sponsorBlockSegments: List<SponsorBlockSegment> = emptyList(),
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier) {
@@ -48,6 +50,7 @@ fun PlayerControls(
         )
         PlayerTimeBar(
             player = player,
+            segments = sponsorBlockSegments,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(horizontal = 12.dp, vertical = 12.dp),

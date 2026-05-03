@@ -27,6 +27,7 @@ import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
 import androidx.media3.ui.compose.state.rememberPresentationState
 import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
+import dev.typetype.android.domain.stream.SponsorBlockSegment
 import dev.typetype.android.feature.player.state.PlayerGestureState
 import kotlinx.coroutines.delay
 
@@ -37,6 +38,7 @@ private const val AUTO_HIDE_DELAY_MS = 3_500L
 fun PlayerSurfaceBox(
     player: Player,
     onNavigateBack: () -> Unit,
+    sponsorBlockSegments: List<SponsorBlockSegment> = emptyList(),
     modifier: Modifier = Modifier,
 ) {
     val activity = LocalActivity.current
@@ -115,8 +117,11 @@ fun PlayerSurfaceBox(
             PlayerControls(
                 player = player,
                 onNavigateBack = onNavigateBack,
+                sponsorBlockSegments = sponsorBlockSegments,
                 modifier = Modifier.fillMaxSize(),
             )
         }
+
+        SponsorBlockSkipper(player = player, segments = sponsorBlockSegments)
     }
 }

@@ -8,6 +8,10 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.annotation.OptIn
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,21 +25,55 @@ import androidx.compose.ui.unit.sp
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.state.rememberProgressStateWithTickInterval
+import dev.typetype.android.domain.stream.SponsorBlockSegment
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val TICK_INTERVAL_MS = 200L
 
 @OptIn(markerClass = [UnstableApi::class])
 @Composable
-fun PlayerTimeBar(player: Player, modifier: Modifier = Modifier) {
+fun PlayerTimeBar(
+    player: Player,
+    segments: List<SponsorBlockSegment> = emptyList(),
+    modifier: Modifier = Modifier,
+) {
     val progressState = rememberProgressStateWithTickInterval(player, TICK_INTERVAL_MS)
     var scrubPositionMs by remember { mutableStateOf<Long?>(null) }
 
     val durationMs = progressState.durationMs.coerceAtLeast(0L)
     val displayedPosMs = scrubPositionMs ?: progressState.currentPositionMs.coerceIn(0L, durationMs)
 
+    Column(modifier = modifier) {
+        SliderRow(
+            displayedPosMs = displayedPosMs,
+            durationMs = durationMs,
+            onScrub = { scrubPositionMs = it },
+            onScrubFinished = {
+                scrubPositionMs?.let { player.seekTo(it) }
+                scrubPositionMs = null
+            },
+        )
+        if (segments.isNotEmpty()) {
+            Spacer(Modifier.height(4.dp))
+            SponsorBlockMarkers(
+                segments = segments,
+                durationMs = durationMs,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(3.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun SliderRow(
+    displayedPosMs: Long,
+    durationMs: Long,
+    onScrub: (Long?) -> Unit,
+    onScrubFinished: () -> Unit,
+) {
     Row(
-        modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -47,12 +85,9 @@ fun PlayerTimeBar(player: Player, modifier: Modifier = Modifier) {
         Slider(
             value = if (durationMs > 0) displayedPosMs.toFloat() / durationMs.toFloat() else 0f,
             onValueChange = { fraction ->
-                if (durationMs > 0) scrubPositionMs = (fraction * durationMs).toLong()
+                if (durationMs > 0) onScrub((fraction * durationMs).toLong())
             },
-            onValueChangeFinished = {
-                scrubPositionMs?.let { player.seekTo(it) }
-                scrubPositionMs = null
-            },
+            onValueChangeFinished = onScrubFinished,
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = 4.dp),
