@@ -8,4 +8,5 @@ data class SearchState(
     val results: List<Video> = emptyList(),
     val errorMessage: String? = null,
     val hasSearched: Boolean = false,
+    val searchHistory: List<String> = emptyList(),
 )

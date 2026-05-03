@@ -1,12 +1,12 @@
 package dev.typetype.android.feature.player
 
 import android.content.pm.ActivityInfo
-import android.net.Uri
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,10 +17,18 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.BookmarkAdd
+import androidx.compose.material.icons.filled.BookmarkAdded
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,9 +48,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
-import androidx.media3.common.MimeTypes
 import androidx.media3.session.MediaController
 import androidx.paging.PagingData
 import dev.typetype.android.R
@@ -52,10 +57,13 @@ import dev.typetype.android.feature.player.components.CommentsBar
 import dev.typetype.android.feature.player.components.CommentsSheet
 import dev.typetype.android.feature.player.components.DescriptionSection
 import dev.typetype.android.feature.player.components.LocalMediaController
+import dev.typetype.android.feature.player.components.PlayerGestureConfig
 import dev.typetype.android.feature.player.components.PlayerSurfaceBox
 import dev.typetype.android.feature.player.components.RelatedStreamsSection
 import dev.typetype.android.feature.player.components.UploaderCard
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 @Composable
 fun PlayerRoute(
@@ -68,9 +76,11 @@ fun PlayerRoute(
     PlayerScreen(
         state = state,
         commentsFlow = viewModel.comments,
+        eventsFlow = viewModel.events,
         onNavigateBack = onNavigateBack,
         onPlayVideo = onPlayVideo,
         onOpenChannel = onOpenChannel,
+        onAction = viewModel::onAction,
     )
 }
 
@@ -78,28 +88,53 @@ fun PlayerRoute(
 fun PlayerScreen(
     state: PlayerState,
     commentsFlow: Flow<PagingData<Comment>>,
+    eventsFlow: Flow<PlayerEvent> = emptyFlow(),
     onNavigateBack: () -> Unit,
     onPlayVideo: (videoUrl: String) -> Unit,
     onOpenChannel: (channelUrl: String) -> Unit = {},
+    onAction: (PlayerAction) -> Unit = {},
 ) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
-    ) {
-        when {
-            state.isLoading -> LoadingState()
-            state.errorMessage != null -> ErrorState(
-                message = state.errorMessage,
-                onNavigateBack = onNavigateBack,
-            )
-            state.stream != null -> LoadedPlayer(
-                stream = state.stream,
-                videoUrl = state.videoUrl,
-                commentsFlow = commentsFlow,
-                onNavigateBack = onNavigateBack,
-                onPlayVideo = onPlayVideo,
-                onOpenChannel = onOpenChannel,
-            )
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    LaunchedEffect(Unit) {
+        eventsFlow.collect { event ->
+            val message = when (event) {
+                is PlayerEvent.FavoriteAdded -> context.getString(R.string.player_snackbar_favorite_added)
+                PlayerEvent.FavoriteRemoved -> context.getString(R.string.player_snackbar_favorite_removed)
+                is PlayerEvent.WatchLaterAdded -> context.getString(R.string.player_snackbar_watch_later_added)
+                PlayerEvent.WatchLaterRemoved -> context.getString(R.string.player_snackbar_watch_later_removed)
+                is PlayerEvent.ActionFailed -> event.message
+            }
+            snackbarHostState.showSnackbar(message, duration = SnackbarDuration.Short)
+        }
+    }
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = MaterialTheme.colorScheme.background,
+    ) { padding ->
+        Surface(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            color = MaterialTheme.colorScheme.background,
+        ) {
+            when {
+                state.isLoading -> LoadingState()
+                state.errorMessage != null -> ErrorState(
+                    message = state.errorMessage,
+                    onNavigateBack = onNavigateBack,
+                )
+                state.stream != null -> LoadedPlayer(
+                    stream = state.stream,
+                    videoUrl = state.videoUrl,
+                    isFavorited = state.isFavorited,
+                    isInWatchLater = state.isInWatchLater,
+                    gestureConfig = state.gestureConfig,
+                    commentsFlow = commentsFlow,
+                    onNavigateBack = onNavigateBack,
+                    onPlayVideo = onPlayVideo,
+                    onOpenChannel = onOpenChannel,
+                    onAction = onAction,
+                )
+            }
         }
     }
 }
@@ -141,10 +176,14 @@ private fun ErrorState(message: String, onNavigateBack: () -> Unit) {
 private fun LoadedPlayer(
     stream: Stream,
     videoUrl: String,
+    isFavorited: Boolean,
+    isInWatchLater: Boolean,
+    gestureConfig: PlayerGestureConfig,
     commentsFlow: Flow<PagingData<Comment>>,
     onNavigateBack: () -> Unit,
     onPlayVideo: (videoUrl: String) -> Unit,
     onOpenChannel: (channelUrl: String) -> Unit = {},
+    onAction: (PlayerAction) -> Unit = {},
 ) {
     val controller = LocalMediaController.current
     val scrollState = rememberScrollState()
@@ -154,6 +193,14 @@ private fun LoadedPlayer(
 
     LaunchedEffect(stream.id, controller) {
         controller?.let { ctrl -> bindStreamToController(ctrl, stream, videoUrl) }
+    }
+
+    LaunchedEffect(controller) {
+        while (true) {
+            delay(5_000)
+            val ctrl = controller ?: continue
+            if (ctrl.isPlaying) onAction(PlayerAction.OnSaveProgress(ctrl.currentPosition))
+        }
     }
 
     LaunchedEffect(isFullscreen) {
@@ -172,6 +219,11 @@ private fun LoadedPlayer(
 
     DisposableEffect(Unit) {
         onDispose {
+            controller?.let { ctrl ->
+                if (ctrl.currentPosition > 0) {
+                    onAction(PlayerAction.OnSaveProgress(ctrl.currentPosition))
+                }
+            }
             val window = activity?.window ?: return@onDispose
             activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
             WindowCompat.getInsetsController(window, window.decorView)
@@ -196,6 +248,7 @@ private fun LoadedPlayer(
                         onToggleFullscreen = { isFullscreen = true },
                         sponsorBlockSegments = stream.sponsorBlockSegments,
                         chapters = stream.chapters,
+                        gestureConfig = gestureConfig,
                         modifier = Modifier.fillMaxSize(),
                     )
                 } else {
@@ -213,6 +266,12 @@ private fun LoadedPlayer(
                     viewCount = stream.viewCount,
                     likeCount = stream.likeCount,
                     description = stream.description,
+                )
+                PlayerInteractionRow(
+                    isFavorited = isFavorited,
+                    isInWatchLater = isInWatchLater,
+                    onToggleFavorite = { onAction(PlayerAction.OnToggleFavorite) },
+                    onToggleWatchLater = { onAction(PlayerAction.OnToggleWatchLater) },
                 )
                 UploaderCard(
                     name = stream.uploaderName,
@@ -253,36 +312,34 @@ private fun LoadedPlayer(
     }
 }
 
-private fun bindStreamToController(
-    controller: MediaController,
-    stream: Stream,
-    videoUrl: String,
+@Composable
+private fun PlayerInteractionRow(
+    isFavorited: Boolean,
+    isInWatchLater: Boolean,
+    onToggleFavorite: () -> Unit,
+    onToggleWatchLater: () -> Unit,
 ) {
-    val (sourceUrl, mimeType) = pickPlayableSource(stream)
-    if (sourceUrl == null) return
-    val metadata = MediaMetadata.Builder()
-        .setTitle(stream.title)
-        .setArtist(stream.uploaderName)
-        .setArtworkUri(Uri.parse(stream.thumbnailUrl))
-        .build()
-    val mediaItem = MediaItem.Builder()
-        .setUri(sourceUrl)
-        .setMediaId(videoUrl)
-        .setMediaMetadata(metadata)
-        .apply { mimeType?.let { setMimeType(it) } }
-        .build()
-    val sameMedia = controller.currentMediaItem?.mediaId == videoUrl
-    if (!sameMedia) {
-        controller.setMediaItem(mediaItem)
-        controller.prepare()
-        if (stream.startPositionMillis > 0) controller.seekTo(stream.startPositionMillis)
+    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        IconButton(onClick = onToggleFavorite) {
+            Icon(
+                imageVector = if (isFavorited) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                contentDescription = stringResource(
+                    if (isFavorited) R.string.player_remove_from_favorites
+                    else R.string.player_add_to_favorites,
+                ),
+                tint = if (isFavorited) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
+            )
+        }
+        IconButton(onClick = onToggleWatchLater) {
+            Icon(
+                imageVector = if (isInWatchLater) Icons.Filled.BookmarkAdded else Icons.Filled.BookmarkAdd,
+                contentDescription = stringResource(
+                    if (isInWatchLater) R.string.player_remove_from_watch_later
+                    else R.string.player_add_to_watch_later,
+                ),
+                tint = if (isInWatchLater) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
+            )
+        }
     }
-    controller.playWhenReady = true
 }
 
-private fun pickPlayableSource(stream: Stream): Pair<String?, String?> = when {
-    !stream.hlsUrl.isNullOrBlank() -> stream.hlsUrl to MimeTypes.APPLICATION_M3U8
-    !stream.dashMpdUrl.isNullOrBlank() -> stream.dashMpdUrl to MimeTypes.APPLICATION_MPD
-    !stream.progressiveUrl.isNullOrBlank() -> stream.progressiveUrl to MimeTypes.VIDEO_MP4
-    else -> null to null
-}
