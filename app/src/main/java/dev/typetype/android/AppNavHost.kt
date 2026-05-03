@@ -9,7 +9,7 @@ import dev.typetype.android.core.ui.navigation.AddServerRoute
 import dev.typetype.android.core.ui.navigation.HomeRoute
 import dev.typetype.android.core.ui.navigation.LoginRoute
 import dev.typetype.android.core.ui.navigation.WelcomeRoute
-import dev.typetype.android.feature.home.HomePlaceholderScreen
+import dev.typetype.android.feature.home.HomeRoute as HomeRouteScreen
 import dev.typetype.android.feature.setup.addserver.AddServerRoute as AddServerRouteScreen
 import dev.typetype.android.feature.setup.login.LoginRoute as LoginRouteScreen
 import dev.typetype.android.feature.setup.welcome.WelcomeRoute as WelcomeRouteScreen
@@ -43,6 +43,6 @@ fun AppNavHost(startRoute: Any) {
                 },
             )
         }
-        composable<HomeRoute> { HomePlaceholderScreen() }
+        composable<HomeRoute> { HomeRouteScreen() }
     }
 }
