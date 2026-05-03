@@ -4,8 +4,10 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import dev.typetype.android.data.auth.AuthRepositoryImpl
 import dev.typetype.android.data.server.RoomServerRepository
 import dev.typetype.android.data.setup.SetupRepositoryImpl
+import dev.typetype.android.domain.auth.AuthRepository
 import dev.typetype.android.domain.server.ServerRepository
 import dev.typetype.android.domain.setup.SetupRepository
 import javax.inject.Singleton
@@ -21,4 +23,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSetupRepository(impl: SetupRepositoryImpl): SetupRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
 }
