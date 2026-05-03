@@ -11,7 +11,9 @@
     <color name="blue_400">#60A5FA</color>
     <color name="blue_500">#3B82F6</color>
 
+    <color name="red_400">#F87171</color>
     <color name="red_500">#EF4444</color>
+    <color name="red_600">#DC2626</color>
 
-    <color name="ic_launcher_background">#09090B</color>
+    <color name="ic_launcher_background">#DC2626</color>
 </resources>
