@@ -132,6 +132,7 @@ private fun LoadedPlayer(stream: Stream, onNavigateBack: () -> Unit) {
                 PlayerSurfaceBox(
                     player = controller,
                     onNavigateBack = onNavigateBack,
+                    sponsorBlockSegments = stream.sponsorBlockSegments,
                     modifier = Modifier.fillMaxSize(),
                 )
             } else {
