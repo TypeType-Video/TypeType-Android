@@ -17,3 +17,18 @@ data class LoginRoute(
 
 @Serializable
 data object HomeRoute
+
+@Serializable
+data object SubscriptionsRoute
+
+@Serializable
+data object LibraryRoute
+
+@Serializable
+data object SettingsRoute
+
+@Serializable
+data object AppearanceRoute
+
+@Serializable
+data class PlayerRoute(val videoUrl: String)
