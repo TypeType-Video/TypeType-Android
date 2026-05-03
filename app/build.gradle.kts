@@ -160,10 +160,6 @@ dependencies {
     implementation(libs.kotlinx.datetime)
     implementation(libs.converter.kotlinx.serialization)
 
-    /* NewPipe Extractor */
-    implementation(libs.newpipeextractor)
-
-
     /* Coil */
     coreLibraryDesugaring(libs.desugaring)
     implementation(libs.coil)
