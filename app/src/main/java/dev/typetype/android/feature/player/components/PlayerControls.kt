@@ -13,7 +13,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.annotation.OptIn
@@ -30,7 +29,6 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 import androidx.media3.ui.compose.state.rememberSeekBackButtonState
 import androidx.media3.ui.compose.state.rememberSeekForwardButtonState
-import androidx.compose.foundation.layout.Row
 import dev.typetype.android.R
 import dev.typetype.android.domain.stream.SponsorBlockSegment
 
@@ -41,6 +39,8 @@ fun PlayerControls(
     onOpenOptions: () -> Unit = {},
     onOpenChapters: () -> Unit = {},
     onEnterPip: () -> Unit = {},
+    onToggleFullscreen: () -> Unit = {},
+    isFullscreen: Boolean = false,
     chaptersAvailable: Boolean = false,
     sponsorBlockSegments: List<SponsorBlockSegment> = emptyList(),
     modifier: Modifier = Modifier,
@@ -63,12 +63,15 @@ fun PlayerControls(
             player = player,
             modifier = Modifier.align(Alignment.Center),
         )
-        PlayerTimeBar(
+        BottomBar(
             player = player,
-            segments = sponsorBlockSegments,
+            sponsorBlockSegments = sponsorBlockSegments,
+            isFullscreen = isFullscreen,
+            onToggleFullscreen = onToggleFullscreen,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(horizontal = 12.dp, vertical = 12.dp),
+                .fillMaxWidth()
+                .padding(start = 12.dp, end = 4.dp, bottom = 4.dp),
         )
     }
 }
@@ -123,7 +126,7 @@ private fun TopActions(
     Row(modifier = modifier.padding(8.dp)) {
         IconButton(onClick = onEnterPip) {
             Icon(
-                imageVector = Icons.Filled.Star,
+                painter = painterResource(R.drawable.ic_pip),
                 contentDescription = stringResource(R.string.player_pip),
                 tint = Color.White,
             )
@@ -141,6 +144,35 @@ private fun TopActions(
             Icon(
                 imageVector = Icons.Filled.Settings,
                 contentDescription = stringResource(R.string.player_playback_options),
+                tint = Color.White,
+            )
+        }
+    }
+}
+
+@Composable
+private fun BottomBar(
+    player: Player,
+    sponsorBlockSegments: List<SponsorBlockSegment>,
+    isFullscreen: Boolean,
+    onToggleFullscreen: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        PlayerTimeBar(
+            player = player,
+            segments = sponsorBlockSegments,
+            modifier = Modifier.weight(1f).padding(vertical = 8.dp),
+        )
+        IconButton(onClick = onToggleFullscreen) {
+            Icon(
+                painter = painterResource(
+                    if (isFullscreen) R.drawable.ic_fullscreen_exit else R.drawable.ic_fullscreen,
+                ),
+                contentDescription = stringResource(R.string.player_fullscreen),
                 tint = Color.White,
             )
         }
@@ -171,7 +203,7 @@ private fun CenterControls(player: Player, modifier: Modifier = Modifier) {
             contentDescription = stringResource(R.string.player_play_pause),
             enabled = playPauseState.isEnabled,
             onClick = { playPauseState.onClick() },
-            sizeDp = 72,
+            sizeDp = 80,
         )
         ControlButton(
             iconRes = R.drawable.ic_forward,
