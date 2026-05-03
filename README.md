@@ -2,6 +2,16 @@
   <img src="assets/banner.png" alt="TypeType-Android" width="100%">
 </div>
 
+<div align="center">
+
+[<img src="assets/widgets/license.svg" alt="GPL-V3">](LICENSE)
+
+[<img src="assets/widgets/typetype.svg" alt="TypeType">](https://github.com/Priveetee/TypeType)
+[<img src="assets/widgets/pipepipe.svg" alt="PipePipe">](https://github.com/InfinityLoop1308/PipePipeExtractor)
+[<img src="assets/widgets/libretube.svg" alt="LibreTube">](https://github.com/libre-tube/LibreTube)
+
+</div>
+
 TypeType-Android is the native Android client for [TypeType](https://github.com/Priveetee/TypeType), a self-hosted, privacy-respecting video platform.
 
 This project is in **very early development**. Expect breakage, missing features, and incomplete UI.
