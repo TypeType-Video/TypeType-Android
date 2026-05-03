@@ -61,6 +61,7 @@ import kotlinx.coroutines.flow.Flow
 fun PlayerRoute(
     onNavigateBack: () -> Unit,
     onPlayVideo: (videoUrl: String) -> Unit,
+    onOpenChannel: (channelUrl: String) -> Unit = {},
     viewModel: PlayerViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -69,6 +70,7 @@ fun PlayerRoute(
         commentsFlow = viewModel.comments,
         onNavigateBack = onNavigateBack,
         onPlayVideo = onPlayVideo,
+        onOpenChannel = onOpenChannel,
     )
 }
 
@@ -78,6 +80,7 @@ fun PlayerScreen(
     commentsFlow: Flow<PagingData<Comment>>,
     onNavigateBack: () -> Unit,
     onPlayVideo: (videoUrl: String) -> Unit,
+    onOpenChannel: (channelUrl: String) -> Unit = {},
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -95,6 +98,7 @@ fun PlayerScreen(
                 commentsFlow = commentsFlow,
                 onNavigateBack = onNavigateBack,
                 onPlayVideo = onPlayVideo,
+                onOpenChannel = onOpenChannel,
             )
         }
     }
@@ -140,6 +144,7 @@ private fun LoadedPlayer(
     commentsFlow: Flow<PagingData<Comment>>,
     onNavigateBack: () -> Unit,
     onPlayVideo: (videoUrl: String) -> Unit,
+    onOpenChannel: (channelUrl: String) -> Unit = {},
 ) {
     val controller = LocalMediaController.current
     val scrollState = rememberScrollState()
@@ -214,6 +219,7 @@ private fun LoadedPlayer(
                     avatarUrl = stream.uploaderAvatarUrl,
                     subscriberCount = stream.uploaderSubscriberCount,
                     verified = stream.uploaderVerified,
+                    onCardClick = { onOpenChannel(stream.uploaderUrl) },
                 )
                 CommentsBar(onClick = { commentsVisible = true })
                 Spacer(Modifier.height(4.dp))

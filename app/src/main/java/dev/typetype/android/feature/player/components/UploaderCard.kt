@@ -1,6 +1,7 @@
 package dev.typetype.android.feature.player.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,11 +35,12 @@ fun UploaderCard(
     avatarUrl: String,
     subscriberCount: Long,
     verified: Boolean,
+    onCardClick: () -> Unit = {},
     onSubscribeClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().clickable(onClick = onCardClick),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AsyncImage(
