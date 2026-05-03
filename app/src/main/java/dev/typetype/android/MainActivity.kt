@@ -22,11 +22,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
-            TypeTypeTheme {
+            val preferences by viewModel.preferences.collectAsStateWithLifecycle()
+            TypeTypeTheme(accentColor = preferences.accentColor) {
                 val state by viewModel.state.collectAsStateWithLifecycle()
                 val startRoute = state.startRoute
                 if (startRoute != null) {
-                    AppNavHost(startRoute = startRoute)
+                    AppNavHost(startRoute = startRoute, mainViewModel = viewModel)
                 }
             }
         }
