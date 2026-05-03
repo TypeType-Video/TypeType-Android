@@ -1,129 +1,73 @@
 package dev.typetype.android.feature.home
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.typetype.android.core.ui.components.HorizontalVideoCard
+import dev.typetype.android.core.ui.components.SectionHeader
 import dev.typetype.android.core.ui.components.VideoCard
-import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun HomeRoute(
-    onNavigateToWelcome: () -> Unit,
-    viewModel: HomeViewModel = hiltViewModel(),
+    viewModel: HomeViewModel,
+    onPlayVideo: (videoUrl: String) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    LaunchedEffect(viewModel) {
-        viewModel.events.collectLatest { event ->
-            when (event) {
-                HomeEvent.NavigateToWelcome -> onNavigateToWelcome()
-            }
-        }
-    }
-    HomeScreen(state = state, onAction = viewModel::onAction)
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun HomeScreen(state: HomeState, onAction: (HomeAction) -> Unit) {
-    var menuExpanded by remember { mutableStateOf(false) }
-
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = "TypeType",
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
-                        color = MaterialTheme.colorScheme.onBackground,
-                    )
-                },
-                actions = {
-                    Box {
-                        IconButton(onClick = { menuExpanded = true }) {
-                            Icon(
-                                imageVector = Icons.Filled.MoreVert,
-                                contentDescription = "More",
-                                tint = MaterialTheme.colorScheme.onBackground,
-                            )
-                        }
-                        DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                            DropdownMenuItem(
-                                text = { Text("Sign out") },
-                                onClick = {
-                                    menuExpanded = false
-                                    onAction(HomeAction.OnSignOutClick)
-                                },
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                ),
-            )
-        },
-    ) { padding ->
-        HomeContent(state = state, modifier = Modifier.fillMaxSize().padding(padding))
-    }
+    HomeScreen(
+        state = state,
+        onPlayVideo = onPlayVideo,
+        onRetry = { viewModel.onAction(HomeAction.OnRefresh) },
+    )
 }
 
 @Composable
-private fun HomeContent(state: HomeState, modifier: Modifier = Modifier) {
+fun HomeScreen(
+    state: HomeState,
+    onPlayVideo: (videoUrl: String) -> Unit,
+    onRetry: () -> Unit,
+) {
+    val nothingToShow = state.topSectionVideos.isEmpty() && state.recommendations.isEmpty()
+
     when {
-        state.isLoading && state.videos.isEmpty() -> {
-            Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        state.isLoading && nothingToShow -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         }
-        state.errorMessage != null && state.videos.isEmpty() -> {
-            Box(
-                modifier = modifier.fillMaxSize().padding(24.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = state.errorMessage,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
-                )
-            }
+        nothingToShow && state.recommendationsError != null && state.topSectionError != null -> {
+            EmptyError(message = state.recommendationsError, onRetry = onRetry)
         }
-        state.videos.isEmpty() -> {
+        nothingToShow -> {
             Box(
-                modifier = modifier.fillMaxSize().padding(24.dp),
+                modifier = Modifier.fillMaxSize().padding(24.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "No recommendations yet",
+                    text = "Nothing here yet",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -131,14 +75,123 @@ private fun HomeContent(state: HomeState, modifier: Modifier = Modifier) {
         }
         else -> {
             LazyColumn(
-                modifier = modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(vertical = 12.dp),
             ) {
-                items(state.videos, key = { it.id }) { video ->
-                    VideoCard(video = video)
+                if (state.topSectionVideos.isNotEmpty()) {
+                    item {
+                        val title = when (state.topSectionKind) {
+                            TopSectionKind.Subscriptions -> "From your subscriptions"
+                            TopSectionKind.Trending -> "Trending"
+                        }
+                        SectionHeader(text = title, modifier = Modifier.padding(horizontal = 16.dp))
+                        Spacer(Modifier.height(10.dp))
+                        LazyRow(
+                            contentPadding = PaddingValues(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            items(state.topSectionVideos, key = { "top-${it.id}" }) { video ->
+                                HorizontalVideoCard(
+                                    video = video,
+                                    onClick = { onPlayVideo(video.url) },
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(28.dp))
+                    }
+                }
+                if (state.recommendations.isNotEmpty()) {
+                    item {
+                        SectionHeader(
+                            text = "Recommended",
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                        )
+                        Spacer(Modifier.height(10.dp))
+                    }
+                    items(state.recommendations, key = { "rec-${it.id}" }) { video ->
+                        VideoCard(
+                            video = video,
+                            onClick = { onPlayVideo(video.url) },
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        )
+                    }
+                } else if (state.recommendationsError != null) {
+                    item {
+                        SectionErrorBanner(
+                            sectionLabel = "Recommended",
+                            message = state.recommendationsError,
+                            onRetry = onRetry,
+                        )
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun EmptyError(message: String, onRetry: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.error,
+        )
+        Spacer(Modifier.height(16.dp))
+        RetryPill(onRetry = onRetry)
+    }
+}
+
+@Composable
+private fun SectionErrorBanner(
+    sectionLabel: String,
+    message: String,
+    onRetry: () -> Unit,
+) {
+    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+        SectionHeader(text = sectionLabel)
+        Spacer(Modifier.height(8.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(16.dp),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                )
+                Spacer(Modifier.height(8.dp))
+                RetryPill(onRetry = onRetry)
+            }
+        }
+    }
+}
+
+@Composable
+private fun RetryPill(onRetry: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(999.dp))
+            .background(MaterialTheme.colorScheme.primary)
+            .clickable(onClick = onRetry)
+            .padding(horizontal = 14.dp, vertical = 6.dp),
+    ) {
+        Text(
+            text = "Retry",
+            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
+            color = MaterialTheme.colorScheme.onPrimary,
+        )
     }
 }
