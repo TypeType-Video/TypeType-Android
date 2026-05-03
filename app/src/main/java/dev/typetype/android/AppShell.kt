@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -64,6 +65,7 @@ private val topLevelTabs = listOf(
 fun AppShell(
     navController: NavHostController,
     onOpenSettings: () -> Unit,
+    onOpenSearch: () -> Unit = {},
     onPlayVideo: (videoUrl: String) -> Unit,
     content: @Composable (Modifier) -> Unit,
 ) {
@@ -82,7 +84,7 @@ fun AppShell(
             containerColor = MaterialTheme.colorScheme.background,
             topBar = {
                 if (isTopLevel) {
-                    AppTopBar(onOpenSettings = onOpenSettings)
+                    AppTopBar(onOpenSearch = onOpenSearch, onOpenSettings = onOpenSettings)
                 }
             },
             bottomBar = {
@@ -130,7 +132,7 @@ fun AppShell(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AppTopBar(onOpenSettings: () -> Unit) {
+private fun AppTopBar(onOpenSearch: () -> Unit, onOpenSettings: () -> Unit) {
     TopAppBar(
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -156,6 +158,13 @@ private fun AppTopBar(onOpenSettings: () -> Unit) {
             }
         },
         actions = {
+            IconButton(onClick = onOpenSearch) {
+                Icon(
+                    imageVector = Icons.Filled.Search,
+                    contentDescription = "Search",
+                    tint = MaterialTheme.colorScheme.onBackground,
+                )
+            }
             IconButton(onClick = onOpenSettings) {
                 Icon(
                     imageVector = Icons.Filled.Settings,
