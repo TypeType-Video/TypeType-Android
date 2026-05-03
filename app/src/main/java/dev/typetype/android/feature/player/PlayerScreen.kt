@@ -1,5 +1,6 @@
 package dev.typetype.android.feature.player
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,14 +25,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -39,12 +39,14 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.MimeTypes
-import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.MediaController
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.feature.player.components.PlayerSurfaceBox
+import dev.typetype.android.feature.player.components.rememberMediaController
 
 @Composable
 fun PlayerRoute(
@@ -110,39 +112,57 @@ private fun ErrorState(message: String, onNavigateBack: () -> Unit) {
 
 @Composable
 private fun LoadedPlayer(stream: Stream, onNavigateBack: () -> Unit) {
-    val context = LocalContext.current
+    val controllerState = rememberMediaController()
+    val controller = controllerState.value
     val scrollState = rememberScrollState()
 
-    val exoPlayer = remember(stream.id) {
-        val (sourceUrl, mimeType) = pickPlayableSource(stream)
-        ExoPlayer.Builder(context).build().apply {
-            if (sourceUrl != null) {
-                val mediaItem = MediaItem.Builder()
-                    .setUri(sourceUrl)
-                    .apply { mimeType?.let { setMimeType(it) } }
-                    .build()
-                setMediaItem(mediaItem)
-                playWhenReady = true
-                if (stream.startPositionMillis > 0) seekTo(stream.startPositionMillis)
-                prepare()
-            }
-        }
-    }
-
-    DisposableEffect(exoPlayer) {
-        onDispose { exoPlayer.release() }
+    LaunchedEffect(stream.id, controller) {
+        controller?.let { ctrl -> bindStreamToController(ctrl, stream) }
     }
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState)) {
-        PlayerSurfaceBox(
-            player = exoPlayer,
-            onNavigateBack = onNavigateBack,
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(16f / 9f),
-        )
+                .aspectRatio(16f / 9f)
+                .background(Color.Black),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (controller != null) {
+                PlayerSurfaceBox(
+                    player = controller,
+                    onNavigateBack = onNavigateBack,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            } else {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+            }
+        }
         StreamMetadata(stream = stream)
     }
+}
+
+private fun bindStreamToController(controller: MediaController, stream: Stream) {
+    val (sourceUrl, mimeType) = pickPlayableSource(stream)
+    if (sourceUrl == null) return
+    val metadata = MediaMetadata.Builder()
+        .setTitle(stream.title)
+        .setArtist(stream.uploaderName)
+        .setArtworkUri(Uri.parse(stream.thumbnailUrl))
+        .build()
+    val mediaItem = MediaItem.Builder()
+        .setUri(sourceUrl)
+        .setMediaId(stream.id)
+        .setMediaMetadata(metadata)
+        .apply { mimeType?.let { setMimeType(it) } }
+        .build()
+    val sameMedia = controller.currentMediaItem?.mediaId == stream.id
+    if (!sameMedia) {
+        controller.setMediaItem(mediaItem)
+        controller.prepare()
+        if (stream.startPositionMillis > 0) controller.seekTo(stream.startPositionMillis)
+    }
+    controller.playWhenReady = true
 }
 
 @Composable
