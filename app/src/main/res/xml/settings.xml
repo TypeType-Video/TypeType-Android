@@ -9,12 +9,6 @@
         app:title="@string/general" />
 
     <Preference
-        android:icon="@drawable/ic_server"
-        app:key="instance"
-        app:summary="@string/instance_summary"
-        app:title="@string/instance" />
-
-    <Preference
         android:icon="@drawable/ic_color"
         app:key="appearance"
         app:summary="@string/appearance_summary"
@@ -49,12 +43,6 @@
         android:summary="@string/notify_new_streams"
         app:key="notifications"
         app:title="@string/notifications" />
-
-    <Preference
-        android:icon="@drawable/ic_backup"
-        app:key="backup_restore"
-        app:summary="@string/backup_restore_summary"
-        app:title="@string/backup_restore" />
 
     <PreferenceCategory>
 

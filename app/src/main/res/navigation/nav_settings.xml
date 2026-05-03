@@ -10,11 +10,6 @@
         android:label="@string/settings" />
 
     <fragment
-        android:id="@+id/instanceSettings"
-        android:name="com.github.libretube.ui.preferences.InstanceSettings"
-        android:label="@string/instance" />
-
-    <fragment
         android:id="@+id/generalSettings"
         android:name="com.github.libretube.ui.preferences.GeneralSettings"
         android:label="@string/general" />
@@ -27,10 +22,6 @@
         android:id="@+id/audioVideoSettings"
         android:name="com.github.libretube.ui.preferences.AudioVideoSettings"
         android:label="@string/audio_video" />
-    <fragment
-        android:id="@+id/backupRestoreSettings"
-        android:name="com.github.libretube.ui.preferences.BackupRestoreSettings"
-        android:label="@string/backup_restore" />
     <fragment
         android:id="@+id/historySettings"
         android:name="com.github.libretube.ui.preferences.HistorySettings"
@@ -57,14 +48,6 @@
         app:popExitAnim="@animator/nav_default_pop_exit_anim" />
 
     <action
-        android:id="@+id/action_global_instanceSettings"
-        app:destination="@id/instanceSettings"
-        app:enterAnim="@animator/nav_default_enter_anim"
-        app:exitAnim="@animator/nav_default_exit_anim"
-        app:popEnterAnim="@animator/nav_default_pop_enter_anim"
-        app:popExitAnim="@animator/nav_default_pop_exit_anim" />
-
-    <action
         android:id="@+id/action_global_appearanceSettings"
         app:destination="@id/appearanceSettings"
         app:enterAnim="@animator/nav_default_enter_anim"
@@ -75,14 +58,6 @@
     <action
         android:id="@+id/action_global_audioVideoSettings"
         app:destination="@id/audioVideoSettings"
-        app:enterAnim="@animator/nav_default_enter_anim"
-        app:exitAnim="@animator/nav_default_exit_anim"
-        app:popEnterAnim="@animator/nav_default_pop_enter_anim"
-        app:popExitAnim="@animator/nav_default_pop_exit_anim" />
-
-    <action
-        android:id="@+id/action_global_backupRestoreSettings"
-        app:destination="@id/backupRestoreSettings"
         app:enterAnim="@animator/nav_default_enter_anim"
         app:exitAnim="@animator/nav_default_exit_anim"
         app:popEnterAnim="@animator/nav_default_pop_enter_anim"
