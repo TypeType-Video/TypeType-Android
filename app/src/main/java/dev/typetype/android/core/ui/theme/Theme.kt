@@ -1,20 +1,21 @@
 package dev.typetype.android.core.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+import dev.typetype.android.domain.preferences.AccentColor
 
-private val TypeTypeDarkColors = darkColorScheme(
-    primary = Zinc100,
+private fun darkSchemeFor(accent: Color, accentSoft: Color) = darkColorScheme(
+    primary = accent,
     onPrimary = Zinc950,
-    primaryContainer = Zinc100,
+    primaryContainer = accent,
     onPrimaryContainer = Zinc950,
-    secondary = Blue400,
+    secondary = accent,
     onSecondary = White,
-    secondaryContainer = Blue400,
-    onSecondaryContainer = White,
-    tertiary = Blue300,
+    secondaryContainer = Zinc800,
+    onSecondaryContainer = Zinc100,
+    tertiary = accentSoft,
     onTertiary = Zinc950,
     background = Zinc950,
     onBackground = Zinc100,
@@ -32,10 +33,22 @@ private val TypeTypeDarkColors = darkColorScheme(
     onErrorContainer = White,
 )
 
+private fun colorsFor(accentColor: AccentColor): Pair<Color, Color> = when (accentColor) {
+    AccentColor.Red -> AccentRed to Red300
+    AccentColor.Blue -> AccentBlue to Blue300
+    AccentColor.Yellow -> AccentYellow to Color(0xFFFDE68A)
+    AccentColor.Green -> AccentGreen to Color(0xFF86EFAC)
+    AccentColor.Purple -> AccentPurple to Color(0xFFE9D5FF)
+    AccentColor.Violet -> AccentViolet to Color(0xFFC4B5FD)
+    AccentColor.Monochrome -> AccentMonochrome to Zinc300
+    AccentColor.System -> AccentRed to Red300
+}
+
 @Composable
 fun TypeTypeTheme(
-    @Suppress("UNUSED_PARAMETER") darkTheme: Boolean = isSystemInDarkTheme(),
+    accentColor: AccentColor = AccentColor.Red,
     content: @Composable () -> Unit,
 ) {
-    MaterialTheme(colorScheme = TypeTypeDarkColors, content = content)
+    val (accent, accentSoft) = colorsFor(accentColor)
+    MaterialTheme(colorScheme = darkSchemeFor(accent, accentSoft), content = content)
 }
