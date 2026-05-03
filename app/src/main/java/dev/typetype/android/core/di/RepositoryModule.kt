@@ -5,12 +5,14 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dev.typetype.android.data.auth.AuthRepositoryImpl
+import dev.typetype.android.data.comments.CommentsRepositoryImpl
 import dev.typetype.android.data.feed.HomeFeedRepositoryImpl
 import dev.typetype.android.data.preferences.DataStorePreferencesRepository
 import dev.typetype.android.data.server.RoomServerRepository
 import dev.typetype.android.data.setup.SetupRepositoryImpl
 import dev.typetype.android.data.stream.StreamRepositoryImpl
 import dev.typetype.android.domain.auth.AuthRepository
+import dev.typetype.android.domain.comments.CommentsRepository
 import dev.typetype.android.domain.feed.HomeFeedRepository
 import dev.typetype.android.domain.preferences.PreferencesRepository
 import dev.typetype.android.domain.server.ServerRepository
@@ -45,4 +47,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindStreamRepository(impl: StreamRepositoryImpl): StreamRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCommentsRepository(impl: CommentsRepositoryImpl): CommentsRepository
 }
