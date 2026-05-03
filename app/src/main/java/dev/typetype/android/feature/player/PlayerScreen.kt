@@ -1,6 +1,5 @@
 package dev.typetype.android.feature.player
 
-import android.view.LayoutInflater
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -44,8 +43,10 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil3.compose.AsyncImage
+import dev.typetype.android.R
 import dev.typetype.android.domain.stream.Stream
 
 @Composable
@@ -144,10 +145,13 @@ private fun LoadedPlayer(stream: Stream, onNavigateBack: () -> Unit) {
         ) {
             AndroidView(
                 factory = { ctx ->
-                    val view = LayoutInflater.from(ctx)
-                        .inflate(dev.typetype.android.R.layout.view_player, null) as PlayerView
-                    view.player = exoPlayer
-                    view
+                    PlayerView(ctx).apply {
+                        setControllerLayoutId(R.layout.exo_player_control_view)
+                        resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                        setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
+                        useController = true
+                        player = exoPlayer
+                    }
                 },
                 modifier = Modifier.fillMaxSize(),
             )
