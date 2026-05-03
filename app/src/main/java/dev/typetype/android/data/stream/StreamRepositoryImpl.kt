@@ -4,7 +4,9 @@ import dev.typetype.android.data.network.TypeTypeApiHolder
 import dev.typetype.android.data.network.dto.SponsorBlockSegmentItem
 import dev.typetype.android.data.network.dto.StreamResponse
 import dev.typetype.android.data.network.dto.StreamSegmentItem
+import dev.typetype.android.data.network.dto.VideoItem
 import dev.typetype.android.data.network.dto.VideoStreamItem
+import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.stream.Chapter
 import dev.typetype.android.domain.stream.SponsorAction
 import dev.typetype.android.domain.stream.SponsorBlockSegment
@@ -37,6 +39,8 @@ class StreamRepositoryImpl @Inject constructor(
         uploaderName = uploaderName,
         uploaderAvatarUrl = uploaderAvatarUrl,
         uploaderUrl = uploaderUrl,
+        uploaderSubscriberCount = uploaderSubscriberCount,
+        uploaderVerified = uploaderVerified,
         thumbnailUrl = thumbnailUrl,
         description = description,
         durationSeconds = duration,
@@ -50,6 +54,7 @@ class StreamRepositoryImpl @Inject constructor(
         startPositionMillis = startPosition,
         sponsorBlockSegments = sponsorBlockSegments.map { it.toDomain() },
         chapters = streamSegments.map { it.toChapter() },
+        relatedStreams = relatedStreams.map { it.toDomainVideo() },
     )
 
     private fun pickBestProgressiveStream(videoStreams: List<VideoStreamItem>): String? =
@@ -69,5 +74,21 @@ class StreamRepositoryImpl @Inject constructor(
         title = title,
         startMs = startTimeSeconds.toLong() * 1_000L,
         previewUrl = previewUrl,
+    )
+
+    private fun VideoItem.toDomainVideo(): Video = Video(
+        id = id,
+        url = url,
+        title = title,
+        thumbnailUrl = thumbnailUrl,
+        uploaderName = uploaderName,
+        uploaderUrl = uploaderUrl,
+        uploaderAvatarUrl = uploaderAvatarUrl,
+        uploaderVerified = uploaderVerified,
+        durationSeconds = duration,
+        viewCount = viewCount,
+        uploadedAtMillis = uploaded,
+        isShortFormContent = isShortFormContent,
+        shortDescription = shortDescription,
     )
 }
