@@ -1,5 +1,6 @@
 package dev.typetype.android.data.network
 
+import dev.typetype.android.data.network.dto.CommentsPageResponse
 import dev.typetype.android.data.network.dto.GuestResponse
 import dev.typetype.android.data.network.dto.HealthResponse
 import dev.typetype.android.data.network.dto.HomeRecommendationsResponse
@@ -67,4 +68,10 @@ interface TypeTypeApi {
     suspend fun streams(
         @Query("url") videoUrl: String,
     ): Response<StreamResponse>
+
+    @GET("comments")
+    suspend fun comments(
+        @Query("url") videoUrl: String,
+        @Query("nextpage") nextpage: String? = null,
+    ): Response<CommentsPageResponse>
 }
