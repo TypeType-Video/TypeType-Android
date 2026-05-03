@@ -22,7 +22,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "LibreTube"
+rootProject.name = "TypeType-Android"
 
 include(":app")
-include(":baselineprofile")
