@@ -1,5 +1,8 @@
 package dev.typetype.android.feature.player.components
 
+import android.content.Intent
+import android.net.Uri
+import android.util.Patterns
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,12 +25,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withLink
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -40,6 +53,8 @@ fun DescriptionSection(
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var pendingUrl by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
 
     Column(
         modifier = modifier
@@ -79,15 +94,68 @@ fun DescriptionSection(
             if (description.isNotBlank()) {
                 Column {
                     Spacer(Modifier.height(12.dp))
-                    Text(
+                    LinkedText(
                         text = description,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = MaterialTheme.colorScheme.onSurface,
+                        ),
+                        linkColor = MaterialTheme.colorScheme.primary,
+                        onUrlClick = { url -> pendingUrl = url },
                     )
                 }
             }
         }
     }
+
+    if (pendingUrl != null) {
+        ExternalLinkDialog(
+            url = pendingUrl!!,
+            onConfirm = {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(pendingUrl))
+                context.startActivity(intent)
+                pendingUrl = null
+            },
+            onDismiss = { pendingUrl = null },
+        )
+    }
+}
+
+@Composable
+private fun LinkedText(
+    text: String,
+    style: TextStyle,
+    linkColor: Color,
+    onUrlClick: (String) -> Unit,
+) {
+    val latestOnUrlClick = rememberUpdatedState(onUrlClick)
+    val annotated = remember(text, linkColor) {
+        buildAnnotatedString {
+            var lastIndex = 0
+            val matcher = Patterns.WEB_URL.matcher(text)
+            while (matcher.find()) {
+                val url = matcher.group() ?: continue
+                val start = matcher.start()
+                append(text.substring(lastIndex, start))
+                withLink(
+                    LinkAnnotation.Url(
+                        url = url,
+                        styles = TextLinkStyles(
+                            style = SpanStyle(
+                                color = linkColor,
+                                textDecoration = TextDecoration.Underline,
+                            ),
+                        ),
+                        linkInteractionListener = { latestOnUrlClick.value(url) },
+                    ),
+                ) {
+                    append(url)
+                }
+                lastIndex = matcher.end()
+            }
+            append(text.substring(lastIndex))
+        }
+    }
+    Text(text = annotated, style = style)
 }
 
 @Composable
