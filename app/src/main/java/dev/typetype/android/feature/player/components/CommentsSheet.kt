@@ -46,7 +46,7 @@ fun CommentsSheet(
     pagingFlow: Flow<PagingData<Comment>>,
     onDismiss: () -> Unit,
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val items: LazyPagingItems<Comment> = pagingFlow.collectAsLazyPagingItems()
 
     ModalBottomSheet(

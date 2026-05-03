@@ -39,7 +39,7 @@ fun PlaybackOptionsSheet(
     player: Player,
     onDismiss: () -> Unit,
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val tracks = player.currentTracks
     val videoOptions = remember(tracks) { tracks.optionsForType(C.TRACK_TYPE_VIDEO) }
     val audioOptions = remember(tracks) { tracks.optionsForType(C.TRACK_TYPE_AUDIO) }
