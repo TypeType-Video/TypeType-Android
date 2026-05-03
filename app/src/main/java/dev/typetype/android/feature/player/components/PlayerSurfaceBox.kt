@@ -39,6 +39,8 @@ private const val AUTO_HIDE_DELAY_MS = 3_500L
 fun PlayerSurfaceBox(
     player: Player,
     onNavigateBack: () -> Unit,
+    isFullscreen: Boolean = false,
+    onToggleFullscreen: () -> Unit = {},
     sponsorBlockSegments: List<SponsorBlockSegment> = emptyList(),
     chapters: List<Chapter> = emptyList(),
     modifier: Modifier = Modifier,
@@ -124,6 +126,8 @@ fun PlayerSurfaceBox(
                 onOpenOptions = { optionsVisible = true },
                 onOpenChapters = { chaptersVisible = true },
                 onEnterPip = { enterPictureInPicture(activity) },
+                onToggleFullscreen = onToggleFullscreen,
+                isFullscreen = isFullscreen,
                 chaptersAvailable = chapters.isNotEmpty(),
                 sponsorBlockSegments = sponsorBlockSegments,
                 modifier = Modifier.fillMaxSize(),
