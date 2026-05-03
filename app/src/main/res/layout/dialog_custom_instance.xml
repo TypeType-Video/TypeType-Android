@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingTop="8dp">
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/CustomDialogTextInputLayout"
+        android:hint="@string/instance_api_url">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/instanceApiUrl"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/CustomDialogTextInputLayout"
+        android:hint="@string/instance_name">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/instanceName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/CustomDialogTextInputLayout"
+        android:hint="@string/instance_frontend_url">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/instanceFrontendUrl"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+</LinearLayout>

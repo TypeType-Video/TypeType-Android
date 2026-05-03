@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:id="@+id/standard_bottom_sheet"
+        style="@style/Widget.Material3.BottomSheet"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Drag handle for accessibility -->
+            <com.google.android.material.bottomsheet.BottomSheetDragHandleView
+                android:id="@+id/drag_handle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/options_recycler"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="10dp">
+
+                <com.google.android.material.button.MaterialButtonGroup
+                    style="@style/Widget.Material3.MaterialButtonGroup.Connected"
+                    android:id="@+id/bottom_controls"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/repeat"
+                        style="?materialIconButtonOutlinedStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:tooltipText="@string/tooltip_repeat"
+                        app:icon="@drawable/ic_repeat" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/add_to_playlist"
+                        style="?materialIconButtonOutlinedStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:tooltipText="@string/addToPlaylist"
+                        app:icon="@drawable/ic_playlist_add" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/sort"
+                        style="?materialIconButtonOutlinedStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:tooltipText="@string/tooltip_sort"
+                        app:icon="@drawable/ic_sort" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/watch_positions_options"
+                        style="?materialIconButtonOutlinedStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:tooltipText="@string/tooltip_watch_position"
+                        app:icon="@drawable/ic_eye" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/clear_queue"
+                        style="?materialIconButtonOutlinedStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:tooltipText="@string/tooltip_clear_queue"
+                        app:icon="@drawable/ic_close" />
+
+                </com.google.android.material.button.MaterialButtonGroup>
+
+                <com.google.android.material.button.MaterialButton
+                    style="?materialIconButtonFilledTonalStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_gravity="end|center"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/dismiss"
+                    android:drawablePadding="30dp"
+                    app:iconGravity="end"
+                    app:icon="@drawable/ic_arrow_down"
+                    android:tooltipText="@string/tooltip_dismiss" />
+
+            </FrameLayout>
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

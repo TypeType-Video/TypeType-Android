@@ -1,0 +1,3 @@
+<resources>
+    <string name="config_default_orientation_pref" translatable="false">portrait</string>
+</resources>
