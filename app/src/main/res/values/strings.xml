@@ -10,5 +10,6 @@
     <string name="player_back">Back</string>
     <string name="player_playback_options">Playback options</string>
     <string name="player_chapters">Chapters</string>
+    <string name="mini_player_close">Close mini player</string>
     <string name="player_time_separator"> / </string>
 </resources>
