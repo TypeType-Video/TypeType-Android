@@ -1,6 +1,10 @@
 package dev.typetype.android.data.library
 
 import dev.typetype.android.data.network.TypeTypeApiHolder
+import dev.typetype.android.data.network.dto.AddFavoriteRequest
+import dev.typetype.android.data.network.dto.AddHistoryRequest
+import dev.typetype.android.data.network.dto.AddWatchLaterRequest
+import dev.typetype.android.data.network.dto.SaveProgressRequest
 import dev.typetype.android.domain.library.FavoriteItem
 import dev.typetype.android.domain.library.HistoryItem
 import dev.typetype.android.domain.library.LibraryRepository
@@ -81,5 +85,68 @@ class LibraryRepositoryImpl @Inject constructor(
                 },
             )
         }
+    }
+
+    override suspend fun addFavorite(videoUrl: String): Result<Unit> = runCatching {
+        val api = apiHolder.require()
+        val response = withContext(Dispatchers.IO) { api.addFavorite(AddFavoriteRequest(videoUrl)) }
+        if (!response.isSuccessful) error("Add favorite failed (HTTP ${response.code()})")
+    }
+
+    override suspend fun removeFavorite(videoUrl: String): Result<Unit> = runCatching {
+        val api = apiHolder.require()
+        val response = withContext(Dispatchers.IO) { api.removeFavorite(videoUrl) }
+        if (!response.isSuccessful) error("Remove favorite failed (HTTP ${response.code()})")
+    }
+
+    override suspend fun addWatchLater(
+        url: String,
+        title: String,
+        thumbnail: String,
+        duration: Long,
+    ): Result<Unit> = runCatching {
+        val api = apiHolder.require()
+        val response = withContext(Dispatchers.IO) {
+            api.addWatchLater(AddWatchLaterRequest(url = url, title = title, thumbnail = thumbnail, duration = duration))
+        }
+        if (!response.isSuccessful) error("Add watch later failed (HTTP ${response.code()})")
+    }
+
+    override suspend fun removeWatchLater(url: String): Result<Unit> = runCatching {
+        val api = apiHolder.require()
+        val response = withContext(Dispatchers.IO) { api.removeWatchLater(url) }
+        if (!response.isSuccessful) error("Remove watch later failed (HTTP ${response.code()})")
+    }
+
+    override suspend fun addHistory(
+        videoUrl: String,
+        title: String,
+        thumbnail: String,
+        duration: Long,
+        channelName: String,
+        channelUrl: String,
+    ): Result<Unit> = runCatching {
+        val api = apiHolder.require()
+        val response = withContext(Dispatchers.IO) {
+            api.addHistory(
+                AddHistoryRequest(
+                    videoUrl = videoUrl,
+                    title = title,
+                    thumbnail = thumbnail,
+                    duration = duration,
+                    channelName = channelName,
+                    channelUrl = channelUrl,
+                ),
+            )
+        }
+        if (!response.isSuccessful) error("Add history failed (HTTP ${response.code()})")
+    }
+
+    override suspend fun saveProgress(videoUrl: String, positionMillis: Long): Result<Unit> = runCatching {
+        val api = apiHolder.require()
+        val response = withContext(Dispatchers.IO) {
+            api.saveProgress(SaveProgressRequest(url = videoUrl, positionMillis = positionMillis))
+        }
+        if (!response.isSuccessful) error("Save progress failed (HTTP ${response.code()})")
     }
 }
