@@ -7,8 +7,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dev.typetype.android.core.ui.navigation.AddServerRoute
 import dev.typetype.android.core.ui.navigation.HomeRoute
+import dev.typetype.android.core.ui.navigation.LoginRoute
 import dev.typetype.android.core.ui.navigation.WelcomeRoute
 import dev.typetype.android.feature.home.HomePlaceholderScreen
+import dev.typetype.android.feature.setup.addserver.AddServerRoute as AddServerRouteScreen
 import dev.typetype.android.feature.setup.welcome.WelcomeRoute as WelcomeRouteScreen
 
 @Composable
@@ -21,7 +23,17 @@ fun AppNavHost(startRoute: Any) {
             )
         }
         composable<AddServerRoute> {
-            // AddServer screen lands in 2.3
+            AddServerRouteScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToLogin = { serverId ->
+                    navController.navigate(LoginRoute(serverId = serverId)) {
+                        popUpTo(WelcomeRoute) { inclusive = true }
+                    }
+                },
+            )
+        }
+        composable<LoginRoute> {
+            // Login screen lands in 2.4
         }
         composable<HomeRoute> { HomePlaceholderScreen() }
     }
