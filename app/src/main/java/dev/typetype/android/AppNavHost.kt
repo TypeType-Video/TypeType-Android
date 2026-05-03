@@ -26,8 +26,14 @@ fun AppNavHost(startRoute: Any) {
         composable<AddServerRoute> {
             AddServerRouteScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToLogin = { serverId ->
-                    navController.navigate(LoginRoute(serverId = serverId)) {
+                onNavigateToLogin = { serverId, guestAllowed, registrationAllowed ->
+                    navController.navigate(
+                        LoginRoute(
+                            serverId = serverId,
+                            guestAllowed = guestAllowed,
+                            registrationAllowed = registrationAllowed,
+                        ),
+                    ) {
                         popUpTo(WelcomeRoute) { inclusive = false }
                     }
                 },
@@ -43,6 +49,14 @@ fun AppNavHost(startRoute: Any) {
                 },
             )
         }
-        composable<HomeRoute> { HomeRouteScreen() }
+        composable<HomeRoute> {
+            HomeRouteScreen(
+                onNavigateToWelcome = {
+                    navController.navigate(WelcomeRoute) {
+                        popUpTo(HomeRoute) { inclusive = true }
+                    }
+                },
+            )
+        }
     }
 }
