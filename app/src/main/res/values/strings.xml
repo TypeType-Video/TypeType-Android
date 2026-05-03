@@ -3,4 +3,9 @@
     <string name="tab_home">Home</string>
     <string name="tab_subscriptions">Subscriptions</string>
     <string name="tab_library">Library</string>
+    <string name="player_rewind">Rewind</string>
+    <string name="player_play_pause">Play / pause</string>
+    <string name="player_forward">Forward</string>
+    <string name="player_fullscreen">Fullscreen</string>
+    <string name="player_time_separator"> / </string>
 </resources>

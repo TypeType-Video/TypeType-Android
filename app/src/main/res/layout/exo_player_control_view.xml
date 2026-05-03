@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<merge xmlns:android="http://schemas.android.com/apk/res/android">
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:override="true">
 
     <View
         android:layout_width="match_parent"
@@ -26,7 +29,7 @@
             android:layout_width="56dp"
             android:layout_height="56dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Rewind"
+            android:contentDescription="@string/player_rewind"
             android:padding="4dp"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_rewind" />
@@ -37,18 +40,18 @@
             android:layout_height="72dp"
             android:layout_marginHorizontal="32dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Play / pause"
+            android:contentDescription="@string/player_play_pause"
             android:padding="14dp"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_play"
-            android:tint="@android:color/white" />
+            app:tint="@android:color/white" />
 
         <ImageButton
             android:id="@id/exo_ffwd"
             android:layout_width="56dp"
             android:layout_height="56dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Forward"
+            android:contentDescription="@string/player_forward"
             android:padding="4dp"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_forward" />
@@ -71,14 +74,13 @@
             android:fontFamily="monospace"
             android:textColor="@android:color/white"
             android:textSize="12sp"
-            tools:ignore="MissingPrefix"
-            xmlns:tools="http://schemas.android.com/tools" />
+            tools:ignore="MissingPrefix" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="4dp"
-            android:text=" / "
+            android:text="@string/player_time_separator"
             android:textColor="#B3FFFFFF"
             android:textSize="12sp" />
 
@@ -100,11 +102,11 @@
             android:layout_width="44dp"
             android:layout_height="44dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Fullscreen"
+            android:contentDescription="@string/player_fullscreen"
             android:padding="10dp"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_fullscreen"
-            android:tint="@android:color/white" />
+            app:tint="@android:color/white" />
     </LinearLayout>
 
     <androidx.media3.ui.DefaultTimeBar
