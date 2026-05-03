@@ -27,6 +27,7 @@ import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
 import androidx.media3.ui.compose.state.rememberPresentationState
 import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
+import dev.typetype.android.domain.stream.Chapter
 import dev.typetype.android.domain.stream.SponsorBlockSegment
 import dev.typetype.android.feature.player.state.PlayerGestureState
 import kotlinx.coroutines.delay
@@ -39,6 +40,7 @@ fun PlayerSurfaceBox(
     player: Player,
     onNavigateBack: () -> Unit,
     sponsorBlockSegments: List<SponsorBlockSegment> = emptyList(),
+    chapters: List<Chapter> = emptyList(),
     modifier: Modifier = Modifier,
 ) {
     val activity = LocalActivity.current
@@ -50,6 +52,7 @@ fun PlayerSurfaceBox(
     val playPauseState = rememberPlayPauseButtonState(player)
     var controlsVisible by remember { mutableStateOf(true) }
     var optionsVisible by remember { mutableStateOf(false) }
+    var chaptersVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         gestureState.brightnessFraction.floatValue = activity?.window?.attributes?.screenBrightness
@@ -119,6 +122,8 @@ fun PlayerSurfaceBox(
                 player = player,
                 onNavigateBack = onNavigateBack,
                 onOpenOptions = { optionsVisible = true },
+                onOpenChapters = { chaptersVisible = true },
+                chaptersAvailable = chapters.isNotEmpty(),
                 sponsorBlockSegments = sponsorBlockSegments,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -130,6 +135,18 @@ fun PlayerSurfaceBox(
             PlaybackOptionsSheet(
                 player = player,
                 onDismiss = { optionsVisible = false },
+            )
+        }
+
+        if (chaptersVisible && chapters.isNotEmpty()) {
+            ChaptersSheet(
+                chapters = chapters,
+                currentPositionMs = player.currentPosition,
+                onChapterClick = { chapter ->
+                    player.seekTo(chapter.startMs)
+                    chaptersVisible = false
+                },
+                onDismiss = { chaptersVisible = false },
             )
         }
     }

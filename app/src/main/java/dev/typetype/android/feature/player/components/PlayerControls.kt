@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -28,6 +29,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 import androidx.media3.ui.compose.state.rememberSeekBackButtonState
 import androidx.media3.ui.compose.state.rememberSeekForwardButtonState
+import androidx.compose.foundation.layout.Row
 import dev.typetype.android.R
 import dev.typetype.android.domain.stream.SponsorBlockSegment
 
@@ -36,6 +38,8 @@ fun PlayerControls(
     player: Player,
     onNavigateBack: () -> Unit,
     onOpenOptions: () -> Unit = {},
+    onOpenChapters: () -> Unit = {},
+    chaptersAvailable: Boolean = false,
     sponsorBlockSegments: List<SponsorBlockSegment> = emptyList(),
     modifier: Modifier = Modifier,
 ) {
@@ -46,8 +50,10 @@ fun PlayerControls(
             onNavigateBack = onNavigateBack,
             modifier = Modifier.align(Alignment.TopStart),
         )
-        OptionsButton(
+        TopActions(
+            onOpenChapters = onOpenChapters,
             onOpenOptions = onOpenOptions,
+            chaptersAvailable = chaptersAvailable,
             modifier = Modifier.align(Alignment.TopEnd),
         )
         CenterControls(
@@ -104,13 +110,29 @@ private fun BackButton(onNavigateBack: () -> Unit, modifier: Modifier = Modifier
 }
 
 @Composable
-private fun OptionsButton(onOpenOptions: () -> Unit, modifier: Modifier = Modifier) {
-    IconButton(onClick = onOpenOptions, modifier = modifier.padding(8.dp)) {
-        Icon(
-            imageVector = Icons.Filled.Settings,
-            contentDescription = stringResource(R.string.player_playback_options),
-            tint = Color.White,
-        )
+private fun TopActions(
+    onOpenChapters: () -> Unit,
+    onOpenOptions: () -> Unit,
+    chaptersAvailable: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Row(modifier = modifier.padding(8.dp)) {
+        if (chaptersAvailable) {
+            IconButton(onClick = onOpenChapters) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.List,
+                    contentDescription = stringResource(R.string.player_chapters),
+                    tint = Color.White,
+                )
+            }
+        }
+        IconButton(onClick = onOpenOptions) {
+            Icon(
+                imageVector = Icons.Filled.Settings,
+                contentDescription = stringResource(R.string.player_playback_options),
+                tint = Color.White,
+            )
+        }
     }
 }
 
