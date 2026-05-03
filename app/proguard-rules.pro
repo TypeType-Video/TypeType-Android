@@ -28,3 +28,8 @@
 }
 
 -keepattributes RuntimeVisibleAnnotations,AnnotationDefault
+
+-keep class com.google.crypto.tink.** { *; }
+-keep class com.google.crypto.tink.shaded.protobuf.** { *; }
+-keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod
+-keep class * extends com.google.crypto.tink.shaded.protobuf.GeneratedMessageLite { *; }

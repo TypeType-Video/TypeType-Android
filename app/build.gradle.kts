@@ -123,7 +123,7 @@ dependencies {
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
 
     implementation(libs.androidx.datastore.preferences)
-    implementation(libs.androidx.security.crypto)
+    implementation(libs.google.tink.android)
 
     implementation(libs.coil)
     implementation(libs.coil.compose)
