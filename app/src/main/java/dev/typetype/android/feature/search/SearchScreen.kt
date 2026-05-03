@@ -1,11 +1,15 @@
 package dev.typetype.android.feature.search
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
@@ -13,6 +17,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -32,10 +37,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.VideoCard
 
 @Composable
@@ -62,7 +69,6 @@ fun SearchScreen(
     onAction: (SearchAction) -> Unit,
 ) {
     val focusRequester = remember { FocusRequester() }
-
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -73,7 +79,7 @@ fun SearchScreen(
                     onValueChange = { onAction(SearchAction.OnQueryChange(it)) },
                     placeholder = {
                         Text(
-                            text = "Search videos...",
+                            text = stringResource(R.string.search_placeholder),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -97,7 +103,7 @@ fun SearchScreen(
                 IconButton(onClick = onNavigateBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
+                        contentDescription = stringResource(R.string.search_back),
                         tint = MaterialTheme.colorScheme.onBackground,
                     )
                 }
@@ -107,7 +113,7 @@ fun SearchScreen(
                     IconButton(onClick = { onAction(SearchAction.OnClearQuery) }) {
                         Icon(
                             imageVector = Icons.Filled.Clear,
-                            contentDescription = "Clear",
+                            contentDescription = stringResource(R.string.search_clear),
                             tint = MaterialTheme.colorScheme.onBackground,
                         )
                     }
@@ -135,12 +141,17 @@ fun SearchScreen(
                     color = MaterialTheme.colorScheme.error,
                 )
             }
-            state.hasSearched && state.results.isEmpty() -> Box(
+            !state.hasSearched -> SearchHistoryList(
+                history = state.searchHistory,
+                onEntryClick = { onAction(SearchAction.OnHistoryEntryClick(it)) },
+                onDeleteEntry = { onAction(SearchAction.OnDeleteHistoryEntry(it)) },
+            )
+            state.results.isEmpty() -> Box(
                 modifier = Modifier.fillMaxSize().padding(24.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "No results for \"${state.query}\"",
+                    text = stringResource(R.string.search_no_results, state.query),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -151,6 +162,54 @@ fun SearchScreen(
             ) {
                 items(state.results, key = { it.id }) { video ->
                     VideoCard(video = video, onClick = { onPlayVideo(video.url) })
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SearchHistoryList(
+    history: List<String>,
+    onEntryClick: (String) -> Unit,
+    onDeleteEntry: (String) -> Unit,
+) {
+    if (history.isEmpty()) return
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        item {
+            Text(
+                text = stringResource(R.string.search_recent_searches),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            )
+        }
+        items(history, key = { it }) { query ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onEntryClick(query) }
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.History,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    text = query,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.weight(1f),
+                )
+                IconButton(onClick = { onDeleteEntry(query) }) {
+                    Icon(
+                        imageVector = Icons.Filled.Clear,
+                        contentDescription = stringResource(R.string.search_clear),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
         }

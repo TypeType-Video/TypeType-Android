@@ -1,7 +1,8 @@
 package dev.typetype.android.core.ui.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,13 +33,22 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.typetype.android.domain.feed.Video
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun VideoCard(
     video: Video,
     modifier: Modifier = Modifier,
+    onMenuAction: ((VideoMenuAction) -> Unit)? = null,
     onClick: () -> Unit = {},
 ) {
-    Column(modifier = modifier.fillMaxWidth().clickable(onClick = onClick)) {
+    var menuVisible by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = modifier.fillMaxWidth().combinedClickable(
+            onClick = onClick,
+            onLongClick = if (onMenuAction != null) ({ menuVisible = true }) else null,
+        ),
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -99,6 +113,13 @@ fun VideoCard(
                 )
             }
         }
+    }
+
+    if (menuVisible && onMenuAction != null) {
+        VideoCardMenu(
+            onAction = onMenuAction,
+            onDismiss = { menuVisible = false },
+        )
     }
 }
 
