@@ -1,10 +1,15 @@
 package dev.typetype.android.feature.player
 
 import dev.typetype.android.domain.stream.Stream
+import dev.typetype.android.feature.player.components.PlayerGestureConfig
 
 data class PlayerState(
     val isLoading: Boolean = true,
     val stream: Stream? = null,
     val videoUrl: String = "",
     val errorMessage: String? = null,
+    val isFavorited: Boolean = false,
+    val isInWatchLater: Boolean = false,
+    val gestureConfig: PlayerGestureConfig = PlayerGestureConfig(),
+    val autoplayEnabled: Boolean = true,
 )
