@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.annotation.OptIn
@@ -34,6 +35,7 @@ import dev.typetype.android.domain.stream.SponsorBlockSegment
 fun PlayerControls(
     player: Player,
     onNavigateBack: () -> Unit,
+    onOpenOptions: () -> Unit = {},
     sponsorBlockSegments: List<SponsorBlockSegment> = emptyList(),
     modifier: Modifier = Modifier,
 ) {
@@ -43,6 +45,10 @@ fun PlayerControls(
         BackButton(
             onNavigateBack = onNavigateBack,
             modifier = Modifier.align(Alignment.TopStart),
+        )
+        OptionsButton(
+            onOpenOptions = onOpenOptions,
+            modifier = Modifier.align(Alignment.TopEnd),
         )
         CenterControls(
             player = player,
@@ -92,6 +98,17 @@ private fun BackButton(onNavigateBack: () -> Unit, modifier: Modifier = Modifier
         Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
             contentDescription = stringResource(R.string.player_back),
+            tint = Color.White,
+        )
+    }
+}
+
+@Composable
+private fun OptionsButton(onOpenOptions: () -> Unit, modifier: Modifier = Modifier) {
+    IconButton(onClick = onOpenOptions, modifier = modifier.padding(8.dp)) {
+        Icon(
+            imageVector = Icons.Filled.Settings,
+            contentDescription = stringResource(R.string.player_playback_options),
             tint = Color.White,
         )
     }
