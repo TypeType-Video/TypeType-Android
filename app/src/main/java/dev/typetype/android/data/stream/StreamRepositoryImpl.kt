@@ -3,7 +3,9 @@ package dev.typetype.android.data.stream
 import dev.typetype.android.data.network.TypeTypeApiHolder
 import dev.typetype.android.data.network.dto.SponsorBlockSegmentItem
 import dev.typetype.android.data.network.dto.StreamResponse
+import dev.typetype.android.data.network.dto.StreamSegmentItem
 import dev.typetype.android.data.network.dto.VideoStreamItem
+import dev.typetype.android.domain.stream.Chapter
 import dev.typetype.android.domain.stream.SponsorAction
 import dev.typetype.android.domain.stream.SponsorBlockSegment
 import dev.typetype.android.domain.stream.SponsorCategory
@@ -47,6 +49,7 @@ class StreamRepositoryImpl @Inject constructor(
         progressiveUrl = pickBestProgressiveStream(videoStreams),
         startPositionMillis = startPosition,
         sponsorBlockSegments = sponsorBlockSegments.map { it.toDomain() },
+        chapters = streamSegments.map { it.toChapter() },
     )
 
     private fun pickBestProgressiveStream(videoStreams: List<VideoStreamItem>): String? =
@@ -60,5 +63,11 @@ class StreamRepositoryImpl @Inject constructor(
         endMs = (endTime * 1_000).toLong(),
         category = SponsorCategory.fromKey(category),
         action = SponsorAction.fromKey(action),
+    )
+
+    private fun StreamSegmentItem.toChapter(): Chapter = Chapter(
+        title = title,
+        startMs = startTimeSeconds.toLong() * 1_000L,
+        previewUrl = previewUrl,
     )
 }
