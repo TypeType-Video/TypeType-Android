@@ -20,7 +20,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.SecondaryScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -64,7 +64,7 @@ fun LibraryScreen(
 ) {
     val tabs = LibraryTab.entries
     Column(modifier = Modifier.fillMaxSize()) {
-        ScrollableTabRow(
+        SecondaryScrollableTabRow(
             selectedTabIndex = tabs.indexOf(state.selectedTab),
             containerColor = MaterialTheme.colorScheme.background,
             edgePadding = 0.dp,
