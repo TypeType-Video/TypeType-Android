@@ -85,6 +85,7 @@ fun PlayerScreen(
             )
             state.stream != null -> LoadedPlayer(
                 stream = state.stream,
+                videoUrl = state.videoUrl,
                 commentsFlow = commentsFlow,
                 onNavigateBack = onNavigateBack,
                 onPlayVideo = onPlayVideo,
@@ -129,6 +130,7 @@ private fun ErrorState(message: String, onNavigateBack: () -> Unit) {
 @Composable
 private fun LoadedPlayer(
     stream: Stream,
+    videoUrl: String,
     commentsFlow: Flow<PagingData<Comment>>,
     onNavigateBack: () -> Unit,
     onPlayVideo: (videoUrl: String) -> Unit,
@@ -139,7 +141,7 @@ private fun LoadedPlayer(
     var commentsVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(stream.id, controller) {
-        controller?.let { ctrl -> bindStreamToController(ctrl, stream) }
+        controller?.let { ctrl -> bindStreamToController(ctrl, stream, videoUrl) }
     }
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState)) {
@@ -197,7 +199,11 @@ private fun LoadedPlayer(
     }
 }
 
-private fun bindStreamToController(controller: MediaController, stream: Stream) {
+private fun bindStreamToController(
+    controller: MediaController,
+    stream: Stream,
+    videoUrl: String,
+) {
     val (sourceUrl, mimeType) = pickPlayableSource(stream)
     if (sourceUrl == null) return
     val metadata = MediaMetadata.Builder()
@@ -207,11 +213,11 @@ private fun bindStreamToController(controller: MediaController, stream: Stream) 
         .build()
     val mediaItem = MediaItem.Builder()
         .setUri(sourceUrl)
-        .setMediaId(stream.id)
+        .setMediaId(videoUrl)
         .setMediaMetadata(metadata)
         .apply { mimeType?.let { setMimeType(it) } }
         .build()
-    val sameMedia = controller.currentMediaItem?.mediaId == stream.id
+    val sameMedia = controller.currentMediaItem?.mediaId == videoUrl
     if (!sameMedia) {
         controller.setMediaItem(mediaItem)
         controller.prepare()

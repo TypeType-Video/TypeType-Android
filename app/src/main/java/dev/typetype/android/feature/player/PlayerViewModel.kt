@@ -30,7 +30,7 @@ class PlayerViewModel @Inject constructor(
 
     private val route: PlayerRoute = savedStateHandle.toRoute<PlayerRoute>()
 
-    private val _state = MutableStateFlow(PlayerState())
+    private val _state = MutableStateFlow(PlayerState(videoUrl = route.videoUrl))
     val state = _state.asStateFlow()
 
     val comments: Flow<PagingData<Comment>> = Pager(

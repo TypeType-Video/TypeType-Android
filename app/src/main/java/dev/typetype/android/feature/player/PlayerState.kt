@@ -5,5 +5,6 @@ import dev.typetype.android.domain.stream.Stream
 data class PlayerState(
     val isLoading: Boolean = true,
     val stream: Stream? = null,
+    val videoUrl: String = "",
     val errorMessage: String? = null,
 )
