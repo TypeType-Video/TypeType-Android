@@ -45,6 +45,7 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
     AppShell(
         navController = navController,
         onOpenSettings = { navController.navigate(SettingsRoute) },
+        onPlayVideo = { videoUrl -> navController.navigate(PlayerRoute(videoUrl = videoUrl)) },
     ) { innerModifier ->
         NavHost(
             navController = navController,
