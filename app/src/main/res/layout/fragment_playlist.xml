@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.fragments.PlaylistFragment">
+
+    <com.google.android.material.loadingindicator.LoadingIndicator
+        android:id="@+id/playlist_progress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/playlist_recView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:visibility="gone"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/playlist_app_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <com.google.android.material.appbar.CollapsingToolbarLayout
+            android:id="@+id/playlist_collapsing_tb"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_scrollFlags="scroll"
+            app:titleCollapseMode="scale">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:layout_margin="8dp"
+                        app:cardCornerRadius="8dp"
+                        app:layout_constraintDimensionRatio="16:9"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <ImageView
+                            android:id="@+id/thumbnail"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:adjustViewBounds="true"
+                            android:scaleType="centerCrop"
+                            tools:srcCompat="@tools:sample/backgrounds/scenic[0]" />
+
+
+                        <androidx.cardview.widget.CardView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="bottom|end"
+                            android:layout_marginEnd="6dp"
+                            android:layout_marginBottom="6dp"
+                            app:cardBackgroundColor="@color/duration_background_color"
+                            app:cardCornerRadius="8dp"
+                            app:cardElevation="0dp">
+
+                            <TextView
+                                android:id="@+id/playlist_duration"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:paddingHorizontal="6dp"
+                                android:paddingVertical="2dp"
+                                android:textColor="@color/duration_text_color"
+                                android:textSize="12sp"
+                                tools:text="05:36" />
+
+                        </androidx.cardview.widget.CardView>
+
+                    </androidx.cardview.widget.CardView>
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginStart="12dp"
+                        android:layout_marginEnd="8dp">
+
+                        <com.github.libretube.ui.views.ExpandableTextView
+                            android:id="@+id/playlist_name"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:paddingVertical="2dp"
+                            android:textColor="?android:attr/textColorPrimary"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            tools:text="Playlist name" />
+
+                        <TextView
+                            android:id="@+id/playlistInfo"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textStyle="bold"
+                            tools:text="info" />
+
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButtonGroup
+                        style="@style/Widget.Material3.MaterialSplitButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="4dp"
+                        android:gravity="center"
+                        android:paddingTop="0dp"
+                        android:paddingBottom="0dp">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/sortBTN"
+                            style="?materialButtonTonalStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:visibility="gone"
+                            app:icon="@drawable/ic_sort"
+                            app:iconGravity="textEnd"
+                            tools:text="@string/most_recent"
+                            tools:visibility="visible" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/optionsMenu"
+                            style="?materialIconButtonFilledTonalStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            app:icon="@drawable/ic_three_dots" />
+
+                    </com.google.android.material.button.MaterialButtonGroup>
+
+                </LinearLayout>
+
+                <com.github.libretube.ui.views.ExpandableTextView
+                    android:id="@+id/playlistDescription"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="2dp"
+                    android:padding="10dp" />
+
+                <com.google.android.material.button.MaterialButtonGroup
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="12dp"
+                    android:layout_marginVertical="10dp"
+                    android:orientation="horizontal"
+                    app:buttonSizeChange="@null">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/play_all"
+                        style="@style/Widget.Material3Expressive.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:maxLines="1"
+                        android:text="@string/play_all"
+                        app:icon="@drawable/ic_playlist" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/bookmark"
+                        style="@style/Widget.Material3Expressive.Button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:maxLines="1"
+                        android:text="@string/bookmark"
+                        app:icon="@drawable/ic_bookmark_outlined" />
+
+                </com.google.android.material.button.MaterialButtonGroup>
+
+                <LinearLayout
+                    android:id="@+id/nothing_here"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginBottom="35dp"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:layout_width="100dp"
+                        android:layout_height="100dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_list" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="@string/emptyList"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+
+            </LinearLayout>
+
+
+        </com.google.android.material.appbar.CollapsingToolbarLayout>
+
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

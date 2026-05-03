@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:navigationIcon="?homeAsUpIndicator"
+            android:fitsSystemWindows="true"
+            app:title="@string/help" />
+
+        <com.github.libretube.ui.views.AppIconHeader
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/faq"
+            style="@style/AboutCard">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                style="@style/AboutItem"
+                android:text="@string/faq"
+                app:drawableStartCompat="@drawable/ic_help" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/matrix"
+            style="@style/AboutCard">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                style="@style/AboutItem"
+                android:text="Matrix"
+                app:drawableStartCompat="@drawable/ic_matrix"
+                tools:ignore="HardcodedText" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/mastodon"
+            style="@style/AboutCard">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                style="@style/AboutItem"
+                android:text="Mastodon"
+                app:drawableStartCompat="@drawable/ic_mastodon"
+                tools:ignore="HardcodedText" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/lemmy"
+            style="@style/AboutCard">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                style="@style/AboutItem"
+                android:text="Lemmy"
+                app:drawableStartCompat="@drawable/ic_lemmy"
+                tools:ignore="HardcodedText" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+
+</ScrollView>

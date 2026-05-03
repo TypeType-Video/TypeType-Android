@@ -1,0 +1,23 @@
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:drawable="@drawable/splash_icon">
+
+    <target android:name="scaleGroup">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="500"
+                android:propertyName="scaleX"
+                android:valueFrom="0.3"
+                android:valueTo="0.5" />
+        </aapt:attr>
+    </target>
+    <target android:name="scaleGroup">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="500"
+                android:propertyName="scaleY"
+                android:valueFrom="0.3"
+                android:valueTo="0.5" />
+        </aapt:attr>
+    </target>
+</animated-vector>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="SliderPreference">
+        <attr name="valueFrom" format="float" />
+        <attr name="valueTo" format="float" />
+        <attr name="stepSize" format="float" />
+        <attr name="defValue" format="float" />
+    </declare-styleable>
+
+    <declare-styleable name="DrawableTextView">
+        <attr name="drawableStartDimen" format="dimension" />
+        <attr name="drawableTopDimen" format="dimension" />
+        <attr name="drawableEndDimen" format="dimension" />
+        <attr name="drawableBottomDimen" format="dimension" />
+        <attr name="android:drawablePadding" />
+        <attr name="android:gravity" />
+    </declare-styleable>
+
+    <declare-styleable name="DropdownMenu">
+        <attr name="hint" format="string" />
+        <attr name="icon" format="reference" />
+    </declare-styleable>
+
+</resources>

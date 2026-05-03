@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="startpage">او</string>
+    <string name="subscriptions">آبونەليكلر</string>
+    <string name="yes">بەلی</string>
+    <string name="search_hint">آختاريش</string>
+    <string name="videos">ويديولار</string>
+    <string name="subscribe">Abunə ol</string>
+    <string name="unsubscribe">Abunəliyi ləğ et</string>
+    <string name="library">كتابخانا</string>
+    <string name="download">Endir</string>
+    <string name="save">Yadda saxla</string>
+    <string name="share">Paylaş</string>
+    <string name="username">İstifadəçi adı</string>
+    <string name="password">Şifrə</string>
+    <string name="login">Daxil ol</string>
+    <string name="register">Qeydiyyatdan keç</string>
+    <string name="logout">Çıxış</string>
+    <string name="cancel">Ləğv et</string>
+    <string name="loggedIn">Giriş</string>
+</resources>
