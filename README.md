@@ -24,7 +24,7 @@ A Kotlin Android application that talks exclusively to a TypeType-Server instanc
 
 - Not a standalone YouTube client. It does not work without a reachable TypeType-Server.
 - Not a Piped, Invidious, or NewPipe client.
-- Not maintained by the LibreTube team. This is an independent project that started from a fork of their codebase and was substantially rewritten.
+- Not affiliated with the LibreTube team. This is an independent codebase that originally started from their work and has since been rewritten in full.
 
 ## Stack
 
@@ -32,7 +32,7 @@ A Kotlin Android application that talks exclusively to a TypeType-Server instanc
 |---|---|
 | Language | Kotlin |
 | Min SDK | 26 (Android 8.0) |
-| UI | Jetpack Compose for new modules, XML for inherited LibreTube screens |
+| UI | Jetpack Compose with Material 3 |
 | Navigation | Navigation Compose with type-safe routes |
 | DI | Hilt |
 | Network | Retrofit + OkHttp + kotlinx.serialization |
@@ -59,16 +59,13 @@ A signed release flow and CI publishing will be added later.
 
 ## License
 
-GPL v3 — inherited from LibreTube. See [LICENSE](LICENSE).
-
-The original LibreTube `LICENSE` file is preserved as-is to honor the obligations of the GPL.
+GPL v3. See [LICENSE](LICENSE). The codebase originally inherited from LibreTube (also GPL v3), so we keep the licensing model.
 
 ## Acknowledgments
 
-A huge thanks to the projects without which TypeType-Android would not exist:
+TypeType-Android took inspiration and lessons from several projects:
 
-- [LibreTube](https://github.com/libre-tube/LibreTube) — the entire UI/UX foundation, player architecture, navigation patterns, downloads logic, and a great deal of Android-specific polish are inherited from their work. TypeType-Android started from their codebase and rewires the data layer to TypeType-Server.
-- [Findroid](https://github.com/jarnedemeulemeester/findroid) by Jarne Demeulemeester — architectural reference for the multi-server setup flow, the MVI pattern in the setup module, Compose Navigation with type-safe routes, and the overall discipline of a fully server-side native Android client.
-- [Bnyro](https://github.com/Bnyro) and the LibreTube contributors — for years of work refining one of the cleanest Android video player UIs available.
+- [LibreTube](https://github.com/libre-tube/LibreTube) by [Bnyro](https://github.com/Bnyro) and contributors — the original codebase we started from, and the reference for the overall Android video-client UX (bottom navigation, home sections, player ergonomics, accent-color theming).
+- [Findroid](https://github.com/jarnedemeulemeester/findroid) by Jarne Demeulemeester — architectural reference for the multi-server setup flow, the MVI pattern, Compose Navigation with type-safe routes, and the discipline of a fully server-side native Android client.
 
-Both LibreTube and Findroid are licensed under GPL v3. TypeType-Android is published under the same license.
+Both are GPL v3. TypeType-Android is published under the same license.
