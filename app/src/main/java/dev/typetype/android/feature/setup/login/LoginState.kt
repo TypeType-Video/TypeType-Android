@@ -5,4 +5,6 @@ data class LoginState(
     val password: String = "",
     val isSubmitting: Boolean = false,
     val errorMessage: String? = null,
+    val guestAllowed: Boolean = false,
+    val registrationAllowed: Boolean = false,
 )

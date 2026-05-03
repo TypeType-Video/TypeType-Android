@@ -17,15 +17,19 @@ class SetupRepositoryImpl @Inject constructor(
 ) : SetupRepository {
 
     override suspend fun probeServer(rawUrl: String): Result<ProbeResult> = runCatching {
-        val normalized = normalizeUrl(rawUrl)
-        val api = retrofitFactory.create(normalized)
-        val response = withContext(Dispatchers.IO) { api.guest() }
-        if (!response.isSuccessful) {
-            error("Server responded with HTTP ${response.code()}")
-        }
+        val candidates = candidateBaseUrls(rawUrl)
+        val resolved = candidates.firstNotNullOfOrNull { tryCandidate(it) }
+            ?: error("No TypeType API found at this address")
         ProbeResult(
-            normalizedUrl = normalized,
-            derivedDisplayName = displayNameFrom(normalized),
+            normalizedUrl = resolved.baseUrl,
+            name = resolved.instance.name,
+            tagline = resolved.instance.tagline,
+            version = resolved.instance.version,
+            apiVersion = resolved.instance.apiVersion,
+            registrationAllowed = resolved.instance.registrationAllowed,
+            guestAllowed = resolved.instance.guestAllowed,
+            supportedServices = resolved.instance.supportedServices,
+            minAndroidClientVersion = resolved.instance.minClientVersion?.android,
         )
     }
 
@@ -34,7 +38,20 @@ class SetupRepositoryImpl @Inject constructor(
         if (makeCurrent) serverRepository.setCurrentServer(server.id)
     }
 
-    private fun normalizeUrl(raw: String): String {
+    private suspend fun tryCandidate(baseUrl: String): Resolved? {
+        val api = retrofitFactory.create(baseUrl)
+        return runCatching {
+            val instanceResponse = withContext(Dispatchers.IO) { api.instance() }
+            val body = instanceResponse.body()
+            if (instanceResponse.isSuccessful && body != null) {
+                Resolved(baseUrl, body)
+            } else {
+                null
+            }
+        }.getOrNull()
+    }
+
+    private fun candidateBaseUrls(raw: String): List<String> {
         val trimmed = raw.trim().trimEnd('/')
         require(trimmed.isNotEmpty()) { "URL cannot be empty" }
         val withScheme = if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
@@ -42,9 +59,15 @@ class SetupRepositoryImpl @Inject constructor(
         } else {
             "https://$trimmed"
         }
-        return withScheme
+        return if (withScheme.contains("/api")) {
+            listOf(withScheme)
+        } else {
+            listOf(withScheme, "$withScheme/api")
+        }
     }
 
-    private fun displayNameFrom(url: String): String =
-        url.removePrefix("https://").removePrefix("http://").substringBefore('/')
+    private data class Resolved(
+        val baseUrl: String,
+        val instance: dev.typetype.android.data.network.dto.InstanceResponse,
+    )
 }

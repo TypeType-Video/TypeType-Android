@@ -21,9 +21,15 @@ class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
 ) : ViewModel() {
 
-    private val serverId: String = savedStateHandle.toRoute<LoginRoute>().serverId
+    private val route: LoginRoute = savedStateHandle.toRoute<LoginRoute>()
+    private val serverId: String = route.serverId
 
-    private val _state = MutableStateFlow(LoginState())
+    private val _state = MutableStateFlow(
+        LoginState(
+            guestAllowed = route.guestAllowed,
+            registrationAllowed = route.registrationAllowed,
+        ),
+    )
     val state = _state.asStateFlow()
 
     private val eventsChannel = Channel<LoginEvent>(Channel.BUFFERED)
