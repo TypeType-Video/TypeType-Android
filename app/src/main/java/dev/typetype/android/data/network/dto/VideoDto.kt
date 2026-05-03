@@ -28,3 +28,9 @@ data class HomeRecommendationsResponse(
     val nextCursor: String? = null,
     val hasMore: Boolean = false,
 )
+
+@Serializable
+data class SubscriptionFeedResponse(
+    val videos: List<VideoItem> = emptyList(),
+    val nextpage: String? = null,
+)

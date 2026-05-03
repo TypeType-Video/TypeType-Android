@@ -8,7 +8,10 @@ import dev.typetype.android.data.network.dto.LoginRequest
 import dev.typetype.android.data.network.dto.RefreshRequest
 import dev.typetype.android.data.network.dto.RegisterRequest
 import dev.typetype.android.data.network.dto.SessionResponse
+import dev.typetype.android.data.network.dto.StreamResponse
+import dev.typetype.android.data.network.dto.SubscriptionFeedResponse
 import dev.typetype.android.data.network.dto.UserProfile
+import dev.typetype.android.data.network.dto.VideoItem
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -48,4 +51,20 @@ interface TypeTypeApi {
         @Query("intent") intent: String? = null,
         @Query("cursor") cursor: String? = null,
     ): Response<HomeRecommendationsResponse>
+
+    @GET("trending")
+    suspend fun trending(
+        @Query("service") service: Int = 0,
+    ): Response<List<VideoItem>>
+
+    @GET("subscriptions/feed")
+    suspend fun subscriptionsFeed(
+        @Query("page") page: Int = 0,
+        @Query("limit") limit: Int = 30,
+    ): Response<SubscriptionFeedResponse>
+
+    @GET("streams")
+    suspend fun streams(
+        @Query("url") videoUrl: String,
+    ): Response<StreamResponse>
 }
