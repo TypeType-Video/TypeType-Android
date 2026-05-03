@@ -133,6 +133,7 @@ private fun LoadedPlayer(stream: Stream, onNavigateBack: () -> Unit) {
                     player = controller,
                     onNavigateBack = onNavigateBack,
                     sponsorBlockSegments = stream.sponsorBlockSegments,
+                    chapters = stream.chapters,
                     modifier = Modifier.fillMaxSize(),
                 )
             } else {
