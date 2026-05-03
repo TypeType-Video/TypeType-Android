@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="welcome_title">TypeType</string>
-    <string name="welcome_subtitle">Native Android client</string>
-    <string name="welcome_status">Debug build · v0.1.0</string>
-    <string name="welcome_footer">Server-side, privacy-first, GPL-3.0</string>
+    <string name="tab_home">Home</string>
+    <string name="tab_subscriptions">Subscriptions</string>
+    <string name="tab_library">Library</string>
 </resources>
