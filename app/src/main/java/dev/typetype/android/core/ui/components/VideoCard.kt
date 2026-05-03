@@ -1,6 +1,7 @@
 package dev.typetype.android.core.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,9 +31,10 @@ import dev.typetype.android.domain.feed.Video
 @Composable
 fun VideoCard(
     video: Video,
+    onClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier.fillMaxWidth()) {
+    Column(modifier = modifier.fillMaxWidth().clickable(onClick = onClick)) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
