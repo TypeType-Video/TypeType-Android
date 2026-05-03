@@ -28,7 +28,13 @@ class AddServerViewModel @Inject constructor(
     fun onAction(action: AddServerAction) {
         when (action) {
             is AddServerAction.OnUrlChange -> _state.update {
-                it.copy(url = action.url, errorMessage = null)
+                it.copy(
+                    url = action.url,
+                    errorMessage = null,
+                    resolvedName = null,
+                    resolvedTagline = null,
+                    resolvedVersion = null,
+                )
             }
             AddServerAction.OnConnectClick -> connect()
             AddServerAction.OnBackClick -> emit(AddServerEvent.NavigateBack)
@@ -48,12 +54,25 @@ class AddServerViewModel @Inject constructor(
                     val server = Server(
                         id = UUID.randomUUID().toString(),
                         baseUrl = probe.normalizedUrl,
-                        displayName = probe.derivedDisplayName,
+                        displayName = probe.name,
                         addedAt = System.currentTimeMillis(),
                     )
                     setupRepository.persistServer(server)
-                    _state.update { it.copy(isConnecting = false) }
-                    emit(AddServerEvent.NavigateToLogin(server.id))
+                    _state.update {
+                        it.copy(
+                            isConnecting = false,
+                            resolvedName = probe.name,
+                            resolvedTagline = probe.tagline,
+                            resolvedVersion = probe.version,
+                        )
+                    }
+                    emit(
+                        AddServerEvent.NavigateToLogin(
+                            serverId = server.id,
+                            guestAllowed = probe.guestAllowed,
+                            registrationAllowed = probe.registrationAllowed,
+                        ),
+                    )
                 },
                 onFailure = { throwable ->
                     _state.update {

@@ -9,21 +9,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,6 +31,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.typetype.android.core.ui.components.SectionHeader
+import dev.typetype.android.core.ui.components.TypeTypeCard
+import dev.typetype.android.core.ui.components.TypeTypePrimaryButton
+import dev.typetype.android.core.ui.components.TypeTypeTextField
+import dev.typetype.android.core.ui.components.TypeTypeTextLink
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -83,72 +83,66 @@ fun LoginScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 32.dp, vertical = 64.dp),
+                    .padding(horizontal = 24.dp)
+                    .padding(top = 72.dp, bottom = 24.dp),
                 verticalArrangement = Arrangement.Top,
             ) {
+                SectionHeader(text = "Setup")
                 Spacer(Modifier.height(8.dp))
                 Text(
                     text = "Sign in",
                     style = MaterialTheme.typography.headlineMedium.copy(
-                        fontWeight = FontWeight.Light,
-                        letterSpacing = 0.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = (-0.3).sp,
                     ),
                     color = MaterialTheme.colorScheme.onBackground,
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(6.dp))
                 Text(
-                    text = "Use your TypeType account or browse anonymously.",
+                    text = "Use your TypeType account credentials.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Spacer(Modifier.height(32.dp))
-                OutlinedTextField(
-                    value = state.identifier,
-                    onValueChange = { onAction(LoginAction.OnIdentifierChange(it)) },
-                    label = { Text("Email or username") },
-                    singleLine = true,
-                    enabled = !state.isSubmitting,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Spacer(Modifier.height(16.dp))
-                OutlinedTextField(
-                    value = state.password,
-                    onValueChange = { onAction(LoginAction.OnPasswordChange(it)) },
-                    label = { Text("Password") },
-                    singleLine = true,
-                    enabled = !state.isSubmitting,
-                    visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    isError = state.errorMessage != null,
-                    supportingText = state.errorMessage?.let { { Text(it) } },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Spacer(Modifier.height(24.dp))
-                Button(
-                    onClick = { onAction(LoginAction.OnLoginClick) },
-                    enabled = !state.isSubmitting,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    if (state.isSubmitting) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onPrimary,
-                        )
-                    } else {
-                        Text(text = "Sign in", modifier = Modifier.padding(vertical = 4.dp))
-                    }
+                Spacer(Modifier.height(28.dp))
+                TypeTypeCard {
+                    TypeTypeTextField(
+                        value = state.identifier,
+                        onValueChange = { onAction(LoginAction.OnIdentifierChange(it)) },
+                        placeholder = "Email or username",
+                        enabled = !state.isSubmitting,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    TypeTypeTextField(
+                        value = state.password,
+                        onValueChange = { onAction(LoginAction.OnPasswordChange(it)) },
+                        placeholder = "Password",
+                        enabled = !state.isSubmitting,
+                        isError = state.errorMessage != null,
+                        supportingText = state.errorMessage,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        visualTransformation = PasswordVisualTransformation(),
+                    )
+                    Spacer(Modifier.height(20.dp))
+                    TypeTypePrimaryButton(
+                        text = "Sign in",
+                        onClick = { onAction(LoginAction.OnLoginClick) },
+                        enabled = !state.isSubmitting,
+                        isLoading = state.isSubmitting,
+                    )
                 }
-                Spacer(Modifier.height(8.dp))
-                TextButton(
-                    onClick = { onAction(LoginAction.OnContinueAsGuestClick) },
-                    enabled = !state.isSubmitting,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.CenterHorizontally),
-                ) {
-                    Text(text = "Continue as guest")
+                if (state.guestAllowed) {
+                    Spacer(Modifier.height(16.dp))
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        TypeTypeTextLink(
+                            text = "Continue as guest",
+                            onClick = { onAction(LoginAction.OnContinueAsGuestClick) },
+                            enabled = !state.isSubmitting,
+                        )
+                    }
                 }
             }
         }

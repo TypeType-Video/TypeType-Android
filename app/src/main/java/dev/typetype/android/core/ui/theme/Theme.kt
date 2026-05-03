@@ -6,22 +6,30 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 
 private val TypeTypeDarkColors = darkColorScheme(
-    primary = Blue400,
+    primary = Zinc100,
     onPrimary = Zinc950,
-    primaryContainer = Zinc900,
-    onPrimaryContainer = Zinc100,
-    secondary = Blue500,
-    onSecondary = Zinc950,
+    primaryContainer = Zinc100,
+    onPrimaryContainer = Zinc950,
+    secondary = Blue400,
+    onSecondary = White,
+    secondaryContainer = Blue400,
+    onSecondaryContainer = White,
+    tertiary = Blue300,
+    onTertiary = Zinc950,
     background = Zinc950,
     onBackground = Zinc100,
     surface = Zinc900,
     onSurface = Zinc100,
     surfaceVariant = Zinc800,
-    onSurfaceVariant = Zinc300,
+    onSurfaceVariant = Zinc400,
+    surfaceContainerHigh = Zinc800,
+    surfaceContainerHighest = Zinc700,
     outline = Zinc800,
     outlineVariant = Zinc700,
-    error = Red500,
-    onError = Zinc100,
+    error = Red400,
+    onError = White,
+    errorContainer = Red500,
+    onErrorContainer = White,
 )
 
 @Composable

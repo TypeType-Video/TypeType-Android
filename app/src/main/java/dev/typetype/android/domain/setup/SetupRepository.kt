@@ -9,5 +9,12 @@ interface SetupRepository {
 
 data class ProbeResult(
     val normalizedUrl: String,
-    val derivedDisplayName: String,
+    val name: String,
+    val tagline: String?,
+    val version: String,
+    val apiVersion: Int,
+    val registrationAllowed: Boolean,
+    val guestAllowed: Boolean,
+    val supportedServices: List<Int>,
+    val minAndroidClientVersion: Int?,
 )
