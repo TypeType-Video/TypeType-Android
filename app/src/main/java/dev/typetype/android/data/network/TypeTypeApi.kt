@@ -1,5 +1,8 @@
 package dev.typetype.android.data.network
 
+import dev.typetype.android.data.network.dto.AddFavoriteRequest
+import dev.typetype.android.data.network.dto.AddHistoryRequest
+import dev.typetype.android.data.network.dto.AddWatchLaterRequest
 import dev.typetype.android.data.network.dto.ChannelResponse
 import dev.typetype.android.data.network.dto.CommentsPageResponse
 import dev.typetype.android.data.network.dto.FavoriteItemDto
@@ -12,6 +15,8 @@ import dev.typetype.android.data.network.dto.LoginRequest
 import dev.typetype.android.data.network.dto.PlaylistDto
 import dev.typetype.android.data.network.dto.RefreshRequest
 import dev.typetype.android.data.network.dto.RegisterRequest
+import dev.typetype.android.data.network.dto.SaveProgressRequest
+import dev.typetype.android.data.network.dto.SearchHistoryEntryRequest
 import dev.typetype.android.data.network.dto.SearchResponse
 import dev.typetype.android.data.network.dto.SessionResponse
 import dev.typetype.android.data.network.dto.StreamResponse
@@ -21,8 +26,10 @@ import dev.typetype.android.data.network.dto.VideoItem
 import dev.typetype.android.data.network.dto.WatchLaterItemDto
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Query
 
 interface TypeTypeApi {
@@ -97,6 +104,33 @@ interface TypeTypeApi {
 
     @GET("playlists")
     suspend fun playlists(): Response<List<PlaylistDto>>
+
+    @POST("favorites")
+    suspend fun addFavorite(@Body body: AddFavoriteRequest): Response<Unit>
+
+    @DELETE("favorites")
+    suspend fun removeFavorite(@Query("url") videoUrl: String): Response<Unit>
+
+    @POST("watch-later")
+    suspend fun addWatchLater(@Body body: AddWatchLaterRequest): Response<Unit>
+
+    @DELETE("watch-later")
+    suspend fun removeWatchLater(@Query("url") url: String): Response<Unit>
+
+    @POST("history")
+    suspend fun addHistory(@Body body: AddHistoryRequest): Response<Unit>
+
+    @PUT("progress")
+    suspend fun saveProgress(@Body body: SaveProgressRequest): Response<Unit>
+
+    @GET("search-history")
+    suspend fun searchHistory(): Response<List<String>>
+
+    @POST("search-history")
+    suspend fun addSearchHistory(@Body body: SearchHistoryEntryRequest): Response<Unit>
+
+    @DELETE("search-history")
+    suspend fun removeSearchHistory(@Query("query") query: String): Response<Unit>
 
     @GET("streams")
     suspend fun streams(
