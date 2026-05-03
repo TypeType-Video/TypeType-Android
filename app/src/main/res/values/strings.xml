@@ -7,5 +7,6 @@
     <string name="player_play_pause">Play / pause</string>
     <string name="player_forward">Forward</string>
     <string name="player_fullscreen">Fullscreen</string>
+    <string name="player_back">Back</string>
     <string name="player_time_separator"> / </string>
 </resources>

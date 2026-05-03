@@ -1,8 +1,5 @@
 package dev.typetype.android.feature.player
 
-import android.view.LayoutInflater
-import android.widget.FrameLayout
-import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,9 +12,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.CircularProgressIndicator
@@ -35,20 +32,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.PlayerView
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
 import dev.typetype.android.domain.stream.Stream
+import dev.typetype.android.feature.player.components.PlayerSurfaceBox
 
 @Composable
 fun PlayerRoute(
@@ -67,8 +63,14 @@ fun PlayerScreen(state: PlayerState, onNavigateBack: () -> Unit) {
     ) {
         when {
             state.isLoading -> LoadingState()
-            state.errorMessage != null -> ErrorState(message = state.errorMessage, onNavigateBack = onNavigateBack)
-            state.stream != null -> LoadedPlayer(stream = state.stream, onNavigateBack = onNavigateBack)
+            state.errorMessage != null -> ErrorState(
+                message = state.errorMessage,
+                onNavigateBack = onNavigateBack,
+            )
+            state.stream != null -> LoadedPlayer(
+                stream = state.stream,
+                onNavigateBack = onNavigateBack,
+            )
         }
     }
 }
@@ -93,7 +95,7 @@ private fun ErrorState(message: String, onNavigateBack: () -> Unit) {
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
+                contentDescription = stringResource(R.string.player_back),
                 tint = MaterialTheme.colorScheme.onBackground,
             )
         }
@@ -106,19 +108,13 @@ private fun ErrorState(message: String, onNavigateBack: () -> Unit) {
     }
 }
 
-@OptIn(UnstableApi::class)
 @Composable
 private fun LoadedPlayer(stream: Stream, onNavigateBack: () -> Unit) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
     val exoPlayer = remember(stream.id) {
-        val (sourceUrl, mimeType) = when {
-            !stream.hlsUrl.isNullOrBlank() -> stream.hlsUrl to MimeTypes.APPLICATION_M3U8
-            !stream.dashMpdUrl.isNullOrBlank() -> stream.dashMpdUrl to MimeTypes.APPLICATION_MPD
-            !stream.progressiveUrl.isNullOrBlank() -> stream.progressiveUrl to MimeTypes.VIDEO_MP4
-            else -> null to null
-        }
+        val (sourceUrl, mimeType) = pickPlayableSource(stream)
         ExoPlayer.Builder(context).build().apply {
             if (sourceUrl != null) {
                 val mediaItem = MediaItem.Builder()
@@ -138,33 +134,13 @@ private fun LoadedPlayer(stream: Stream, onNavigateBack: () -> Unit) {
     }
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState)) {
-        Box(
+        PlayerSurfaceBox(
+            player = exoPlayer,
+            onNavigateBack = onNavigateBack,
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(16f / 9f)
-                .background(androidx.compose.ui.graphics.Color.Black),
-        ) {
-            AndroidView(
-                factory = { ctx ->
-                    val parent = FrameLayout(ctx)
-                    val view = LayoutInflater.from(ctx)
-                        .inflate(R.layout.view_player, parent, false) as PlayerView
-                    view.player = exoPlayer
-                    view
-                },
-                modifier = Modifier.fillMaxSize(),
-            )
-            IconButton(
-                onClick = onNavigateBack,
-                modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    tint = androidx.compose.ui.graphics.Color.White,
-                )
-            }
-        }
+                .aspectRatio(16f / 9f),
+        )
         StreamMetadata(stream = stream)
     }
 }
@@ -195,11 +171,14 @@ private fun StreamMetadata(stream: Stream) {
             Column {
                 Text(
                     text = stream.uploaderName,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Medium,
+                    ),
                     color = MaterialTheme.colorScheme.onBackground,
                 )
                 Text(
-                    text = "${formatViews(stream.viewCount)} views · ${formatLikes(stream.likeCount)} likes",
+                    text = "${formatViews(stream.viewCount)} views · " +
+                        "${formatViews(stream.likeCount)} likes",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -216,11 +195,16 @@ private fun StreamMetadata(stream: Stream) {
     }
 }
 
-private fun formatViews(views: Long): String = when {
-    views >= 1_000_000_000 -> "%.1fB".format(views / 1_000_000_000.0)
-    views >= 1_000_000 -> "%.1fM".format(views / 1_000_000.0)
-    views >= 1_000 -> "%.1fK".format(views / 1_000.0)
-    else -> views.toString()
+private fun pickPlayableSource(stream: Stream): Pair<String?, String?> = when {
+    !stream.hlsUrl.isNullOrBlank() -> stream.hlsUrl to MimeTypes.APPLICATION_M3U8
+    !stream.dashMpdUrl.isNullOrBlank() -> stream.dashMpdUrl to MimeTypes.APPLICATION_MPD
+    !stream.progressiveUrl.isNullOrBlank() -> stream.progressiveUrl to MimeTypes.VIDEO_MP4
+    else -> null to null
 }
 
-private fun formatLikes(likes: Long): String = formatViews(likes)
+private fun formatViews(value: Long): String = when {
+    value >= 1_000_000_000 -> "%.1fB".format(value / 1_000_000_000.0)
+    value >= 1_000_000 -> "%.1fM".format(value / 1_000_000.0)
+    value >= 1_000 -> "%.1fK".format(value / 1_000.0)
+    else -> value.toString()
+}
