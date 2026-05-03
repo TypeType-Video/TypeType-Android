@@ -123,6 +123,7 @@ fun PlayerSurfaceBox(
                 onNavigateBack = onNavigateBack,
                 onOpenOptions = { optionsVisible = true },
                 onOpenChapters = { chaptersVisible = true },
+                onEnterPip = { enterPictureInPicture(activity) },
                 chaptersAvailable = chapters.isNotEmpty(),
                 sponsorBlockSegments = sponsorBlockSegments,
                 modifier = Modifier.fillMaxSize(),

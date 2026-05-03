@@ -45,10 +45,10 @@ import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.feature.player.components.CommentsBar
 import dev.typetype.android.feature.player.components.CommentsSheet
 import dev.typetype.android.feature.player.components.DescriptionSection
+import dev.typetype.android.feature.player.components.LocalMediaController
 import dev.typetype.android.feature.player.components.PlayerSurfaceBox
 import dev.typetype.android.feature.player.components.RelatedStreamsSection
 import dev.typetype.android.feature.player.components.UploaderCard
-import dev.typetype.android.feature.player.components.rememberMediaController
 import kotlinx.coroutines.flow.Flow
 
 @Composable
@@ -135,8 +135,7 @@ private fun LoadedPlayer(
     onNavigateBack: () -> Unit,
     onPlayVideo: (videoUrl: String) -> Unit,
 ) {
-    val controllerState = rememberMediaController()
-    val controller = controllerState.value
+    val controller = LocalMediaController.current
     val scrollState = rememberScrollState()
     var commentsVisible by remember { mutableStateOf(false) }
 

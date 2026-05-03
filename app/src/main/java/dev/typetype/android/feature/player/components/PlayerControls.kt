@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.annotation.OptIn
@@ -39,6 +40,7 @@ fun PlayerControls(
     onNavigateBack: () -> Unit,
     onOpenOptions: () -> Unit = {},
     onOpenChapters: () -> Unit = {},
+    onEnterPip: () -> Unit = {},
     chaptersAvailable: Boolean = false,
     sponsorBlockSegments: List<SponsorBlockSegment> = emptyList(),
     modifier: Modifier = Modifier,
@@ -53,6 +55,7 @@ fun PlayerControls(
         TopActions(
             onOpenChapters = onOpenChapters,
             onOpenOptions = onOpenOptions,
+            onEnterPip = onEnterPip,
             chaptersAvailable = chaptersAvailable,
             modifier = Modifier.align(Alignment.TopEnd),
         )
@@ -113,10 +116,18 @@ private fun BackButton(onNavigateBack: () -> Unit, modifier: Modifier = Modifier
 private fun TopActions(
     onOpenChapters: () -> Unit,
     onOpenOptions: () -> Unit,
+    onEnterPip: () -> Unit,
     chaptersAvailable: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Row(modifier = modifier.padding(8.dp)) {
+        IconButton(onClick = onEnterPip) {
+            Icon(
+                imageVector = Icons.Filled.Star,
+                contentDescription = stringResource(R.string.player_pip),
+                tint = Color.White,
+            )
+        }
         if (chaptersAvailable) {
             IconButton(onClick = onOpenChapters) {
                 Icon(
