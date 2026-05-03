@@ -32,3 +32,9 @@ data object AppearanceRoute
 
 @Serializable
 data class PlayerRoute(val videoUrl: String)
+
+@Serializable
+data object SearchRoute
+
+@Serializable
+data class ChannelRoute(val channelUrl: String)
