@@ -31,8 +31,8 @@ import dev.typetype.android.domain.feed.Video
 @Composable
 fun VideoCard(
     video: Video,
-    onClick: () -> Unit = {},
     modifier: Modifier = Modifier,
+    onClick: () -> Unit = {},
 ) {
     Column(modifier = modifier.fillMaxWidth().clickable(onClick = onClick)) {
         Box(

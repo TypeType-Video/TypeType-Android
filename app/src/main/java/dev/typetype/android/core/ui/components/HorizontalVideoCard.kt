@@ -27,8 +27,8 @@ import dev.typetype.android.domain.feed.Video
 @Composable
 fun HorizontalVideoCard(
     video: Video,
-    onClick: () -> Unit = {},
     modifier: Modifier = Modifier,
+    onClick: () -> Unit = {},
 ) {
     Column(modifier = modifier.width(260.dp).clickable(onClick = onClick)) {
         Box(
