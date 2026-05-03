@@ -24,6 +24,26 @@ class HomeFeedRepositoryImpl @Inject constructor(
         body.items.map { it.toDomain() }
     }
 
+    override suspend fun loadTrending(): Result<List<Video>> = runCatching {
+        val api = apiHolder.require()
+        val response = withContext(Dispatchers.IO) { api.trending() }
+        if (!response.isSuccessful) {
+            error("Trending failed (HTTP ${response.code()})")
+        }
+        val body = response.body() ?: error("Empty trending body")
+        body.map { it.toDomain() }
+    }
+
+    override suspend fun loadSubscriptionsFeed(): Result<List<Video>> = runCatching {
+        val api = apiHolder.require()
+        val response = withContext(Dispatchers.IO) { api.subscriptionsFeed() }
+        if (!response.isSuccessful) {
+            error("Subscriptions feed failed (HTTP ${response.code()})")
+        }
+        val body = response.body() ?: error("Empty subscriptions feed body")
+        body.videos.map { it.toDomain() }
+    }
+
     private fun VideoItem.toDomain(): Video = Video(
         id = id,
         url = url,
