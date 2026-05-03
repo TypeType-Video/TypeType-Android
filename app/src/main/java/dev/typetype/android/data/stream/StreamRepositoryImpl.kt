@@ -1,8 +1,12 @@
 package dev.typetype.android.data.stream
 
 import dev.typetype.android.data.network.TypeTypeApiHolder
+import dev.typetype.android.data.network.dto.SponsorBlockSegmentItem
 import dev.typetype.android.data.network.dto.StreamResponse
 import dev.typetype.android.data.network.dto.VideoStreamItem
+import dev.typetype.android.domain.stream.SponsorAction
+import dev.typetype.android.domain.stream.SponsorBlockSegment
+import dev.typetype.android.domain.stream.SponsorCategory
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.stream.StreamRepository
 import javax.inject.Inject
@@ -42,6 +46,7 @@ class StreamRepositoryImpl @Inject constructor(
         dashMpdUrl = dashMpdUrl.takeIf { it.isNotBlank() },
         progressiveUrl = pickBestProgressiveStream(videoStreams),
         startPositionMillis = startPosition,
+        sponsorBlockSegments = sponsorBlockSegments.map { it.toDomain() },
     )
 
     private fun pickBestProgressiveStream(videoStreams: List<VideoStreamItem>): String? =
@@ -49,4 +54,11 @@ class StreamRepositoryImpl @Inject constructor(
             .filter { !it.isVideoOnly && it.url.isNotBlank() }
             .maxByOrNull { it.height }
             ?.url
+
+    private fun SponsorBlockSegmentItem.toDomain(): SponsorBlockSegment = SponsorBlockSegment(
+        startMs = (startTime * 1_000).toLong(),
+        endMs = (endTime * 1_000).toLong(),
+        category = SponsorCategory.fromKey(category),
+        action = SponsorAction.fromKey(action),
+    )
 }

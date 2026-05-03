@@ -17,4 +17,5 @@ data class Stream(
     val dashMpdUrl: String?,
     val progressiveUrl: String?,
     val startPositionMillis: Long,
+    val sponsorBlockSegments: List<SponsorBlockSegment> = emptyList(),
 )
