@@ -20,3 +20,11 @@ internal val Red500 = Color(0xFFEF4444)
 internal val Red600 = Color(0xFFDC2626)
 
 internal val White = Color(0xFFFFFFFF)
+
+internal val AccentRed = Color(0xFFEF4444)
+internal val AccentBlue = Color(0xFF60A5FA)
+internal val AccentYellow = Color(0xFFFBBF24)
+internal val AccentGreen = Color(0xFF34D399)
+internal val AccentPurple = Color(0xFFC084FC)
+internal val AccentViolet = Color(0xFFA78BFA)
+internal val AccentMonochrome = Color(0xFFE4E4E7)
