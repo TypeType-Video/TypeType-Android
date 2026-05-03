@@ -1,21 +1,33 @@
 package dev.typetype.android.feature.settings
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -24,17 +36,31 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.typetype.android.core.ui.components.SectionHeader
+import dev.typetype.android.R
 
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onOpenAppearance: () -> Unit,
+    onOpenPlayer: () -> Unit = {},
+    onOpenStorage: () -> Unit = {},
+    onOpenAccount: () -> Unit = {},
+    onOpenAbout: () -> Unit = {},
     onSignOut: () -> Unit,
 ) {
+    val entries = listOf(
+        SettingsEntry(R.string.settings_appearance_title, R.string.settings_appearance_subtitle, Icons.Filled.Palette, onOpenAppearance),
+        SettingsEntry(R.string.settings_player_title, R.string.settings_player_subtitle, Icons.Filled.PlayCircle, onOpenPlayer),
+        SettingsEntry(R.string.settings_storage_title, R.string.settings_storage_subtitle, Icons.Filled.Storage, onOpenStorage),
+        SettingsEntry(R.string.settings_account_title, R.string.settings_account_subtitle, Icons.Filled.AccountCircle, onOpenAccount),
+        SettingsEntry(R.string.settings_about_title, R.string.settings_about_subtitle, Icons.Filled.Info, onOpenAbout),
+    )
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
@@ -44,84 +70,123 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.systemBars),
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            SettingsTopBar(onNavigateBack = onNavigateBack)
+            LazyColumn(
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.weight(1f),
             ) {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = MaterialTheme.colorScheme.onBackground,
-                    )
+                items(entries) { entry -> SettingsCategoryCard(entry = entry) }
+                item {
+                    Spacer(Modifier.size(16.dp))
+                    SignOutRow(onClick = onSignOut)
                 }
-                Text(
-                    text = "Settings",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        letterSpacing = (-0.3).sp,
-                    ),
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(start = 4.dp),
-                )
-            }
-            Spacer(Modifier.height(8.dp))
-            Column(modifier = Modifier.fillMaxWidth()) {
-                SectionHeader(
-                    text = "Personalize",
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-                )
-                SettingsRow(
-                    title = "Appearance",
-                    description = "Theme accent",
-                    onClick = onOpenAppearance,
-                )
-                Spacer(Modifier.height(16.dp))
-                SectionHeader(
-                    text = "Account",
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-                )
-                SettingsRow(
-                    title = "Sign out",
-                    description = null,
-                    onClick = onSignOut,
-                )
             }
         }
     }
 }
 
 @Composable
-private fun SettingsRow(
-    title: String,
-    description: String?,
-    onClick: () -> Unit,
-) {
-    Box(
+private fun SettingsTopBar(onNavigateBack: () -> Unit) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 24.dp, vertical = 16.dp),
+            .padding(horizontal = 8.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-                color = MaterialTheme.colorScheme.onBackground,
+        IconButton(onClick = onNavigateBack) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(R.string.settings_back),
+                tint = MaterialTheme.colorScheme.onBackground,
             )
-            if (description != null) {
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
         }
+        Text(
+            text = stringResource(R.string.settings_title),
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = (-0.3).sp,
+            ),
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.padding(start = 4.dp),
+        )
     }
-    HorizontalDivider(
-        color = MaterialTheme.colorScheme.outline,
-        modifier = Modifier.padding(horizontal = 24.dp),
-    )
 }
+
+@Composable
+private fun SettingsCategoryCard(entry: SettingsEntry) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .clickable(onClick = entry.onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = entry.icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(22.dp),
+            )
+        }
+        Spacer(Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                text = stringResource(entry.titleRes),
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = stringResource(entry.subtitleRes),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun SignOutRow(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.Logout,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.error,
+        )
+        Spacer(Modifier.width(14.dp))
+        Text(
+            text = stringResource(R.string.settings_sign_out),
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = MaterialTheme.colorScheme.error,
+        )
+    }
+}
+
+private data class SettingsEntry(
+    val titleRes: Int,
+    val subtitleRes: Int,
+    val icon: ImageVector,
+    val onClick: () -> Unit,
+)
