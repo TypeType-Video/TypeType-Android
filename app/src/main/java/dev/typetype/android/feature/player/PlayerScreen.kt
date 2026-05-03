@@ -24,6 +24,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -35,13 +38,18 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.MimeTypes
 import androidx.media3.session.MediaController
+import androidx.paging.PagingData
 import dev.typetype.android.R
+import dev.typetype.android.domain.comments.Comment
 import dev.typetype.android.domain.stream.Stream
+import dev.typetype.android.feature.player.components.CommentsBar
+import dev.typetype.android.feature.player.components.CommentsSheet
 import dev.typetype.android.feature.player.components.DescriptionSection
 import dev.typetype.android.feature.player.components.PlayerSurfaceBox
 import dev.typetype.android.feature.player.components.RelatedStreamsSection
 import dev.typetype.android.feature.player.components.UploaderCard
 import dev.typetype.android.feature.player.components.rememberMediaController
+import kotlinx.coroutines.flow.Flow
 
 @Composable
 fun PlayerRoute(
@@ -52,6 +60,7 @@ fun PlayerRoute(
     val state by viewModel.state.collectAsStateWithLifecycle()
     PlayerScreen(
         state = state,
+        commentsFlow = viewModel.comments,
         onNavigateBack = onNavigateBack,
         onPlayVideo = onPlayVideo,
     )
@@ -60,6 +69,7 @@ fun PlayerRoute(
 @Composable
 fun PlayerScreen(
     state: PlayerState,
+    commentsFlow: Flow<PagingData<Comment>>,
     onNavigateBack: () -> Unit,
     onPlayVideo: (videoUrl: String) -> Unit,
 ) {
@@ -75,6 +85,7 @@ fun PlayerScreen(
             )
             state.stream != null -> LoadedPlayer(
                 stream = state.stream,
+                commentsFlow = commentsFlow,
                 onNavigateBack = onNavigateBack,
                 onPlayVideo = onPlayVideo,
             )
@@ -118,12 +129,14 @@ private fun ErrorState(message: String, onNavigateBack: () -> Unit) {
 @Composable
 private fun LoadedPlayer(
     stream: Stream,
+    commentsFlow: Flow<PagingData<Comment>>,
     onNavigateBack: () -> Unit,
     onPlayVideo: (videoUrl: String) -> Unit,
 ) {
     val controllerState = rememberMediaController()
     val controller = controllerState.value
     val scrollState = rememberScrollState()
+    var commentsVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(stream.id, controller) {
         controller?.let { ctrl -> bindStreamToController(ctrl, stream) }
@@ -167,12 +180,20 @@ private fun LoadedPlayer(
                 subscriberCount = stream.uploaderSubscriberCount,
                 verified = stream.uploaderVerified,
             )
+            CommentsBar(onClick = { commentsVisible = true })
             Spacer(Modifier.height(4.dp))
             RelatedStreamsSection(
                 videos = stream.relatedStreams,
                 onPlayVideo = onPlayVideo,
             )
         }
+    }
+
+    if (commentsVisible) {
+        CommentsSheet(
+            pagingFlow = commentsFlow,
+            onDismiss = { commentsVisible = false },
+        )
     }
 }
 
