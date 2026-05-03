@@ -8,5 +8,6 @@
     <string name="player_forward">Forward</string>
     <string name="player_fullscreen">Fullscreen</string>
     <string name="player_back">Back</string>
+    <string name="player_playback_options">Playback options</string>
     <string name="player_time_separator"> / </string>
 </resources>

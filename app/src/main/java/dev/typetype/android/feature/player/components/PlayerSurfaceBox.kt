@@ -49,6 +49,7 @@ fun PlayerSurfaceBox(
     val gestureState = remember { PlayerGestureState() }
     val playPauseState = rememberPlayPauseButtonState(player)
     var controlsVisible by remember { mutableStateOf(true) }
+    var optionsVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         gestureState.brightnessFraction.floatValue = activity?.window?.attributes?.screenBrightness
@@ -117,11 +118,19 @@ fun PlayerSurfaceBox(
             PlayerControls(
                 player = player,
                 onNavigateBack = onNavigateBack,
+                onOpenOptions = { optionsVisible = true },
                 sponsorBlockSegments = sponsorBlockSegments,
                 modifier = Modifier.fillMaxSize(),
             )
         }
 
         SponsorBlockSkipper(player = player, segments = sponsorBlockSegments)
+
+        if (optionsVisible) {
+            PlaybackOptionsSheet(
+                player = player,
+                onDismiss = { optionsVisible = false },
+            )
+        }
     }
 }
