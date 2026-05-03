@@ -1,18 +1,24 @@
 package dev.typetype.android.data.network
 
+import dev.typetype.android.data.network.dto.ChannelResponse
 import dev.typetype.android.data.network.dto.CommentsPageResponse
+import dev.typetype.android.data.network.dto.FavoriteItemDto
 import dev.typetype.android.data.network.dto.GuestResponse
 import dev.typetype.android.data.network.dto.HealthResponse
+import dev.typetype.android.data.network.dto.HistoryItemDto
 import dev.typetype.android.data.network.dto.HomeRecommendationsResponse
 import dev.typetype.android.data.network.dto.InstanceResponse
 import dev.typetype.android.data.network.dto.LoginRequest
+import dev.typetype.android.data.network.dto.PlaylistDto
 import dev.typetype.android.data.network.dto.RefreshRequest
 import dev.typetype.android.data.network.dto.RegisterRequest
+import dev.typetype.android.data.network.dto.SearchResponse
 import dev.typetype.android.data.network.dto.SessionResponse
 import dev.typetype.android.data.network.dto.StreamResponse
 import dev.typetype.android.data.network.dto.SubscriptionFeedResponse
 import dev.typetype.android.data.network.dto.UserProfile
 import dev.typetype.android.data.network.dto.VideoItem
+import dev.typetype.android.data.network.dto.WatchLaterItemDto
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -63,6 +69,34 @@ interface TypeTypeApi {
         @Query("page") page: Int = 0,
         @Query("limit") limit: Int = 30,
     ): Response<SubscriptionFeedResponse>
+
+    @GET("search")
+    suspend fun search(
+        @Query("q") query: String,
+        @Query("service") service: Int = 0,
+        @Query("nextpage") nextpage: String? = null,
+    ): Response<SearchResponse>
+
+    @GET("channel")
+    suspend fun channel(
+        @Query("url") url: String,
+        @Query("nextpage") nextpage: String? = null,
+    ): Response<ChannelResponse>
+
+    @GET("history")
+    suspend fun history(
+        @Query("limit") limit: Int = 60,
+        @Query("offset") offset: Int = 0,
+    ): Response<List<HistoryItemDto>>
+
+    @GET("favorites")
+    suspend fun favorites(): Response<List<FavoriteItemDto>>
+
+    @GET("watch-later")
+    suspend fun watchLater(): Response<List<WatchLaterItemDto>>
+
+    @GET("playlists")
+    suspend fun playlists(): Response<List<PlaylistDto>>
 
     @GET("streams")
     suspend fun streams(
