@@ -110,6 +110,9 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
             composable<PlayerRoute> {
                 PlayerRouteScreen(
                     onNavigateBack = { navController.popBackStack() },
+                    onPlayVideo = { videoUrl ->
+                        navController.navigate(PlayerRoute(videoUrl = videoUrl))
+                    },
                 )
             }
         }
