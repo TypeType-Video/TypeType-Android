@@ -18,4 +18,5 @@ data class Stream(
     val progressiveUrl: String?,
     val startPositionMillis: Long,
     val sponsorBlockSegments: List<SponsorBlockSegment> = emptyList(),
+    val chapters: List<Chapter> = emptyList(),
 )
