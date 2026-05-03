@@ -2,6 +2,7 @@ package dev.typetype.android.feature.player.components
 
 import android.media.AudioManager
 import androidx.activity.compose.LocalActivity
+import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -21,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
 import androidx.media3.ui.compose.state.rememberPresentationState
@@ -30,6 +32,7 @@ import kotlinx.coroutines.delay
 
 private const val AUTO_HIDE_DELAY_MS = 3_500L
 
+@OptIn(markerClass = [UnstableApi::class])
 @Composable
 fun PlayerSurfaceBox(
     player: Player,
