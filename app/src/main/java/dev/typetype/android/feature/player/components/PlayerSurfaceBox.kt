@@ -43,6 +43,7 @@ fun PlayerSurfaceBox(
     onToggleFullscreen: () -> Unit = {},
     sponsorBlockSegments: List<SponsorBlockSegment> = emptyList(),
     chapters: List<Chapter> = emptyList(),
+    gestureConfig: PlayerGestureConfig = PlayerGestureConfig(),
     modifier: Modifier = Modifier,
 ) {
     val activity = LocalActivity.current
@@ -112,6 +113,7 @@ fun PlayerSurfaceBox(
                     manager.setStreamVolume(AudioManager.STREAM_MUSIC, target, 0)
                 }
             },
+            config = gestureConfig,
             modifier = Modifier.fillMaxSize(),
         )
 
