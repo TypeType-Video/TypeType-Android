@@ -9,23 +9,27 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dev.typetype.android.core.ui.navigation.AddServerRoute
 import dev.typetype.android.core.ui.navigation.AppearanceRoute
+import dev.typetype.android.core.ui.navigation.ChannelRoute
 import dev.typetype.android.core.ui.navigation.HomeRoute
 import dev.typetype.android.core.ui.navigation.LibraryRoute
 import dev.typetype.android.core.ui.navigation.LoginRoute
 import dev.typetype.android.core.ui.navigation.PlayerRoute
+import dev.typetype.android.core.ui.navigation.SearchRoute
 import dev.typetype.android.core.ui.navigation.SettingsRoute
 import dev.typetype.android.core.ui.navigation.SubscriptionsRoute
 import dev.typetype.android.core.ui.navigation.WelcomeRoute
+import dev.typetype.android.feature.channel.ChannelRoute as ChannelRouteScreen
 import dev.typetype.android.feature.home.HomeRoute as HomeRouteScreen
 import dev.typetype.android.feature.home.HomeViewModel
-import dev.typetype.android.feature.library.LibraryScreen
+import dev.typetype.android.feature.library.LibraryRoute as LibraryRouteScreen
 import dev.typetype.android.feature.player.PlayerRoute as PlayerRouteScreen
+import dev.typetype.android.feature.search.SearchRoute as SearchRouteScreen
 import dev.typetype.android.feature.settings.SettingsScreen
 import dev.typetype.android.feature.settings.appearance.AppearanceRoute as AppearanceRouteScreen
 import dev.typetype.android.feature.setup.addserver.AddServerRoute as AddServerRouteScreen
 import dev.typetype.android.feature.setup.login.LoginRoute as LoginRouteScreen
 import dev.typetype.android.feature.setup.welcome.WelcomeRoute as WelcomeRouteScreen
-import dev.typetype.android.feature.subscriptions.SubscriptionsScreen
+import dev.typetype.android.feature.subscriptions.SubscriptionsRoute as SubscriptionsRouteScreen
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -44,6 +48,7 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
 
     AppShell(
         navController = navController,
+        onOpenSearch = { navController.navigate(SearchRoute) },
         onOpenSettings = { navController.navigate(SettingsRoute) },
         onPlayVideo = { videoUrl -> navController.navigate(PlayerRoute(videoUrl = videoUrl)) },
     ) { innerModifier ->
@@ -91,8 +96,28 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
                     },
                 )
             }
-            composable<SubscriptionsRoute> { SubscriptionsScreen() }
-            composable<LibraryRoute> { LibraryScreen() }
+            composable<SearchRoute> {
+                SearchRouteScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onPlayVideo = { videoUrl ->
+                        navController.navigate(PlayerRoute(videoUrl = videoUrl))
+                    },
+                )
+            }
+            composable<SubscriptionsRoute> {
+                SubscriptionsRouteScreen(
+                    onPlayVideo = { videoUrl ->
+                        navController.navigate(PlayerRoute(videoUrl = videoUrl))
+                    },
+                )
+            }
+            composable<LibraryRoute> {
+                LibraryRouteScreen(
+                    onPlayVideo = { videoUrl ->
+                        navController.navigate(PlayerRoute(videoUrl = videoUrl))
+                    },
+                )
+            }
             composable<SettingsRoute> {
                 SettingsScreen(
                     onNavigateBack = { navController.popBackStack() },
@@ -110,6 +135,17 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
             }
             composable<PlayerRoute> {
                 PlayerRouteScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onPlayVideo = { videoUrl ->
+                        navController.navigate(PlayerRoute(videoUrl = videoUrl))
+                    },
+                    onOpenChannel = { channelUrl ->
+                        navController.navigate(ChannelRoute(channelUrl = channelUrl))
+                    },
+                )
+            }
+            composable<ChannelRoute> {
+                ChannelRouteScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onPlayVideo = { videoUrl ->
                         navController.navigate(PlayerRoute(videoUrl = videoUrl))
