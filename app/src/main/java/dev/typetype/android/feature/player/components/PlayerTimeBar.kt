@@ -7,6 +7,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
+import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,11 +19,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.state.rememberProgressStateWithTickInterval
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val TICK_INTERVAL_MS = 200L
 
+@OptIn(markerClass = [UnstableApi::class])
 @Composable
 fun PlayerTimeBar(player: Player, modifier: Modifier = Modifier) {
     val progressState = rememberProgressStateWithTickInterval(player, TICK_INTERVAL_MS)

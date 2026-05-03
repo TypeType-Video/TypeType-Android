@@ -73,6 +73,7 @@ android {
         compilerOptions {
             jvmTarget = JvmTarget.JVM_17
             javaParameters = true
+            freeCompilerArgs.addAll("-opt-in=androidx.media3.common.util.UnstableApi")
         }
     }
 
