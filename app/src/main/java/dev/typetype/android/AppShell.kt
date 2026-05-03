@@ -27,7 +27,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -79,6 +83,12 @@ fun AppShell(
     val controllerState = rememberMediaController()
     val controller = controllerState.value
 
+    var miniPlayerDismissed by remember { mutableStateOf(false) }
+    val currentItem = controller?.currentMediaItem
+    LaunchedEffect(currentItem?.mediaId) {
+        if (currentItem != null) miniPlayerDismissed = false
+    }
+
     CompositionLocalProvider(LocalMediaController provides controller) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
@@ -90,26 +100,24 @@ fun AppShell(
             bottomBar = {
                 if (isTopLevel) {
                     Column {
-                        if (controller != null && !isPlayer) {
-                            val item = controller.currentMediaItem
-                            if (item != null) {
-                                MiniPlayerBar(
-                                    player = controller,
-                                    title = item.mediaMetadata.title?.toString() ?: "",
-                                    subtitle = item.mediaMetadata.artist?.toString() ?: "",
-                                    artworkUri = item.mediaMetadata.artworkUri?.toString(),
-                                    onExpand = {
-                                        val mediaId = item.mediaId
-                                        if (mediaId.isNotBlank()) {
-                                            onPlayVideo(mediaId)
-                                        }
-                                    },
-                                    onClose = {
-                                        controller.stop()
-                                        controller.clearMediaItems()
-                                    },
-                                )
-                            }
+                        if (controller != null && !isPlayer && !miniPlayerDismissed && currentItem != null) {
+                            MiniPlayerBar(
+                                player = controller,
+                                title = currentItem.mediaMetadata.title?.toString() ?: "",
+                                subtitle = currentItem.mediaMetadata.artist?.toString() ?: "",
+                                artworkUri = currentItem.mediaMetadata.artworkUri?.toString(),
+                                onExpand = {
+                                    val mediaId = currentItem.mediaId
+                                    if (mediaId.isNotBlank()) {
+                                        onPlayVideo(mediaId)
+                                    }
+                                },
+                                onClose = {
+                                    miniPlayerDismissed = true
+                                    controller.stop()
+                                    controller.clearMediaItems()
+                                },
+                            )
                         }
                         AppBottomBar(
                             currentDestination = currentDestination,

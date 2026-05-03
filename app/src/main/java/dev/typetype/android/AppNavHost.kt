@@ -1,5 +1,7 @@
 package dev.typetype.android
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -7,6 +9,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import dev.typetype.android.core.ui.navigation.AboutRoute
 import dev.typetype.android.core.ui.navigation.AddServerRoute
 import dev.typetype.android.core.ui.navigation.AppearanceRoute
 import dev.typetype.android.core.ui.navigation.ChannelRoute
@@ -14,6 +17,7 @@ import dev.typetype.android.core.ui.navigation.HomeRoute
 import dev.typetype.android.core.ui.navigation.LibraryRoute
 import dev.typetype.android.core.ui.navigation.LoginRoute
 import dev.typetype.android.core.ui.navigation.PlayerRoute
+import dev.typetype.android.core.ui.navigation.PlayerSettingsRoute
 import dev.typetype.android.core.ui.navigation.SearchRoute
 import dev.typetype.android.core.ui.navigation.SettingsRoute
 import dev.typetype.android.core.ui.navigation.SubscriptionsRoute
@@ -25,7 +29,9 @@ import dev.typetype.android.feature.library.LibraryRoute as LibraryRouteScreen
 import dev.typetype.android.feature.player.PlayerRoute as PlayerRouteScreen
 import dev.typetype.android.feature.search.SearchRoute as SearchRouteScreen
 import dev.typetype.android.feature.settings.SettingsScreen
+import dev.typetype.android.feature.settings.about.AboutScreen
 import dev.typetype.android.feature.settings.appearance.AppearanceRoute as AppearanceRouteScreen
+import dev.typetype.android.feature.settings.player.PlayerSettingsRoute as PlayerSettingsRouteScreen
 import dev.typetype.android.feature.setup.addserver.AddServerRoute as AddServerRouteScreen
 import dev.typetype.android.feature.setup.login.LoginRoute as LoginRouteScreen
 import dev.typetype.android.feature.setup.welcome.WelcomeRoute as WelcomeRouteScreen
@@ -56,6 +62,30 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
             navController = navController,
             startDestination = startRoute,
             modifier = innerModifier,
+            enterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(280),
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(280),
+                )
+            },
+            popEnterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(280),
+                )
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(280),
+                )
+            },
         ) {
             composable<WelcomeRoute> {
                 WelcomeRouteScreen(
@@ -122,6 +152,8 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
                 SettingsScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onOpenAppearance = { navController.navigate(AppearanceRoute) },
+                    onOpenPlayer = { navController.navigate(PlayerSettingsRoute) },
+                    onOpenAbout = { navController.navigate(AboutRoute) },
                     onSignOut = {
                         navController.popBackStack()
                         mainViewModel.signOut()
@@ -130,6 +162,16 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
             }
             composable<AppearanceRoute> {
                 AppearanceRouteScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                )
+            }
+            composable<PlayerSettingsRoute> {
+                PlayerSettingsRouteScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                )
+            }
+            composable<AboutRoute> {
+                AboutScreen(
                     onNavigateBack = { navController.popBackStack() },
                 )
             }
