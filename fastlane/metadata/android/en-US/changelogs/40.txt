@@ -1,8 +1,0 @@
-* fix: persistence of sponsorblock category prefs
-* fix: crash when removing video from playlist
-* fix: download paused notification shown instead of completed
-* fix(import): prevent crash when importing
-* fix(import): correctly import playlist csv
-* fix: sort order of playlists isn't shown properly
-* fix: overflowing issue in sort order option in library
-* fix: restoring playback positions via notification controls
