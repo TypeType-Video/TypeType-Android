@@ -7,10 +7,11 @@ import dev.typetype.android.core.ui.navigation.HomeRoute
 import dev.typetype.android.core.ui.navigation.WelcomeRoute
 import dev.typetype.android.domain.server.ServerRepository
 import javax.inject.Inject
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 data class MainState(
     val isLoading: Boolean = true,
@@ -19,19 +20,19 @@ data class MainState(
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    serverRepository: ServerRepository,
+    private val serverRepository: ServerRepository,
 ) : ViewModel() {
 
-    val state: StateFlow<MainState> = serverRepository.observeCurrentServer()
-        .map { current ->
-            MainState(
+    private val _state = MutableStateFlow(MainState())
+    val state: StateFlow<MainState> = _state.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            val initial = serverRepository.observeCurrentServer().first()
+            _state.value = MainState(
                 isLoading = false,
-                startRoute = if (current != null) HomeRoute else WelcomeRoute,
+                startRoute = if (initial != null) HomeRoute else WelcomeRoute,
             )
         }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = MainState(),
-        )
+    }
 }
