@@ -7,11 +7,18 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.AspectRatio
+import androidx.compose.material.icons.filled.Crop
+import androidx.compose.material.icons.filled.FitScreen
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -21,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -31,6 +39,7 @@ import androidx.media3.ui.compose.state.rememberSeekBackButtonState
 import androidx.media3.ui.compose.state.rememberSeekForwardButtonState
 import dev.typetype.android.R
 import dev.typetype.android.domain.stream.SponsorBlockSegment
+import dev.typetype.android.feature.player.state.ResizeMode
 
 @Composable
 fun PlayerControls(
@@ -40,6 +49,8 @@ fun PlayerControls(
     onOpenChapters: () -> Unit = {},
     onEnterPip: () -> Unit = {},
     onToggleFullscreen: () -> Unit = {},
+    onCycleResizeMode: () -> Unit = {},
+    resizeMode: ResizeMode = ResizeMode.Fit,
     isFullscreen: Boolean = false,
     chaptersAvailable: Boolean = false,
     sponsorBlockSegments: List<SponsorBlockSegment> = emptyList(),
@@ -50,14 +61,21 @@ fun PlayerControls(
         BottomScrim(modifier = Modifier.align(Alignment.BottomCenter))
         BackButton(
             onNavigateBack = onNavigateBack,
-            modifier = Modifier.align(Alignment.TopStart),
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .windowInsetsPadding(WindowInsets.statusBars),
         )
         TopActions(
             onOpenChapters = onOpenChapters,
             onOpenOptions = onOpenOptions,
             onEnterPip = onEnterPip,
+            onCycleResizeMode = onCycleResizeMode,
+            resizeMode = resizeMode,
+            isFullscreen = isFullscreen,
             chaptersAvailable = chaptersAvailable,
-            modifier = Modifier.align(Alignment.TopEnd),
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .windowInsetsPadding(WindowInsets.statusBars),
         )
         CenterControls(
             player = player,
@@ -120,10 +138,22 @@ private fun TopActions(
     onOpenChapters: () -> Unit,
     onOpenOptions: () -> Unit,
     onEnterPip: () -> Unit,
+    onCycleResizeMode: () -> Unit,
+    resizeMode: ResizeMode,
+    isFullscreen: Boolean,
     chaptersAvailable: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Row(modifier = modifier.padding(8.dp)) {
+        if (isFullscreen) {
+            IconButton(onClick = onCycleResizeMode) {
+                Icon(
+                    imageVector = resizeMode.icon(),
+                    contentDescription = stringResource(R.string.player_resize_mode),
+                    tint = Color.White,
+                )
+            }
+        }
         IconButton(onClick = onEnterPip) {
             Icon(
                 painter = painterResource(R.drawable.ic_pip),
@@ -148,6 +178,12 @@ private fun TopActions(
             )
         }
     }
+}
+
+private fun ResizeMode.icon(): ImageVector = when (this) {
+    ResizeMode.Fit -> Icons.Filled.FitScreen
+    ResizeMode.Crop -> Icons.Filled.Crop
+    ResizeMode.Stretch -> Icons.Filled.AspectRatio
 }
 
 @Composable
@@ -188,7 +224,7 @@ private fun CenterControls(player: Player, modifier: Modifier = Modifier) {
 
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(32.dp),
+        horizontalArrangement = Arrangement.spacedBy(40.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ControlButton(
@@ -196,21 +232,25 @@ private fun CenterControls(player: Player, modifier: Modifier = Modifier) {
             contentDescription = stringResource(R.string.player_rewind),
             enabled = seekBackState.isEnabled,
             onClick = { seekBackState.onClick() },
-            sizeDp = 56,
+            buttonDp = 64,
+            iconDp = 36,
         )
         ControlButton(
             iconRes = if (playPauseState.showPlay) R.drawable.ic_play else R.drawable.ic_pause,
             contentDescription = stringResource(R.string.player_play_pause),
             enabled = playPauseState.isEnabled,
             onClick = { playPauseState.onClick() },
-            sizeDp = 80,
+            buttonDp = 80,
+            iconDp = 56,
+            withScrim = true,
         )
         ControlButton(
             iconRes = R.drawable.ic_forward,
             contentDescription = stringResource(R.string.player_forward),
             enabled = seekForwardState.isEnabled,
             onClick = { seekForwardState.onClick() },
-            sizeDp = 56,
+            buttonDp = 64,
+            iconDp = 36,
         )
     }
 }
@@ -221,17 +261,26 @@ private fun ControlButton(
     contentDescription: String,
     enabled: Boolean,
     onClick: () -> Unit,
-    sizeDp: Int,
+    buttonDp: Int,
+    iconDp: Int,
+    withScrim: Boolean = false,
 ) {
+    val baseModifier = Modifier.size(buttonDp.dp)
+    val modifier = if (withScrim) {
+        baseModifier.background(Color.Black.copy(alpha = 0.45f), CircleShape)
+    } else {
+        baseModifier
+    }
     IconButton(
         onClick = onClick,
         enabled = enabled,
-        modifier = Modifier.size(sizeDp.dp),
+        modifier = modifier,
     ) {
         Icon(
             painter = painterResource(iconRes),
             contentDescription = contentDescription,
             tint = Color.White,
+            modifier = Modifier.size(iconDp.dp),
         )
     }
 }
