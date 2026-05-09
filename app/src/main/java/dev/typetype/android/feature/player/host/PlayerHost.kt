@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -74,6 +75,8 @@ fun PlayerHost(
 
     val navigationBarsBottom = WindowInsets.navigationBars.asPaddingValues()
         .calculateBottomPadding()
+    val statusBarsTop = WindowInsets.statusBars.asPaddingValues()
+        .calculateTopPadding()
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val containerHeightPx = constraints.maxHeight.toFloat().coerceAtLeast(1f)
         val miniHeightPx = with(density) { MINI_PLAYER_HEIGHT.toPx() }
@@ -146,26 +149,43 @@ fun PlayerHost(
             val isExpanded = anchoredState.currentValue == PlayerHostTarget.Expanded &&
                 abs(anchoredState.requireOffset()) < 1f
 
+            // Dynamic height: while Expanded the Box covers the screen so the
+            // entire player UI is visible. While Mini the Box shrinks down to
+            // exactly the MiniSlot height, freeing the bottom-nav area for
+            // taps. During the drag/animation the height interpolates so
+            // there is no visual jump and tap-targets behave correctly.
+            val rawOffsetPx = if (anchoredState.anchors.size > 0) {
+                anchoredState.requireOffset()
+            } else {
+                containerHeightPx
+            }
+            val miniProgress = if (miniAnchorPx > 0f) {
+                (rawOffsetPx / miniAnchorPx).coerceIn(0f, 1f)
+            } else {
+                0f
+            }
+            val effectiveHeightPx = (
+                containerHeightPx + (miniHeightPx - containerHeightPx) * miniProgress
+                ).coerceAtLeast(miniHeightPx)
+            val effectiveHeightDp = with(density) { effectiveHeightPx.toDp() }
+
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
+                    .height(effectiveHeightDp)
                     .offset {
-                        val raw = if (anchoredState.anchors.size > 0) {
-                            anchoredState.requireOffset()
-                        } else {
-                            containerHeightPx
-                        }
-                        IntOffset(0, raw.toInt())
+                        IntOffset(0, rawOffsetPx.toInt())
                     }
                     .pointerInput(anchoredState) {
-                        // Player area in pixels: statusBars padding + 16:9 of width.
-                        // Only intercept downward drags that START in this area when
-                        // Expanded — anywhere else (description, related streams) the
-                        // child scroll handles the gesture as usual.
+                        // Player area in pixels: statusBars top inset + 16:9
+                        // of the width. Only intercept downward drags that
+                        // START strictly in this area when Expanded —
+                        // anywhere else (description, related streams) the
+                        // child scroll handles the gesture as usual, no
+                        // glitches.
                         val playerAreaHeightPx = with(density) {
-                            navigationBarsBottom.toPx()
-                        } + (size.width.toFloat() * 9f / 16f) +
-                            with(density) { 96.dp.toPx() }
+                            statusBarsTop.toPx()
+                        } + (size.width.toFloat() * 9f / 16f)
 
                         awaitEachGesture {
                             val down = awaitFirstDown(
@@ -195,12 +215,14 @@ fun PlayerHost(
                                 if (!intercepting) {
                                     val absDy = abs(movement.y)
                                     val absDx = abs(movement.x)
-                                    val isClearVertical = absDy > absDx * 1.5f && absDy > 28f
+                                    val isClearVertical = absDy > absDx * 1.5f && absDy > 60f
                                     val current = anchoredState.currentValue
                                     val triggered = isClearVertical && when (current) {
                                         PlayerHostTarget.Expanded ->
-                                            movement.y > 28f && startPos.y < playerAreaHeightPx
-                                        PlayerHostTarget.Mini -> true
+                                            movement.y > 60f && startPos.y < playerAreaHeightPx
+                                        // Mini is tap-only: tap expands the
+                                        // player, X button closes it. No drag.
+                                        PlayerHostTarget.Mini -> false
                                         PlayerHostTarget.Hidden -> false
                                     }
                                     if (triggered) {
