@@ -8,7 +8,7 @@ import dev.typetype.android.data.auth.AuthRepositoryImpl
 import dev.typetype.android.data.channel.ChannelRepositoryImpl
 import dev.typetype.android.data.comments.CommentsRepositoryImpl
 import dev.typetype.android.data.feed.HomeFeedRepositoryImpl
-import dev.typetype.android.data.library.LibraryRepositoryImpl
+import dev.typetype.android.data.library.OfflineLibraryRepository
 import dev.typetype.android.data.preferences.DataStorePreferencesRepository
 import dev.typetype.android.data.search.SearchRepositoryImpl
 import dev.typetype.android.data.searchhistory.RemoteSearchHistoryStore
@@ -66,7 +66,7 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindLibraryRepository(impl: LibraryRepositoryImpl): LibraryRepository
+    abstract fun bindLibraryRepository(impl: OfflineLibraryRepository): LibraryRepository
 
     @Binds
     @Singleton
