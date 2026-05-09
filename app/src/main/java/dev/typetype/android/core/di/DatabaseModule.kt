@@ -11,6 +11,10 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dev.typetype.android.data.database.TypeTypeDatabase
+import dev.typetype.android.data.library.local.FavoritesDao
+import dev.typetype.android.data.library.local.HistoryDao
+import dev.typetype.android.data.library.local.PlaylistsDao
+import dev.typetype.android.data.library.local.WatchLaterDao
 import dev.typetype.android.data.server.ServerDao
 import javax.inject.Singleton
 
@@ -23,10 +27,24 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): TypeTypeDatabase =
-        Room.databaseBuilder(context, TypeTypeDatabase::class.java, "typetype.db").build()
+        Room.databaseBuilder(context, TypeTypeDatabase::class.java, "typetype.db")
+            .fallbackToDestructiveMigration(false)
+            .build()
 
     @Provides
     fun provideServerDao(database: TypeTypeDatabase): ServerDao = database.serverDao()
+
+    @Provides
+    fun provideFavoritesDao(database: TypeTypeDatabase): FavoritesDao = database.favoritesDao()
+
+    @Provides
+    fun provideHistoryDao(database: TypeTypeDatabase): HistoryDao = database.historyDao()
+
+    @Provides
+    fun provideWatchLaterDao(database: TypeTypeDatabase): WatchLaterDao = database.watchLaterDao()
+
+    @Provides
+    fun providePlaylistsDao(database: TypeTypeDatabase): PlaylistsDao = database.playlistsDao()
 
     @Provides
     @Singleton
