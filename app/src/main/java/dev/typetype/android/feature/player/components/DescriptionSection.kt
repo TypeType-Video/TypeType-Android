@@ -59,49 +59,53 @@ fun DescriptionSection(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clickable { expanded = !expanded }
             .padding(vertical = 4.dp),
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = (-0.2).sp,
-            ),
-            color = MaterialTheme.colorScheme.onBackground,
-            maxLines = if (expanded) Int.MAX_VALUE else 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Spacer(Modifier.height(8.dp))
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = !expanded },
         ) {
-            StatChip(label = formatCompact(viewCount), suffix = "views")
-            if (likeCount > 0) {
-                StatChip(label = formatCompact(likeCount), suffix = "likes")
-            }
-            Spacer(Modifier.weight(1f))
-            Icon(
-                imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = (-0.3).sp,
+                ),
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = if (expanded) Int.MAX_VALUE else 2,
+                overflow = TextOverflow.Ellipsis,
             )
-        }
-        AnimatedVisibility(visible = expanded) {
-            if (description.isNotBlank()) {
-                Column {
-                    Spacer(Modifier.height(12.dp))
-                    LinkedText(
-                        text = description,
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = MaterialTheme.colorScheme.onSurface,
-                        ),
-                        linkColor = MaterialTheme.colorScheme.primary,
-                        onUrlClick = { url -> pendingUrl = url },
-                    )
-                }
+            Spacer(Modifier.height(6.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = buildStatsLine(viewCount, likeCount),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                Icon(
+                    imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
+        }
+        if (expanded && description.isNotBlank()) {
+            LinkedText(
+                text = description.collapseEmptyLines(),
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    color = MaterialTheme.colorScheme.onSurface,
+                    lineHeight = 22.sp,
+                ),
+                linkColor = MaterialTheme.colorScheme.primary,
+                onUrlClick = { url -> pendingUrl = url },
+                modifier = Modifier.padding(top = 10.dp),
+            )
         }
     }
 
@@ -119,11 +123,12 @@ fun DescriptionSection(
 }
 
 @Composable
-private fun LinkedText(
+internal fun LinkedText(
     text: String,
     style: TextStyle,
     linkColor: Color,
     onUrlClick: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val latestOnUrlClick = rememberUpdatedState(onUrlClick)
     val annotated = remember(text, linkColor) {
@@ -153,24 +158,18 @@ private fun LinkedText(
             append(text.substring(lastIndex))
         }
     }
-    Text(text = annotated, style = style)
+    Text(text = annotated, style = style, modifier = modifier)
 }
 
-@Composable
-private fun StatChip(label: String, suffix: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-        Spacer(Modifier.width(4.dp))
-        Text(
-            text = suffix,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+private fun String.collapseEmptyLines(): String =
+    Regex("\\n{3,}").replace(this, "\n\n")
+
+private fun buildStatsLine(viewCount: Long, likeCount: Long): String {
+    val parts = buildList {
+        add("${formatCompact(viewCount)} views")
+        if (likeCount > 0) add("${formatCompact(likeCount)} likes")
     }
+    return parts.joinToString(" • ")
 }
 
 private fun formatCompact(value: Long): String = when {
