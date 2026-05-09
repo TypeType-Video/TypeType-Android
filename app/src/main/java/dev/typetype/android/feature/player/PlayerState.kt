@@ -1,5 +1,6 @@
 package dev.typetype.android.feature.player
 
+import dev.typetype.android.domain.library.Playlist
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.feature.player.components.PlayerGestureConfig
 
@@ -12,4 +13,7 @@ data class PlayerState(
     val isInWatchLater: Boolean = false,
     val gestureConfig: PlayerGestureConfig = PlayerGestureConfig(),
     val autoplayEnabled: Boolean = true,
+    val playlistPickerVisible: Boolean = false,
+    val playlists: List<Playlist> = emptyList(),
+    val playlistActionInFlight: Boolean = false,
 )
