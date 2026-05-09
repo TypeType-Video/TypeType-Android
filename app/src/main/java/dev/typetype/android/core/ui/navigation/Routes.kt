@@ -44,3 +44,6 @@ data object SearchRoute
 
 @Serializable
 data class ChannelRoute(val channelUrl: String)
+
+@Serializable
+data class PlaylistRoute(val playlistId: String)
