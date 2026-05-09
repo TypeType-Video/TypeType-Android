@@ -38,6 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.session.MediaController
 import dev.typetype.android.feature.player.PlayerRoute as PlayerRouteScreen
 import dev.typetype.android.feature.player.components.MiniPlayerBar
+import dev.typetype.android.feature.player.components.rememberIsInPipMode
 import kotlin.math.abs
 import kotlinx.coroutines.launch
 
@@ -69,6 +70,7 @@ fun PlayerHost(
     val state by controller.state.collectAsStateWithLifecycle()
     val density = LocalDensity.current
     val coroutineScope = rememberCoroutineScope()
+    val isInPip by rememberIsInPipMode()
 
     val navigationBarsBottom = WindowInsets.navigationBars.asPaddingValues()
         .calculateBottomPadding()
@@ -133,8 +135,14 @@ fun PlayerHost(
 
         if (hasVideo) {
             // Collapse-to-mini swipe handler for the player area.
-            val isMini = anchoredState.currentValue == PlayerHostTarget.Mini ||
-                anchoredState.targetValue == PlayerHostTarget.Mini
+            // While in PIP, the activity window is tiny and the anchors get
+            // recalculated to overlapping values — force-keep the Expanded
+            // layout so the same PlayerSurface stays composed across the
+            // PIP transition (no re-attachment, no grey screen on exit).
+            val isMini = !isInPip && (
+                anchoredState.currentValue == PlayerHostTarget.Mini ||
+                    anchoredState.targetValue == PlayerHostTarget.Mini
+                )
             val isExpanded = anchoredState.currentValue == PlayerHostTarget.Expanded &&
                 abs(anchoredState.requireOffset()) < 1f
 
@@ -150,6 +158,15 @@ fun PlayerHost(
                         IntOffset(0, raw.toInt())
                     }
                     .pointerInput(anchoredState) {
+                        // Player area in pixels: statusBars padding + 16:9 of width.
+                        // Only intercept downward drags that START in this area when
+                        // Expanded — anywhere else (description, related streams) the
+                        // child scroll handles the gesture as usual.
+                        val playerAreaHeightPx = with(density) {
+                            navigationBarsBottom.toPx()
+                        } + (size.width.toFloat() * 9f / 16f) +
+                            with(density) { 96.dp.toPx() }
+
                         awaitEachGesture {
                             val down = awaitFirstDown(
                                 requireUnconsumed = false,
@@ -179,8 +196,10 @@ fun PlayerHost(
                                     val absDy = abs(movement.y)
                                     val absDx = abs(movement.x)
                                     val isClearVertical = absDy > absDx * 1.5f && absDy > 28f
-                                    val triggered = isClearVertical && when (anchoredState.currentValue) {
-                                        PlayerHostTarget.Expanded -> movement.y > 28f
+                                    val current = anchoredState.currentValue
+                                    val triggered = isClearVertical && when (current) {
+                                        PlayerHostTarget.Expanded ->
+                                            movement.y > 28f && startPos.y < playerAreaHeightPx
                                         PlayerHostTarget.Mini -> true
                                         PlayerHostTarget.Hidden -> false
                                     }
@@ -211,7 +230,10 @@ fun PlayerHost(
                     PlayerRouteScreen(
                         onNavigateBack = { controller.minimize() },
                         onPlayVideo = { url -> controller.openVideo(url) },
-                        onOpenChannel = onOpenChannel,
+                        onOpenChannel = { url ->
+                            controller.minimize()
+                            onOpenChannel(url)
+                        },
                     )
                 }
             }
