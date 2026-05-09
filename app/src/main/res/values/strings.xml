@@ -10,6 +10,11 @@
     <string name="player_back">Back</string>
     <string name="player_playback_options">Playback options</string>
     <string name="player_chapters">Chapters</string>
+    <string name="player_retry">Retry</string>
+    <string name="player_resize_mode">Resize</string>
+    <string name="player_resize_fit">Fit</string>
+    <string name="player_resize_crop">Crop</string>
+    <string name="player_resize_stretch">Stretch</string>
     <string name="mini_player_close">Close mini player</string>
     <string name="player_pip">Picture in picture</string>
     <string name="player_time_separator"> / </string>
@@ -17,10 +22,12 @@
     <string name="player_remove_from_favorites">Remove from favorites</string>
     <string name="player_add_to_watch_later">Add to Watch Later</string>
     <string name="player_remove_from_watch_later">Remove from Watch Later</string>
+    <string name="player_add_to_playlist">Add to playlist</string>
     <string name="player_snackbar_favorite_added">Added to favorites</string>
     <string name="player_snackbar_favorite_removed">Removed from favorites</string>
     <string name="player_snackbar_watch_later_added">Added to Watch Later</string>
     <string name="player_snackbar_watch_later_removed">Removed from Watch Later</string>
+    <string name="player_snackbar_added_to_playlist">Added to %1$s</string>
     <string name="settings_title">Settings</string>
     <string name="settings_back">Back</string>
     <string name="settings_sign_out">Sign out</string>
@@ -61,4 +68,6 @@
     <string name="video_menu_remove_from_watch_later">Remove from Watch Later</string>
     <string name="video_menu_share">Share</string>
     <string name="video_menu_open_channel">Open channel</string>
+    <string name="playback_channel_name">Playback</string>
+    <string name="playback_channel_description">Media controls and audio playback</string>
 </resources>
