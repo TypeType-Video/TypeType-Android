@@ -38,7 +38,7 @@ class PlayerViewModel @Inject constructor(
     private val libraryRepository: LibraryRepository,
     private val preferencesRepository: PreferencesRepository,
     private val playerHostController: PlayerHostController,
-    commentsRepository: CommentsRepository,
+    val commentsRepository: CommentsRepository,
 ) : ViewModel() {
 
     private val videoUrlFlow = playerHostController.state

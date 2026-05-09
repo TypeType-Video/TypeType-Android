@@ -80,6 +80,7 @@ fun PlayerRoute(
         state = state,
         commentsFlow = viewModel.comments,
         eventsFlow = viewModel.events,
+        commentsRepository = viewModel.commentsRepository,
         onNavigateBack = onNavigateBack,
         onPlayVideo = onPlayVideo,
         onOpenChannel = onOpenChannel,
@@ -92,6 +93,7 @@ fun PlayerScreen(
     state: PlayerState,
     commentsFlow: Flow<PagingData<Comment>>,
     eventsFlow: Flow<PlayerEvent> = emptyFlow(),
+    commentsRepository: dev.typetype.android.domain.comments.CommentsRepository? = null,
     onNavigateBack: () -> Unit,
     onPlayVideo: (videoUrl: String) -> Unit,
     onOpenChannel: (channelUrl: String) -> Unit = {},
@@ -140,6 +142,7 @@ fun PlayerScreen(
                     playlistPickerVisible = state.playlistPickerVisible,
                     playlistActionInFlight = state.playlistActionInFlight,
                     commentsFlow = commentsFlow,
+                    commentsRepository = commentsRepository,
                     onNavigateBack = onNavigateBack,
                     onPlayVideo = onPlayVideo,
                     onOpenChannel = onOpenChannel,
@@ -203,6 +206,7 @@ private fun LoadedPlayer(
     playlistPickerVisible: Boolean,
     playlistActionInFlight: Boolean,
     commentsFlow: Flow<PagingData<Comment>>,
+    commentsRepository: dev.typetype.android.domain.comments.CommentsRepository?,
     onNavigateBack: () -> Unit,
     onPlayVideo: (videoUrl: String) -> Unit,
     onOpenChannel: (channelUrl: String) -> Unit = {},
@@ -360,9 +364,11 @@ private fun LoadedPlayer(
         }
     }
 
-    if (commentsVisible) {
+    if (commentsVisible && commentsRepository != null) {
         CommentsSheet(
             pagingFlow = commentsFlow,
+            videoUrl = videoUrl,
+            commentsRepository = commentsRepository,
             onDismiss = { commentsVisible = false },
         )
     }

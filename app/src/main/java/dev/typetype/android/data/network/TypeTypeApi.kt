@@ -162,4 +162,10 @@ interface TypeTypeApi {
         @Query("url") videoUrl: String,
         @Query("nextpage") nextpage: String? = null,
     ): Response<CommentsPageResponse>
+
+    @GET("comments/replies")
+    suspend fun commentReplies(
+        @Query("url") videoUrl: String,
+        @Query("repliesPage") repliesPage: String,
+    ): Response<CommentsPageResponse>
 }

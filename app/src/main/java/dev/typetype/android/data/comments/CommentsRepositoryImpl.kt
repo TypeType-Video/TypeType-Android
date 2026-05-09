@@ -32,6 +32,23 @@ class CommentsRepositoryImpl @Inject constructor(
             )
         }
 
+    override suspend fun loadReplies(videoUrl: String, repliesPage: String): Result<CommentsPage> =
+        runCatching {
+            val api = apiHolder.require()
+            val response = withContext(Dispatchers.IO) {
+                api.commentReplies(videoUrl = videoUrl, repliesPage = repliesPage)
+            }
+            if (!response.isSuccessful) {
+                error("Replies failed (HTTP ${response.code()})")
+            }
+            val body = response.body() ?: error("Empty replies body")
+            CommentsPage(
+                comments = body.comments.map { it.toDomain() },
+                nextpage = body.nextpage,
+                commentsDisabled = body.commentsDisabled,
+            )
+        }
+
     private fun CommentItem.toDomain(): Comment = Comment(
         id = id,
         text = text,
@@ -44,5 +61,6 @@ class CommentsRepositoryImpl @Inject constructor(
         isPinned = isPinned,
         uploaderVerified = uploaderVerified,
         replyCount = replyCount,
+        repliesPage = repliesPage,
     )
 }
