@@ -7,8 +7,12 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -19,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.media3.common.Player
@@ -26,10 +31,11 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
 import androidx.media3.ui.compose.state.rememberPresentationState
-import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 import dev.typetype.android.domain.stream.Chapter
 import dev.typetype.android.domain.stream.SponsorBlockSegment
 import dev.typetype.android.feature.player.state.PlayerGestureState
+import dev.typetype.android.feature.player.state.ResizeMode
+import dev.typetype.android.feature.player.state.next
 import kotlinx.coroutines.delay
 
 private const val AUTO_HIDE_DELAY_MS = 3_500L
@@ -52,7 +58,6 @@ fun PlayerSurfaceBox(
         context.getSystemService(AudioManager::class.java)
     }
     val gestureState = remember { PlayerGestureState() }
-    val playPauseState = rememberPlayPauseButtonState(player)
     var controlsVisible by remember { mutableStateOf(true) }
     var optionsVisible by remember { mutableStateOf(false) }
     var chaptersVisible by remember { mutableStateOf(false) }
@@ -73,14 +78,42 @@ fun PlayerSurfaceBox(
         }
     }
 
-    Box(modifier = modifier.background(Color.Black)) {
-        PlayerSurface(
-            player = player,
-            surfaceType = SURFACE_TYPE_SURFACE_VIEW,
-            modifier = Modifier.fillMaxSize(),
-        )
+    val presentationState = rememberPresentationState(player)
+    Box(modifier = modifier.background(Color.Black).clipToBounds()) {
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val containerW = constraints.maxWidth.toFloat().coerceAtLeast(1f)
+            val containerH = constraints.maxHeight.toFloat().coerceAtLeast(1f)
+            val containerAspect = containerW / containerH
+            val videoSize = presentationState.videoSizeDp
+            val videoAspect = if (videoSize != null && videoSize.width > 0f && videoSize.height > 0f) {
+                videoSize.width / videoSize.height
+            } else {
+                containerAspect
+            }
+            val surfaceModifier = when (gestureState.resizeMode.value) {
+                ResizeMode.Fit -> Modifier
+                    .align(Alignment.Center)
+                    .aspectRatio(videoAspect)
+                ResizeMode.Crop -> if (videoAspect > containerAspect) {
+                    Modifier
+                        .align(Alignment.Center)
+                        .fillMaxHeight()
+                        .aspectRatio(videoAspect)
+                } else {
+                    Modifier
+                        .align(Alignment.Center)
+                        .fillMaxWidth()
+                        .aspectRatio(videoAspect)
+                }
+                ResizeMode.Stretch -> Modifier.fillMaxSize()
+            }
+            PlayerSurface(
+                player = player,
+                surfaceType = SURFACE_TYPE_SURFACE_VIEW,
+                modifier = surfaceModifier,
+            )
+        }
 
-        val presentationState = rememberPresentationState(player)
         if (presentationState.coverSurface) {
             Box(
                 modifier = Modifier.fillMaxSize().background(Color.Black),
@@ -95,9 +128,6 @@ fun PlayerSurfaceBox(
             state = gestureState,
             onTogglePlayPause = {
                 controlsVisible = !controlsVisible
-                if (!controlsVisible && playPauseState.isEnabled) {
-                    playPauseState.onClick()
-                }
             },
             onAdjustBrightness = { fraction ->
                 activity?.window?.let { window ->
@@ -129,6 +159,10 @@ fun PlayerSurfaceBox(
                 onOpenChapters = { chaptersVisible = true },
                 onEnterPip = { enterPictureInPicture(activity) },
                 onToggleFullscreen = onToggleFullscreen,
+                onCycleResizeMode = {
+                    gestureState.resizeMode.value = gestureState.resizeMode.value.next()
+                },
+                resizeMode = gestureState.resizeMode.value,
                 isFullscreen = isFullscreen,
                 chaptersAvailable = chapters.isNotEmpty(),
                 sponsorBlockSegments = sponsorBlockSegments,

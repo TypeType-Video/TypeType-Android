@@ -8,19 +8,24 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.BookmarkAdd
-import androidx.compose.material.icons.filled.BookmarkAdded
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.PlaylistAdd
+import androidx.compose.material.icons.filled.WatchLater
+import androidx.compose.material.icons.outlined.WatchLater
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -43,14 +48,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.session.MediaController
 import androidx.paging.PagingData
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.util.WindowHelper
 import dev.typetype.android.domain.comments.Comment
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.feature.player.components.CommentsBar
@@ -103,6 +106,8 @@ fun PlayerScreen(
                 PlayerEvent.FavoriteRemoved -> context.getString(R.string.player_snackbar_favorite_removed)
                 is PlayerEvent.WatchLaterAdded -> context.getString(R.string.player_snackbar_watch_later_added)
                 PlayerEvent.WatchLaterRemoved -> context.getString(R.string.player_snackbar_watch_later_removed)
+                is PlayerEvent.AddedToPlaylist ->
+                    context.getString(R.string.player_snackbar_added_to_playlist, event.playlistName)
                 is PlayerEvent.ActionFailed -> event.message
             }
             snackbarHostState.showSnackbar(message, duration = SnackbarDuration.Short)
@@ -111,6 +116,7 @@ fun PlayerScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0),
     ) { padding ->
         Surface(
             modifier = Modifier.fillMaxSize().padding(padding),
@@ -121,6 +127,7 @@ fun PlayerScreen(
                 state.errorMessage != null -> ErrorState(
                     message = state.errorMessage,
                     onNavigateBack = onNavigateBack,
+                    onRetry = { onAction(PlayerAction.OnRetry) },
                 )
                 state.stream != null -> LoadedPlayer(
                     stream = state.stream,
@@ -128,6 +135,10 @@ fun PlayerScreen(
                     isFavorited = state.isFavorited,
                     isInWatchLater = state.isInWatchLater,
                     gestureConfig = state.gestureConfig,
+                    autoplayEnabled = state.autoplayEnabled,
+                    playlists = state.playlists,
+                    playlistPickerVisible = state.playlistPickerVisible,
+                    playlistActionInFlight = state.playlistActionInFlight,
                     commentsFlow = commentsFlow,
                     onNavigateBack = onNavigateBack,
                     onPlayVideo = onPlayVideo,
@@ -147,7 +158,11 @@ private fun LoadingState() {
 }
 
 @Composable
-private fun ErrorState(message: String, onNavigateBack: () -> Unit) {
+private fun ErrorState(
+    message: String,
+    onNavigateBack: () -> Unit,
+    onRetry: () -> Unit,
+) {
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.Center,
@@ -169,6 +184,10 @@ private fun ErrorState(message: String, onNavigateBack: () -> Unit) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.error,
         )
+        Spacer(Modifier.height(16.dp))
+        androidx.compose.material3.OutlinedButton(onClick = onRetry) {
+            Text(text = stringResource(R.string.player_retry))
+        }
     }
 }
 
@@ -179,6 +198,10 @@ private fun LoadedPlayer(
     isFavorited: Boolean,
     isInWatchLater: Boolean,
     gestureConfig: PlayerGestureConfig,
+    autoplayEnabled: Boolean,
+    playlists: List<dev.typetype.android.domain.library.Playlist>,
+    playlistPickerVisible: Boolean,
+    playlistActionInFlight: Boolean,
     commentsFlow: Flow<PagingData<Comment>>,
     onNavigateBack: () -> Unit,
     onPlayVideo: (videoUrl: String) -> Unit,
@@ -203,17 +226,42 @@ private fun LoadedPlayer(
         }
     }
 
+    DisposableEffect(controller, autoplayEnabled, stream.relatedStreams) {
+        val ctrl = controller
+        if (ctrl == null) {
+            onDispose { }
+        } else {
+            val nextUrl = stream.relatedStreams.firstOrNull()?.url
+            val listener = object : androidx.media3.common.Player.Listener {
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    if (playbackState == androidx.media3.common.Player.STATE_ENDED &&
+                        autoplayEnabled &&
+                        !nextUrl.isNullOrBlank()
+                    ) {
+                        onPlayVideo(nextUrl)
+                    }
+                }
+                override fun onIsPlayingChanged(isPlaying: Boolean) {
+                    dev.typetype.android.feature.player.components.applyAutoEnterPipParams(activity, isPlaying)
+                }
+            }
+            ctrl.addListener(listener)
+            dev.typetype.android.feature.player.components.applyAutoEnterPipParams(activity, ctrl.isPlaying)
+            onDispose {
+                ctrl.removeListener(listener)
+                dev.typetype.android.feature.player.components.applyAutoEnterPipParams(activity, false)
+            }
+        }
+    }
+
     LaunchedEffect(isFullscreen) {
         val window = activity?.window ?: return@LaunchedEffect
-        val ctrl = WindowCompat.getInsetsController(window, window.decorView)
         if (isFullscreen) {
             activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-            ctrl.hide(WindowInsetsCompat.Type.systemBars())
-            ctrl.systemBarsBehavior =
-                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            WindowHelper.toggleFullscreen(window, isFullscreen = true)
         } else {
             activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-            ctrl.show(WindowInsetsCompat.Type.systemBars())
+            WindowHelper.toggleFullscreen(window, isFullscreen = false)
         }
     }
 
@@ -226,26 +274,45 @@ private fun LoadedPlayer(
             }
             val window = activity?.window ?: return@onDispose
             activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-            WindowCompat.getInsetsController(window, window.decorView)
-                .show(WindowInsetsCompat.Type.systemBars())
+            WindowHelper.toggleFullscreen(window, isFullscreen = false)
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState)) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+            .then(
+                if (isFullscreen) Modifier
+                else Modifier.windowInsetsPadding(WindowInsets.statusBars),
+            ),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .then(if (isFullscreen) Modifier else Modifier.verticalScroll(scrollState)),
+        ) {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(16f / 9f)
-                    .background(Color.Black),
+                modifier = if (isFullscreen) {
+                    Modifier
+                        .fillMaxSize()
+                        .background(Color.Black)
+                } else {
+                    Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(16f / 9f)
+                        .background(Color.Black)
+                },
                 contentAlignment = Alignment.Center,
             ) {
                 if (controller != null) {
                     PlayerSurfaceBox(
                         player = controller,
-                        onNavigateBack = onNavigateBack,
-                        isFullscreen = false,
-                        onToggleFullscreen = { isFullscreen = true },
+                        onNavigateBack = {
+                            if (isFullscreen) isFullscreen = false else onNavigateBack()
+                        },
+                        isFullscreen = isFullscreen,
+                        onToggleFullscreen = { isFullscreen = !isFullscreen },
                         sponsorBlockSegments = stream.sponsorBlockSegments,
                         chapters = stream.chapters,
                         gestureConfig = gestureConfig,
@@ -255,51 +322,40 @@ private fun LoadedPlayer(
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                DescriptionSection(
-                    title = stream.title,
-                    viewCount = stream.viewCount,
-                    likeCount = stream.likeCount,
-                    description = stream.description,
-                )
-                PlayerInteractionRow(
-                    isFavorited = isFavorited,
-                    isInWatchLater = isInWatchLater,
-                    onToggleFavorite = { onAction(PlayerAction.OnToggleFavorite) },
-                    onToggleWatchLater = { onAction(PlayerAction.OnToggleWatchLater) },
-                )
-                UploaderCard(
-                    name = stream.uploaderName,
-                    avatarUrl = stream.uploaderAvatarUrl,
-                    subscriberCount = stream.uploaderSubscriberCount,
-                    verified = stream.uploaderVerified,
-                    onCardClick = { onOpenChannel(stream.uploaderUrl) },
-                )
-                CommentsBar(onClick = { commentsVisible = true })
-                Spacer(Modifier.height(4.dp))
-                RelatedStreamsSection(
-                    videos = stream.relatedStreams,
-                    onPlayVideo = onPlayVideo,
-                )
-            }
-        }
-
-        if (isFullscreen && controller != null) {
-            Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-                PlayerSurfaceBox(
-                    player = controller,
-                    onNavigateBack = { isFullscreen = false },
-                    isFullscreen = true,
-                    onToggleFullscreen = { isFullscreen = false },
-                    sponsorBlockSegments = stream.sponsorBlockSegments,
-                    chapters = stream.chapters,
-                    modifier = Modifier.fillMaxSize(),
-                )
+            if (!isFullscreen) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    DescriptionSection(
+                        title = stream.title,
+                        viewCount = stream.viewCount,
+                        likeCount = stream.likeCount,
+                        description = stream.description,
+                    )
+                    PlayerInteractionRow(
+                        isFavorited = isFavorited,
+                        isInWatchLater = isInWatchLater,
+                        onToggleFavorite = { onAction(PlayerAction.OnToggleFavorite) },
+                        onToggleWatchLater = { onAction(PlayerAction.OnToggleWatchLater) },
+                        onAddToPlaylist = { onAction(PlayerAction.OnOpenPlaylistPicker) },
+                    )
+                    UploaderCard(
+                        name = stream.uploaderName,
+                        avatarUrl = stream.uploaderAvatarUrl,
+                        subscriberCount = stream.uploaderSubscriberCount,
+                        verified = stream.uploaderVerified,
+                        onCardClick = { onOpenChannel(stream.uploaderUrl) },
+                    )
+                    CommentsBar(onClick = { commentsVisible = true })
+                    Spacer(Modifier.height(4.dp))
+                    RelatedStreamsSection(
+                        videos = stream.relatedStreams,
+                        onPlayVideo = onPlayVideo,
+                    )
+                }
             }
         }
     }
@@ -310,6 +366,16 @@ private fun LoadedPlayer(
             onDismiss = { commentsVisible = false },
         )
     }
+
+    if (playlistPickerVisible) {
+        dev.typetype.android.feature.player.components.PlaylistPickerSheet(
+            playlists = playlists,
+            isInFlight = playlistActionInFlight,
+            onAddToPlaylist = { onAction(PlayerAction.OnAddToPlaylist(it)) },
+            onCreatePlaylist = { onAction(PlayerAction.OnCreatePlaylistAndAdd(it)) },
+            onDismiss = { onAction(PlayerAction.OnDismissPlaylistPicker) },
+        )
+    }
 }
 
 @Composable
@@ -318,6 +384,7 @@ private fun PlayerInteractionRow(
     isInWatchLater: Boolean,
     onToggleFavorite: () -> Unit,
     onToggleWatchLater: () -> Unit,
+    onAddToPlaylist: () -> Unit,
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         IconButton(onClick = onToggleFavorite) {
@@ -332,12 +399,19 @@ private fun PlayerInteractionRow(
         }
         IconButton(onClick = onToggleWatchLater) {
             Icon(
-                imageVector = if (isInWatchLater) Icons.Filled.BookmarkAdded else Icons.Filled.BookmarkAdd,
+                imageVector = if (isInWatchLater) Icons.Filled.WatchLater else Icons.Outlined.WatchLater,
                 contentDescription = stringResource(
                     if (isInWatchLater) R.string.player_remove_from_watch_later
                     else R.string.player_add_to_watch_later,
                 ),
                 tint = if (isInWatchLater) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
+            )
+        }
+        IconButton(onClick = onAddToPlaylist) {
+            Icon(
+                imageVector = Icons.Filled.PlaylistAdd,
+                contentDescription = stringResource(R.string.player_add_to_playlist),
+                tint = MaterialTheme.colorScheme.onBackground,
             )
         }
     }

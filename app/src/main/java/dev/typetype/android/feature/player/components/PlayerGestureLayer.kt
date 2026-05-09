@@ -16,6 +16,7 @@ import androidx.media3.common.Player
 import dev.typetype.android.feature.player.state.DragMode
 import dev.typetype.android.feature.player.state.GestureSide
 import dev.typetype.android.feature.player.state.PlayerGestureState
+import dev.typetype.android.feature.player.state.ResizeMode
 import kotlin.math.abs
 
 private const val BRIGHTNESS_DRAG_PIXELS_PER_FULL = 600f
@@ -146,7 +147,7 @@ fun PlayerGestureLayer(
             .pointerInput(Unit) {
                 detectTransformGestures { _, _, zoom, _ ->
                     if (abs(zoom - 1f) > 0.05f) {
-                        state.zoomFillMode.value = zoom > 1f
+                        state.resizeMode.value = if (zoom > 1f) ResizeMode.Crop else ResizeMode.Fit
                     }
                 }
             },
