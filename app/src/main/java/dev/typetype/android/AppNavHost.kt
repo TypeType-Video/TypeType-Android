@@ -79,7 +79,9 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
         onOpenSettings = { navController.navigate(SettingsRoute) },
         onPlayVideo = onPlayVideo,
         onOpenChannel = { channelUrl ->
-            navController.navigate(ChannelRoute(channelUrl = channelUrl))
+            navController.navigate(ChannelRoute(channelUrl = channelUrl)) {
+                launchSingleTop = true
+            }
         },
     ) { innerModifier ->
         NavHost(
