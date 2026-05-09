@@ -1,9 +1,10 @@
 package dev.typetype.android.data.network
 
-import dev.typetype.android.data.network.dto.AddFavoriteRequest
 import dev.typetype.android.data.network.dto.AddHistoryRequest
+import dev.typetype.android.data.network.dto.AddPlaylistVideoRequest
 import dev.typetype.android.data.network.dto.AddWatchLaterRequest
 import dev.typetype.android.data.network.dto.ChannelResponse
+import dev.typetype.android.data.network.dto.CreatePlaylistRequest
 import dev.typetype.android.data.network.dto.CommentsPageResponse
 import dev.typetype.android.data.network.dto.FavoriteItemDto
 import dev.typetype.android.data.network.dto.GuestResponse
@@ -30,6 +31,7 @@ import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface TypeTypeApi {
@@ -105,23 +107,41 @@ interface TypeTypeApi {
     @GET("playlists")
     suspend fun playlists(): Response<List<PlaylistDto>>
 
-    @POST("favorites")
-    suspend fun addFavorite(@Body body: AddFavoriteRequest): Response<Unit>
+    @POST("favorites/{videoUrl}")
+    suspend fun addFavorite(@Path("videoUrl") videoUrl: String): Response<Unit>
 
-    @DELETE("favorites")
-    suspend fun removeFavorite(@Query("url") videoUrl: String): Response<Unit>
+    @DELETE("favorites/{videoUrl}")
+    suspend fun removeFavorite(@Path("videoUrl") videoUrl: String): Response<Unit>
 
     @POST("watch-later")
     suspend fun addWatchLater(@Body body: AddWatchLaterRequest): Response<Unit>
 
-    @DELETE("watch-later")
-    suspend fun removeWatchLater(@Query("url") url: String): Response<Unit>
+    @DELETE("watch-later/{videoUrl}")
+    suspend fun removeWatchLater(@Path("videoUrl") videoUrl: String): Response<Unit>
 
     @POST("history")
     suspend fun addHistory(@Body body: AddHistoryRequest): Response<Unit>
 
     @PUT("progress")
-    suspend fun saveProgress(@Body body: SaveProgressRequest): Response<Unit>
+    suspend fun saveProgress(
+        @Query("url") videoUrl: String,
+        @Body body: SaveProgressRequest,
+    ): Response<Unit>
+
+    @POST("playlists")
+    suspend fun createPlaylist(@Body body: CreatePlaylistRequest): Response<PlaylistDto>
+
+    @POST("playlists/{id}/videos")
+    suspend fun addVideoToPlaylist(
+        @Path("id") playlistId: String,
+        @Body body: AddPlaylistVideoRequest,
+    ): Response<Unit>
+
+    @DELETE("playlists/{id}/videos/{videoUrl}")
+    suspend fun removeVideoFromPlaylist(
+        @Path("id") playlistId: String,
+        @Path("videoUrl") videoUrl: String,
+    ): Response<Unit>
 
     @GET("search-history")
     suspend fun searchHistory(): Response<List<String>>
