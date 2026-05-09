@@ -24,18 +24,26 @@ class LibraryNetworkSource @Inject constructor(
     suspend fun fetchHistory(): List<HistoryEntity> = withContext(Dispatchers.IO) {
         val response = apiHolder.require().history()
         if (!response.isSuccessful) error("History failed (HTTP ${response.code()})")
-        (response.body() ?: emptyList()).map { dto ->
-            HistoryEntity(
-                id = dto.id,
-                url = dto.url,
-                title = dto.title,
-                thumbnailUrl = dto.thumbnail,
-                channelName = dto.channelName,
-                durationSeconds = dto.duration,
-                progressSeconds = dto.progress,
-                watchedAtMillis = dto.watchedAt,
-            )
-        }
+        // Server returns rows sorted by watchedAt DESC. Multiple POST /history
+        // calls for the same video produce duplicates server-side, so we dedup
+        // by URL keeping the first occurrence (= most recent watch). Same
+        // pattern as the TypeType web client (apps/web/src/hooks/use-history.ts).
+        val seen = HashSet<String>()
+        (response.body() ?: emptyList()).asSequence()
+            .filter { seen.add(it.url) }
+            .map { dto ->
+                HistoryEntity(
+                    id = dto.id,
+                    url = dto.url,
+                    title = dto.title,
+                    thumbnailUrl = dto.thumbnail,
+                    channelName = dto.channelName,
+                    durationSeconds = dto.duration,
+                    progressSeconds = dto.progress,
+                    watchedAtMillis = dto.watchedAt,
+                )
+            }
+            .toList()
     }
 
     suspend fun fetchFavorites(): List<FavoriteEntity> = withContext(Dispatchers.IO) {
