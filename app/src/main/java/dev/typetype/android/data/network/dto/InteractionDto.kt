@@ -3,9 +3,6 @@ package dev.typetype.android.data.network.dto
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class AddFavoriteRequest(val videoUrl: String)
-
-@Serializable
 data class AddWatchLaterRequest(
     val url: String,
     val title: String,
@@ -15,16 +12,32 @@ data class AddWatchLaterRequest(
 
 @Serializable
 data class AddHistoryRequest(
-    val videoUrl: String,
+    val url: String,
     val title: String,
     val thumbnail: String,
     val duration: Long,
     val channelName: String,
     val channelUrl: String,
+    val channelAvatar: String = "",
+    val progress: Long = 0L,
 )
 
 @Serializable
-data class SaveProgressRequest(val url: String, val positionMillis: Long)
+data class SaveProgressRequest(val position: Long)
 
 @Serializable
 data class SearchHistoryEntryRequest(val query: String)
+
+@Serializable
+data class CreatePlaylistRequest(
+    val name: String,
+    val description: String = "",
+)
+
+@Serializable
+data class AddPlaylistVideoRequest(
+    val url: String,
+    val title: String,
+    val thumbnail: String,
+    val duration: Long,
+)
