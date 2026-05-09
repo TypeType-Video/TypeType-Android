@@ -59,10 +59,8 @@ fun DescriptionSection(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surface)
             .clickable { expanded = !expanded }
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+            .padding(vertical = 4.dp),
     ) {
         Text(
             text = title,

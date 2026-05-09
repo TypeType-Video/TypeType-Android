@@ -9,6 +9,13 @@ import androidx.compose.runtime.mutableStateOf
 
 enum class GestureSide { Left, Right }
 enum class DragMode { None, Brightness, Volume, Seek }
+enum class ResizeMode { Fit, Crop, Stretch }
+
+fun ResizeMode.next(): ResizeMode = when (this) {
+    ResizeMode.Fit -> ResizeMode.Crop
+    ResizeMode.Crop -> ResizeMode.Stretch
+    ResizeMode.Stretch -> ResizeMode.Fit
+}
 
 @Stable
 class PlayerGestureState {
@@ -18,7 +25,7 @@ class PlayerGestureState {
     val brightnessFraction = mutableFloatStateOf(0.5f)
     val volumeOverlayActive: MutableState<Boolean> = mutableStateOf(false)
     val volumeFraction = mutableFloatStateOf(0.5f)
-    val zoomFillMode: MutableState<Boolean> = mutableStateOf(false)
+    val resizeMode: MutableState<ResizeMode> = mutableStateOf(ResizeMode.Fit)
     val dragMode: MutableState<DragMode> = mutableStateOf(DragMode.None)
     val seekDragStartMs: MutableLongState = mutableLongStateOf(0L)
     val seekDragTargetMs: MutableLongState = mutableLongStateOf(0L)
