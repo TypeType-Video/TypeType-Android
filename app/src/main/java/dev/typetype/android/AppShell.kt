@@ -3,13 +3,13 @@ package dev.typetype.android
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -27,11 +27,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,11 +42,11 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.navigation.HomeRoute
 import dev.typetype.android.core.ui.navigation.LibraryRoute
-import dev.typetype.android.core.ui.navigation.PlayerRoute
 import dev.typetype.android.core.ui.navigation.SubscriptionsRoute
 import dev.typetype.android.feature.player.components.LocalMediaController
-import dev.typetype.android.feature.player.components.MiniPlayerBar
 import dev.typetype.android.feature.player.components.rememberMediaController
+import dev.typetype.android.feature.player.host.PlayerHost
+import dev.typetype.android.feature.player.host.PlayerHostController
 
 internal data class TopLevelTab(
     val route: Any,
@@ -64,13 +60,17 @@ private val topLevelTabs = listOf(
     TopLevelTab(LibraryRoute, R.string.tab_library, R.drawable.ic_library),
 )
 
+private val NAV_BAR_HEIGHT_DP: Float = 80f
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppShell(
     navController: NavHostController,
+    playerHostController: PlayerHostController,
     onOpenSettings: () -> Unit,
     onOpenSearch: () -> Unit = {},
     onPlayVideo: (videoUrl: String) -> Unit,
+    onOpenChannel: (channelUrl: String) -> Unit,
     content: @Composable (Modifier) -> Unit,
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -78,47 +78,22 @@ fun AppShell(
     val isTopLevel = topLevelTabs.any { tab ->
         currentDestination.matchesRoute(tab.route)
     }
-    val isPlayer = currentDestination?.hasRoute<PlayerRoute>() == true
 
     val controllerState = rememberMediaController()
     val controller = controllerState.value
 
-    var miniPlayerDismissed by remember { mutableStateOf(false) }
-    val currentItem = controller?.currentMediaItem
-    LaunchedEffect(currentItem?.mediaId) {
-        if (currentItem != null) miniPlayerDismissed = false
-    }
-
     CompositionLocalProvider(LocalMediaController provides controller) {
-        Scaffold(
-            containerColor = MaterialTheme.colorScheme.background,
-            topBar = {
-                if (isTopLevel) {
-                    AppTopBar(onOpenSearch = onOpenSearch, onOpenSettings = onOpenSettings)
-                }
-            },
-            bottomBar = {
-                if (isTopLevel) {
-                    Column {
-                        if (controller != null && !isPlayer && !miniPlayerDismissed && currentItem != null) {
-                            MiniPlayerBar(
-                                player = controller,
-                                title = currentItem.mediaMetadata.title?.toString() ?: "",
-                                subtitle = currentItem.mediaMetadata.artist?.toString() ?: "",
-                                artworkUri = currentItem.mediaMetadata.artworkUri?.toString(),
-                                onExpand = {
-                                    val mediaId = currentItem.mediaId
-                                    if (mediaId.isNotBlank()) {
-                                        onPlayVideo(mediaId)
-                                    }
-                                },
-                                onClose = {
-                                    miniPlayerDismissed = true
-                                    controller.stop()
-                                    controller.clearMediaItems()
-                                },
-                            )
-                        }
+        Box(modifier = Modifier.fillMaxSize()) {
+            Scaffold(
+                containerColor = MaterialTheme.colorScheme.background,
+                contentWindowInsets = WindowInsets.systemBars,
+                topBar = {
+                    if (isTopLevel) {
+                        AppTopBar(onOpenSearch = onOpenSearch, onOpenSettings = onOpenSettings)
+                    }
+                },
+                bottomBar = {
+                    if (isTopLevel) {
                         AppBottomBar(
                             currentDestination = currentDestination,
                             onTabClick = { route ->
@@ -130,10 +105,18 @@ fun AppShell(
                             },
                         )
                     }
-                }
-            },
-        ) { padding ->
-            content(Modifier.fillMaxSize().padding(padding))
+                },
+            ) { padding ->
+                content(Modifier.fillMaxSize().padding(padding))
+            }
+
+            PlayerHost(
+                controller = playerHostController,
+                bottomBarHeightDp = if (isTopLevel) NAV_BAR_HEIGHT_DP else 0f,
+                mediaController = controller,
+                onOpenChannel = onOpenChannel,
+                content = {},
+            )
         }
     }
 }
@@ -144,20 +127,20 @@ private fun AppTopBar(onOpenSearch: () -> Unit, onOpenSettings: () -> Unit) {
     TopAppBar(
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                androidx.compose.foundation.layout.Box(
-                    modifier = androidx.compose.ui.Modifier
+                Box(
+                    modifier = Modifier
                         .size(28.dp)
                         .clip(RoundedCornerShape(7.dp))
                         .background(MaterialTheme.colorScheme.errorContainer),
                     contentAlignment = Alignment.Center,
                 ) {
                     Image(
-                        painter = androidx.compose.ui.res.painterResource(R.drawable.ic_launcher_monochrome),
+                        painter = painterResource(R.drawable.ic_launcher_monochrome),
                         contentDescription = null,
-                        modifier = androidx.compose.ui.Modifier.size(22.dp),
+                        modifier = Modifier.size(22.dp),
                     )
                 }
-                Spacer(androidx.compose.ui.Modifier.width(10.dp))
+                Spacer(Modifier.width(10.dp))
                 Text(
                     text = "TypeType",
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
