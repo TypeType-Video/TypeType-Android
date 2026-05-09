@@ -22,7 +22,7 @@ android {
 
     defaultConfig {
         applicationId = "dev.typetype.android"
-        minSdk = 26
+        minSdk = 33
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
@@ -98,6 +98,12 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.lifecycle.runtime)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.test.espressoCore)
+    androidTestImplementation(libs.androidx.test.junit)
     coreLibraryDesugaring(libs.desugaring)
 
     implementation(libs.androidx.appcompat)
@@ -116,6 +122,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.navigation.compose)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     implementation(libs.hilt.android)

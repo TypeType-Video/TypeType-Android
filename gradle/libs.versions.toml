@@ -2,7 +2,7 @@
 appcompat = "1.7.1"
 core = "1.18.0"
 documentfile = "1.1.0"
-gradle = "9.0.1"
+gradle = "9.2.1"
 junit = "4.13.2"
 kotlin = "2.3.10"
 ksp = "2.3.5"
@@ -40,6 +40,7 @@ datastore = "1.2.1"
 securityCrypto = "1.1.0"
 tink = "1.21.0"
 okhttp = "5.3.2"
+coreKtx = "1.10.1"
 
 [libraries]
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
@@ -106,6 +107,9 @@ androidx-paging = { group = "androidx.paging", name = "paging-runtime-ktx", vers
 androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging" }
 androidx-collection = { group = "androidx.collection", name = "collection", version.ref = "collection" }
 androidx-swiperefreshlayout = { group = "androidx.swiperefreshlayout", name = "swiperefreshlayout", version.ref = "swiperefreshlayout" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 
 [plugins]
 androidTest = { id = "com.android.test", version.ref = "gradle" }

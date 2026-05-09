@@ -25,3 +25,4 @@ dependencyResolutionManagement {
 rootProject.name = "TypeType-Android"
 
 include(":app")
+include(":app")
