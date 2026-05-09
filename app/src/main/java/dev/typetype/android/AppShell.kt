@@ -40,8 +40,10 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.navigation.ChannelRoute
 import dev.typetype.android.core.ui.navigation.HomeRoute
 import dev.typetype.android.core.ui.navigation.LibraryRoute
+import dev.typetype.android.core.ui.navigation.PlaylistRoute
 import dev.typetype.android.core.ui.navigation.SubscriptionsRoute
 import dev.typetype.android.feature.player.components.LocalMediaController
 import dev.typetype.android.feature.player.components.rememberMediaController
@@ -78,6 +80,12 @@ fun AppShell(
     val isTopLevel = topLevelTabs.any { tab ->
         currentDestination.matchesRoute(tab.route)
     }
+    // Bottom navigation is shown for top-level tabs AND for content browsing
+    // destinations like channel pages and playlist details, so the user can
+    // jump to Home/Subs/Library at any time without back-stacking out.
+    val showsBottomNav = isTopLevel ||
+        currentDestination?.hasRoute<ChannelRoute>() == true ||
+        currentDestination?.hasRoute<PlaylistRoute>() == true
 
     val controllerState = rememberMediaController()
     val controller = controllerState.value
@@ -93,7 +101,7 @@ fun AppShell(
                     }
                 },
                 bottomBar = {
-                    if (isTopLevel) {
+                    if (showsBottomNav) {
                         AppBottomBar(
                             currentDestination = currentDestination,
                             onTabClick = { route ->
@@ -112,7 +120,7 @@ fun AppShell(
 
             PlayerHost(
                 controller = playerHostController,
-                bottomBarHeightDp = if (isTopLevel) NAV_BAR_HEIGHT_DP else 0f,
+                bottomBarHeightDp = if (showsBottomNav) NAV_BAR_HEIGHT_DP else 0f,
                 mediaController = controller,
                 onOpenChannel = onOpenChannel,
                 content = {},

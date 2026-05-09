@@ -24,6 +24,9 @@ interface HistoryDao {
     @Query("DELETE FROM history")
     suspend fun deleteAll()
 
+    @Query("DELETE FROM history WHERE url = :url")
+    suspend fun deleteByUrl(url: String)
+
     @Transaction
     suspend fun replaceAll(items: List<HistoryEntity>) {
         deleteAll()
