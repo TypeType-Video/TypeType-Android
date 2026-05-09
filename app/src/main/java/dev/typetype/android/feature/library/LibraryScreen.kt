@@ -35,10 +35,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
-import dev.typetype.android.domain.library.FavoriteItem
 import dev.typetype.android.domain.library.HistoryItem
 import dev.typetype.android.domain.library.Playlist
-import dev.typetype.android.domain.library.WatchLaterItem
+import dev.typetype.android.domain.library.PlaylistVideo
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -46,12 +45,14 @@ import java.util.Locale
 @Composable
 fun LibraryRoute(
     onPlayVideo: (videoUrl: String) -> Unit,
+    onOpenPlaylist: (playlistId: String) -> Unit = {},
     viewModel: LibraryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LibraryScreen(
         state = state,
         onPlayVideo = onPlayVideo,
+        onOpenPlaylist = onOpenPlaylist,
         onAction = viewModel::onAction,
     )
 }
@@ -60,6 +61,7 @@ fun LibraryRoute(
 fun LibraryScreen(
     state: LibraryState,
     onPlayVideo: (videoUrl: String) -> Unit,
+    onOpenPlaylist: (playlistId: String) -> Unit,
     onAction: (LibraryAction) -> Unit,
 ) {
     val tabs = LibraryTab.entries
@@ -107,7 +109,10 @@ fun LibraryScreen(
                 items = state.watchLater,
                 onPlayVideo = onPlayVideo,
             )
-            LibraryTab.Playlists -> PlaylistsTab(playlists = state.playlists)
+            LibraryTab.Playlists -> PlaylistsTab(
+                playlists = state.playlists,
+                onOpenPlaylist = onOpenPlaylist,
+            )
         }
     }
 }
@@ -176,69 +181,46 @@ private fun HistoryRow(item: HistoryItem, onClick: () -> Unit) {
 }
 
 @Composable
-private fun FavoritesTab(items: List<FavoriteItem>, onPlayVideo: (String) -> Unit) {
-    if (items.isEmpty()) {
-        EmptyTab("No favorites yet")
-        return
-    }
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = 8.dp),
-    ) {
-        items(items, key = { it.videoUrl }) { item ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onPlayVideo(item.videoUrl) }
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = item.videoUrl,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        text = formatDate(item.favoritedAtMillis),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        }
-    }
+private fun FavoritesTab(items: List<PlaylistVideo>, onPlayVideo: (String) -> Unit) {
+    PlaylistVideosList(items = items, emptyMessage = "No favorites yet", onPlayVideo = onPlayVideo)
 }
 
 @Composable
-private fun WatchLaterTab(items: List<WatchLaterItem>, onPlayVideo: (String) -> Unit) {
+private fun WatchLaterTab(items: List<PlaylistVideo>, onPlayVideo: (String) -> Unit) {
+    PlaylistVideosList(items = items, emptyMessage = "Nothing in Watch Later", onPlayVideo = onPlayVideo)
+}
+
+@Composable
+private fun PlaylistVideosList(
+    items: List<PlaylistVideo>,
+    emptyMessage: String,
+    onPlayVideo: (String) -> Unit,
+) {
     if (items.isEmpty()) {
-        EmptyTab("Nothing in Watch Later")
+        EmptyTab(emptyMessage)
         return
     }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = 8.dp),
     ) {
-        items(items, key = { it.url }) { item ->
+        items(items, key = { it.id }) { video ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onPlayVideo(item.url) }
+                    .clickable { onPlayVideo(video.url) }
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(
                     modifier = Modifier
-                        .width(100.dp)
+                        .width(120.dp)
                         .aspectRatio(16f / 9f)
                         .clip(RoundedCornerShape(6.dp))
                         .background(MaterialTheme.colorScheme.surfaceVariant),
                 ) {
                     AsyncImage(
-                        model = item.thumbnailUrl,
+                        model = video.thumbnailUrl,
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize(),
@@ -247,25 +229,42 @@ private fun WatchLaterTab(items: List<WatchLaterItem>, onPlayVideo: (String) -> 
                 Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = item.title,
+                        text = video.title,
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    Text(
-                        text = formatDate(item.addedAtMillis),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    if (video.durationSeconds > 0) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = formatDuration(video.durationSeconds),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
         }
     }
 }
 
+private fun formatDuration(seconds: Long): String {
+    val hours = seconds / 3600
+    val minutes = (seconds % 3600) / 60
+    val secs = seconds % 60
+    return if (hours > 0) {
+        String.format(Locale.US, "%d:%02d:%02d", hours, minutes, secs)
+    } else {
+        String.format(Locale.US, "%d:%02d", minutes, secs)
+    }
+}
+
 @Composable
-private fun PlaylistsTab(playlists: List<Playlist>) {
+private fun PlaylistsTab(
+    playlists: List<Playlist>,
+    onOpenPlaylist: (playlistId: String) -> Unit,
+) {
     if (playlists.isEmpty()) {
         EmptyTab("No playlists yet")
         return
@@ -279,6 +278,7 @@ private fun PlaylistsTab(playlists: List<Playlist>) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .clickable { onOpenPlaylist(playlist.id) }
                     .padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
