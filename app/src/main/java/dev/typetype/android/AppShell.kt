@@ -29,8 +29,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,6 +52,7 @@ import dev.typetype.android.core.ui.navigation.ChannelRoute
 import dev.typetype.android.core.ui.navigation.HomeRoute
 import dev.typetype.android.core.ui.navigation.LibraryRoute
 import dev.typetype.android.core.ui.navigation.PlaylistRoute
+import dev.typetype.android.core.ui.navigation.SearchRoute
 import dev.typetype.android.core.ui.navigation.SubscriptionsRoute
 import dev.typetype.android.feature.player.components.LocalMediaController
 import dev.typetype.android.feature.player.components.rememberMediaController
@@ -84,12 +89,20 @@ fun AppShell(
     val isTopLevel = topLevelTabs.any { tab ->
         currentDestination.matchesRoute(tab.route)
     }
-    // Bottom navigation is shown for top-level tabs AND for content browsing
-    // destinations like channel pages and playlist details, so the user can
-    // jump to Home/Subs/Library at any time without back-stacking out.
     val showsBottomNav = isTopLevel ||
         currentDestination?.hasRoute<ChannelRoute>() == true ||
-        currentDestination?.hasRoute<PlaylistRoute>() == true
+        currentDestination?.hasRoute<PlaylistRoute>() == true ||
+        currentDestination?.hasRoute<SearchRoute>() == true
+
+    var activeTabRoute by rememberSaveable { mutableStateOf<String?>(null) }
+    LaunchedEffect(currentDestination) {
+        val matched = topLevelTabs.firstOrNull { tab ->
+            currentDestination.matchesRoute(tab.route)
+        }
+        if (matched != null) {
+            activeTabRoute = matched.route::class.qualifiedName
+        }
+    }
 
     val controllerState = rememberMediaController()
     val controller = controllerState.value
@@ -112,6 +125,7 @@ fun AppShell(
                     if (showsBottomNav) {
                         AppBottomBar(
                             currentDestination = currentDestination,
+                            fallbackTabRouteQualifiedName = activeTabRoute,
                             onTabClick = { route ->
                                 navController.navigate(route) {
                                     popUpTo(HomeRoute) { saveState = true }
@@ -190,14 +204,21 @@ private fun AppTopBar(onOpenSearch: () -> Unit, onOpenSettings: () -> Unit) {
 @Composable
 private fun AppBottomBar(
     currentDestination: NavDestination?,
+    fallbackTabRouteQualifiedName: String?,
     onTabClick: (Any) -> Unit,
 ) {
+    val anyTopLevelMatched = topLevelTabs.any { tab ->
+        currentDestination.matchesRoute(tab.route)
+    }
     NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
         topLevelTabs.forEach { tab ->
-            val selected = currentDestination.matchesRoute(tab.route)
+            val matchesCurrent = currentDestination.matchesRoute(tab.route)
+            val matchesFallback = !anyTopLevelMatched &&
+                tab.route::class.qualifiedName == fallbackTabRouteQualifiedName
+            val selected = matchesCurrent || matchesFallback
             NavigationBarItem(
                 selected = selected,
-                onClick = { if (!selected) onTabClick(tab.route) },
+                onClick = { if (!matchesCurrent) onTabClick(tab.route) },
                 icon = {
                     Icon(
                         painter = painterResource(tab.iconRes),
