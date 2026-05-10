@@ -7,17 +7,6 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 
-/**
- * Toggles edge-to-edge fullscreen on a window. Mirrors LibreTube's WindowHelper
- * (see /home/xut/Documents/Source/LibreTube/.../helpers/WindowHelper.kt:17-42)
- * and PipePipe's showSystemUi/hideSystemUi pair
- * (see VideoDetailFragment.java:2233-2286).
- *
- * Use SHORT_EDGES only in fullscreen so video can extend behind the cutout in
- * landscape; in non-fullscreen rely on Android 9+'s default "content under
- * cutout in portrait" semantics, which avoids the dim status-bar scrim that
- * SHORT_EDGES otherwise leaves on top of dark content.
- */
 object WindowHelper {
 
     fun toggleFullscreen(window: Window, isFullscreen: Boolean) {

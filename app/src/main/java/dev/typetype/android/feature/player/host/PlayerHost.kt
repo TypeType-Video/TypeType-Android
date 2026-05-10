@@ -45,20 +45,6 @@ import kotlinx.coroutines.launch
 
 private val MINI_PLAYER_HEIGHT = 64.dp
 
-/**
- * Floating player overlay that slides between Expanded (full screen), Mini
- * (compact bar above the bottom bar), and Hidden (fully off-screen) states.
- *
- * Replaces the old PlayerRoute navigation entry. Inspired by:
- * - LibreTube `SingleViewTouchableMotionLayout` + `player_scene.xml`
- *   (drag-down via MotionLayout `OnSwipe motion:dragDirection="dragDown"`)
- * - PipePipe `setupBottomPlayer` with `BottomSheetBehavior` and three states
- *   (HIDDEN / COLLAPSED with peekHeight / EXPANDED) — see VideoDetailFragment.java:2500.
- *
- * The host owns the AnchoredDraggable; the [PlayerHostController] only signals
- * "open this video / minimize / hide" — all gesture-driven transitions are
- * handled here and reported back via [PlayerHostController.onAnchorSettled].
- */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PlayerHost(
@@ -108,7 +94,6 @@ fun PlayerHost(
             anchoredState.updateAnchors(anchors)
         }
 
-        // React to controller state changes (openVideo / hide / minimize)
         LaunchedEffect(state.requestStamp) {
             val target = state.target
             if (anchoredState.currentValue != target) {
@@ -122,14 +107,10 @@ fun PlayerHost(
             }
         }
 
-        // Report user-driven settling back to the controller so other parts of
-        // the app see the new target (e.g. a deep-link openVideo while we're
-        // mid-drag).
         LaunchedEffect(anchoredState.settledValue) {
             controller.onAnchorSettled(anchoredState.settledValue)
         }
 
-        // Background content (the NavHost) is always rendered.
         content()
 
         val hasVideo = state.videoUrl != null ||
@@ -137,23 +118,11 @@ fun PlayerHost(
             anchoredState.targetValue != PlayerHostTarget.Hidden
 
         if (hasVideo) {
-            // Collapse-to-mini swipe handler for the player area.
-            // While in PIP, the activity window is tiny and the anchors get
-            // recalculated to overlapping values — force-keep the Expanded
-            // layout so the same PlayerSurface stays composed across the
-            // PIP transition (no re-attachment, no grey screen on exit).
             val isMini = !isInPip && (
                 anchoredState.currentValue == PlayerHostTarget.Mini ||
                     anchoredState.targetValue == PlayerHostTarget.Mini
                 )
-            val isExpanded = anchoredState.currentValue == PlayerHostTarget.Expanded &&
-                abs(anchoredState.requireOffset()) < 1f
 
-            // Dynamic height: while Expanded the Box covers the screen so the
-            // entire player UI is visible. While Mini the Box shrinks down to
-            // exactly the MiniSlot height, freeing the bottom-nav area for
-            // taps. During the drag/animation the height interpolates so
-            // there is no visual jump and tap-targets behave correctly.
             val rawOffsetPx = if (anchoredState.anchors.size > 0) {
                 anchoredState.requireOffset()
             } else {
@@ -177,12 +146,6 @@ fun PlayerHost(
                         IntOffset(0, rawOffsetPx.toInt())
                     }
                     .pointerInput(anchoredState) {
-                        // Player area in pixels: statusBars top inset + 16:9
-                        // of the width. Only intercept downward drags that
-                        // START strictly in this area when Expanded —
-                        // anywhere else (description, related streams) the
-                        // child scroll handles the gesture as usual, no
-                        // glitches.
                         val playerAreaHeightPx = with(density) {
                             statusBarsTop.toPx()
                         } + (size.width.toFloat() * 9f / 16f)
@@ -220,8 +183,6 @@ fun PlayerHost(
                                     val triggered = isClearVertical && when (current) {
                                         PlayerHostTarget.Expanded ->
                                             movement.y > 60f && startPos.y < playerAreaHeightPx
-                                        // Mini is tap-only: tap expands the
-                                        // player, X button closes it. No drag.
                                         PlayerHostTarget.Mini -> false
                                         PlayerHostTarget.Hidden -> false
                                     }
