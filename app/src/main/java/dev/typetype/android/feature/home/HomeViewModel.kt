@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.typetype.android.domain.feed.HomeFeedRepository
+import dev.typetype.android.domain.library.VideoMetaRepository
+import dev.typetype.android.domain.library.cacheVideos
 import dev.typetype.android.domain.server.ServerRepository
 import javax.inject.Inject
 import kotlinx.coroutines.Job
@@ -17,6 +19,7 @@ import kotlinx.coroutines.launch
 class HomeViewModel @Inject constructor(
     serverRepository: ServerRepository,
     private val feedRepository: HomeFeedRepository,
+    private val videoMetaRepository: VideoMetaRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
@@ -53,7 +56,7 @@ class HomeViewModel @Inject constructor(
             val recommendationsDeferred = async { feedRepository.loadHomeRecommendations() }
 
             val subsResult = subsDeferred.await()
-            val subsVideos = subsResult.getOrDefault(emptyList())
+            val subsVideos = subsResult.map { it.videos }.getOrDefault(emptyList())
 
             val (topKind, topVideos, topError) = if (subsVideos.isNotEmpty()) {
                 Triple(TopSectionKind.Subscriptions, subsVideos, null as String?)
@@ -67,6 +70,9 @@ class HomeViewModel @Inject constructor(
             }
 
             val recommendationsResult = recommendationsDeferred.await()
+            val recommendations = recommendationsResult.getOrDefault(emptyList())
+
+            videoMetaRepository.cacheVideos(topVideos + recommendations)
 
             _state.update {
                 it.copy(
@@ -74,7 +80,7 @@ class HomeViewModel @Inject constructor(
                     topSectionKind = topKind,
                     topSectionVideos = topVideos,
                     topSectionError = topError.takeIf { topVideos.isEmpty() },
-                    recommendations = recommendationsResult.getOrDefault(emptyList()),
+                    recommendations = recommendations,
                     recommendationsError = recommendationsResult.exceptionOrNull()?.message,
                 )
             }

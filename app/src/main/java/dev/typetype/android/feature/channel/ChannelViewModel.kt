@@ -7,6 +7,8 @@ import androidx.navigation.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.typetype.android.core.ui.navigation.ChannelRoute
 import dev.typetype.android.domain.channel.ChannelRepository
+import dev.typetype.android.domain.library.VideoMetaRepository
+import dev.typetype.android.domain.library.cacheVideos
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,6 +20,7 @@ import javax.inject.Inject
 class ChannelViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val channelRepository: ChannelRepository,
+    private val videoMetaRepository: VideoMetaRepository,
 ) : ViewModel() {
 
     private val channelUrl = savedStateHandle.toRoute<ChannelRoute>().channelUrl
@@ -43,6 +46,7 @@ class ChannelViewModel @Inject constructor(
             _state.update { it.copy(isLoading = true, errorMessage = null) }
             channelRepository.loadChannel(channelUrl).fold(
                 onSuccess = { channel ->
+                    videoMetaRepository.cacheVideos(channel.videos)
                     _state.update { it.copy(isLoading = false, channel = channel) }
                 },
                 onFailure = { error ->

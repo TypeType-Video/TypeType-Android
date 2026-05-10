@@ -11,6 +11,9 @@ import dev.typetype.android.data.comments.CommentsPagingSource
 import dev.typetype.android.domain.comments.Comment
 import dev.typetype.android.domain.comments.CommentsRepository
 import dev.typetype.android.domain.library.LibraryRepository
+import dev.typetype.android.domain.library.VideoMeta
+import dev.typetype.android.domain.library.VideoMetaRepository
+import dev.typetype.android.domain.library.cacheVideos
 import dev.typetype.android.domain.preferences.PreferencesRepository
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.stream.StreamRepository
@@ -36,6 +39,7 @@ import kotlinx.coroutines.launch
 class PlayerViewModel @Inject constructor(
     private val streamRepository: StreamRepository,
     private val libraryRepository: LibraryRepository,
+    private val videoMetaRepository: VideoMetaRepository,
     private val preferencesRepository: PreferencesRepository,
     private val playerHostController: PlayerHostController,
     val commentsRepository: CommentsRepository,
@@ -168,6 +172,10 @@ class PlayerViewModel @Inject constructor(
                 title = stream.title,
                 thumbnail = stream.thumbnailUrl,
                 duration = stream.durationSeconds,
+                channelName = stream.uploaderName,
+                channelUrl = stream.uploaderUrl,
+                channelAvatarUrl = stream.uploaderAvatarUrl,
+                viewCount = stream.viewCount,
             ).fold(
                 onSuccess = {
                     _state.update {
@@ -198,6 +206,10 @@ class PlayerViewModel @Inject constructor(
                         title = stream.title,
                         thumbnail = stream.thumbnailUrl,
                         duration = stream.durationSeconds,
+                        channelName = stream.uploaderName,
+                        channelUrl = stream.uploaderUrl,
+                        channelAvatarUrl = stream.uploaderAvatarUrl,
+                        viewCount = stream.viewCount,
                     ).fold(
                         onSuccess = {
                             _state.update {
@@ -233,6 +245,7 @@ class PlayerViewModel @Inject constructor(
                     if (currentUrl() == url) {
                         _state.update { it.copy(isLoading = false, stream = stream) }
                         postHistory(url, stream)
+                        cacheStreamMeta(url, stream)
                     }
                 },
                 onFailure = { throwable ->
@@ -258,19 +271,45 @@ class PlayerViewModel @Inject constructor(
                 duration = stream.durationSeconds,
                 channelName = stream.uploaderName,
                 channelUrl = stream.uploaderUrl,
+                channelAvatarUrl = stream.uploaderAvatarUrl,
             )
+        }
+    }
+
+    private fun cacheStreamMeta(url: String, stream: Stream) {
+        viewModelScope.launch {
+            videoMetaRepository.put(
+                VideoMeta(
+                    videoUrl = url,
+                    channelName = stream.uploaderName,
+                    channelUrl = stream.uploaderUrl,
+                    channelAvatarUrl = stream.uploaderAvatarUrl,
+                    viewCount = stream.viewCount,
+                ),
+            )
+            videoMetaRepository.cacheVideos(stream.relatedStreams)
         }
     }
 
     private fun toggleFavorite() {
         val url = currentUrl() ?: return
         val favorited = _state.value.isFavorited
-        val title = _state.value.stream?.title.orEmpty()
+        val stream = _state.value.stream
+        val title = stream?.title.orEmpty()
         viewModelScope.launch {
             val result = if (favorited) {
                 libraryRepository.removeFavorite(url)
             } else {
-                libraryRepository.addFavorite(url)
+                libraryRepository.addFavorite(
+                    videoUrl = url,
+                    title = title,
+                    thumbnail = stream?.thumbnailUrl.orEmpty(),
+                    duration = stream?.durationSeconds ?: 0L,
+                    channelName = stream?.uploaderName.orEmpty(),
+                    channelUrl = stream?.uploaderUrl.orEmpty(),
+                    channelAvatarUrl = stream?.uploaderAvatarUrl.orEmpty(),
+                    viewCount = stream?.viewCount ?: 0L,
+                )
             }
             result.fold(
                 onSuccess = {
@@ -294,6 +333,10 @@ class PlayerViewModel @Inject constructor(
                     title = stream.title,
                     thumbnail = stream.thumbnailUrl,
                     duration = stream.durationSeconds,
+                    channelName = stream.uploaderName,
+                    channelUrl = stream.uploaderUrl,
+                    channelAvatarUrl = stream.uploaderAvatarUrl,
+                    viewCount = stream.viewCount,
                 )
             }
             result.fold(
