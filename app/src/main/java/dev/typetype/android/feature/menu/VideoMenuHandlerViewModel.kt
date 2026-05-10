@@ -32,12 +32,18 @@ class VideoMenuHandlerViewModel @Inject constructor(
     val playlists = libraryRepository.observePlaylists()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    val favoriteUrls = libraryRepository.observeFavorites()
-        .map { items -> items.map { it.videoUrl }.toSet() }
+    val favoriteUrls = libraryRepository.observePlaylists()
+        .map { lists ->
+            lists.firstOrNull { it.name.equals("Favorites", ignoreCase = true) }
+                ?.videos?.map { it.url }?.toSet() ?: emptySet()
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
 
-    val watchLaterUrls = libraryRepository.observeWatchLater()
-        .map { items -> items.map { it.url }.toSet() }
+    val watchLaterUrls = libraryRepository.observePlaylists()
+        .map { lists ->
+            lists.firstOrNull { it.name.equals("Watch Later", ignoreCase = true) }
+                ?.videos?.map { it.url }?.toSet() ?: emptySet()
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
 
     val watchedUrls = libraryRepository.observeHistory()
@@ -58,7 +64,16 @@ class VideoMenuHandlerViewModel @Inject constructor(
             val result = if (isCurrentlyFavorite) {
                 libraryRepository.removeFavorite(video.url)
             } else {
-                libraryRepository.addFavorite(video.url)
+                libraryRepository.addFavorite(
+                    videoUrl = video.url,
+                    title = video.title,
+                    thumbnail = video.thumbnailUrl,
+                    duration = video.durationSeconds,
+                    channelName = video.uploaderName,
+                    channelUrl = video.uploaderUrl,
+                    channelAvatarUrl = video.uploaderAvatarUrl,
+                    viewCount = video.viewCount,
+                )
             }
             val successRes = if (isCurrentlyFavorite) {
                 R.string.snackbar_removed_from_favorites
@@ -79,6 +94,10 @@ class VideoMenuHandlerViewModel @Inject constructor(
                     title = video.title,
                     thumbnail = video.thumbnailUrl,
                     duration = video.durationSeconds,
+                    channelName = video.uploaderName,
+                    channelUrl = video.uploaderUrl,
+                    channelAvatarUrl = video.uploaderAvatarUrl,
+                    viewCount = video.viewCount,
                 )
             }
             val successRes = if (isCurrentlyInWatchLater) {
@@ -99,6 +118,10 @@ class VideoMenuHandlerViewModel @Inject constructor(
                 title = video.title,
                 thumbnail = video.thumbnailUrl,
                 duration = video.durationSeconds,
+                channelName = video.uploaderName,
+                channelUrl = video.uploaderUrl,
+                channelAvatarUrl = video.uploaderAvatarUrl,
+                viewCount = video.viewCount,
             ).fold(
                 onSuccess = {
                     val msg = playlistName?.let {
@@ -123,6 +146,10 @@ class VideoMenuHandlerViewModel @Inject constructor(
                         title = video.title,
                         thumbnail = video.thumbnailUrl,
                         duration = video.durationSeconds,
+                        channelName = video.uploaderName,
+                        channelUrl = video.uploaderUrl,
+                        channelAvatarUrl = video.uploaderAvatarUrl,
+                        viewCount = video.viewCount,
                     ).fold(
                         onSuccess = {
                             _events.send(
@@ -151,6 +178,7 @@ class VideoMenuHandlerViewModel @Inject constructor(
                     duration = video.durationSeconds,
                     channelName = video.uploaderName,
                     channelUrl = video.uploaderUrl,
+                    channelAvatarUrl = video.uploaderAvatarUrl,
                 )
             }
             val successRes = if (isCurrentlyWatched) {
@@ -168,6 +196,77 @@ class VideoMenuHandlerViewModel @Inject constructor(
                 videoActionsRepository.blockVideo(video.url),
                 R.string.snackbar_video_blocked,
             )
+        }
+    }
+
+    fun blockVideoUrl(videoUrl: String) {
+        viewModelScope.launch {
+            emitResult(
+                videoActionsRepository.blockVideo(videoUrl),
+                R.string.snackbar_video_blocked,
+            )
+        }
+    }
+
+    fun removeFromPlaylist(playlistId: String, playlistName: String, videoUrl: String) {
+        viewModelScope.launch {
+            libraryRepository.removeVideoFromPlaylist(playlistId, videoUrl).fold(
+                onSuccess = {
+                    _events.send(
+                        VideoMenuEvent.Snackbar(
+                            context.getString(R.string.snackbar_removed_from_playlist, playlistName),
+                        ),
+                    )
+                },
+                onFailure = { emitFailure(it) },
+            )
+        }
+    }
+
+    fun removeFavoriteUrl(videoUrl: String) {
+        viewModelScope.launch {
+            emitResult(
+                libraryRepository.removeFavorite(videoUrl),
+                R.string.snackbar_removed_from_favorites,
+            )
+        }
+    }
+
+    fun removeWatchLaterUrl(videoUrl: String) {
+        viewModelScope.launch {
+            emitResult(
+                libraryRepository.removeWatchLater(videoUrl),
+                R.string.snackbar_removed_from_watch_later,
+            )
+        }
+    }
+
+    fun toggleWatchedUrl(
+        videoUrl: String,
+        title: String,
+        thumbnail: String,
+        duration: Long,
+        isCurrentlyWatched: Boolean,
+    ) {
+        viewModelScope.launch {
+            val result = if (isCurrentlyWatched) {
+                libraryRepository.removeFromHistory(videoUrl)
+            } else {
+                libraryRepository.addHistory(
+                    videoUrl = videoUrl,
+                    title = title,
+                    thumbnail = thumbnail,
+                    duration = duration,
+                    channelName = "",
+                    channelUrl = "",
+                )
+            }
+            val successRes = if (isCurrentlyWatched) {
+                R.string.snackbar_unmarked_as_watched
+            } else {
+                R.string.snackbar_marked_as_watched
+            }
+            emitResult(result, successRes)
         }
     }
 
