@@ -8,6 +8,7 @@ data class PlayerState(
     val isLoading: Boolean = true,
     val stream: Stream? = null,
     val videoUrl: String = "",
+    val resumeAtMillis: Long = 0L,
     val errorMessage: String? = null,
     val isFavorited: Boolean = false,
     val isInWatchLater: Boolean = false,

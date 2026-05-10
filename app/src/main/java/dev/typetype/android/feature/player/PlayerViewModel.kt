@@ -21,7 +21,9 @@ import dev.typetype.android.feature.player.components.PlayerGestureConfig
 import dev.typetype.android.feature.player.host.PlayerHostController
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -75,6 +77,7 @@ class PlayerViewModel @Inject constructor(
                     it.copy(
                         videoUrl = url.orEmpty(),
                         stream = null,
+                        resumeAtMillis = 0L,
                         isLoading = !url.isNullOrBlank(),
                         errorMessage = null,
                         isFavorited = false,
@@ -240,10 +243,28 @@ class PlayerViewModel @Inject constructor(
         loadStreamJob?.cancel()
         _state.update { it.copy(isLoading = true, errorMessage = null) }
         loadStreamJob = viewModelScope.launch {
-            streamRepository.loadStream(url).fold(
+            val (streamResult, savedMs) = coroutineScope {
+                val streamDeferred = async { streamRepository.loadStream(url) }
+                val progressDeferred = async {
+                    libraryRepository.fetchProgressMillis(url).getOrNull()
+                }
+                streamDeferred.await() to (progressDeferred.await() ?: 0L)
+            }
+            streamResult.fold(
                 onSuccess = { stream ->
                     if (currentUrl() == url) {
-                        _state.update { it.copy(isLoading = false, stream = stream) }
+                        val resumeMs = computeResumeMillis(
+                            savedMs = savedMs,
+                            serverStartMs = stream.startPositionMillis,
+                            durationMs = stream.durationSeconds * 1000L,
+                        )
+                        _state.update {
+                            it.copy(
+                                isLoading = false,
+                                stream = stream,
+                                resumeAtMillis = resumeMs,
+                            )
+                        }
                         postHistory(url, stream)
                         cacheStreamMeta(url, stream)
                     }
@@ -260,6 +281,22 @@ class PlayerViewModel @Inject constructor(
                 },
             )
         }
+    }
+
+    private fun computeResumeMillis(
+        savedMs: Long,
+        serverStartMs: Long,
+        durationMs: Long,
+    ): Long {
+        val candidate = if (savedMs > 0) savedMs else serverStartMs
+        if (candidate < RESUME_MIN_MS) return 0L
+        if (durationMs > 0 && candidate >= durationMs * RESUME_MAX_FRACTION) return 0L
+        return candidate
+    }
+
+    private companion object {
+        const val RESUME_MIN_MS = 5_000L
+        const val RESUME_MAX_FRACTION = 0.95
     }
 
     private fun postHistory(url: String, stream: Stream) {

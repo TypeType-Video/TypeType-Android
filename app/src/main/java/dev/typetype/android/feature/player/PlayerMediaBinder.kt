@@ -11,6 +11,7 @@ internal fun bindStreamToController(
     controller: MediaController,
     stream: Stream,
     videoUrl: String,
+    startMillis: Long,
 ) {
     val (sourceUrl, mimeType) = pickPlayableSource(stream)
     if (sourceUrl == null) return
@@ -27,9 +28,12 @@ internal fun bindStreamToController(
         .build()
     val sameMedia = controller.currentMediaItem?.mediaId == videoUrl
     if (!sameMedia) {
-        controller.setMediaItem(mediaItem)
+        if (startMillis > 0) {
+            controller.setMediaItem(mediaItem, startMillis)
+        } else {
+            controller.setMediaItem(mediaItem)
+        }
         controller.prepare()
-        if (stream.startPositionMillis > 0) controller.seekTo(stream.startPositionMillis)
     }
     controller.playWhenReady = true
 }
