@@ -34,6 +34,15 @@ data object AppearanceRoute
 data object PlayerSettingsRoute
 
 @Serializable
+data object ProfileSettingsRoute
+
+@Serializable
+data object PrivacySettingsRoute
+
+@Serializable
+data object BlockedSettingsRoute
+
+@Serializable
 data object AboutRoute
 
 @Serializable

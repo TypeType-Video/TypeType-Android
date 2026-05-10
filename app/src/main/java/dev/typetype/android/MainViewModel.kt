@@ -11,7 +11,10 @@ import dev.typetype.android.domain.auth.AuthRepository
 import dev.typetype.android.domain.auth.SessionStatus
 import dev.typetype.android.domain.preferences.AppPreferences
 import dev.typetype.android.domain.preferences.PreferencesRepository
+import dev.typetype.android.domain.profile.ProfileRepository
 import dev.typetype.android.domain.server.ServerRepository
+import dev.typetype.android.domain.subscriptions.SubscriptionsRepository
+import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import dev.typetype.android.feature.player.host.PlayerHostController
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
@@ -20,6 +23,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -40,6 +44,9 @@ class MainViewModel @Inject constructor(
     private val tokenStore: AccessTokenStore,
     private val authRepository: AuthRepository,
     private val videoActionsRepository: VideoActionsRepository,
+    private val userSettingsRepository: UserSettingsRepository,
+    private val profileRepository: ProfileRepository,
+    private val subscriptionsRepository: SubscriptionsRepository,
     val playerHostController: PlayerHostController,
     preferencesRepository: PreferencesRepository,
 ) : ViewModel() {
@@ -53,6 +60,22 @@ class MainViewModel @Inject constructor(
             started = SharingStarted.Eagerly,
             initialValue = AppPreferences(),
         )
+
+    val currentServerBaseUrl: StateFlow<String?> = serverRepository.observeCurrentServer()
+        .map { it?.baseUrl }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = null,
+        )
+
+    val currentProfile: StateFlow<dev.typetype.android.domain.profile.Profile?> =
+        profileRepository.observe()
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.Eagerly,
+                initialValue = null,
+            )
 
     private val eventsChannel = Channel<MainEvent>(Channel.BUFFERED)
     val events = eventsChannel.receiveAsFlow()
@@ -72,6 +95,9 @@ class MainViewModel @Inject constructor(
             _state.value = MainState(isLoading = false, startRoute = startRoute)
             if (startRoute == HomeRoute) {
                 launch { videoActionsRepository.refreshBlocked() }
+                launch { userSettingsRepository.refresh() }
+                launch { profileRepository.refresh() }
+                launch { subscriptionsRepository.refresh() }
             }
         }
     }
