@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class PlaylistDetailState(
+    val playlistId: String = "",
     val title: String = "",
     val videos: List<PlaylistVideo> = emptyList(),
     val isLoading: Boolean = true,
@@ -32,6 +33,7 @@ class PlaylistViewModel @Inject constructor(
     val state = _state.asStateFlow()
 
     init {
+        _state.update { it.copy(playlistId = route.playlistId) }
         viewModelScope.launch {
             repository.observePlaylists().collect { playlists ->
                 val playlist = playlists.firstOrNull { it.id == route.playlistId }
@@ -40,6 +42,7 @@ class PlaylistViewModel @Inject constructor(
                 } else {
                     _state.update {
                         it.copy(
+                            playlistId = playlist.id,
                             title = playlist.name,
                             videos = playlist.videos,
                             isLoading = false,
