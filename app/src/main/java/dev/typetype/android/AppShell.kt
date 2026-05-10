@@ -2,6 +2,7 @@ package dev.typetype.android
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -80,6 +81,9 @@ fun AppShell(
     playerHostController: PlayerHostController,
     onOpenSettings: () -> Unit,
     onOpenSearch: () -> Unit = {},
+    onOpenProfile: () -> Unit = {},
+    avatarUrl: String? = null,
+    avatarFallbackLetter: String? = null,
     onPlayVideo: (videoUrl: String) -> Unit,
     onOpenChannel: (channelUrl: String) -> Unit,
     content: @Composable (Modifier) -> Unit,
@@ -118,7 +122,13 @@ fun AppShell(
                 contentWindowInsets = WindowInsets.systemBars,
                 topBar = {
                     if (isTopLevel) {
-                        AppTopBar(onOpenSearch = onOpenSearch, onOpenSettings = onOpenSettings)
+                        AppTopBar(
+                            onOpenSearch = onOpenSearch,
+                            onOpenSettings = onOpenSettings,
+                            onOpenProfile = onOpenProfile,
+                            avatarUrl = avatarUrl,
+                            avatarFallbackLetter = avatarFallbackLetter,
+                        )
                     }
                 },
                 bottomBar = {
@@ -154,7 +164,13 @@ fun AppShell(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AppTopBar(onOpenSearch: () -> Unit, onOpenSettings: () -> Unit) {
+private fun AppTopBar(
+    onOpenSearch: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onOpenProfile: () -> Unit,
+    avatarUrl: String?,
+    avatarFallbackLetter: String?,
+) {
     TopAppBar(
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -194,11 +210,49 @@ private fun AppTopBar(onOpenSearch: () -> Unit, onOpenSettings: () -> Unit) {
                     tint = MaterialTheme.colorScheme.onBackground,
                 )
             }
+            ProfileAvatarButton(
+                avatarUrl = avatarUrl,
+                fallbackLetter = avatarFallbackLetter,
+                onClick = onOpenProfile,
+            )
+            Spacer(Modifier.width(4.dp))
         },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.background,
         ),
     )
+}
+
+@Composable
+private fun ProfileAvatarButton(
+    avatarUrl: String?,
+    fallbackLetter: String?,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .padding(horizontal = 4.dp)
+            .size(34.dp)
+            .clip(androidx.compose.foundation.shape.CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (!avatarUrl.isNullOrBlank()) {
+            coil3.compose.AsyncImage(
+                model = avatarUrl,
+                contentDescription = "Profile",
+                contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                modifier = Modifier.fillMaxSize().padding(3.dp),
+            )
+        } else {
+            Text(
+                text = fallbackLetter?.uppercase() ?: "?",
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
 }
 
 @Composable

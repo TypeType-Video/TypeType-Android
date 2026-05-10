@@ -10,7 +10,14 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.core.ui.navigation.AboutRoute
+import dev.typetype.android.core.ui.navigation.BlockedSettingsRoute
+import dev.typetype.android.core.ui.navigation.PrivacySettingsRoute
+import dev.typetype.android.core.ui.navigation.ProfileSettingsRoute
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
 import dev.typetype.android.core.ui.navigation.AddServerRoute
 import dev.typetype.android.core.ui.navigation.AppearanceRoute
 import dev.typetype.android.core.ui.navigation.ChannelRoute
@@ -32,7 +39,10 @@ import dev.typetype.android.feature.search.SearchRoute as SearchRouteScreen
 import dev.typetype.android.feature.settings.SettingsScreen
 import dev.typetype.android.feature.settings.about.AboutScreen
 import dev.typetype.android.feature.settings.appearance.AppearanceRoute as AppearanceRouteScreen
+import dev.typetype.android.feature.settings.blocked.BlockedSettingsRoute as BlockedSettingsRouteScreen
 import dev.typetype.android.feature.settings.player.PlayerSettingsRoute as PlayerSettingsRouteScreen
+import dev.typetype.android.feature.settings.privacy.PrivacySettingsRoute as PrivacySettingsRouteScreen
+import dev.typetype.android.feature.settings.profile.ProfileSettingsRoute as ProfileSettingsRouteScreen
 import dev.typetype.android.feature.setup.addserver.AddServerRoute as AddServerRouteScreen
 import dev.typetype.android.feature.setup.login.LoginRoute as LoginRouteScreen
 import dev.typetype.android.feature.setup.welcome.WelcomeRoute as WelcomeRouteScreen
@@ -43,6 +53,8 @@ import kotlinx.coroutines.flow.collectLatest
 fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
     val navController: NavHostController = rememberNavController()
     val playerHostController = remember { mainViewModel.playerHostController }
+    val serverBaseUrl by mainViewModel.currentServerBaseUrl.collectAsStateWithLifecycle()
+    val currentProfile by mainViewModel.currentProfile.collectAsStateWithLifecycle()
     val onPlayVideo: (String) -> Unit = { videoUrl ->
         playerHostController.openVideo(videoUrl)
     }
@@ -78,11 +90,29 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
         }
     }
 
+    val avatarUrl = remember(currentProfile, serverBaseUrl) {
+        val p = currentProfile ?: return@remember null
+        when {
+            p.avatarType == "emoji" && p.avatarCode.isNotBlank() ->
+                dev.typetype.android.core.openmoji.openMojiUrl(serverBaseUrl, p.avatarCode)
+            p.avatarUrl.isNotBlank() && p.avatarUrl.startsWith("http") -> p.avatarUrl
+            else -> dev.typetype.android.core.openmoji.openMojiUrl(
+                serverBaseUrl,
+                dev.typetype.android.core.openmoji.pickOpenMojiCode("${p.id}:${p.publicUsername}"),
+            )
+        }
+    }
+    val avatarFallback = currentProfile?.publicUsername?.firstOrNull()?.toString()
+
+    CompositionLocalProvider(LocalServerBaseUrl provides serverBaseUrl) {
     AppShell(
         navController = navController,
         playerHostController = playerHostController,
         onOpenSearch = { navController.navigate(SearchRoute) },
         onOpenSettings = { navController.navigate(SettingsRoute) },
+        onOpenProfile = { navController.navigate(ProfileSettingsRoute) },
+        avatarUrl = avatarUrl,
+        avatarFallbackLetter = avatarFallback,
         onPlayVideo = onPlayVideo,
         onOpenChannel = onOpenChannel,
     ) { innerModifier ->
@@ -197,13 +227,21 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
             composable<SettingsRoute> {
                 SettingsScreen(
                     onNavigateBack = { navController.popBackStack() },
+                    onOpenProfile = { navController.navigate(ProfileSettingsRoute) },
                     onOpenAppearance = { navController.navigate(AppearanceRoute) },
                     onOpenPlayer = { navController.navigate(PlayerSettingsRoute) },
+                    onOpenPrivacy = { navController.navigate(PrivacySettingsRoute) },
+                    onOpenBlocked = { navController.navigate(BlockedSettingsRoute) },
                     onOpenAbout = { navController.navigate(AboutRoute) },
                     onSignOut = {
                         navController.popBackStack()
                         mainViewModel.signOut()
                     },
+                )
+            }
+            composable<ProfileSettingsRoute> {
+                ProfileSettingsRouteScreen(
+                    onNavigateBack = { navController.popBackStack() },
                 )
             }
             composable<AppearanceRoute> {
@@ -213,6 +251,16 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
             }
             composable<PlayerSettingsRoute> {
                 PlayerSettingsRouteScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                )
+            }
+            composable<PrivacySettingsRoute> {
+                PrivacySettingsRouteScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                )
+            }
+            composable<BlockedSettingsRoute> {
+                BlockedSettingsRouteScreen(
                     onNavigateBack = { navController.popBackStack() },
                 )
             }
@@ -228,5 +276,6 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
                 )
             }
         }
+    }
     }
 }
