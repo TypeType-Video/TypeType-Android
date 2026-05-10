@@ -3,6 +3,7 @@ package dev.typetype.android.feature.settings.player
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -11,13 +12,18 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -26,6 +32,9 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,6 +45,43 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.R
+
+private val QUALITY_OPTIONS = listOf("144p", "240p", "360p", "480p", "720p", "1080p", "1440p", "2160p")
+
+private data class ServiceOption(
+    val id: Int,
+    val labelRes: Int,
+    val initial: String,
+    val brandColor: androidx.compose.ui.graphics.Color,
+)
+
+private val SERVICES = listOf(
+    ServiceOption(0, R.string.settings_default_service_youtube, "Y", androidx.compose.ui.graphics.Color(0xFFFF0000)),
+    ServiceOption(6, R.string.settings_default_service_niconico, "N", androidx.compose.ui.graphics.Color(0xFF202020)),
+    ServiceOption(5, R.string.settings_default_service_bilibili, "B", androidx.compose.ui.graphics.Color(0xFF00A1D6)),
+)
+
+private data class LanguageOption(val code: String, val display: String)
+
+private val LANGUAGE_OPTIONS = listOf(
+    LanguageOption("", "Auto"),
+    LanguageOption("en", "English"),
+    LanguageOption("fr", "Français"),
+    LanguageOption("es", "Español"),
+    LanguageOption("de", "Deutsch"),
+    LanguageOption("it", "Italiano"),
+    LanguageOption("pt", "Português"),
+    LanguageOption("ru", "Русский"),
+    LanguageOption("ja", "日本語"),
+    LanguageOption("ko", "한국어"),
+    LanguageOption("zh", "中文"),
+    LanguageOption("ar", "العربية"),
+    LanguageOption("hi", "हिन्दी"),
+    LanguageOption("nl", "Nederlands"),
+    LanguageOption("pl", "Polski"),
+    LanguageOption("sv", "Svenska"),
+    LanguageOption("tr", "Türkçe"),
+)
 
 @Composable
 fun PlayerSettingsRoute(
@@ -60,14 +106,98 @@ fun PlayerSettingsScreen(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars),
-        ) {
+        Column(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars)) {
             TopBar(onNavigateBack = onNavigateBack)
             LazyColumn(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                item { SectionHeader(stringResource(R.string.settings_player_section_playback)) }
+                item {
+                    SwitchRow(
+                        title = stringResource(R.string.settings_player_autoplay),
+                        subtitle = null,
+                        checked = state.autoplayEnabled,
+                        onCheckedChange = { onAction(PlayerSettingsAction.SetAutoplay(it)) },
+                    )
+                }
+                item {
+                    DropdownRow(
+                        title = stringResource(R.string.settings_player_default_quality),
+                        subtitle = stringResource(R.string.settings_player_default_quality_subtitle),
+                        options = QUALITY_OPTIONS.map { it to it },
+                        selectedKey = state.defaultQuality,
+                        onSelect = { onAction(PlayerSettingsAction.SetDefaultQuality(it)) },
+                    )
+                }
+                item {
+                    SwitchRow(
+                        title = stringResource(R.string.settings_player_pause_in_background),
+                        subtitle = null,
+                        checked = state.pauseInBackgroundEnabled,
+                        onCheckedChange = { onAction(PlayerSettingsAction.SetPauseInBackground(it)) },
+                    )
+                }
+
+                if (state.defaultService == 0) {
+                    item { Spacer(Modifier.size(8.dp)) }
+                    item { SectionHeader(stringResource(R.string.settings_player_section_subtitles)) }
+                    item {
+                        SwitchRow(
+                            title = stringResource(R.string.settings_player_subtitles_enabled),
+                            subtitle = stringResource(R.string.settings_player_subtitles_enabled_subtitle),
+                            checked = state.subtitlesEnabled,
+                            onCheckedChange = { onAction(PlayerSettingsAction.SetSubtitlesEnabled(it)) },
+                        )
+                    }
+                    item {
+                        DropdownRow(
+                            title = stringResource(R.string.settings_player_subtitle_language),
+                            subtitle = stringResource(R.string.settings_player_subtitle_language_subtitle),
+                            options = LANGUAGE_OPTIONS.map { it.code to it.display },
+                            selectedKey = state.defaultSubtitleLanguage,
+                            onSelect = { onAction(PlayerSettingsAction.SetSubtitleLanguage(it)) },
+                            enabled = state.subtitlesEnabled,
+                        )
+                    }
+                    item {
+                        DropdownRow(
+                            title = stringResource(R.string.settings_player_audio_language),
+                            subtitle = if (state.preferOriginalLanguage) {
+                                stringResource(R.string.settings_player_prefer_original_active)
+                            } else {
+                                stringResource(R.string.settings_player_audio_language_subtitle)
+                            },
+                            options = LANGUAGE_OPTIONS.map { it.code to it.display },
+                            selectedKey = state.defaultAudioLanguage,
+                            onSelect = { onAction(PlayerSettingsAction.SetAudioLanguage(it)) },
+                            enabled = !state.preferOriginalLanguage,
+                        )
+                    }
+                    item {
+                        SwitchRow(
+                            title = stringResource(R.string.settings_player_prefer_original),
+                            subtitle = stringResource(R.string.settings_player_prefer_original_subtitle),
+                            checked = state.preferOriginalLanguage,
+                            onCheckedChange = { onAction(PlayerSettingsAction.SetPreferOriginalLanguage(it)) },
+                        )
+                    }
+                }
+
+                item { Spacer(Modifier.size(8.dp)) }
+                item { SectionHeader(stringResource(R.string.settings_section_default_service)) }
+                items(SERVICES.size, key = { i -> "svc-${SERVICES[i].id}" }) { i ->
+                    val svc = SERVICES[i]
+                    ServiceRow(
+                        title = stringResource(svc.labelRes),
+                        initial = svc.initial,
+                        brandColor = svc.brandColor,
+                        selected = state.defaultService == svc.id,
+                        onClick = { onAction(PlayerSettingsAction.SetDefaultService(svc.id)) },
+                    )
+                }
+
+                item { Spacer(Modifier.size(8.dp)) }
                 item { SectionHeader(stringResource(R.string.settings_player_section_gestures)) }
                 item {
                     SwitchRow(
@@ -99,24 +229,6 @@ fun PlayerSettingsScreen(
                         subtitle = stringResource(R.string.settings_player_long_press_speed_subtitle),
                         checked = state.longPressSpeedEnabled,
                         onCheckedChange = { onAction(PlayerSettingsAction.SetLongPressSpeed(it)) },
-                    )
-                }
-                item { Spacer(Modifier.width(16.dp)) }
-                item { SectionHeader(stringResource(R.string.settings_player_section_playback)) }
-                item {
-                    SwitchRow(
-                        title = stringResource(R.string.settings_player_autoplay),
-                        subtitle = null,
-                        checked = state.autoplayEnabled,
-                        onCheckedChange = { onAction(PlayerSettingsAction.SetAutoplay(it)) },
-                    )
-                }
-                item {
-                    SwitchRow(
-                        title = stringResource(R.string.settings_player_pause_in_background),
-                        subtitle = null,
-                        checked = state.pauseInBackgroundEnabled,
-                        onCheckedChange = { onAction(PlayerSettingsAction.SetPauseInBackground(it)) },
                     )
                 }
             }
@@ -190,5 +302,181 @@ private fun SwitchRow(
             }
         }
         Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+private fun DropdownRow(
+    title: String,
+    subtitle: String?,
+    options: List<Pair<String, String>>,
+    selectedKey: String,
+    onSelect: (String) -> Unit,
+    enabled: Boolean = true,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedDisplay = options.firstOrNull { it.first == selectedKey }?.second ?: selectedKey
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .clickable(enabled = enabled) { expanded = true }
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        val titleColor = if (enabled) MaterialTheme.colorScheme.onSurface
+        else MaterialTheme.colorScheme.onSurfaceVariant
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                color = titleColor,
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        Box {
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .clickable(enabled = enabled) { expanded = true }
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = selectedDisplay,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = titleColor,
+                )
+                Spacer(Modifier.width(4.dp))
+                Icon(
+                    imageVector = Icons.Filled.ExpandMore,
+                    contentDescription = null,
+                    tint = titleColor,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+            ) {
+                options.forEach { (key, display) ->
+                    DropdownMenuItem(
+                        text = { Text(display) },
+                        onClick = {
+                            onSelect(key)
+                            expanded = false
+                        },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ServiceRow(
+    title: String,
+    initial: String,
+    brandColor: androidx.compose.ui.graphics.Color,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(brandColor),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = initial,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                ),
+                color = androidx.compose.ui.graphics.Color.White,
+            )
+        }
+        Spacer(Modifier.width(14.dp))
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+        )
+        Box(
+            modifier = Modifier
+                .size(20.dp)
+                .clip(CircleShape)
+                .background(
+                    if (selected) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.surfaceVariant,
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (selected) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.onPrimary),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RadioRow(title: String, selected: Boolean, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+        )
+        Box(
+            modifier = Modifier
+                .size(20.dp)
+                .clip(CircleShape)
+                .background(
+                    if (selected) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.surfaceVariant,
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (selected) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.onPrimary),
+                )
+            }
+        }
     }
 }
