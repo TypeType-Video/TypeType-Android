@@ -16,6 +16,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,11 +29,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import dev.typetype.android.R
 import dev.typetype.android.domain.feed.Video
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -39,7 +45,9 @@ fun VideoCard(
     video: Video,
     modifier: Modifier = Modifier,
     onMenuAction: ((VideoMenuAction) -> Unit)? = null,
+    menuItemState: VideoMenuItemState = VideoMenuItemState(),
     onClick: () -> Unit = {},
+    onChannelClick: (() -> Unit)? = null,
 ) {
     var menuVisible by remember { mutableStateOf(false) }
 
@@ -62,6 +70,15 @@ fun VideoCard(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
             )
+            if (menuItemState.isWatched) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(16f / 9f)
+                        .background(Color.Black.copy(alpha = 0.45f)),
+                )
+                WatchedBadge(modifier = Modifier.align(Alignment.TopStart).padding(8.dp))
+            }
             if (video.durationSeconds > 0) {
                 Box(
                     modifier = Modifier
@@ -81,14 +98,16 @@ fun VideoCard(
         }
         Spacer(Modifier.height(10.dp))
         Row(verticalAlignment = Alignment.Top) {
+            val avatarModifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .let { if (onChannelClick != null) it.combinedClickable(onClick = onChannelClick) else it }
             AsyncImage(
                 model = video.uploaderAvatarUrl,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                modifier = avatarModifier,
             )
             Spacer(Modifier.width(10.dp))
             Column(verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.weight(1f)) {
@@ -105,6 +124,11 @@ fun VideoCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = if (onChannelClick != null) {
+                        Modifier.combinedClickable(onClick = onChannelClick)
+                    } else {
+                        Modifier
+                    },
                 )
                 Text(
                     text = "${formatViews(video.viewCount)} views",
@@ -119,6 +143,31 @@ fun VideoCard(
         VideoCardMenu(
             onAction = onMenuAction,
             onDismiss = { menuVisible = false },
+            state = menuItemState,
+        )
+    }
+}
+
+@Composable
+private fun WatchedBadge(modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(6.dp))
+            .background(Color.Black.copy(alpha = 0.7f))
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Visibility,
+            contentDescription = null,
+            tint = Color.White,
+            modifier = Modifier.size(14.dp),
+        )
+        Spacer(Modifier.width(4.dp))
+        Text(
+            text = stringResource(R.string.watched_indicator),
+            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+            color = Color.White,
         )
     }
 }
