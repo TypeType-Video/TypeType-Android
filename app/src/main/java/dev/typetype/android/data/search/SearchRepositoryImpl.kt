@@ -36,4 +36,13 @@ class SearchRepositoryImpl @Inject constructor(
             )
         }
     }
+
+    override suspend fun suggestions(query: String, service: Int): Result<List<String>> = runCatching {
+        val api = apiHolder.require()
+        val response = withContext(Dispatchers.IO) {
+            api.searchSuggestions(query = query, service = service)
+        }
+        if (!response.isSuccessful) error("Suggestions failed (HTTP ${response.code()})")
+        response.body() ?: emptyList()
+    }
 }
