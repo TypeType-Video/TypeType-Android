@@ -15,16 +15,6 @@ data class PlayerHostStateSnapshot(
     val requestStamp: Long = 0L,
 )
 
-/**
- * Singleton state holder for the floating player overlay.
- *
- * Replaces the old PlayerRoute navigation: callers invoke openVideo(url) and the
- * PlayerHost composable observes [state] to expand/collapse/hide the player.
- *
- * The PlayerHost composable owns the AnchoredDraggable; it animates to match
- * [PlayerHostStateSnapshot.target] every time [requestStamp] advances. The user
- * may also drag the player to update [target] back via [onAnchorSettled].
- */
 @Singleton
 class PlayerHostController @Inject constructor() {
 
@@ -63,7 +53,6 @@ class PlayerHostController @Inject constructor() {
         }
     }
 
-    /** Called by the host after the user finishes a drag and the anchor settles. */
     fun onAnchorSettled(target: PlayerHostTarget) {
         _state.update { current ->
             val nextVideoUrl = if (target == PlayerHostTarget.Hidden) null else current.videoUrl

@@ -70,10 +70,6 @@ fun CommentsSheet(
     commentsRepository: CommentsRepository,
     onDismiss: () -> Unit,
 ) {
-    // skipPartiallyExpanded = true so scrolling inside the list never causes
-    // the sheet to grow from PartiallyExpanded to Expanded. We then constrain
-    // the content height so the sheet stays at a fixed size; only drag-down
-    // can dismiss it.
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val items: LazyPagingItems<Comment> = pagingFlow.collectAsLazyPagingItems()
     val context = LocalContext.current
