@@ -3,7 +3,9 @@ package dev.typetype.android.data.actions
 import dev.typetype.android.data.network.TypeTypeApiHolder
 import dev.typetype.android.data.network.dto.BlockChannelRequest
 import dev.typetype.android.data.network.dto.BlockVideoRequest
+import dev.typetype.android.data.network.dto.BlockedItemDto
 import dev.typetype.android.data.network.extractServerErrorMessage
+import dev.typetype.android.domain.actions.BlockedItem
 import dev.typetype.android.domain.actions.VideoActionsRepository
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -11,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 
@@ -19,25 +22,29 @@ class VideoActionsRepositoryImpl @Inject constructor(
     private val apiHolder: TypeTypeApiHolder,
 ) : VideoActionsRepository {
 
-    private val blockedVideos = MutableStateFlow<Set<String>>(emptySet())
-    private val blockedChannels = MutableStateFlow<Set<String>>(emptySet())
+    private val blockedVideosState = MutableStateFlow<List<BlockedItem>>(emptyList())
+    private val blockedChannelsState = MutableStateFlow<List<BlockedItem>>(emptyList())
 
-    override fun observeBlockedVideoUrls(): Flow<Set<String>> = blockedVideos.asStateFlow()
+    override fun observeBlockedVideoUrls(): Flow<Set<String>> =
+        blockedVideosState.map { items -> items.map { it.url }.toSet() }
 
-    override fun observeBlockedChannelUrls(): Flow<Set<String>> = blockedChannels.asStateFlow()
+    override fun observeBlockedChannelUrls(): Flow<Set<String>> =
+        blockedChannelsState.map { items -> items.map { it.url }.toSet() }
+
+    override fun observeBlockedVideos(): Flow<List<BlockedItem>> = blockedVideosState.asStateFlow()
+
+    override fun observeBlockedChannels(): Flow<List<BlockedItem>> = blockedChannelsState.asStateFlow()
 
     override suspend fun refreshBlocked(): Result<Unit> = runCatching {
         val api = apiHolder.require()
-        val (videos, channels) = withContext(Dispatchers.IO) {
+        withContext(Dispatchers.IO) {
             val v = api.blockedVideos()
             val c = api.blockedChannels()
             if (!v.isSuccessful) error(extractServerErrorMessage(v))
             if (!c.isSuccessful) error(extractServerErrorMessage(c))
-            (v.body().orEmpty().mapNotNull { it.url }.toSet()) to
-                (c.body().orEmpty().mapNotNull { it.url }.toSet())
+            blockedVideosState.value = v.body().orEmpty().map { it.toDomain() }
+            blockedChannelsState.value = c.body().orEmpty().map { it.toDomain() }
         }
-        blockedVideos.value = videos
-        blockedChannels.value = channels
     }
 
     override suspend fun blockVideo(videoUrl: String): Result<Unit> = runCatching {
@@ -45,7 +52,10 @@ class VideoActionsRepositoryImpl @Inject constructor(
             apiHolder.require().blockVideo(BlockVideoRequest(url = videoUrl))
         }
         if (!response.isSuccessful) error(extractServerErrorMessage(response))
-        blockedVideos.update { it + videoUrl }
+        blockedVideosState.update { current ->
+            if (current.any { it.url == videoUrl }) current
+            else current + BlockedItem(videoUrl, "", "", System.currentTimeMillis())
+        }
     }
 
     override suspend fun unblockVideo(videoUrl: String): Result<Unit> = runCatching {
@@ -53,7 +63,7 @@ class VideoActionsRepositoryImpl @Inject constructor(
             apiHolder.require().unblockVideo(videoUrl)
         }
         if (!response.isSuccessful) error(extractServerErrorMessage(response))
-        blockedVideos.update { it - videoUrl }
+        blockedVideosState.update { it.filterNot { item -> item.url == videoUrl } }
     }
 
     override suspend fun blockChannel(
@@ -71,7 +81,15 @@ class VideoActionsRepositoryImpl @Inject constructor(
             )
         }
         if (!response.isSuccessful) error(extractServerErrorMessage(response))
-        blockedChannels.update { it + channelUrl }
+        blockedChannelsState.update { current ->
+            if (current.any { it.url == channelUrl }) current
+            else current + BlockedItem(
+                url = channelUrl,
+                name = channelName.orEmpty(),
+                thumbnailUrl = avatarUrl.orEmpty(),
+                blockedAt = System.currentTimeMillis(),
+            )
+        }
     }
 
     override suspend fun unblockChannel(channelUrl: String): Result<Unit> = runCatching {
@@ -79,6 +97,13 @@ class VideoActionsRepositoryImpl @Inject constructor(
             apiHolder.require().unblockChannel(channelUrl)
         }
         if (!response.isSuccessful) error(extractServerErrorMessage(response))
-        blockedChannels.update { it - channelUrl }
+        blockedChannelsState.update { it.filterNot { item -> item.url == channelUrl } }
     }
+
+    private fun BlockedItemDto.toDomain(): BlockedItem = BlockedItem(
+        url = url,
+        name = name.orEmpty(),
+        thumbnailUrl = thumbnailUrl.orEmpty(),
+        blockedAt = blockedAt,
+    )
 }
