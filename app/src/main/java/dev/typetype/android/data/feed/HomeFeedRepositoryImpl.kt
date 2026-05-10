@@ -17,7 +17,9 @@ class HomeFeedRepositoryImpl @Inject constructor(
 
     override suspend fun loadHomeRecommendations(): Result<List<Video>> = runCatching {
         val api = apiHolder.require()
-        val response = withContext(Dispatchers.IO) { api.homeRecommendations() }
+        val response = withContext(Dispatchers.IO) {
+            api.homeRecommendations(intent = "auto")
+        }
         if (!response.isSuccessful) {
             error("Recommendations failed (HTTP ${response.code()})")
         }
