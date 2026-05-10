@@ -1,6 +1,7 @@
 package dev.typetype.android.data.stream
 
 import dev.typetype.android.data.network.TypeTypeApiHolder
+import dev.typetype.android.data.network.extractServerErrorMessage
 import dev.typetype.android.data.network.dto.SponsorBlockSegmentItem
 import dev.typetype.android.data.network.dto.StreamResponse
 import dev.typetype.android.data.network.dto.StreamSegmentItem
@@ -27,7 +28,7 @@ class StreamRepositoryImpl @Inject constructor(
         val api = apiHolder.require()
         val response = withContext(Dispatchers.IO) { api.streams(videoUrl) }
         if (!response.isSuccessful) {
-            error("Stream load failed (HTTP ${response.code()})")
+            error(extractServerErrorMessage(response))
         }
         val body = response.body() ?: error("Empty stream body")
         body.toDomain()

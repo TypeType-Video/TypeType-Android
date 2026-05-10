@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.PlaylistAdd
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.WatchLater
 import androidx.compose.material.icons.outlined.WatchLater
 import androidx.compose.material3.CircularProgressIndicator
@@ -155,8 +156,21 @@ fun PlayerScreen(
 
 @Composable
 private fun LoadingState() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+            .windowInsetsPadding(WindowInsets.statusBars),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(16f / 9f)
+                .background(Color.Black),
+            contentAlignment = Alignment.Center,
+        ) {
+            dev.typetype.android.core.ui.components.AnimatedLoader(size = 88.dp)
+        }
     }
 }
 
@@ -166,14 +180,24 @@ private fun ErrorState(
     onNavigateBack: () -> Unit,
     onRetry: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
+    val classification = dev.typetype.android.feature.player.error.classifyStreamError(message)
+    val illustrationRes = when (classification.kind) {
+        dev.typetype.android.feature.player.error.StreamErrorKind.MemberOnly,
+        dev.typetype.android.feature.player.error.StreamErrorKind.GeoRestricted,
+        -> R.raw.member_only
+        dev.typetype.android.feature.player.error.StreamErrorKind.Generic -> R.raw.error_cat
+    }
+    val displayMessage = when (classification.kind) {
+        dev.typetype.android.feature.player.error.StreamErrorKind.MemberOnly ->
+            stringResource(R.string.state_member_only_message)
+        dev.typetype.android.feature.player.error.StreamErrorKind.GeoRestricted,
+        dev.typetype.android.feature.player.error.StreamErrorKind.Generic ->
+            classification.rawMessage ?: stringResource(R.string.state_failed_to_load_stream)
+    }
+    Box(modifier = Modifier.fillMaxSize()) {
         IconButton(
             onClick = onNavigateBack,
-            modifier = Modifier.align(Alignment.Start),
+            modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -181,16 +205,14 @@ private fun ErrorState(
                 tint = MaterialTheme.colorScheme.onBackground,
             )
         }
-        Spacer(Modifier.height(48.dp))
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.error,
+        dev.typetype.android.core.ui.components.StreamErrorState(
+            title = stringResource(R.string.state_couldnt_load_video),
+            message = displayMessage,
+            illustrationRes = illustrationRes,
+            countryCode = classification.countryCode,
+            onRetry = onRetry,
+            onBack = onNavigateBack,
         )
-        Spacer(Modifier.height(16.dp))
-        androidx.compose.material3.OutlinedButton(onClick = onRetry) {
-            Text(text = stringResource(R.string.player_retry))
-        }
     }
 }
 
@@ -342,6 +364,7 @@ private fun LoadedPlayer(
                     PlayerInteractionRow(
                         isFavorited = isFavorited,
                         isInWatchLater = isInWatchLater,
+                        shareUrl = videoUrl,
                         onToggleFavorite = { onAction(PlayerAction.OnToggleFavorite) },
                         onToggleWatchLater = { onAction(PlayerAction.OnToggleWatchLater) },
                         onAddToPlaylist = { onAction(PlayerAction.OnOpenPlaylistPicker) },
@@ -388,10 +411,13 @@ private fun LoadedPlayer(
 private fun PlayerInteractionRow(
     isFavorited: Boolean,
     isInWatchLater: Boolean,
+    shareUrl: String,
     onToggleFavorite: () -> Unit,
     onToggleWatchLater: () -> Unit,
     onAddToPlaylist: () -> Unit,
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val shareChooserTitle = stringResource(R.string.video_menu_share_chooser)
     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         IconButton(onClick = onToggleFavorite) {
             Icon(
@@ -417,6 +443,19 @@ private fun PlayerInteractionRow(
             Icon(
                 imageVector = Icons.Filled.PlaylistAdd,
                 contentDescription = stringResource(R.string.player_add_to_playlist),
+                tint = MaterialTheme.colorScheme.onBackground,
+            )
+        }
+        IconButton(onClick = {
+            val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(android.content.Intent.EXTRA_TEXT, shareUrl)
+            }
+            context.startActivity(android.content.Intent.createChooser(intent, shareChooserTitle))
+        }) {
+            Icon(
+                imageVector = Icons.Filled.Share,
+                contentDescription = stringResource(R.string.video_menu_share),
                 tint = MaterialTheme.colorScheme.onBackground,
             )
         }
