@@ -18,6 +18,8 @@ import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.LocalAppSnackbarHost
 import dev.typetype.android.core.ui.components.VideoMenuAction
 import dev.typetype.android.core.ui.components.VideoMenuItemState
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildShareUrl
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.feature.player.components.PlaylistPickerSheet
 
@@ -53,6 +55,7 @@ fun rememberVideoMenuScope(
     val blockedVideos by viewModel.blockedVideoUrls.collectAsStateWithLifecycle()
     val blockedChannels by viewModel.blockedChannelUrls.collectAsStateWithLifecycle()
     val shareChooserTitle = stringResource(R.string.video_menu_share_chooser)
+    val serverBaseUrl = LocalServerBaseUrl.current
 
     var pickerVideo by remember { mutableStateOf<Video?>(null) }
 
@@ -94,7 +97,7 @@ fun rememberVideoMenuScope(
             VideoMenuAction.Share -> {
                 val intent = Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, video.url)
+                    putExtra(Intent.EXTRA_TEXT, buildShareUrl(serverBaseUrl, video.url))
                 }
                 context.startActivity(Intent.createChooser(intent, shareChooserTitle))
             }
