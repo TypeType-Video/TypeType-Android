@@ -3,6 +3,7 @@ package dev.typetype.android.data.feed
 import dev.typetype.android.data.network.TypeTypeApiHolder
 import dev.typetype.android.data.network.dto.VideoItem
 import dev.typetype.android.domain.feed.HomeFeedRepository
+import dev.typetype.android.domain.feed.SubscriptionsPage
 import dev.typetype.android.domain.feed.Video
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -34,14 +35,17 @@ class HomeFeedRepositoryImpl @Inject constructor(
         body.map { it.toDomain() }
     }
 
-    override suspend fun loadSubscriptionsFeed(): Result<List<Video>> = runCatching {
+    override suspend fun loadSubscriptionsFeed(page: Int, limit: Int): Result<SubscriptionsPage> = runCatching {
         val api = apiHolder.require()
-        val response = withContext(Dispatchers.IO) { api.subscriptionsFeed() }
+        val response = withContext(Dispatchers.IO) { api.subscriptionsFeed(page = page, limit = limit) }
         if (!response.isSuccessful) {
             error("Subscriptions feed failed (HTTP ${response.code()})")
         }
         val body = response.body() ?: error("Empty subscriptions feed body")
-        body.videos.map { it.toDomain() }
+        SubscriptionsPage(
+            videos = body.videos.map { it.toDomain() },
+            hasMore = body.nextpage != null,
+        )
     }
 
     private fun VideoItem.toDomain(): Video = Video(
