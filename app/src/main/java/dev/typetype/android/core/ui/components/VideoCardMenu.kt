@@ -9,17 +9,25 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BookmarkAdd
+import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CheckCircleOutline
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PersonOff
+import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.WatchLater
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -28,17 +36,29 @@ import androidx.compose.ui.unit.dp
 import dev.typetype.android.R
 
 sealed interface VideoMenuAction {
-    data object AddToFavorites : VideoMenuAction
-    data object AddToWatchLater : VideoMenuAction
+    data object ToggleFavorite : VideoMenuAction
+    data object ToggleWatchLater : VideoMenuAction
+    data object AddToPlaylist : VideoMenuAction
+    data object ToggleWatched : VideoMenuAction
     data object Share : VideoMenuAction
     data object OpenChannel : VideoMenuAction
+    data object BlockVideo : VideoMenuAction
+    data object BlockChannel : VideoMenuAction
 }
+
+@Immutable
+data class VideoMenuItemState(
+    val isFavorite: Boolean = false,
+    val isInWatchLater: Boolean = false,
+    val isWatched: Boolean = false,
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VideoCardMenu(
     onAction: (VideoMenuAction) -> Unit,
     onDismiss: () -> Unit,
+    state: VideoMenuItemState = VideoMenuItemState(),
     showOpenChannel: Boolean = true,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
@@ -49,14 +69,33 @@ fun VideoCardMenu(
     ) {
         Column(modifier = Modifier.padding(bottom = 24.dp)) {
             VideoMenuItem(
-                icon = Icons.Filled.FavoriteBorder,
-                label = stringResource(R.string.video_menu_add_to_favorites),
-                onClick = { onAction(VideoMenuAction.AddToFavorites); onDismiss() },
+                icon = if (state.isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                label = stringResource(
+                    if (state.isFavorite) R.string.video_menu_remove_from_favorites
+                    else R.string.video_menu_add_to_favorites,
+                ),
+                onClick = { onAction(VideoMenuAction.ToggleFavorite); onDismiss() },
             )
             VideoMenuItem(
-                icon = Icons.Filled.BookmarkAdd,
-                label = stringResource(R.string.video_menu_add_to_watch_later),
-                onClick = { onAction(VideoMenuAction.AddToWatchLater); onDismiss() },
+                icon = Icons.Filled.WatchLater,
+                label = stringResource(
+                    if (state.isInWatchLater) R.string.video_menu_remove_from_watch_later
+                    else R.string.video_menu_add_to_watch_later,
+                ),
+                onClick = { onAction(VideoMenuAction.ToggleWatchLater); onDismiss() },
+            )
+            VideoMenuItem(
+                icon = Icons.Filled.PlaylistAdd,
+                label = stringResource(R.string.video_menu_add_to_playlist),
+                onClick = { onAction(VideoMenuAction.AddToPlaylist); onDismiss() },
+            )
+            VideoMenuItem(
+                icon = if (state.isWatched) Icons.Filled.CheckCircle else Icons.Filled.CheckCircleOutline,
+                label = stringResource(
+                    if (state.isWatched) R.string.video_menu_unmark_as_watched
+                    else R.string.video_menu_mark_as_watched,
+                ),
+                onClick = { onAction(VideoMenuAction.ToggleWatched); onDismiss() },
             )
             VideoMenuItem(
                 icon = Icons.Filled.Share,
@@ -68,6 +107,19 @@ fun VideoCardMenu(
                     icon = Icons.Filled.Person,
                     label = stringResource(R.string.video_menu_open_channel),
                     onClick = { onAction(VideoMenuAction.OpenChannel); onDismiss() },
+                )
+            }
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+            VideoMenuItem(
+                icon = Icons.Filled.Block,
+                label = stringResource(R.string.video_menu_block_video),
+                onClick = { onAction(VideoMenuAction.BlockVideo); onDismiss() },
+            )
+            if (showOpenChannel) {
+                VideoMenuItem(
+                    icon = Icons.Filled.PersonOff,
+                    label = stringResource(R.string.video_menu_block_channel),
+                    onClick = { onAction(VideoMenuAction.BlockChannel); onDismiss() },
                 )
             }
         }
