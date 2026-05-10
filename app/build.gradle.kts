@@ -136,6 +136,7 @@ dependencies {
     implementation(libs.coil)
     implementation(libs.coil.compose)
     implementation(libs.coil.gif)
+    implementation(libs.coil.svg)
     implementation(libs.coil.network.okhttp)
 
     implementation(libs.room)
