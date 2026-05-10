@@ -10,6 +10,7 @@ import dev.typetype.android.data.channel.ChannelRepositoryImpl
 import dev.typetype.android.data.comments.CommentsRepositoryImpl
 import dev.typetype.android.data.feed.HomeFeedRepositoryImpl
 import dev.typetype.android.data.library.OfflineLibraryRepository
+import dev.typetype.android.data.library.RoomVideoMetaRepository
 import dev.typetype.android.data.preferences.DataStorePreferencesRepository
 import dev.typetype.android.data.search.SearchRepositoryImpl
 import dev.typetype.android.data.searchhistory.RemoteSearchHistoryStore
@@ -22,6 +23,7 @@ import dev.typetype.android.domain.channel.ChannelRepository
 import dev.typetype.android.domain.comments.CommentsRepository
 import dev.typetype.android.domain.feed.HomeFeedRepository
 import dev.typetype.android.domain.library.LibraryRepository
+import dev.typetype.android.domain.library.VideoMetaRepository
 import dev.typetype.android.domain.preferences.PreferencesRepository
 import dev.typetype.android.domain.search.SearchRepository
 import dev.typetype.android.domain.searchhistory.SearchHistoryRepository
@@ -69,6 +71,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindLibraryRepository(impl: OfflineLibraryRepository): LibraryRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindVideoMetaRepository(impl: RoomVideoMetaRepository): VideoMetaRepository
 
     @Binds
     @Singleton
