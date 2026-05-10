@@ -1,5 +1,6 @@
 package dev.typetype.android.data.library.local
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -25,4 +26,8 @@ data class PlaylistVideoEntity(
     val thumbnailUrl: String,
     val durationSeconds: Long,
     val position: Int,
+    @ColumnInfo(defaultValue = "") val channelName: String = "",
+    @ColumnInfo(defaultValue = "") val channelUrl: String = "",
+    @ColumnInfo(defaultValue = "") val channelAvatarUrl: String = "",
+    @ColumnInfo(defaultValue = "0") val viewCount: Long = 0L,
 )

@@ -13,6 +13,9 @@ interface PlaylistsDao {
     @Query("SELECT * FROM playlists ORDER BY createdAtMillis DESC")
     fun observeAllWithVideos(): Flow<List<PlaylistWithVideos>>
 
+    @Query("SELECT id FROM playlists WHERE name = :name COLLATE NOCASE LIMIT 1")
+    suspend fun findIdByName(name: String): String?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertPlaylist(playlist: PlaylistEntity)
 
@@ -24,6 +27,9 @@ interface PlaylistsDao {
 
     @Query("DELETE FROM playlist_videos")
     suspend fun deleteAllVideos()
+
+    @Query("DELETE FROM playlist_videos WHERE playlistId = :playlistId AND url = :videoUrl")
+    suspend fun deleteVideoFromPlaylist(playlistId: String, videoUrl: String)
 
     @Transaction
     suspend fun replaceAll(playlists: List<PlaylistEntity>, videos: List<PlaylistVideoEntity>) {
