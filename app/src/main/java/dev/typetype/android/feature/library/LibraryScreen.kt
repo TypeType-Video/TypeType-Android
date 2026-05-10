@@ -18,23 +18,31 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SecondaryScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import dev.typetype.android.R
+import dev.typetype.android.core.ui.components.FullScreenLoader
+import dev.typetype.android.core.ui.components.LibraryFilterBar
+import dev.typetype.android.core.ui.components.LibrarySortMode
 import dev.typetype.android.domain.library.HistoryItem
 import dev.typetype.android.domain.library.Playlist
 import dev.typetype.android.domain.library.PlaylistVideo
@@ -65,6 +73,10 @@ fun LibraryScreen(
     onAction: (LibraryAction) -> Unit,
 ) {
     val tabs = LibraryTab.entries
+    var filter by rememberSaveable(state.selectedTab) { mutableStateOf("") }
+    var sort by rememberSaveable(state.selectedTab) {
+        mutableStateOf(defaultSortFor(state.selectedTab))
+    }
     Column(modifier = Modifier.fillMaxSize()) {
         SecondaryScrollableTabRow(
             selectedTabIndex = tabs.indexOf(state.selectedTab),
@@ -90,37 +102,114 @@ fun LibraryScreen(
         }
 
         if (state.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-            }
+            FullScreenLoader()
             return
         }
 
+        LibraryFilterBar(
+            query = filter,
+            onQueryChange = { filter = it },
+            sortOptions = sortOptionsFor(state.selectedTab),
+            selectedSort = sort,
+            onSortChange = { sort = it },
+        )
+
         when (state.selectedTab) {
             LibraryTab.History -> HistoryTab(
-                items = state.history,
+                items = sortHistory(filterHistory(state.history, filter), sort),
+                filter = filter,
                 onPlayVideo = onPlayVideo,
             )
             LibraryTab.Favorites -> FavoritesTab(
-                items = state.favorites,
+                items = sortPlaylistVideos(filterPlaylistVideos(state.favorites, filter), sort),
+                filter = filter,
                 onPlayVideo = onPlayVideo,
             )
             LibraryTab.WatchLater -> WatchLaterTab(
-                items = state.watchLater,
+                items = sortPlaylistVideos(filterPlaylistVideos(state.watchLater, filter), sort),
+                filter = filter,
                 onPlayVideo = onPlayVideo,
             )
             LibraryTab.Playlists -> PlaylistsTab(
-                playlists = state.playlists,
+                playlists = sortPlaylists(filterPlaylists(state.playlists, filter), sort),
+                filter = filter,
                 onOpenPlaylist = onOpenPlaylist,
             )
         }
     }
 }
 
+private fun defaultSortFor(tab: LibraryTab): LibrarySortMode = when (tab) {
+    LibraryTab.History -> LibrarySortMode.RecentFirst
+    LibraryTab.Favorites -> LibrarySortMode.RecentFirst
+    LibraryTab.WatchLater -> LibrarySortMode.RecentFirst
+    LibraryTab.Playlists -> LibrarySortMode.RecentFirst
+}
+
+private fun sortOptionsFor(tab: LibraryTab): List<LibrarySortMode> = when (tab) {
+    LibraryTab.History,
+    LibraryTab.Favorites,
+    LibraryTab.WatchLater -> listOf(
+        LibrarySortMode.RecentFirst,
+        LibrarySortMode.OldestFirst,
+        LibrarySortMode.TitleAZ,
+        LibrarySortMode.TitleZA,
+    )
+    LibraryTab.Playlists -> listOf(
+        LibrarySortMode.RecentFirst,
+        LibrarySortMode.OldestFirst,
+        LibrarySortMode.NameAZ,
+        LibrarySortMode.NameZA,
+    )
+}
+
+private fun sortHistory(items: List<HistoryItem>, mode: LibrarySortMode): List<HistoryItem> = when (mode) {
+    LibrarySortMode.OldestFirst -> items.sortedBy { it.watchedAtMillis }
+    LibrarySortMode.TitleAZ -> items.sortedBy { it.title.lowercase() }
+    LibrarySortMode.TitleZA -> items.sortedByDescending { it.title.lowercase() }
+    else -> items.sortedByDescending { it.watchedAtMillis }
+}
+
+private fun sortPlaylistVideos(
+    items: List<PlaylistVideo>,
+    mode: LibrarySortMode,
+): List<PlaylistVideo> = when (mode) {
+    LibrarySortMode.OldestFirst -> items.sortedBy { it.position }
+    LibrarySortMode.TitleAZ -> items.sortedBy { it.title.lowercase() }
+    LibrarySortMode.TitleZA -> items.sortedByDescending { it.title.lowercase() }
+    else -> items.sortedByDescending { it.position }
+}
+
+private fun sortPlaylists(items: List<Playlist>, mode: LibrarySortMode): List<Playlist> = when (mode) {
+    LibrarySortMode.OldestFirst -> items.sortedBy { it.createdAtMillis }
+    LibrarySortMode.NameAZ -> items.sortedBy { it.name.lowercase() }
+    LibrarySortMode.NameZA -> items.sortedByDescending { it.name.lowercase() }
+    else -> items.sortedByDescending { it.createdAtMillis }
+}
+
+private fun matchesFilter(text: String, filter: String): Boolean =
+    filter.isBlank() || text.contains(filter.trim(), ignoreCase = true)
+
+private fun filterHistory(items: List<HistoryItem>, filter: String): List<HistoryItem> =
+    if (filter.isBlank()) items
+    else items.filter { matchesFilter(it.title, filter) || matchesFilter(it.channelName, filter) }
+
+private fun filterPlaylistVideos(items: List<PlaylistVideo>, filter: String): List<PlaylistVideo> =
+    if (filter.isBlank()) items
+    else items.filter { matchesFilter(it.title, filter) }
+
+private fun filterPlaylists(items: List<Playlist>, filter: String): List<Playlist> =
+    if (filter.isBlank()) items
+    else items.filter { matchesFilter(it.name, filter) }
+
 @Composable
-private fun HistoryTab(items: List<HistoryItem>, onPlayVideo: (String) -> Unit) {
+private fun HistoryTab(
+    items: List<HistoryItem>,
+    filter: String,
+    onPlayVideo: (String) -> Unit,
+) {
     if (items.isEmpty()) {
-        EmptyTab("No watch history yet")
+        EmptyTab(emptyMessageFor(filter, "No watch history yet"))
         return
     }
     LazyColumn(
@@ -181,14 +270,34 @@ private fun HistoryRow(item: HistoryItem, onClick: () -> Unit) {
 }
 
 @Composable
-private fun FavoritesTab(items: List<PlaylistVideo>, onPlayVideo: (String) -> Unit) {
-    PlaylistVideosList(items = items, emptyMessage = "No favorites yet", onPlayVideo = onPlayVideo)
+private fun FavoritesTab(
+    items: List<PlaylistVideo>,
+    filter: String,
+    onPlayVideo: (String) -> Unit,
+) {
+    PlaylistVideosList(
+        items = items,
+        emptyMessage = emptyMessageFor(filter, "No favorites yet"),
+        onPlayVideo = onPlayVideo,
+    )
 }
 
 @Composable
-private fun WatchLaterTab(items: List<PlaylistVideo>, onPlayVideo: (String) -> Unit) {
-    PlaylistVideosList(items = items, emptyMessage = "Nothing in Watch Later", onPlayVideo = onPlayVideo)
+private fun WatchLaterTab(
+    items: List<PlaylistVideo>,
+    filter: String,
+    onPlayVideo: (String) -> Unit,
+) {
+    PlaylistVideosList(
+        items = items,
+        emptyMessage = emptyMessageFor(filter, "Nothing in Watch Later"),
+        onPlayVideo = onPlayVideo,
+    )
 }
+
+@Composable
+private fun emptyMessageFor(filter: String, default: String): String =
+    if (filter.isBlank()) default else stringResource(R.string.library_filter_no_match, filter)
 
 @Composable
 private fun PlaylistVideosList(
@@ -263,10 +372,11 @@ private fun formatDuration(seconds: Long): String {
 @Composable
 private fun PlaylistsTab(
     playlists: List<Playlist>,
+    filter: String,
     onOpenPlaylist: (playlistId: String) -> Unit,
 ) {
     if (playlists.isEmpty()) {
-        EmptyTab("No playlists yet")
+        EmptyTab(emptyMessageFor(filter, "No playlists yet"))
         return
     }
     LazyColumn(

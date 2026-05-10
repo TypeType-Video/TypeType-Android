@@ -25,16 +25,23 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import dev.typetype.android.R
+import dev.typetype.android.core.ui.components.LibraryFilterBar
+import dev.typetype.android.core.ui.components.LibrarySortMode
 import dev.typetype.android.domain.library.PlaylistVideo
 import java.util.Locale
 
@@ -62,6 +69,25 @@ private fun PlaylistScreen(
     onNavigateBack: () -> Unit,
     onPlayVideo: (String) -> Unit,
 ) {
+    var filter by rememberSaveable { mutableStateOf("") }
+    var sort by rememberSaveable { mutableStateOf(LibrarySortMode.DefaultOrder) }
+    val sortOptions = listOf(
+        LibrarySortMode.DefaultOrder,
+        LibrarySortMode.TitleAZ,
+        LibrarySortMode.TitleZA,
+    )
+    val filtered = if (filter.isBlank()) {
+        videos
+    } else {
+        val needle = filter.trim()
+        videos.filter { it.title.contains(needle, ignoreCase = true) }
+    }
+    val visible = when (sort) {
+        LibrarySortMode.TitleAZ -> filtered.sortedBy { it.title.lowercase() }
+        LibrarySortMode.TitleZA -> filtered.sortedByDescending { it.title.lowercase() }
+        else -> filtered.sortedBy { it.position }
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp),
@@ -95,10 +121,25 @@ private fun PlaylistScreen(
             return
         }
 
-        if (videos.isEmpty()) {
+        if (videos.isNotEmpty()) {
+            LibraryFilterBar(
+                query = filter,
+                onQueryChange = { filter = it },
+                sortOptions = sortOptions,
+                selectedSort = sort,
+                onSortChange = { sort = it },
+            )
+        }
+
+        if (visible.isEmpty()) {
+            val message = if (filter.isBlank()) {
+                "Empty playlist"
+            } else {
+                stringResource(R.string.library_filter_no_match, filter)
+            }
             Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "Empty playlist",
+                    text = message,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -111,7 +152,7 @@ private fun PlaylistScreen(
             contentPadding = PaddingValues(vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            items(videos, key = { it.id }) { video ->
+            items(visible, key = { it.id }) { video ->
                 PlaylistVideoRow(video = video, onClick = { onPlayVideo(video.url) })
             }
         }
