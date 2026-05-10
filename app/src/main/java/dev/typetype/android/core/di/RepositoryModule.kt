@@ -12,11 +12,14 @@ import dev.typetype.android.data.feed.HomeFeedRepositoryImpl
 import dev.typetype.android.data.library.OfflineLibraryRepository
 import dev.typetype.android.data.library.RoomVideoMetaRepository
 import dev.typetype.android.data.preferences.DataStorePreferencesRepository
+import dev.typetype.android.data.profile.RemoteProfileRepository
 import dev.typetype.android.data.search.SearchRepositoryImpl
 import dev.typetype.android.data.searchhistory.RemoteSearchHistoryStore
 import dev.typetype.android.data.server.RoomServerRepository
 import dev.typetype.android.data.setup.SetupRepositoryImpl
 import dev.typetype.android.data.stream.StreamRepositoryImpl
+import dev.typetype.android.data.subscriptions.RemoteSubscriptionsRepository
+import dev.typetype.android.data.usersettings.RemoteUserSettingsRepository
 import dev.typetype.android.domain.actions.VideoActionsRepository
 import dev.typetype.android.domain.auth.AuthRepository
 import dev.typetype.android.domain.channel.ChannelRepository
@@ -25,11 +28,14 @@ import dev.typetype.android.domain.feed.HomeFeedRepository
 import dev.typetype.android.domain.library.LibraryRepository
 import dev.typetype.android.domain.library.VideoMetaRepository
 import dev.typetype.android.domain.preferences.PreferencesRepository
+import dev.typetype.android.domain.profile.ProfileRepository
 import dev.typetype.android.domain.search.SearchRepository
 import dev.typetype.android.domain.searchhistory.SearchHistoryRepository
 import dev.typetype.android.domain.server.ServerRepository
 import dev.typetype.android.domain.setup.SetupRepository
 import dev.typetype.android.domain.stream.StreamRepository
+import dev.typetype.android.domain.subscriptions.SubscriptionsRepository
+import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import javax.inject.Singleton
 
 @Module
@@ -87,4 +93,16 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindVideoActionsRepository(impl: VideoActionsRepositoryImpl): VideoActionsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindUserSettingsRepository(impl: RemoteUserSettingsRepository): UserSettingsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindProfileRepository(impl: RemoteProfileRepository): ProfileRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSubscriptionsRepository(impl: RemoteSubscriptionsRepository): SubscriptionsRepository
 }

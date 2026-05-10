@@ -26,6 +26,7 @@ import dev.typetype.android.data.network.dto.SessionResponse
 import dev.typetype.android.data.network.dto.StreamResponse
 import dev.typetype.android.data.network.dto.SubscriptionFeedResponse
 import dev.typetype.android.data.network.dto.UserProfile
+import dev.typetype.android.data.network.dto.UserSettingsDto
 import dev.typetype.android.data.network.dto.VideoItem
 import dev.typetype.android.data.network.dto.WatchLaterItemDto
 import retrofit2.Response
@@ -62,6 +63,39 @@ interface TypeTypeApi {
 
     @GET("auth/me")
     suspend fun me(): Response<UserProfile>
+
+    @PUT("profile")
+    suspend fun updateProfile(
+        @Body body: dev.typetype.android.data.network.dto.ProfileUpdateRequest,
+    ): Response<Unit>
+
+    @PUT("profile/avatar/emoji")
+    suspend fun setAvatarEmoji(
+        @Body body: dev.typetype.android.data.network.dto.AvatarEmojiRequest,
+    ): Response<Unit>
+
+    @DELETE("profile/avatar")
+    suspend fun clearAvatar(): Response<Unit>
+
+    @GET("settings")
+    suspend fun settings(): Response<UserSettingsDto>
+
+    @PUT("settings")
+    suspend fun updateSettings(@Body body: UserSettingsDto): Response<UserSettingsDto>
+
+    @DELETE("history")
+    suspend fun clearHistory(): Response<Unit>
+
+    @GET("subscriptions")
+    suspend fun subscriptions(): Response<List<dev.typetype.android.data.network.dto.SubscriptionItemDto>>
+
+    @POST("subscriptions")
+    suspend fun subscribe(
+        @Body body: dev.typetype.android.data.network.dto.SubscriptionItemDto,
+    ): Response<Unit>
+
+    @DELETE("subscriptions")
+    suspend fun unsubscribe(@Query("url") channelUrl: String): Response<Unit>
 
     @GET("recommendations/home")
     suspend fun homeRecommendations(
@@ -131,6 +165,11 @@ interface TypeTypeApi {
         @Body body: SaveProgressRequest,
     ): Response<Unit>
 
+    @GET("progress/{videoUrl}")
+    suspend fun fetchProgress(
+        @Path("videoUrl") videoUrl: String,
+    ): Response<dev.typetype.android.data.network.dto.ProgressItemDto>
+
     @POST("playlists")
     suspend fun createPlaylist(@Body body: CreatePlaylistRequest): Response<PlaylistDto>
 
@@ -178,6 +217,9 @@ interface TypeTypeApi {
 
     @DELETE("search-history")
     suspend fun removeSearchHistory(@Query("query") query: String): Response<Unit>
+
+    @DELETE("search-history")
+    suspend fun clearSearchHistory(): Response<Unit>
 
     @GET("streams")
     suspend fun streams(
