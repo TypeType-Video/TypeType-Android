@@ -9,4 +9,5 @@ data class SearchState(
     val errorMessage: String? = null,
     val hasSearched: Boolean = false,
     val searchHistory: List<String> = emptyList(),
+    val suggestions: List<String> = emptyList(),
 )

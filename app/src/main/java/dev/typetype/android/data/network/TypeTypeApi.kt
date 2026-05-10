@@ -164,6 +164,12 @@ interface TypeTypeApi {
     @DELETE("blocked/channels/{channelUrl}")
     suspend fun unblockChannel(@Path("channelUrl") channelUrl: String): Response<Unit>
 
+    @GET("suggestions")
+    suspend fun searchSuggestions(
+        @Query("query") query: String,
+        @Query("service") service: Int = 0,
+    ): Response<List<String>>
+
     @GET("search-history")
     suspend fun searchHistory(): Response<List<String>>
 
