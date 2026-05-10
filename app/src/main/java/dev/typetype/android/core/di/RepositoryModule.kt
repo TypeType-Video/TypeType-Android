@@ -4,6 +4,7 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import dev.typetype.android.data.actions.VideoActionsRepositoryImpl
 import dev.typetype.android.data.auth.AuthRepositoryImpl
 import dev.typetype.android.data.channel.ChannelRepositoryImpl
 import dev.typetype.android.data.comments.CommentsRepositoryImpl
@@ -15,6 +16,7 @@ import dev.typetype.android.data.searchhistory.RemoteSearchHistoryStore
 import dev.typetype.android.data.server.RoomServerRepository
 import dev.typetype.android.data.setup.SetupRepositoryImpl
 import dev.typetype.android.data.stream.StreamRepositoryImpl
+import dev.typetype.android.domain.actions.VideoActionsRepository
 import dev.typetype.android.domain.auth.AuthRepository
 import dev.typetype.android.domain.channel.ChannelRepository
 import dev.typetype.android.domain.comments.CommentsRepository
@@ -75,4 +77,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSearchHistoryRepository(impl: RemoteSearchHistoryStore): SearchHistoryRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindVideoActionsRepository(impl: VideoActionsRepositoryImpl): VideoActionsRepository
 }

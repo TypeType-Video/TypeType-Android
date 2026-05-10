@@ -3,6 +3,9 @@ package dev.typetype.android.data.network
 import dev.typetype.android.data.network.dto.AddHistoryRequest
 import dev.typetype.android.data.network.dto.AddPlaylistVideoRequest
 import dev.typetype.android.data.network.dto.AddWatchLaterRequest
+import dev.typetype.android.data.network.dto.BlockChannelRequest
+import dev.typetype.android.data.network.dto.BlockVideoRequest
+import dev.typetype.android.data.network.dto.BlockedItemDto
 import dev.typetype.android.data.network.dto.ChannelResponse
 import dev.typetype.android.data.network.dto.CreatePlaylistRequest
 import dev.typetype.android.data.network.dto.CommentsPageResponse
@@ -142,6 +145,24 @@ interface TypeTypeApi {
         @Path("id") playlistId: String,
         @Path("videoUrl") videoUrl: String,
     ): Response<Unit>
+
+    @POST("blocked/videos")
+    suspend fun blockVideo(@Body body: BlockVideoRequest): Response<Unit>
+
+    @POST("blocked/channels")
+    suspend fun blockChannel(@Body body: BlockChannelRequest): Response<Unit>
+
+    @GET("blocked/videos")
+    suspend fun blockedVideos(): Response<List<BlockedItemDto>>
+
+    @GET("blocked/channels")
+    suspend fun blockedChannels(): Response<List<BlockedItemDto>>
+
+    @DELETE("blocked/videos/{videoUrl}")
+    suspend fun unblockVideo(@Path("videoUrl") videoUrl: String): Response<Unit>
+
+    @DELETE("blocked/channels/{channelUrl}")
+    suspend fun unblockChannel(@Path("channelUrl") channelUrl: String): Response<Unit>
 
     @GET("search-history")
     suspend fun searchHistory(): Response<List<String>>

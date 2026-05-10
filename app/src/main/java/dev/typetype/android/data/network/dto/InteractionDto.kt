@@ -41,3 +41,24 @@ data class AddPlaylistVideoRequest(
     val thumbnail: String,
     val duration: Long,
 )
+
+@Serializable
+data class BlockVideoRequest(
+    val url: String,
+)
+
+@Serializable
+data class BlockChannelRequest(
+    val url: String,
+    val name: String? = null,
+    val thumbnailUrl: String? = null,
+)
+
+@Serializable
+data class BlockedItemDto(
+    val url: String,
+    val name: String? = null,
+    val thumbnailUrl: String? = null,
+    val blockedAt: Long = 0,
+    val global: Boolean? = null,
+)
