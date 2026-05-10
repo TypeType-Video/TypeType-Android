@@ -62,6 +62,7 @@
     <string name="search_no_results">No results for \"%1$s\"</string>
     <string name="search_back">Back</string>
     <string name="search_clear">Clear</string>
+    <string name="search_submit">Search</string>
     <string name="video_menu_add_to_favorites">Add to favorites</string>
     <string name="video_menu_remove_from_favorites">Remove from favorites</string>
     <string name="video_menu_add_to_watch_later">Add to Watch Later</string>
@@ -99,6 +100,17 @@
     <string name="snackbar_channel_blocked">Channel blocked</string>
     <string name="snackbar_channel_unblocked">Channel unblocked</string>
     <string name="snackbar_action_failed">Action failed</string>
+    <string name="snackbar_removed_from_playlist">Removed from %1$s</string>
+    <string name="playlist_action_remove_from_favorites">Remove from Favorites</string>
+    <string name="playlist_action_remove_from_watch_later">Remove from Watch Later</string>
+    <string name="playlist_action_remove_from_playlist">Remove from %1$s</string>
+    <string name="playlist_action_mark_watched">Mark as watched</string>
+    <string name="playlist_action_unmark_watched">Remove from history</string>
+    <string name="playlist_action_share">Share</string>
+    <string name="playlist_action_block_video">Block video</string>
+    <string name="playlist_card_video_count">%1$d videos</string>
+    <string name="playlist_card_single_video">1 video</string>
+    <string name="playlist_empty">Empty playlist</string>
     <string name="watched_indicator">Watched</string>
     <string name="library_filter_placeholder">Filter videos…</string>
     <string name="library_filter_clear">Clear filter</string>
