@@ -149,6 +149,15 @@ class LibraryNetworkSource @Inject constructor(
         if (!response.isSuccessful) error("Add history failed (HTTP ${response.code()})")
     }
 
+    suspend fun getProgress(videoUrl: String): Long? = withContext(Dispatchers.IO) {
+        val response = apiHolder.require().fetchProgress(videoUrl)
+        when {
+            response.isSuccessful -> response.body()?.position
+            response.code() == 404 -> null
+            else -> error("Fetch progress failed (HTTP ${response.code()})")
+        }
+    }
+
     suspend fun putProgress(videoUrl: String, positionMillis: Long) = withContext(Dispatchers.IO) {
         val response = apiHolder.require().saveProgress(
             videoUrl = videoUrl,
@@ -200,4 +209,26 @@ class LibraryNetworkSource @Inject constructor(
                 error("Remove from playlist failed (HTTP ${response.code()})")
             }
         }
+
+    suspend fun deleteAllHistory() = withContext(Dispatchers.IO) {
+        val response = apiHolder.require().clearHistory()
+        if (!response.isSuccessful) error("Clear history failed (HTTP ${response.code()})")
+    }
+
+    suspend fun deleteAllSearchHistory() = withContext(Dispatchers.IO) {
+        val response = apiHolder.require().clearSearchHistory()
+        if (!response.isSuccessful) error("Clear search history failed (HTTP ${response.code()})")
+    }
+
+    suspend fun fetchSubscriptions(): List<dev.typetype.android.data.network.dto.SubscriptionItemDto> =
+        withContext(Dispatchers.IO) {
+            val response = apiHolder.require().subscriptions()
+            if (!response.isSuccessful) error("Subscriptions failed (HTTP ${response.code()})")
+            response.body() ?: emptyList()
+        }
+
+    suspend fun deleteSubscription(channelUrl: String) = withContext(Dispatchers.IO) {
+        val response = apiHolder.require().unsubscribe(channelUrl)
+        if (!response.isSuccessful) error("Unsubscribe failed (HTTP ${response.code()})")
+    }
 }

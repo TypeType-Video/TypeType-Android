@@ -26,6 +26,13 @@ data class AddHistoryRequest(
 data class SaveProgressRequest(val position: Long)
 
 @Serializable
+data class ProgressItemDto(
+    val videoUrl: String = "",
+    val position: Long = 0L,
+    val updatedAt: Long = 0L,
+)
+
+@Serializable
 data class SearchHistoryEntryRequest(val query: String)
 
 @Serializable

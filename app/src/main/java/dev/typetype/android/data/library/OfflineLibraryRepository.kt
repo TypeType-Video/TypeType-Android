@@ -87,11 +87,13 @@ class OfflineLibraryRepository @Inject constructor(
     }
 
     override suspend fun removeFavorite(videoUrl: String): Result<Unit> = runCatching {
-        val playlistId = playlistsDao.findIdByName(FAVORITES_NAME)
-            ?: error("Favorites playlist not found")
-        playlistsDao.deleteVideoFromPlaylist(playlistId, videoUrl)
-        runCatching { network.deleteVideoFromPlaylist(playlistId = playlistId, videoUrl = videoUrl) }
-            .onFailure { runCatching { refreshPlaylists() }; throw it }
+        val playlistId = resolveFavoritesPlaylistId()
+        playlistId?.let { playlistsDao.deleteVideoFromPlaylist(it, videoUrl) }
+        removeFromSpecialPlaylistOrLegacy(
+            playlistId = playlistId,
+            videoUrl = videoUrl,
+            legacyDelete = { network.deleteFavorite(videoUrl) },
+        )
     }
 
     override suspend fun addWatchLater(
@@ -120,11 +122,13 @@ class OfflineLibraryRepository @Inject constructor(
     }
 
     override suspend fun removeWatchLater(url: String): Result<Unit> = runCatching {
-        val playlistId = playlistsDao.findIdByName(WATCH_LATER_NAME)
-            ?: error("Watch Later playlist not found")
-        playlistsDao.deleteVideoFromPlaylist(playlistId, url)
-        runCatching { network.deleteVideoFromPlaylist(playlistId = playlistId, videoUrl = url) }
-            .onFailure { runCatching { refreshPlaylists() }; throw it }
+        val playlistId = resolveWatchLaterPlaylistId()
+        playlistId?.let { playlistsDao.deleteVideoFromPlaylist(it, url) }
+        removeFromSpecialPlaylistOrLegacy(
+            playlistId = playlistId,
+            videoUrl = url,
+            legacyDelete = { network.deleteWatchLater(url) },
+        )
     }
 
     private suspend fun ensureSpecialPlaylist(name: String): String {
@@ -134,6 +138,38 @@ class OfflineLibraryRepository @Inject constructor(
         val id = network.postCreatePlaylist(name)
         runCatching { refreshPlaylists() }
         return id
+    }
+
+    private suspend fun resolveFavoritesPlaylistId(): String? =
+        playlistsDao.findIdByName(FAVORITES_NAME)
+            ?: run {
+                runCatching { refreshPlaylists() }
+                playlistsDao.findIdByName(FAVORITES_NAME)
+            }
+
+    private suspend fun resolveWatchLaterPlaylistId(): String? =
+        playlistsDao.findIdByName(WATCH_LATER_NAME)
+            ?: run {
+                runCatching { refreshPlaylists() }
+                playlistsDao.findIdByName(WATCH_LATER_NAME)
+            }
+
+    private suspend fun removeFromSpecialPlaylistOrLegacy(
+        playlistId: String?,
+        videoUrl: String,
+        legacyDelete: suspend () -> Unit,
+    ) {
+        val playlistResult = playlistId?.let { id ->
+            runCatching { network.deleteVideoFromPlaylist(id, videoUrl) }
+        }
+        if (playlistResult?.isSuccess == true) return
+        val legacyResult = runCatching { legacyDelete() }
+        if (legacyResult.isSuccess) return
+        runCatching { refreshPlaylists() }
+        val cause = legacyResult.exceptionOrNull()
+            ?: playlistResult?.exceptionOrNull()
+            ?: error("Remove failed")
+        throw cause
     }
 
     override suspend fun addHistory(
@@ -168,6 +204,15 @@ class OfflineLibraryRepository @Inject constructor(
         historyDao.deleteByUrl(videoUrl)
     }
 
+    override suspend fun clearHistory(): Result<Unit> = runCatching {
+        historyDao.replaceAll(emptyList())
+        runCatching { network.deleteAllHistory() }
+            .onFailure {
+                runCatching { refreshHistory() }
+                throw it
+            }
+    }
+
     override suspend fun saveProgress(videoUrl: String, positionMillis: Long): Result<Unit> = runCatching {
         historyDao.updateProgress(
             url = videoUrl,
@@ -175,6 +220,10 @@ class OfflineLibraryRepository @Inject constructor(
             watchedAtMillis = System.currentTimeMillis(),
         )
         runCatching { network.putProgress(videoUrl, positionMillis) }
+    }
+
+    override suspend fun fetchProgressMillis(videoUrl: String): Result<Long?> = runCatching {
+        network.getProgress(videoUrl)
     }
 
     override suspend fun createPlaylist(name: String): Result<String> = runCatching {
