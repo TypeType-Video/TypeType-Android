@@ -14,6 +14,7 @@ import dev.typetype.android.data.database.TypeTypeDatabase
 import dev.typetype.android.data.library.local.FavoritesDao
 import dev.typetype.android.data.library.local.HistoryDao
 import dev.typetype.android.data.library.local.PlaylistsDao
+import dev.typetype.android.data.library.local.VideoMetaDao
 import dev.typetype.android.data.library.local.WatchLaterDao
 import dev.typetype.android.data.server.ServerDao
 import javax.inject.Singleton
@@ -45,6 +46,9 @@ object DatabaseModule {
 
     @Provides
     fun providePlaylistsDao(database: TypeTypeDatabase): PlaylistsDao = database.playlistsDao()
+
+    @Provides
+    fun provideVideoMetaDao(database: TypeTypeDatabase): VideoMetaDao = database.videoMetaDao()
 
     @Provides
     @Singleton
