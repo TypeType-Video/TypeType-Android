@@ -39,21 +39,32 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.FullScreenLoader
 import dev.typetype.android.core.ui.components.LibraryFilterBar
 import dev.typetype.android.core.ui.components.LibrarySortMode
+import dev.typetype.android.core.ui.components.PlaylistVideoActionsSheet
+import dev.typetype.android.core.ui.components.PlaylistVideoCard
 import dev.typetype.android.domain.library.HistoryItem
 import dev.typetype.android.domain.library.Playlist
 import dev.typetype.android.domain.library.PlaylistVideo
+import dev.typetype.android.feature.library.components.rememberVideoMetas
+import dev.typetype.android.feature.menu.VideoMenuEvent
+import dev.typetype.android.feature.menu.VideoMenuHandlerViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.runtime.LaunchedEffect
+import dev.typetype.android.core.ui.components.LocalAppSnackbarHost
 
 @Composable
 fun LibraryRoute(
     onPlayVideo: (videoUrl: String) -> Unit,
     onOpenPlaylist: (playlistId: String) -> Unit = {},
+    onOpenChannel: (channelUrl: String) -> Unit = {},
     viewModel: LibraryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -61,6 +72,7 @@ fun LibraryRoute(
         state = state,
         onPlayVideo = onPlayVideo,
         onOpenPlaylist = onOpenPlaylist,
+        onOpenChannel = onOpenChannel,
         onAction = viewModel::onAction,
     )
 }
@@ -70,12 +82,28 @@ fun LibraryScreen(
     state: LibraryState,
     onPlayVideo: (videoUrl: String) -> Unit,
     onOpenPlaylist: (playlistId: String) -> Unit,
+    onOpenChannel: (channelUrl: String) -> Unit,
     onAction: (LibraryAction) -> Unit,
 ) {
     val tabs = LibraryTab.entries
     var filter by rememberSaveable(state.selectedTab) { mutableStateOf("") }
     var sort by rememberSaveable(state.selectedTab) {
         mutableStateOf(defaultSortFor(state.selectedTab))
+    }
+
+    val menuVm: VideoMenuHandlerViewModel = hiltViewModel()
+    val watchedUrls by menuVm.watchedUrls.collectAsStateWithLifecycle()
+    val snackbarHost = LocalAppSnackbarHost.current
+    LaunchedEffect(menuVm, snackbarHost) {
+        if (snackbarHost == null) return@LaunchedEffect
+        menuVm.events.collect { event ->
+            when (event) {
+                is VideoMenuEvent.Snackbar -> snackbarHost.showSnackbar(
+                    event.message,
+                    duration = SnackbarDuration.Short,
+                )
+            }
+        }
     }
     Column(modifier = Modifier.fillMaxSize()) {
         SecondaryScrollableTabRow(
@@ -119,16 +147,47 @@ fun LibraryScreen(
                 items = sortHistory(filterHistory(state.history, filter), sort),
                 filter = filter,
                 onPlayVideo = onPlayVideo,
+                onOpenChannel = onOpenChannel,
             )
-            LibraryTab.Favorites -> FavoritesTab(
+            LibraryTab.Favorites -> PlaylistContextTab(
                 items = sortPlaylistVideos(filterPlaylistVideos(state.favorites, filter), sort),
                 filter = filter,
+                emptyDefault = "No favorites yet",
+                watchedUrls = watchedUrls,
                 onPlayVideo = onPlayVideo,
+                onOpenChannel = onOpenChannel,
+                buildRemoveLabel = { stringResource(R.string.playlist_action_remove_from_favorites) },
+                onRemove = { video -> menuVm.removeFavoriteUrl(video.url) },
+                onToggleWatched = { video, isWatched ->
+                    menuVm.toggleWatchedUrl(
+                        videoUrl = video.url,
+                        title = video.title,
+                        thumbnail = video.thumbnailUrl,
+                        duration = video.durationSeconds,
+                        isCurrentlyWatched = isWatched,
+                    )
+                },
+                onBlockVideo = { video -> menuVm.blockVideoUrl(video.url) },
             )
-            LibraryTab.WatchLater -> WatchLaterTab(
+            LibraryTab.WatchLater -> PlaylistContextTab(
                 items = sortPlaylistVideos(filterPlaylistVideos(state.watchLater, filter), sort),
                 filter = filter,
+                emptyDefault = "Nothing in Watch Later",
+                watchedUrls = watchedUrls,
                 onPlayVideo = onPlayVideo,
+                onOpenChannel = onOpenChannel,
+                buildRemoveLabel = { stringResource(R.string.playlist_action_remove_from_watch_later) },
+                onRemove = { video -> menuVm.removeWatchLaterUrl(video.url) },
+                onToggleWatched = { video, isWatched ->
+                    menuVm.toggleWatchedUrl(
+                        videoUrl = video.url,
+                        title = video.title,
+                        thumbnail = video.thumbnailUrl,
+                        duration = video.durationSeconds,
+                        isCurrentlyWatched = isWatched,
+                    )
+                },
+                onBlockVideo = { video -> menuVm.blockVideoUrl(video.url) },
             )
             LibraryTab.Playlists -> PlaylistsTab(
                 playlists = sortPlaylists(filterPlaylists(state.playlists, filter), sort),
@@ -136,6 +195,66 @@ fun LibraryScreen(
                 onOpenPlaylist = onOpenPlaylist,
             )
         }
+    }
+}
+
+@Composable
+private fun PlaylistContextTab(
+    items: List<PlaylistVideo>,
+    filter: String,
+    emptyDefault: String,
+    watchedUrls: Set<String>,
+    onPlayVideo: (String) -> Unit,
+    onOpenChannel: (String) -> Unit,
+    buildRemoveLabel: @Composable (PlaylistVideo) -> String,
+    onRemove: (PlaylistVideo) -> Unit,
+    onToggleWatched: (PlaylistVideo, Boolean) -> Unit,
+    onBlockVideo: (PlaylistVideo) -> Unit,
+) {
+    if (items.isEmpty()) {
+        EmptyTab(emptyMessageFor(filter, emptyDefault))
+        return
+    }
+    val context = LocalContext.current
+    val shareChooserTitle = stringResource(R.string.video_menu_share_chooser)
+    var pendingMenu by remember { mutableStateOf<PlaylistVideo?>(null) }
+    val urlsMissingInfo = items
+        .filter { it.channelAvatarUrl.isBlank() || it.channelName.isBlank() }
+        .map { it.url }
+    val metas = rememberVideoMetas(urlsMissingInfo)
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(vertical = 4.dp),
+    ) {
+        items(items, key = { it.id }) { video ->
+            PlaylistVideoCard(
+                video = video,
+                onClick = { onPlayVideo(video.url) },
+                onLongPress = { pendingMenu = video },
+                isWatched = video.url in watchedUrls,
+                meta = metas[video.url],
+                onChannelClick = onOpenChannel,
+            )
+        }
+    }
+
+    pendingMenu?.let { video ->
+        PlaylistVideoActionsSheet(
+            removeLabel = buildRemoveLabel(video),
+            isWatched = video.url in watchedUrls,
+            onRemoveFromList = { onRemove(video) },
+            onToggleWatched = { onToggleWatched(video, video.url in watchedUrls) },
+            onShare = {
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, video.url)
+                }
+                context.startActivity(Intent.createChooser(intent, shareChooserTitle))
+            },
+            onBlockVideo = { onBlockVideo(video) },
+            onDismiss = { pendingMenu = null },
+        )
     }
 }
 
@@ -207,35 +326,55 @@ private fun HistoryTab(
     items: List<HistoryItem>,
     filter: String,
     onPlayVideo: (String) -> Unit,
+    onOpenChannel: (String) -> Unit,
 ) {
     if (items.isEmpty()) {
         EmptyTab(emptyMessageFor(filter, "No watch history yet"))
         return
     }
+    val urlsMissingInfo = items
+        .filter { it.channelAvatarUrl.isBlank() }
+        .map { it.url }
+    val metas = rememberVideoMetas(urlsMissingInfo)
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = 8.dp),
+        contentPadding = PaddingValues(vertical = 4.dp),
     ) {
         items(items, key = { it.id }) { item ->
-            HistoryRow(item = item, onClick = { onPlayVideo(item.url) })
+            HistoryRow(
+                item = item,
+                meta = metas[item.url],
+                onClick = { onPlayVideo(item.url) },
+                onOpenChannel = onOpenChannel,
+            )
         }
     }
 }
 
 @Composable
-private fun HistoryRow(item: HistoryItem, onClick: () -> Unit) {
+private fun HistoryRow(
+    item: HistoryItem,
+    meta: dev.typetype.android.domain.library.VideoMeta?,
+    onClick: () -> Unit,
+    onOpenChannel: (String) -> Unit,
+) {
+    val channelUrl = item.channelUrl.takeIf { it.isNotBlank() }
+        ?: meta?.channelUrl?.takeIf { it.isNotBlank() }
+    val avatarUrl = item.channelAvatarUrl.takeIf { it.isNotBlank() }
+        ?: meta?.channelAvatarUrl?.takeIf { it.isNotBlank() }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.Top,
     ) {
         Box(
             modifier = Modifier
-                .width(120.dp)
+                .width(160.dp)
                 .aspectRatio(16f / 9f)
-                .clip(RoundedCornerShape(6.dp))
+                .clip(RoundedCornerShape(10.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
             AsyncImage(
@@ -244,130 +383,79 @@ private fun HistoryRow(item: HistoryItem, onClick: () -> Unit) {
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
+            if (item.durationSeconds > 0) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(6.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(MaterialTheme.colorScheme.background.copy(alpha = 0.85f))
+                        .padding(horizontal = 5.dp, vertical = 1.dp),
+                ) {
+                    Text(
+                        text = formatVideoDuration(item.durationSeconds),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onBackground,
+                    )
+                }
+            }
         }
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = item.title,
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = item.channelName,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Spacer(Modifier.height(6.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (avatarUrl != null) {
+                    val avatarModifier = Modifier
+                        .size(22.dp)
+                        .clip(androidx.compose.foundation.shape.CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .let {
+                            if (channelUrl != null) it.clickable { onOpenChannel(channelUrl) } else it
+                        }
+                    AsyncImage(
+                        model = avatarUrl,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = avatarModifier,
+                    )
+                    Spacer(Modifier.width(6.dp))
+                }
+                Text(
+                    text = item.channelName,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = if (channelUrl != null) Modifier.clickable { onOpenChannel(channelUrl) } else Modifier,
+                )
+            }
+            Spacer(Modifier.height(2.dp))
             Text(
                 text = formatDate(item.watchedAtMillis),
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.outlineVariant,
             )
         }
     }
 }
 
-@Composable
-private fun FavoritesTab(
-    items: List<PlaylistVideo>,
-    filter: String,
-    onPlayVideo: (String) -> Unit,
-) {
-    PlaylistVideosList(
-        items = items,
-        emptyMessage = emptyMessageFor(filter, "No favorites yet"),
-        onPlayVideo = onPlayVideo,
-    )
-}
-
-@Composable
-private fun WatchLaterTab(
-    items: List<PlaylistVideo>,
-    filter: String,
-    onPlayVideo: (String) -> Unit,
-) {
-    PlaylistVideosList(
-        items = items,
-        emptyMessage = emptyMessageFor(filter, "Nothing in Watch Later"),
-        onPlayVideo = onPlayVideo,
-    )
+private fun formatVideoDuration(seconds: Long): String {
+    val h = seconds / 3600
+    val m = (seconds % 3600) / 60
+    val s = seconds % 60
+    return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%d:%02d".format(m, s)
 }
 
 @Composable
 private fun emptyMessageFor(filter: String, default: String): String =
     if (filter.isBlank()) default else stringResource(R.string.library_filter_no_match, filter)
-
-@Composable
-private fun PlaylistVideosList(
-    items: List<PlaylistVideo>,
-    emptyMessage: String,
-    onPlayVideo: (String) -> Unit,
-) {
-    if (items.isEmpty()) {
-        EmptyTab(emptyMessage)
-        return
-    }
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = 8.dp),
-    ) {
-        items(items, key = { it.id }) { video ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onPlayVideo(video.url) }
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .width(120.dp)
-                        .aspectRatio(16f / 9f)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                ) {
-                    AsyncImage(
-                        model = video.thumbnailUrl,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
-                Spacer(Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = video.title,
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    if (video.durationSeconds > 0) {
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = formatDuration(video.durationSeconds),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-private fun formatDuration(seconds: Long): String {
-    val hours = seconds / 3600
-    val minutes = (seconds % 3600) / 60
-    val secs = seconds % 60
-    return if (hours > 0) {
-        String.format(Locale.US, "%d:%02d:%02d", hours, minutes, secs)
-    } else {
-        String.format(Locale.US, "%d:%02d", minutes, secs)
-    }
-}
 
 @Composable
 private fun PlaylistsTab(
@@ -382,46 +470,74 @@ private fun PlaylistsTab(
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(playlists, key = { it.id }) { playlist ->
-            Row(
+            PlaylistListCard(
+                playlist = playlist,
+                onClick = { onOpenPlaylist(playlist.id) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun PlaylistListCard(playlist: Playlist, onClick: () -> Unit) {
+    val countLabel = if (playlist.videos.size == 1) {
+        stringResource(R.string.playlist_card_single_video)
+    } else {
+        stringResource(R.string.playlist_card_video_count, playlist.videos.size)
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(16f / 9f)
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+        ) {
+            val cover = playlist.videos.firstOrNull()?.thumbnailUrl
+            if (cover != null) {
+                AsyncImage(
+                    model = cover,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onOpenPlaylist(playlist.id) }
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                    .align(Alignment.BottomEnd)
+                    .padding(8.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(MaterialTheme.colorScheme.background.copy(alpha = 0.85f))
+                    .padding(horizontal = 8.dp, vertical = 3.dp),
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "${playlist.videos.size}",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                        ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Spacer(Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = playlist.name,
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Text(
-                        text = "${playlist.videos.size} videos",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+                Text(
+                    text = countLabel,
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
             }
         }
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = playlist.name,
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+            color = MaterialTheme.colorScheme.onBackground,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            text = countLabel,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

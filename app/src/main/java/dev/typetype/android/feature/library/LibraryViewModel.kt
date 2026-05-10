@@ -73,6 +73,6 @@ class LibraryViewModel @Inject constructor(
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
         const val FAVORITES_PLAYLIST_NAME = "Favorites"
-        const val WATCH_LATER_PLAYLIST_NAME = "Watch later"
+        const val WATCH_LATER_PLAYLIST_NAME = "Watch Later"
     }
 }
