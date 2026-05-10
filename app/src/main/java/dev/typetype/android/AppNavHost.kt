@@ -148,17 +148,32 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
                 HomeRouteScreen(
                     viewModel = hiltViewModel<HomeViewModel>(),
                     onPlayVideo = onPlayVideo,
+                    onOpenChannel = { channelUrl ->
+                        navController.navigate(ChannelRoute(channelUrl = channelUrl)) {
+                            launchSingleTop = true
+                        }
+                    },
                 )
             }
             composable<SearchRoute> {
                 SearchRouteScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onPlayVideo = onPlayVideo,
+                    onOpenChannel = { channelUrl ->
+                        navController.navigate(ChannelRoute(channelUrl = channelUrl)) {
+                            launchSingleTop = true
+                        }
+                    },
                 )
             }
             composable<SubscriptionsRoute> {
                 SubscriptionsRouteScreen(
                     onPlayVideo = onPlayVideo,
+                    onOpenChannel = { channelUrl ->
+                        navController.navigate(ChannelRoute(channelUrl = channelUrl)) {
+                            launchSingleTop = true
+                        }
+                    },
                 )
             }
             composable<LibraryRoute> {

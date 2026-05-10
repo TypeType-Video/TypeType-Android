@@ -49,6 +49,7 @@ import dev.typetype.android.core.ui.components.VideoCard
 fun SearchRoute(
     onNavigateBack: () -> Unit,
     onPlayVideo: (videoUrl: String) -> Unit,
+    onOpenChannel: (channelUrl: String) -> Unit = {},
     viewModel: SearchViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -56,6 +57,7 @@ fun SearchRoute(
         state = state,
         onNavigateBack = onNavigateBack,
         onPlayVideo = onPlayVideo,
+        onOpenChannel = onOpenChannel,
         onAction = viewModel::onAction,
     )
 }
@@ -66,10 +68,15 @@ fun SearchScreen(
     state: SearchState,
     onNavigateBack: () -> Unit,
     onPlayVideo: (videoUrl: String) -> Unit,
+    onOpenChannel: (channelUrl: String) -> Unit,
     onAction: (SearchAction) -> Unit,
 ) {
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
+    val menuScope = dev.typetype.android.feature.menu.rememberVideoMenuScope(
+        onOpenChannel = onOpenChannel,
+    )
+    val visibleResults = state.results.filterNot(menuScope::isHidden)
 
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
@@ -146,7 +153,7 @@ fun SearchScreen(
                 onEntryClick = { onAction(SearchAction.OnHistoryEntryClick(it)) },
                 onDeleteEntry = { onAction(SearchAction.OnDeleteHistoryEntry(it)) },
             )
-            state.results.isEmpty() -> Box(
+            visibleResults.isEmpty() -> Box(
                 modifier = Modifier.fillMaxSize().padding(24.dp),
                 contentAlignment = Alignment.Center,
             ) {
@@ -160,8 +167,14 @@ fun SearchScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(vertical = 8.dp),
             ) {
-                items(state.results, key = { it.id }) { video ->
-                    VideoCard(video = video, onClick = { onPlayVideo(video.url) })
+                items(visibleResults, key = { it.id }) { video ->
+                    VideoCard(
+                        video = video,
+                        onClick = { onPlayVideo(video.url) },
+                        onChannelClick = { onOpenChannel(video.uploaderUrl) },
+                        onMenuAction = { action -> menuScope.onAction(action, video) },
+                        menuItemState = menuScope.stateFor(video),
+                    )
                 }
             }
         }

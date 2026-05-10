@@ -20,7 +20,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +35,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import dev.typetype.android.core.ui.components.AnimatedError
+import dev.typetype.android.core.ui.components.FullScreenLoader
 import dev.typetype.android.core.ui.components.VideoCard
 import dev.typetype.android.domain.channel.Channel
 
@@ -60,20 +61,11 @@ fun ChannelScreen(
     onPlayVideo: (videoUrl: String) -> Unit,
 ) {
     when {
-        state.isLoading -> Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-        }
-        state.errorMessage != null -> Column(
-            modifier = Modifier.fillMaxSize().padding(24.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
+        state.isLoading -> FullScreenLoader()
+        state.errorMessage != null -> Box(modifier = Modifier.fillMaxSize()) {
             IconButton(
                 onClick = onNavigateBack,
-                modifier = Modifier.align(Alignment.Start),
+                modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -81,12 +73,7 @@ fun ChannelScreen(
                     tint = MaterialTheme.colorScheme.onBackground,
                 )
             }
-            Spacer(Modifier.height(24.dp))
-            Text(
-                text = state.errorMessage,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error,
-            )
+            AnimatedError(message = state.errorMessage)
         }
         state.channel != null -> ChannelContent(
             channel = state.channel,
@@ -102,6 +89,10 @@ private fun ChannelContent(
     onNavigateBack: () -> Unit,
     onPlayVideo: (videoUrl: String) -> Unit,
 ) {
+    val menuScope = dev.typetype.android.feature.menu.rememberVideoMenuScope(
+        onOpenChannel = {},
+    )
+    val visibleVideos = channel.videos.filterNot(menuScope::isHidden)
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 16.dp),
@@ -112,15 +103,21 @@ private fun ChannelContent(
         item {
             Text(
                 text = "Videos",
-                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                 color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
             )
         }
-        items(channel.videos, key = { it.id }) { video ->
-            VideoCard(video = video, onClick = { onPlayVideo(video.url) })
+        items(visibleVideos, key = { it.id }) { video ->
+            VideoCard(
+                video = video,
+                onClick = { onPlayVideo(video.url) },
+                onMenuAction = { action -> menuScope.onAction(action, video) },
+                menuItemState = menuScope.stateFor(video),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
         }
-        if (channel.videos.isEmpty()) {
+        if (visibleVideos.isEmpty()) {
             item {
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(24.dp),

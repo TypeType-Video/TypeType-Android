@@ -16,7 +16,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,19 +26,24 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.typetype.android.core.ui.components.AnimatedError
+import dev.typetype.android.core.ui.components.FullScreenLoader
 import dev.typetype.android.core.ui.components.HorizontalVideoCard
 import dev.typetype.android.core.ui.components.SectionHeader
 import dev.typetype.android.core.ui.components.VideoCard
+import dev.typetype.android.feature.menu.rememberVideoMenuScope
 
 @Composable
 fun HomeRoute(
     viewModel: HomeViewModel,
     onPlayVideo: (videoUrl: String) -> Unit,
+    onOpenChannel: (channelUrl: String) -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     HomeScreen(
         state = state,
         onPlayVideo = onPlayVideo,
+        onOpenChannel = onOpenChannel,
         onRetry = { viewModel.onAction(HomeAction.OnRefresh) },
     )
 }
@@ -48,18 +52,18 @@ fun HomeRoute(
 fun HomeScreen(
     state: HomeState,
     onPlayVideo: (videoUrl: String) -> Unit,
+    onOpenChannel: (channelUrl: String) -> Unit,
     onRetry: () -> Unit,
 ) {
-    val nothingToShow = state.topSectionVideos.isEmpty() && state.recommendations.isEmpty()
+    val menuScope = rememberVideoMenuScope(onOpenChannel = onOpenChannel)
+    val visibleTop = state.topSectionVideos.filterNot(menuScope::isHidden)
+    val visibleRecommendations = state.recommendations.filterNot(menuScope::isHidden)
+    val nothingToShow = visibleTop.isEmpty() && visibleRecommendations.isEmpty()
 
     when {
-        state.isLoading && nothingToShow -> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-            }
-        }
+        state.isLoading && nothingToShow -> FullScreenLoader()
         nothingToShow && state.recommendationsError != null && state.topSectionError != null -> {
-            EmptyError(message = state.recommendationsError, onRetry = onRetry)
+            AnimatedError(message = state.recommendationsError, onRetry = onRetry)
         }
         nothingToShow -> {
             Box(
@@ -78,7 +82,7 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(vertical = 12.dp),
             ) {
-                if (state.topSectionVideos.isNotEmpty()) {
+                if (visibleTop.isNotEmpty()) {
                     item {
                         val title = when (state.topSectionKind) {
                             TopSectionKind.Subscriptions -> "From your subscriptions"
@@ -90,7 +94,7 @@ fun HomeScreen(
                             contentPadding = PaddingValues(horizontal = 16.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            items(state.topSectionVideos, key = { "top-${it.id}" }) { video ->
+                            items(visibleTop, key = { "top-${it.id}" }) { video ->
                                 HorizontalVideoCard(
                                     video = video,
                                     onClick = { onPlayVideo(video.url) },
@@ -100,7 +104,7 @@ fun HomeScreen(
                         Spacer(Modifier.height(28.dp))
                     }
                 }
-                if (state.recommendations.isNotEmpty()) {
+                if (visibleRecommendations.isNotEmpty()) {
                     item {
                         SectionHeader(
                             text = "Recommended",
@@ -108,10 +112,13 @@ fun HomeScreen(
                         )
                         Spacer(Modifier.height(10.dp))
                     }
-                    items(state.recommendations, key = { "rec-${it.id}" }) { video ->
+                    items(visibleRecommendations, key = { "rec-${it.id}" }) { video ->
                         VideoCard(
                             video = video,
                             onClick = { onPlayVideo(video.url) },
+                            onChannelClick = { onOpenChannel(video.uploaderUrl) },
+                            onMenuAction = { action -> menuScope.onAction(action, video) },
+                            menuItemState = menuScope.stateFor(video),
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         )
                     }
@@ -126,23 +133,6 @@ fun HomeScreen(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun EmptyError(message: String, onRetry: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.error,
-        )
-        Spacer(Modifier.height(16.dp))
-        RetryPill(onRetry = onRetry)
     }
 }
 
