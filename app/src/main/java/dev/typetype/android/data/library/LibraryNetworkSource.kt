@@ -38,6 +38,8 @@ class LibraryNetworkSource @Inject constructor(
                     title = dto.title,
                     thumbnailUrl = dto.thumbnail,
                     channelName = dto.channelName,
+                    channelUrl = dto.channelUrl,
+                    channelAvatarUrl = dto.channelAvatar,
                     durationSeconds = dto.duration,
                     progressSeconds = dto.progress,
                     watchedAtMillis = dto.watchedAt,
@@ -91,6 +93,10 @@ class LibraryNetworkSource @Inject constructor(
                         thumbnailUrl = v.thumbnail,
                         durationSeconds = v.duration,
                         position = v.position,
+                        channelName = v.channelName,
+                        channelUrl = v.channelUrl,
+                        channelAvatarUrl = v.channelAvatar,
+                        viewCount = v.viewCount,
                     )
                 }
             }
@@ -127,6 +133,7 @@ class LibraryNetworkSource @Inject constructor(
         duration: Long,
         channelName: String,
         channelUrl: String,
+        channelAvatar: String,
     ) = withContext(Dispatchers.IO) {
         val response = apiHolder.require().addHistory(
             AddHistoryRequest(
@@ -136,6 +143,7 @@ class LibraryNetworkSource @Inject constructor(
                 duration = duration,
                 channelName = channelName,
                 channelUrl = channelUrl,
+                channelAvatar = channelAvatar,
             ),
         )
         if (!response.isSuccessful) error("Add history failed (HTTP ${response.code()})")
@@ -161,6 +169,10 @@ class LibraryNetworkSource @Inject constructor(
         title: String,
         thumbnail: String,
         duration: Long,
+        channelName: String,
+        channelUrl: String,
+        channelAvatar: String,
+        viewCount: Long,
     ) = withContext(Dispatchers.IO) {
         val response = apiHolder.require().addVideoToPlaylist(
             playlistId = playlistId,
@@ -169,6 +181,10 @@ class LibraryNetworkSource @Inject constructor(
                 title = title,
                 thumbnail = thumbnail,
                 duration = duration,
+                channelName = channelName,
+                channelUrl = channelUrl,
+                channelAvatar = channelAvatar,
+                viewCount = viewCount,
             ),
         )
         if (!response.isSuccessful) error("Add to playlist failed (HTTP ${response.code()})")

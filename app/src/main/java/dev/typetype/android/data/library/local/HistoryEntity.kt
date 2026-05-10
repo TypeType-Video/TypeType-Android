@@ -1,5 +1,6 @@
 package dev.typetype.android.data.library.local
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import dev.typetype.android.domain.library.HistoryItem
@@ -11,6 +12,8 @@ data class HistoryEntity(
     val title: String,
     val thumbnailUrl: String,
     val channelName: String,
+    @ColumnInfo(defaultValue = "") val channelUrl: String = "",
+    @ColumnInfo(defaultValue = "") val channelAvatarUrl: String = "",
     val durationSeconds: Long,
     val progressSeconds: Long,
     val watchedAtMillis: Long,
@@ -21,6 +24,8 @@ data class HistoryEntity(
         title = title,
         thumbnailUrl = thumbnailUrl,
         channelName = channelName,
+        channelUrl = channelUrl,
+        channelAvatarUrl = channelAvatarUrl,
         durationSeconds = durationSeconds,
         progressSeconds = progressSeconds,
         watchedAtMillis = watchedAtMillis,
@@ -33,6 +38,8 @@ data class HistoryEntity(
             title = item.title,
             thumbnailUrl = item.thumbnailUrl,
             channelName = item.channelName,
+            channelUrl = item.channelUrl,
+            channelAvatarUrl = item.channelAvatarUrl,
             durationSeconds = item.durationSeconds,
             progressSeconds = item.progressSeconds,
             watchedAtMillis = item.watchedAtMillis,

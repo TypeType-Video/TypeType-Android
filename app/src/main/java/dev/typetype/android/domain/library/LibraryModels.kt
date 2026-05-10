@@ -6,6 +6,8 @@ data class HistoryItem(
     val title: String,
     val thumbnailUrl: String,
     val channelName: String,
+    val channelUrl: String = "",
+    val channelAvatarUrl: String = "",
     val durationSeconds: Long,
     val progressSeconds: Long,
     val watchedAtMillis: Long,
@@ -31,6 +33,10 @@ data class PlaylistVideo(
     val thumbnailUrl: String,
     val durationSeconds: Long,
     val position: Int,
+    val channelName: String = "",
+    val channelUrl: String = "",
+    val channelAvatarUrl: String = "",
+    val viewCount: Long = 0L,
 )
 
 data class Playlist(

@@ -40,6 +40,10 @@ data class AddPlaylistVideoRequest(
     val title: String,
     val thumbnail: String,
     val duration: Long,
+    val channelName: String = "",
+    val channelUrl: String = "",
+    val channelAvatar: String = "",
+    val viewCount: Long = 0L,
 )
 
 @Serializable

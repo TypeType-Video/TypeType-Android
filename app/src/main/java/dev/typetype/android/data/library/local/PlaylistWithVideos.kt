@@ -28,6 +28,10 @@ data class PlaylistWithVideos(
                     thumbnailUrl = v.thumbnailUrl,
                     durationSeconds = v.durationSeconds,
                     position = v.position,
+                    channelName = v.channelName,
+                    channelUrl = v.channelUrl,
+                    channelAvatarUrl = v.channelAvatarUrl,
+                    viewCount = v.viewCount,
                 )
             },
     )

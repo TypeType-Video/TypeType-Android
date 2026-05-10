@@ -61,20 +61,37 @@ class OfflineLibraryRepository @Inject constructor(
         playlistsDao.replaceAll(playlists, videos)
     }
 
-    override suspend fun addFavorite(videoUrl: String): Result<Unit> = runCatching {
-        val entity = FavoriteEntity(videoUrl = videoUrl, favoritedAtMillis = System.currentTimeMillis())
-        favoritesDao.upsert(entity)
-        runCatching { network.postFavorite(videoUrl) }
-            .onFailure {
-                favoritesDao.deleteByUrl(videoUrl)
-                throw it
-            }
+    override suspend fun addFavorite(
+        videoUrl: String,
+        title: String,
+        thumbnail: String,
+        duration: Long,
+        channelName: String,
+        channelUrl: String,
+        channelAvatarUrl: String,
+        viewCount: Long,
+    ): Result<Unit> = runCatching {
+        val playlistId = ensureSpecialPlaylist(FAVORITES_NAME)
+        network.postAddVideoToPlaylist(
+            playlistId = playlistId,
+            url = videoUrl,
+            title = title,
+            thumbnail = thumbnail,
+            duration = duration,
+            channelName = channelName,
+            channelUrl = channelUrl,
+            channelAvatar = channelAvatarUrl,
+            viewCount = viewCount,
+        )
+        runCatching { refreshPlaylists() }
     }
 
     override suspend fun removeFavorite(videoUrl: String): Result<Unit> = runCatching {
-        favoritesDao.deleteByUrl(videoUrl)
-        runCatching { network.deleteFavorite(videoUrl) }
-            .onFailure { throw it }
+        val playlistId = playlistsDao.findIdByName(FAVORITES_NAME)
+            ?: error("Favorites playlist not found")
+        playlistsDao.deleteVideoFromPlaylist(playlistId, videoUrl)
+        runCatching { network.deleteVideoFromPlaylist(playlistId = playlistId, videoUrl = videoUrl) }
+            .onFailure { runCatching { refreshPlaylists() }; throw it }
     }
 
     override suspend fun addWatchLater(
@@ -82,26 +99,41 @@ class OfflineLibraryRepository @Inject constructor(
         title: String,
         thumbnail: String,
         duration: Long,
+        channelName: String,
+        channelUrl: String,
+        channelAvatarUrl: String,
+        viewCount: Long,
     ): Result<Unit> = runCatching {
-        val entity = WatchLaterEntity(
+        val playlistId = ensureSpecialPlaylist(WATCH_LATER_NAME)
+        network.postAddVideoToPlaylist(
+            playlistId = playlistId,
             url = url,
             title = title,
-            thumbnailUrl = thumbnail,
-            durationSeconds = duration,
-            addedAtMillis = System.currentTimeMillis(),
+            thumbnail = thumbnail,
+            duration = duration,
+            channelName = channelName,
+            channelUrl = channelUrl,
+            channelAvatar = channelAvatarUrl,
+            viewCount = viewCount,
         )
-        watchLaterDao.upsert(entity)
-        runCatching { network.postWatchLater(url, title, thumbnail, duration) }
-            .onFailure {
-                watchLaterDao.deleteByUrl(url)
-                throw it
-            }
+        runCatching { refreshPlaylists() }
     }
 
     override suspend fun removeWatchLater(url: String): Result<Unit> = runCatching {
-        watchLaterDao.deleteByUrl(url)
-        runCatching { network.deleteWatchLater(url) }
-            .onFailure { throw it }
+        val playlistId = playlistsDao.findIdByName(WATCH_LATER_NAME)
+            ?: error("Watch Later playlist not found")
+        playlistsDao.deleteVideoFromPlaylist(playlistId, url)
+        runCatching { network.deleteVideoFromPlaylist(playlistId = playlistId, videoUrl = url) }
+            .onFailure { runCatching { refreshPlaylists() }; throw it }
+    }
+
+    private suspend fun ensureSpecialPlaylist(name: String): String {
+        playlistsDao.findIdByName(name)?.let { return it }
+        runCatching { refreshPlaylists() }
+        playlistsDao.findIdByName(name)?.let { return it }
+        val id = network.postCreatePlaylist(name)
+        runCatching { refreshPlaylists() }
+        return id
     }
 
     override suspend fun addHistory(
@@ -111,6 +143,7 @@ class OfflineLibraryRepository @Inject constructor(
         duration: Long,
         channelName: String,
         channelUrl: String,
+        channelAvatarUrl: String,
     ): Result<Unit> = runCatching {
         historyDao.deleteByUrl(videoUrl)
         val entity = HistoryEntity(
@@ -119,12 +152,16 @@ class OfflineLibraryRepository @Inject constructor(
             title = title,
             thumbnailUrl = thumbnail,
             channelName = channelName,
+            channelUrl = channelUrl,
+            channelAvatarUrl = channelAvatarUrl,
             durationSeconds = duration,
             progressSeconds = historyDao.getProgressSeconds(videoUrl) ?: 0L,
             watchedAtMillis = System.currentTimeMillis(),
         )
         historyDao.upsert(entity)
-        runCatching { network.postHistory(videoUrl, title, thumbnail, duration, channelName, channelUrl) }
+        runCatching {
+            network.postHistory(videoUrl, title, thumbnail, duration, channelName, channelUrl, channelAvatarUrl)
+        }
     }
 
     override suspend fun removeFromHistory(videoUrl: String): Result<Unit> = runCatching {
@@ -152,6 +189,10 @@ class OfflineLibraryRepository @Inject constructor(
         title: String,
         thumbnail: String,
         duration: Long,
+        channelName: String,
+        channelUrl: String,
+        channelAvatarUrl: String,
+        viewCount: Long,
     ): Result<Unit> = runCatching {
         network.postAddVideoToPlaylist(
             playlistId = playlistId,
@@ -159,7 +200,25 @@ class OfflineLibraryRepository @Inject constructor(
             title = title,
             thumbnail = thumbnail,
             duration = duration,
+            channelName = channelName,
+            channelUrl = channelUrl,
+            channelAvatar = channelAvatarUrl,
+            viewCount = viewCount,
         )
         runCatching { refreshPlaylists() }
+    }
+
+    override suspend fun removeVideoFromPlaylist(
+        playlistId: String,
+        videoUrl: String,
+    ): Result<Unit> = runCatching {
+        playlistsDao.deleteVideoFromPlaylist(playlistId, videoUrl)
+        runCatching { network.deleteVideoFromPlaylist(playlistId = playlistId, videoUrl = videoUrl) }
+            .onFailure { runCatching { refreshPlaylists() }; throw it }
+    }
+
+    private companion object {
+        const val FAVORITES_NAME = "Favorites"
+        const val WATCH_LATER_NAME = "Watch Later"
     }
 }
