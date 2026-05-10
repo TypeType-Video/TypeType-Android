@@ -99,6 +99,8 @@ fun HomeScreen(
                                     video = video,
                                     onClick = { onPlayVideo(video.url) },
                                     onChannelClick = { onOpenChannel(video.uploaderUrl) },
+                                    onMenuAction = { action -> menuScope.onAction(action, video) },
+                                    menuItemState = menuScope.stateFor(video),
                                 )
                             }
                         }

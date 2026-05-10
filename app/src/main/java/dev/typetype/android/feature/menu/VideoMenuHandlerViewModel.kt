@@ -47,7 +47,12 @@ class VideoMenuHandlerViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
 
     val watchedUrls = libraryRepository.observeHistory()
-        .map { items -> items.map { it.url }.toSet() }
+        .map { items ->
+            items.asSequence()
+                .filter { it.durationSeconds > 0 && it.progressSeconds >= it.durationSeconds * 0.9 }
+                .map { it.url }
+                .toSet()
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
 
     val blockedVideoUrls = videoActionsRepository.observeBlockedVideoUrls()

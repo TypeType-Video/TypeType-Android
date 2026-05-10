@@ -108,6 +108,7 @@ private fun PlaylistScreen(
     }
     val context = LocalContext.current
     val shareChooserTitle = stringResource(R.string.video_menu_share_chooser)
+    val serverBaseUrl = dev.typetype.android.core.ui.share.LocalServerBaseUrl.current
     var pendingMenu by remember { mutableStateOf<PlaylistVideo?>(null) }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -207,7 +208,10 @@ private fun PlaylistScreen(
             onShare = {
                 val intent = Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, video.url)
+                    putExtra(
+                        Intent.EXTRA_TEXT,
+                        dev.typetype.android.core.ui.share.buildShareUrl(serverBaseUrl, video.url),
+                    )
                 }
                 context.startActivity(Intent.createChooser(intent, shareChooserTitle))
             },
