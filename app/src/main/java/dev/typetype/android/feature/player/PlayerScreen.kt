@@ -135,6 +135,7 @@ fun PlayerScreen(
                 state.stream != null -> LoadedPlayer(
                     stream = state.stream,
                     videoUrl = state.videoUrl,
+                    resumeAtMillis = state.resumeAtMillis,
                     isFavorited = state.isFavorited,
                     isInWatchLater = state.isInWatchLater,
                     gestureConfig = state.gestureConfig,
@@ -220,6 +221,7 @@ private fun ErrorState(
 private fun LoadedPlayer(
     stream: Stream,
     videoUrl: String,
+    resumeAtMillis: Long,
     isFavorited: Boolean,
     isInWatchLater: Boolean,
     gestureConfig: PlayerGestureConfig,
@@ -241,14 +243,21 @@ private fun LoadedPlayer(
     val activity = LocalActivity.current
 
     LaunchedEffect(stream.id, controller) {
-        controller?.let { ctrl -> bindStreamToController(ctrl, stream, videoUrl) }
+        controller?.let { ctrl -> bindStreamToController(ctrl, stream, videoUrl, resumeAtMillis) }
+    }
+
+    val durationMs = stream.durationSeconds * 1000L
+    val saveProgressIfEligible: (Long) -> Unit = saveProgressIfEligible@{ positionMs ->
+        if (positionMs < 5_000L) return@saveProgressIfEligible
+        if (durationMs > 0 && positionMs >= (durationMs * 0.95).toLong()) return@saveProgressIfEligible
+        onAction(PlayerAction.OnSaveProgress(positionMs))
     }
 
     LaunchedEffect(controller) {
         while (true) {
-            delay(5_000)
+            delay(10_000)
             val ctrl = controller ?: continue
-            if (ctrl.isPlaying) onAction(PlayerAction.OnSaveProgress(ctrl.currentPosition))
+            if (ctrl.isPlaying) saveProgressIfEligible(ctrl.currentPosition)
         }
     }
 
@@ -269,6 +278,16 @@ private fun LoadedPlayer(
                 }
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
                     dev.typetype.android.feature.player.components.applyAutoEnterPipParams(activity, isPlaying)
+                    if (!isPlaying) saveProgressIfEligible(ctrl.currentPosition)
+                }
+                override fun onPositionDiscontinuity(
+                    oldPosition: androidx.media3.common.Player.PositionInfo,
+                    newPosition: androidx.media3.common.Player.PositionInfo,
+                    reason: Int,
+                ) {
+                    if (reason == androidx.media3.common.Player.DISCONTINUITY_REASON_SEEK) {
+                        saveProgressIfEligible(newPosition.positionMs)
+                    }
                 }
             }
             ctrl.addListener(listener)
@@ -278,6 +297,17 @@ private fun LoadedPlayer(
                 dev.typetype.android.feature.player.components.applyAutoEnterPipParams(activity, false)
             }
         }
+    }
+
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, controller) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_PAUSE) {
+                controller?.let { saveProgressIfEligible(it.currentPosition) }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     LaunchedEffect(isFullscreen) {
@@ -293,11 +323,7 @@ private fun LoadedPlayer(
 
     DisposableEffect(Unit) {
         onDispose {
-            controller?.let { ctrl ->
-                if (ctrl.currentPosition > 0) {
-                    onAction(PlayerAction.OnSaveProgress(ctrl.currentPosition))
-                }
-            }
+            controller?.let { ctrl -> saveProgressIfEligible(ctrl.currentPosition) }
             val window = activity?.window ?: return@onDispose
             activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
             WindowHelper.toggleFullscreen(window, isFullscreen = false)
@@ -418,6 +444,7 @@ private fun PlayerInteractionRow(
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val shareChooserTitle = stringResource(R.string.video_menu_share_chooser)
+    val serverBaseUrl = dev.typetype.android.core.ui.share.LocalServerBaseUrl.current
     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         IconButton(onClick = onToggleFavorite) {
             Icon(
@@ -449,7 +476,10 @@ private fun PlayerInteractionRow(
         IconButton(onClick = {
             val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                 type = "text/plain"
-                putExtra(android.content.Intent.EXTRA_TEXT, shareUrl)
+                putExtra(
+                    android.content.Intent.EXTRA_TEXT,
+                    dev.typetype.android.core.ui.share.buildShareUrl(serverBaseUrl, shareUrl),
+                )
             }
             context.startActivity(android.content.Intent.createChooser(intent, shareChooserTitle))
         }) {

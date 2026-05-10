@@ -52,7 +52,7 @@ class StreamRepositoryImpl @Inject constructor(
         hlsUrl = hlsUrl.takeIf { it.isNotBlank() },
         dashMpdUrl = dashMpdUrl.takeIf { it.isNotBlank() },
         progressiveUrl = pickBestProgressiveStream(videoStreams),
-        startPositionMillis = startPosition,
+        startPositionMillis = startPosition * 1000L,
         sponsorBlockSegments = sponsorBlockSegments.map { it.toDomain() },
         chapters = streamSegments.map { it.toChapter() },
         relatedStreams = relatedStreams.map { it.toDomainVideo() },
