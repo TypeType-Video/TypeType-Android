@@ -112,10 +112,6 @@ class OfflineLibraryRepository @Inject constructor(
         channelName: String,
         channelUrl: String,
     ): Result<Unit> = runCatching {
-        // The DB primary key is `id`, so a previously refreshed row from the
-        // server (id = <server-id>) and a freshly added local row (id = url)
-        // can coexist for the same URL. Wipe any existing rows for this URL
-        // before inserting so the displayed list never duplicates.
         historyDao.deleteByUrl(videoUrl)
         val entity = HistoryEntity(
             id = videoUrl,
@@ -129,6 +125,10 @@ class OfflineLibraryRepository @Inject constructor(
         )
         historyDao.upsert(entity)
         runCatching { network.postHistory(videoUrl, title, thumbnail, duration, channelName, channelUrl) }
+    }
+
+    override suspend fun removeFromHistory(videoUrl: String): Result<Unit> = runCatching {
+        historyDao.deleteByUrl(videoUrl)
     }
 
     override suspend fun saveProgress(videoUrl: String, positionMillis: Long): Result<Unit> = runCatching {

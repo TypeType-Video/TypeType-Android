@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.typetype.android.core.ui.navigation.HomeRoute
 import dev.typetype.android.core.ui.navigation.WelcomeRoute
 import dev.typetype.android.data.network.AccessTokenStore
+import dev.typetype.android.domain.actions.VideoActionsRepository
 import dev.typetype.android.domain.auth.AuthRepository
 import dev.typetype.android.domain.auth.SessionStatus
 import dev.typetype.android.domain.preferences.AppPreferences
@@ -38,6 +39,7 @@ class MainViewModel @Inject constructor(
     private val serverRepository: ServerRepository,
     private val tokenStore: AccessTokenStore,
     private val authRepository: AuthRepository,
+    private val videoActionsRepository: VideoActionsRepository,
     val playerHostController: PlayerHostController,
     preferencesRepository: PreferencesRepository,
 ) : ViewModel() {
@@ -68,6 +70,9 @@ class MainViewModel @Inject constructor(
                 else -> HomeRoute
             }
             _state.value = MainState(isLoading = false, startRoute = startRoute)
+            if (startRoute == HomeRoute) {
+                launch { videoActionsRepository.refreshBlocked() }
+            }
         }
     }
 

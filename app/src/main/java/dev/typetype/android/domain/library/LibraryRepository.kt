@@ -28,6 +28,7 @@ interface LibraryRepository {
         channelUrl: String,
     ): Result<Unit>
     suspend fun saveProgress(videoUrl: String, positionMillis: Long): Result<Unit>
+    suspend fun removeFromHistory(videoUrl: String): Result<Unit>
 
     suspend fun createPlaylist(name: String): Result<String>
     suspend fun addVideoToPlaylist(
