@@ -72,17 +72,19 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
         }
     }
 
+    val onOpenChannel: (String) -> Unit = { channelUrl ->
+        navController.navigate(ChannelRoute(channelUrl = channelUrl)) {
+            launchSingleTop = true
+        }
+    }
+
     AppShell(
         navController = navController,
         playerHostController = playerHostController,
         onOpenSearch = { navController.navigate(SearchRoute) },
         onOpenSettings = { navController.navigate(SettingsRoute) },
         onPlayVideo = onPlayVideo,
-        onOpenChannel = { channelUrl ->
-            navController.navigate(ChannelRoute(channelUrl = channelUrl)) {
-                launchSingleTop = true
-            }
-        },
+        onOpenChannel = onOpenChannel,
     ) { innerModifier ->
         NavHost(
             navController = navController,
@@ -182,12 +184,14 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
                     onOpenPlaylist = { playlistId ->
                         navController.navigate(PlaylistRoute(playlistId = playlistId))
                     },
+                    onOpenChannel = onOpenChannel,
                 )
             }
             composable<PlaylistRoute> {
                 PlaylistRouteScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onPlayVideo = onPlayVideo,
+                    onOpenChannel = onOpenChannel,
                 )
             }
             composable<SettingsRoute> {

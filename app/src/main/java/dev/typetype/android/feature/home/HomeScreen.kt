@@ -98,6 +98,7 @@ fun HomeScreen(
                                 HorizontalVideoCard(
                                     video = video,
                                     onClick = { onPlayVideo(video.url) },
+                                    onChannelClick = { onOpenChannel(video.uploaderUrl) },
                                 )
                             }
                         }
