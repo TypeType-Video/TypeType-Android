@@ -46,3 +46,14 @@ data class UserProfile(
 data class ServerError(
     val error: String,
 )
+
+@Serializable
+data class ProfileUpdateRequest(
+    val publicUsername: String? = null,
+    val bio: String? = null,
+)
+
+@Serializable
+data class AvatarEmojiRequest(
+    val code: String,
+)
