@@ -7,4 +7,10 @@ data class PlayerSettingsState(
     val longPressSpeedEnabled: Boolean = true,
     val autoplayEnabled: Boolean = true,
     val pauseInBackgroundEnabled: Boolean = false,
+    val defaultQuality: String = "1080p",
+    val defaultService: Int = 0,
+    val subtitlesEnabled: Boolean = false,
+    val defaultSubtitleLanguage: String = "",
+    val defaultAudioLanguage: String = "",
+    val preferOriginalLanguage: Boolean = false,
 )
