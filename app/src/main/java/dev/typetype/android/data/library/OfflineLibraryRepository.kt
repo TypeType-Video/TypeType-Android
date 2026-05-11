@@ -39,10 +39,10 @@ class OfflineLibraryRepository @Inject constructor(
         playlistsDao.observeAllWithVideos().map { rows -> rows.map { it.toDomain() } }
 
     override fun observeIsFavorite(videoUrl: String): Flow<Boolean> =
-        favoritesDao.observeIsFavorite(videoUrl)
+        playlistsDao.observeIsVideoInPlaylistNamed(FAVORITES_NAME, videoUrl)
 
     override fun observeIsInWatchLater(url: String): Flow<Boolean> =
-        watchLaterDao.observeIsInWatchLater(url)
+        playlistsDao.observeIsVideoInPlaylistNamed(WATCH_LATER_NAME, url)
 
     override suspend fun refreshHistory(): Result<Unit> = runCatching {
         historyDao.replaceAll(network.fetchHistory())
