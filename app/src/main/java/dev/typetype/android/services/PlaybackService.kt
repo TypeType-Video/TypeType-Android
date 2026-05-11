@@ -7,6 +7,7 @@ import androidx.media3.common.C
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -65,7 +66,10 @@ class PlaybackService : MediaSessionService() {
             .setHandleAudioBecomingNoisy(true)
             .setWakeMode(C.WAKE_MODE_NETWORK)
             .setLoadControl(loadControl)
-            .setMediaSourceFactory(MergedStreamMediaSourceFactory(this))
+            .setMediaSourceFactory(
+                MergedStreamMediaSourceFactory(this)
+                    .setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(MIN_LOADABLE_RETRY_COUNT)),
+            )
             .setSeekBackIncrementMs(SEEK_BACK_INCREMENT_MS)
             .setSeekForwardIncrementMs(SEEK_FORWARD_INCREMENT_MS)
             .build()
@@ -101,6 +105,7 @@ class PlaybackService : MediaSessionService() {
         const val BUFFER_FOR_PLAYBACK_MS = 2_500
         const val BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS = 5_000
         const val BACK_BUFFER_MS = 30_000
+        const val MIN_LOADABLE_RETRY_COUNT = 5
         const val SEEK_BACK_INCREMENT_MS = 10_000L
         const val SEEK_FORWARD_INCREMENT_MS = 10_000L
     }
