@@ -3,9 +3,9 @@ package dev.typetype.android.feature.settings.privacy
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.typetype.android.data.library.LibraryNetworkSource
 import dev.typetype.android.domain.library.LibraryRepository
 import dev.typetype.android.domain.searchhistory.SearchHistoryRepository
+import dev.typetype.android.domain.subscriptions.SubscriptionsRepository
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,7 +27,7 @@ data class PrivacyState(
 class PrivacySettingsViewModel @Inject constructor(
     private val libraryRepository: LibraryRepository,
     private val searchHistoryRepository: SearchHistoryRepository,
-    private val networkSource: LibraryNetworkSource,
+    private val subscriptionsRepository: SubscriptionsRepository,
 ) : ViewModel() {
 
     private val subscriptionsCount = MutableStateFlow(0)
@@ -63,7 +63,7 @@ class PrivacySettingsViewModel @Inject constructor(
 
     fun clearSearchHistory() {
         viewModelScope.launch {
-            runCatching { networkSource.deleteAllSearchHistory() }
+            searchHistoryRepository.clearHistory()
                 .onSuccess { _localState.update { it.copy(searchHistoryCount = 0) } }
                 .onFailure { e -> _localState.update { it.copy(errorMessage = e.message) } }
         }
@@ -71,11 +71,9 @@ class PrivacySettingsViewModel @Inject constructor(
 
     fun unsubscribeAll() {
         viewModelScope.launch {
-            val subs = runCatching { networkSource.fetchSubscriptions() }.getOrDefault(emptyList())
-            for (sub in subs) {
-                runCatching { networkSource.deleteSubscription(sub.channelUrl) }
-            }
-            subscriptionsCount.value = 0
+            subscriptionsRepository.unsubscribeAll()
+                .onSuccess { subscriptionsCount.value = 0 }
+                .onFailure { e -> _localState.update { it.copy(errorMessage = e.message) } }
         }
     }
 
@@ -89,7 +87,7 @@ class PrivacySettingsViewModel @Inject constructor(
 
     private fun refreshSubscriptions() {
         viewModelScope.launch {
-            runCatching { networkSource.fetchSubscriptions() }
+            subscriptionsRepository.listSubscriptions()
                 .onSuccess { subscriptionsCount.value = it.size }
         }
     }
