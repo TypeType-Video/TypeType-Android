@@ -24,7 +24,7 @@ sealed interface VideoMenuEvent {
 
 @HiltViewModel
 class VideoMenuHandlerViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val libraryRepository: LibraryRepository,
     private val videoActionsRepository: VideoActionsRepository,
 ) : ViewModel() {
