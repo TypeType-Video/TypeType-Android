@@ -38,6 +38,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -117,10 +118,10 @@ fun AddServerScreen(
                     )
                 }
                 Spacer(Modifier.height(28.dp))
-                SectionHeader(text = "Setup")
+                SectionHeader(text = stringResource(R.string.setup_section))
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text = "Add a server",
+                    text = stringResource(R.string.setup_add_server_title),
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = (-0.3).sp,
@@ -131,7 +132,7 @@ fun AddServerScreen(
                 TypeTypeTextField(
                     value = state.url,
                     onValueChange = { onAction(AddServerAction.OnUrlChange(it)) },
-                    placeholder = "https://typetype.example.com",
+                    placeholder = stringResource(R.string.setup_server_placeholder),
                     enabled = !state.isConnecting,
                     isError = state.errorMessage != null,
                     supportingText = state.errorMessage,
@@ -161,7 +162,7 @@ fun AddServerScreen(
                     }
                     state.resolvedVersion?.let {
                         Text(
-                            text = "v$it",
+                            text = stringResource(R.string.setup_server_version, it),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.outlineVariant,
                         )
@@ -169,7 +170,7 @@ fun AddServerScreen(
                 }
                 Spacer(Modifier.height(24.dp))
                 TypeTypePrimaryButton(
-                    text = "Connect",
+                    text = stringResource(R.string.setup_connect),
                     onClick = { onAction(AddServerAction.OnConnectClick) },
                     enabled = state.url.isNotBlank(),
                     isLoading = state.isConnecting,
@@ -183,7 +184,7 @@ fun AddServerScreen(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = stringResource(R.string.settings_back),
                     tint = MaterialTheme.colorScheme.onBackground,
                 )
             }

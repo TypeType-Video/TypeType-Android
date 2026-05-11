@@ -26,12 +26,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.res.stringResource
 import dev.typetype.android.core.ui.components.AnimatedError
 import dev.typetype.android.core.ui.components.FullScreenLoader
 import dev.typetype.android.core.ui.components.HorizontalVideoCard
 import dev.typetype.android.core.ui.components.SectionHeader
 import dev.typetype.android.core.ui.components.VideoCard
 import dev.typetype.android.feature.menu.rememberVideoMenuScope
+import dev.typetype.android.R
 
 @Composable
 fun HomeRoute(
@@ -71,7 +73,7 @@ fun HomeScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "Nothing here yet",
+                    text = stringResource(R.string.home_empty),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -85,8 +87,8 @@ fun HomeScreen(
                 if (visibleTop.isNotEmpty()) {
                     item {
                         val title = when (state.topSectionKind) {
-                            TopSectionKind.Subscriptions -> "From your subscriptions"
-                            TopSectionKind.Trending -> "Trending"
+                            TopSectionKind.Subscriptions -> stringResource(R.string.home_section_subscriptions)
+                            TopSectionKind.Trending -> stringResource(R.string.home_section_trending)
                         }
                         SectionHeader(text = title, modifier = Modifier.padding(horizontal = 16.dp))
                         Spacer(Modifier.height(10.dp))
@@ -110,7 +112,7 @@ fun HomeScreen(
                 if (visibleRecommendations.isNotEmpty()) {
                     item {
                         SectionHeader(
-                            text = "Recommended",
+                            text = stringResource(R.string.home_section_recommended),
                             modifier = Modifier.padding(horizontal = 16.dp),
                         )
                         Spacer(Modifier.height(10.dp))
@@ -128,7 +130,7 @@ fun HomeScreen(
                 } else if (state.recommendationsError != null) {
                     item {
                         SectionErrorBanner(
-                            sectionLabel = "Recommended",
+                            sectionLabel = stringResource(R.string.home_section_recommended),
                             message = state.recommendationsError,
                             onRetry = onRetry,
                         )
@@ -182,7 +184,7 @@ private fun RetryPill(onRetry: () -> Unit) {
             .padding(horizontal = 14.dp, vertical = 6.dp),
     ) {
         Text(
-            text = "Retry",
+            text = stringResource(R.string.home_retry),
             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
             color = MaterialTheme.colorScheme.onPrimary,
         )

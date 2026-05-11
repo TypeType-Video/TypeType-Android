@@ -35,24 +35,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.SectionHeader
 import dev.typetype.android.domain.preferences.AccentColor
 
-private data class AccentSwatch(val accent: AccentColor, val label: String, val color: Color)
+private data class AccentSwatch(val accent: AccentColor, val labelRes: Int, val color: Color)
 
 private val swatches = listOf(
-    AccentSwatch(AccentColor.Red, "Red", Color(0xFFEF4444)),
-    AccentSwatch(AccentColor.Blue, "Blue", Color(0xFF60A5FA)),
-    AccentSwatch(AccentColor.Yellow, "Yellow", Color(0xFFFBBF24)),
-    AccentSwatch(AccentColor.Green, "Green", Color(0xFF34D399)),
-    AccentSwatch(AccentColor.Purple, "Purple", Color(0xFFC084FC)),
-    AccentSwatch(AccentColor.Violet, "Violet", Color(0xFFA78BFA)),
-    AccentSwatch(AccentColor.Monochrome, "Monochrome", Color(0xFFE4E4E7)),
+    AccentSwatch(AccentColor.Red, R.string.accent_red, Color(0xFFEF4444)),
+    AccentSwatch(AccentColor.Blue, R.string.accent_blue, Color(0xFF60A5FA)),
+    AccentSwatch(AccentColor.Yellow, R.string.accent_yellow, Color(0xFFFBBF24)),
+    AccentSwatch(AccentColor.Green, R.string.accent_green, Color(0xFF34D399)),
+    AccentSwatch(AccentColor.Purple, R.string.accent_purple, Color(0xFFC084FC)),
+    AccentSwatch(AccentColor.Violet, R.string.accent_violet, Color(0xFFA78BFA)),
+    AccentSwatch(AccentColor.Monochrome, R.string.accent_monochrome, Color(0xFFE4E4E7)),
 )
 
 @Composable
@@ -92,12 +94,12 @@ fun AppearanceScreen(
                 IconButton(onClick = onNavigateBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
+                        contentDescription = stringResource(R.string.settings_back),
                         tint = MaterialTheme.colorScheme.onBackground,
                     )
                 }
                 Text(
-                    text = "Appearance",
+                    text = stringResource(R.string.settings_appearance_title),
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = (-0.3).sp,
@@ -108,7 +110,7 @@ fun AppearanceScreen(
             }
             Spacer(Modifier.height(16.dp))
             SectionHeader(
-                text = "Accent color",
+                text = stringResource(R.string.settings_appearance_accent_color),
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
             )
             Spacer(Modifier.height(8.dp))
@@ -161,10 +163,9 @@ private fun AccentSwatchCell(
         }
         Spacer(Modifier.height(6.dp))
         Text(
-            text = swatch.label,
+            text = stringResource(swatch.labelRes),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
-

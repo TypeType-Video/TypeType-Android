@@ -27,10 +27,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.SectionHeader
 import dev.typetype.android.core.ui.components.TypeTypeCard
 import dev.typetype.android.core.ui.components.TypeTypePrimaryButton
@@ -76,7 +78,7 @@ fun LoginScreen(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = stringResource(R.string.settings_back),
                     tint = MaterialTheme.colorScheme.onBackground,
                 )
             }
@@ -87,10 +89,10 @@ fun LoginScreen(
                     .padding(top = 72.dp, bottom = 24.dp),
                 verticalArrangement = Arrangement.Top,
             ) {
-                SectionHeader(text = "Setup")
+                SectionHeader(text = stringResource(R.string.setup_section))
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "Sign in",
+                    text = stringResource(R.string.login_title),
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = (-0.3).sp,
@@ -99,7 +101,7 @@ fun LoginScreen(
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text = "Use your TypeType account credentials.",
+                    text = stringResource(R.string.login_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -108,7 +110,7 @@ fun LoginScreen(
                     TypeTypeTextField(
                         value = state.identifier,
                         onValueChange = { onAction(LoginAction.OnIdentifierChange(it)) },
-                        placeholder = "Email or username",
+                        placeholder = stringResource(R.string.login_identifier_placeholder),
                         enabled = !state.isSubmitting,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     )
@@ -116,7 +118,7 @@ fun LoginScreen(
                     TypeTypeTextField(
                         value = state.password,
                         onValueChange = { onAction(LoginAction.OnPasswordChange(it)) },
-                        placeholder = "Password",
+                        placeholder = stringResource(R.string.login_password_placeholder),
                         enabled = !state.isSubmitting,
                         isError = state.errorMessage != null,
                         supportingText = state.errorMessage,
@@ -125,7 +127,7 @@ fun LoginScreen(
                     )
                     Spacer(Modifier.height(20.dp))
                     TypeTypePrimaryButton(
-                        text = "Sign in",
+                        text = stringResource(R.string.login_title),
                         onClick = { onAction(LoginAction.OnLoginClick) },
                         enabled = !state.isSubmitting,
                         isLoading = state.isSubmitting,
@@ -138,7 +140,7 @@ fun LoginScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         TypeTypeTextLink(
-                            text = "Continue as guest",
+                            text = stringResource(R.string.login_continue_guest),
                             onClick = { onAction(LoginAction.OnContinueAsGuestClick) },
                             enabled = !state.isSubmitting,
                         )
