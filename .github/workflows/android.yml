@@ -54,6 +54,7 @@ jobs:
         run: ./gradlew --no-daemon --no-parallel --stacktrace :app:assembleDebug lint :app:testDebugUnitTest
 
       - name: Upload debug APK
+        if: ${{ github.ref != 'refs/heads/main' }}
         uses: actions/upload-artifact@v5
         with:
           name: typetype-debug-apk
