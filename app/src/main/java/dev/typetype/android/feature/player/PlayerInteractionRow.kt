@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Share
@@ -29,6 +30,8 @@ fun PlayerInteractionRow(
     onToggleFavorite: () -> Unit,
     onToggleWatchLater: () -> Unit,
     onAddToPlaylist: () -> Unit,
+    onDownload: () -> Unit,
+    downloadInFlight: Boolean = false,
 ) {
     val context = LocalContext.current
     val shareChooserTitle = stringResource(R.string.video_menu_share_chooser)
@@ -59,6 +62,20 @@ fun PlayerInteractionRow(
                 imageVector = Icons.AutoMirrored.Filled.PlaylistAdd,
                 contentDescription = stringResource(R.string.player_add_to_playlist),
                 tint = MaterialTheme.colorScheme.onBackground,
+            )
+        }
+        IconButton(
+            onClick = onDownload,
+            enabled = !downloadInFlight,
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Download,
+                contentDescription = stringResource(R.string.player_download),
+                tint = if (downloadInFlight) {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                } else {
+                    MaterialTheme.colorScheme.onBackground
+                },
             )
         }
         IconButton(onClick = {
