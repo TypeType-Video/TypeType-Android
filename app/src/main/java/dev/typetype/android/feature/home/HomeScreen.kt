@@ -96,7 +96,7 @@ fun HomeScreen(
                             contentPadding = PaddingValues(horizontal = 16.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            items(visibleTop, key = { "top-${it.id}" }) { video ->
+                            items(visibleTop, key = { "top-${it.id}" }, contentType = { "top-video" }) { video ->
                                 HorizontalVideoCard(
                                     video = video,
                                     onClick = { onPlayVideo(video.url) },
@@ -117,7 +117,11 @@ fun HomeScreen(
                         )
                         Spacer(Modifier.height(10.dp))
                     }
-                    items(visibleRecommendations, key = { "rec-${it.id}" }) { video ->
+                    items(
+                        visibleRecommendations,
+                        key = { "rec-${it.id}" },
+                        contentType = { "recommended-video" },
+                    ) { video ->
                         VideoCard(
                             video = video,
                             onClick = { onPlayVideo(video.url) },
