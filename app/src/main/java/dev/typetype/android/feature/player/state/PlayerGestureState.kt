@@ -12,9 +12,9 @@ enum class DragMode { None, Brightness, Volume, Seek }
 enum class ResizeMode { Fit, Crop, Stretch }
 
 fun ResizeMode.next(): ResizeMode = when (this) {
-    ResizeMode.Fit -> ResizeMode.Crop
-    ResizeMode.Crop -> ResizeMode.Stretch
-    ResizeMode.Stretch -> ResizeMode.Fit
+    ResizeMode.Fit -> ResizeMode.Stretch
+    ResizeMode.Stretch -> ResizeMode.Crop
+    ResizeMode.Crop -> ResizeMode.Fit
 }
 
 @Stable
