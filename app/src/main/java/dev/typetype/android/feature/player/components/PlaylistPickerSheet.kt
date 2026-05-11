@@ -14,8 +14,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlaylistAdd
-import androidx.compose.material.icons.filled.PlaylistPlay
+import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
+import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -33,9 +33,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import dev.typetype.android.R
 import dev.typetype.android.domain.library.Playlist
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -57,7 +59,7 @@ fun PlaylistPickerSheet(
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
             Text(
-                text = "Add to playlist",
+                text = stringResource(R.string.playlist_picker_title),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
@@ -71,13 +73,13 @@ fun PlaylistPickerSheet(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
-                    imageVector = Icons.Filled.PlaylistAdd,
+                    imageVector = Icons.AutoMirrored.Filled.PlaylistAdd,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                 )
                 Spacer(Modifier.width(16.dp))
                 Text(
-                    text = "Create new playlist",
+                    text = stringResource(R.string.playlist_picker_create_new),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
@@ -85,7 +87,7 @@ fun PlaylistPickerSheet(
             HorizontalDivider()
             if (playlists.isEmpty()) {
                 Text(
-                    text = "No playlists yet",
+                    text = stringResource(R.string.playlist_picker_empty),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(20.dp),
@@ -107,7 +109,7 @@ fun PlaylistPickerSheet(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.PlaylistPlay,
+                                imageVector = Icons.AutoMirrored.Filled.PlaylistPlay,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -119,7 +121,10 @@ fun PlaylistPickerSheet(
                                     color = MaterialTheme.colorScheme.onSurface,
                                 )
                                 Text(
-                                    text = "${playlist.videos.size} videos",
+                                    text = stringResource(
+                                        R.string.playlist_picker_video_count,
+                                        playlist.videos.size,
+                                    ),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -135,12 +140,12 @@ fun PlaylistPickerSheet(
         var newName by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showCreateDialog = false },
-            title = { Text(text = "New playlist") },
+            title = { Text(text = stringResource(R.string.playlist_picker_new_title)) },
             text = {
                 OutlinedTextField(
                     value = newName,
                     onValueChange = { newName = it },
-                    label = { Text(text = "Name") },
+                    label = { Text(text = stringResource(R.string.playlist_picker_name)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 )
@@ -153,12 +158,12 @@ fun PlaylistPickerSheet(
                         onCreatePlaylist(newName)
                     },
                 ) {
-                    Text(text = "Create & add")
+                    Text(text = stringResource(R.string.playlist_picker_create_and_add))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showCreateDialog = false }) {
-                    Text(text = "Cancel")
+                    Text(text = stringResource(R.string.action_cancel))
                 }
             },
         )

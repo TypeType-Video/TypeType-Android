@@ -9,8 +9,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import dev.typetype.android.R
 
 @Composable
 fun ExternalLinkDialog(
@@ -22,7 +24,7 @@ fun ExternalLinkDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Leaving TypeType",
+                text = stringResource(R.string.external_link_title),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
@@ -30,7 +32,7 @@ fun ExternalLinkDialog(
         text = {
             Column {
                 Text(
-                    text = "This link opens outside the app.",
+                    text = stringResource(R.string.external_link_message),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
@@ -46,12 +48,12 @@ fun ExternalLinkDialog(
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text(text = "Open", color = MaterialTheme.colorScheme.primary)
+                Text(text = stringResource(R.string.external_link_open), color = MaterialTheme.colorScheme.primary)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = "Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(text = stringResource(R.string.action_cancel), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         },
         containerColor = MaterialTheme.colorScheme.surface,

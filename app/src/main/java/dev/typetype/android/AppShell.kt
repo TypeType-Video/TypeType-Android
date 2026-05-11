@@ -199,14 +199,14 @@ private fun AppTopBar(
             IconButton(onClick = onOpenSearch) {
                 Icon(
                     imageVector = Icons.Filled.Search,
-                    contentDescription = "Search",
+                    contentDescription = stringResource(R.string.search_submit),
                     tint = MaterialTheme.colorScheme.onBackground,
                 )
             }
             IconButton(onClick = onOpenSettings) {
                 Icon(
                     imageVector = Icons.Filled.Settings,
-                    contentDescription = "Settings",
+                    contentDescription = stringResource(R.string.settings_title),
                     tint = MaterialTheme.colorScheme.onBackground,
                 )
             }
@@ -241,7 +241,7 @@ private fun ProfileAvatarButton(
         if (!avatarUrl.isNullOrBlank()) {
             coil3.compose.AsyncImage(
                 model = avatarUrl,
-                contentDescription = "Profile",
+                contentDescription = stringResource(R.string.settings_profile_title),
                 contentScale = androidx.compose.ui.layout.ContentScale.Fit,
                 modifier = Modifier.fillMaxSize().padding(3.dp),
             )

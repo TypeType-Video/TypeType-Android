@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -26,6 +27,7 @@ import dev.typetype.android.core.ui.components.AnimatedLoader
 import dev.typetype.android.core.ui.components.FullScreenLoader
 import dev.typetype.android.core.ui.components.VideoCard
 import dev.typetype.android.feature.menu.rememberVideoMenuScope
+import dev.typetype.android.R
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 
@@ -66,7 +68,7 @@ fun SubscriptionsScreen(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = "No videos from your subscriptions yet",
+                text = stringResource(R.string.subscriptions_empty),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
