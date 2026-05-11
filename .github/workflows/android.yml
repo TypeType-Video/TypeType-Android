@@ -27,9 +27,15 @@ concurrency:
   group: android-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  CI: true
+  JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
+  GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Djava.awt.headless=true -Dkotlin.daemon.jvm.options=-Djava.awt.headless=true
+
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -44,7 +50,8 @@ jobs:
         uses: gradle/actions/setup-gradle@v5
 
       - name: Build and check
-        run: ./gradlew :app:assembleDebug lint :app:testDebugUnitTest
+        timeout-minutes: 20
+        run: ./gradlew --no-daemon --no-parallel --stacktrace :app:assembleDebug lint :app:testDebugUnitTest
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v5
@@ -57,6 +64,7 @@ jobs:
     needs: verify
     if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish_release)) }}
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -100,7 +108,8 @@ jobs:
           } > keystore.properties
 
       - name: Build release APK
-        run: ./gradlew :app:assembleRelease lint :app:testDebugUnitTest
+        timeout-minutes: 30
+        run: ./gradlew --no-daemon --no-parallel --stacktrace :app:assembleRelease lint :app:testDebugUnitTest
 
       - name: Prepare APK artifact
         run: |
