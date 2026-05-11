@@ -19,7 +19,7 @@ import okhttp3.Route
 class TokenAuthenticator @Inject constructor(
     private val tokenStore: AccessTokenStore,
     private val baseUrlHolder: ApiBaseUrlHolder,
-    @Named("refresh") private val refreshClient: Provider<OkHttpClient>,
+    @param:Named("refresh") private val refreshClient: Provider<OkHttpClient>,
     private val json: Json,
 ) : Authenticator {
 
@@ -56,7 +56,7 @@ class TokenAuthenticator @Inject constructor(
             .build()
         refreshClient.get().newCall(request).execute().use { resp ->
             if (!resp.isSuccessful) return null
-            val text = resp.body?.string() ?: return null
+            val text = resp.body.string()
             return runCatching {
                 json.decodeFromString(SessionResponse.serializer(), text).accessToken
             }.getOrNull()

@@ -1,8 +1,6 @@
 package dev.typetype.android.feature.player.host
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.core.exponentialDecay
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.AnchoredDraggableState
@@ -83,10 +81,6 @@ fun PlayerHost(
         val anchoredState = remember {
             AnchoredDraggableState(
                 initialValue = PlayerHostTarget.Hidden,
-                positionalThreshold = { distance -> distance * 0.5f },
-                velocityThreshold = { with(density) { 100.dp.toPx() } },
-                snapAnimationSpec = tween(durationMillis = 280),
-                decayAnimationSpec = exponentialDecay(),
             )
         }
 
@@ -168,7 +162,12 @@ fun PlayerHost(
                                     if (intercepting) {
                                         change.consume()
                                         val velocity = tracker.calculateVelocity().y
-                                        coroutineScope.launch { anchoredState.settle(velocity) }
+                                        val target = when {
+                                            velocity > with(density) { 100.dp.toPx() } -> PlayerHostTarget.Mini
+                                            anchoredState.requireOffset() > miniAnchorPx * 0.5f -> PlayerHostTarget.Mini
+                                            else -> PlayerHostTarget.Expanded
+                                        }
+                                        coroutineScope.launch { anchoredState.animateTo(target) }
                                     }
                                     break
                                 }
