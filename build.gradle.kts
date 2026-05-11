@@ -11,11 +11,9 @@ tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
 
-// this builds the list of languages to use for Android versions below 13
 tasks.register("buildLanguages") {
     val projectDirectory = layout.projectDirectory
 
-    // reference: https://docs.gradle.org/current/userguide/working_with_files.html
     val resPath = projectDirectory.file("app/src/main/res")
     val locales = resPath.asFile.listFiles()
         .filter {
@@ -26,7 +24,7 @@ tasks.register("buildLanguages") {
         }
         .map {
             it.nameWithoutExtension.removePrefix("values-")
-        } + "en" // en is the default locale, its values file has no -en suffix
+        } + "en"
 
     val localesConfig =
         "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +

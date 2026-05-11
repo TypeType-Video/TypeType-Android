@@ -6,7 +6,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.typetype.android.domain.profile.ProfileRepository
 import dev.typetype.android.domain.server.ServerRepository
 import javax.inject.Inject
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
@@ -23,8 +22,6 @@ class AboutViewModel @Inject constructor(
     serverRepository: ServerRepository,
     profileRepository: ProfileRepository,
 ) : ViewModel() {
-
-    private val refreshTrigger = MutableStateFlow(Unit)
 
     val state = combine(
         serverRepository.observeCurrentServer(),
