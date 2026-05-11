@@ -16,6 +16,15 @@ interface PlaylistsDao {
     @Query("SELECT id FROM playlists WHERE name = :name COLLATE NOCASE LIMIT 1")
     suspend fun findIdByName(name: String): String?
 
+    @Query(
+        "SELECT EXISTS(" +
+            "SELECT 1 FROM playlist_videos pv " +
+            "INNER JOIN playlists p ON pv.playlistId = p.id " +
+            "WHERE p.name = :playlistName COLLATE NOCASE AND pv.url = :videoUrl" +
+            ")",
+    )
+    fun observeIsVideoInPlaylistNamed(playlistName: String, videoUrl: String): Flow<Boolean>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertPlaylist(playlist: PlaylistEntity)
 
