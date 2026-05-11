@@ -94,6 +94,7 @@ fun rememberVideoMenuScope(
             VideoMenuAction.ToggleWatchLater -> viewModel.toggleWatchLater(video, video.url in watchLater)
             VideoMenuAction.AddToPlaylist -> pickerVideo = video
             VideoMenuAction.ToggleWatched -> viewModel.toggleWatched(video, video.url in watched)
+            VideoMenuAction.Download -> viewModel.download(video)
             VideoMenuAction.Share -> {
                 val intent = Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"

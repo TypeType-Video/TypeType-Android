@@ -71,6 +71,7 @@ fun LoadedPlayer(
     playlists: List<Playlist>,
     playlistPickerVisible: Boolean,
     playlistActionInFlight: Boolean,
+    downloadInFlight: Boolean,
     commentsFlow: Flow<PagingData<Comment>>,
     commentsRepository: CommentsRepository?,
     onNavigateBack: () -> Unit,
@@ -102,6 +103,7 @@ fun LoadedPlayer(
         selectedAudioKey,
         selectedSubtitleKey,
         defaultAudioLanguage,
+        defaultQuality,
         preferOriginalLanguage,
     ) {
         controller?.let { ctrl ->
@@ -114,6 +116,7 @@ fun LoadedPlayer(
                 selectedAudioKey = selectedAudioKey,
                 selectedSubtitleKey = selectedSubtitleKey,
                 defaultAudioLanguage = defaultAudioLanguage,
+                automaticQualityCap = defaultQuality,
                 preferOriginalLanguage = preferOriginalLanguage,
             )
         }
@@ -279,6 +282,8 @@ fun LoadedPlayer(
                         onToggleFavorite = { onAction(PlayerAction.OnToggleFavorite) },
                         onToggleWatchLater = { onAction(PlayerAction.OnToggleWatchLater) },
                         onAddToPlaylist = { onAction(PlayerAction.OnOpenPlaylistPicker) },
+                        onDownload = { onAction(PlayerAction.OnDownload(selectedQuality)) },
+                        downloadInFlight = downloadInFlight,
                     )
                     UploaderCard(
                         name = stream.uploaderName,

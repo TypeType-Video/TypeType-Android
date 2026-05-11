@@ -60,6 +60,9 @@ fun PlayerScreen(
     val favoriteRemoved = stringResource(R.string.player_snackbar_favorite_removed)
     val watchLaterAdded = stringResource(R.string.player_snackbar_watch_later_added)
     val watchLaterRemoved = stringResource(R.string.player_snackbar_watch_later_removed)
+    val downloadQueued = stringResource(R.string.player_snackbar_download_queued)
+    val downloadCached = stringResource(R.string.player_snackbar_download_cached)
+    val downloadEnqueued = stringResource(R.string.player_snackbar_download_enqueued)
     val addedToPlaylist = stringResource(
         R.string.player_snackbar_added_to_playlist,
         PLAYLIST_NAME_PLACEHOLDER,
@@ -70,6 +73,9 @@ fun PlayerScreen(
         favoriteRemoved,
         watchLaterAdded,
         watchLaterRemoved,
+        downloadQueued,
+        downloadCached,
+        downloadEnqueued,
         addedToPlaylist,
     ) {
         eventsFlow.collect { event ->
@@ -80,6 +86,8 @@ fun PlayerScreen(
                 PlayerEvent.WatchLaterRemoved -> watchLaterRemoved
                 is PlayerEvent.AddedToPlaylist ->
                     addedToPlaylist.replace(PLAYLIST_NAME_PLACEHOLDER, event.playlistName)
+                is PlayerEvent.DownloadQueued -> if (event.cached) downloadCached else downloadQueued
+                is PlayerEvent.DownloadEnqueued -> downloadEnqueued
                 is PlayerEvent.ActionFailed -> event.message
             }
             snackbarHostState.showSnackbar(message, duration = SnackbarDuration.Short)
@@ -117,6 +125,7 @@ fun PlayerScreen(
                     playlists = state.playlists,
                     playlistPickerVisible = state.playlistPickerVisible,
                     playlistActionInFlight = state.playlistActionInFlight,
+                    downloadInFlight = state.downloadInFlight,
                     commentsFlow = commentsFlow,
                     commentsRepository = commentsRepository,
                     onNavigateBack = onNavigateBack,
