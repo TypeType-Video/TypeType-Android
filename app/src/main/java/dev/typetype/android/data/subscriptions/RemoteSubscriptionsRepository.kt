@@ -3,6 +3,7 @@ package dev.typetype.android.data.subscriptions
 import dev.typetype.android.data.network.TypeTypeApiHolder
 import dev.typetype.android.data.network.dto.SubscriptionItemDto
 import dev.typetype.android.data.network.extractServerErrorMessage
+import dev.typetype.android.domain.subscriptions.SubscriptionSummary
 import dev.typetype.android.domain.subscriptions.SubscriptionsRepository
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,6 +29,12 @@ class RemoteSubscriptionsRepository @Inject constructor(
         state.value = response.body().orEmpty().map { it.channelUrl }.toSet()
     }
 
+    override suspend fun listSubscriptions(): Result<List<SubscriptionSummary>> = runCatching {
+        val response = withContext(Dispatchers.IO) { apiHolder.require().subscriptions() }
+        if (!response.isSuccessful) error(extractServerErrorMessage(response))
+        response.body().orEmpty().map { SubscriptionSummary(channelUrl = it.channelUrl) }
+    }
+
     override suspend fun subscribe(
         channelUrl: String,
         name: String,
@@ -46,5 +53,13 @@ class RemoteSubscriptionsRepository @Inject constructor(
         val response = withContext(Dispatchers.IO) { apiHolder.require().unsubscribe(channelUrl) }
         if (!response.isSuccessful) error(extractServerErrorMessage(response))
         state.update { it - channelUrl }
+    }
+
+    override suspend fun unsubscribeAll(): Result<Unit> = runCatching {
+        val subscriptions = listSubscriptions().getOrThrow()
+        for (subscription in subscriptions) {
+            unsubscribe(subscription.channelUrl).getOrThrow()
+        }
+        state.value = emptySet()
     }
 }

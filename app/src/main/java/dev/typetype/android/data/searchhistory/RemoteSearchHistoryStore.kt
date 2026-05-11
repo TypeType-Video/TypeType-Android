@@ -2,6 +2,7 @@ package dev.typetype.android.data.searchhistory
 
 import dev.typetype.android.data.network.TypeTypeApiHolder
 import dev.typetype.android.data.network.dto.SearchHistoryEntryRequest
+import dev.typetype.android.data.network.extractServerErrorMessage
 import dev.typetype.android.domain.searchhistory.SearchHistoryRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -32,5 +33,10 @@ class RemoteSearchHistoryStore @Inject constructor(
         val api = apiHolder.require()
         val response = withContext(Dispatchers.IO) { api.removeSearchHistory(query) }
         if (!response.isSuccessful) error("Remove search history failed (HTTP ${response.code()})")
+    }
+
+    override suspend fun clearHistory(): Result<Unit> = runCatching {
+        val response = withContext(Dispatchers.IO) { apiHolder.require().clearSearchHistory() }
+        if (!response.isSuccessful) error(extractServerErrorMessage(response))
     }
 }
