@@ -17,6 +17,7 @@ import dev.typetype.android.domain.library.cacheVideos
 import dev.typetype.android.domain.preferences.PreferencesRepository
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.stream.StreamRepository
+import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import dev.typetype.android.feature.player.components.PlayerGestureConfig
 import dev.typetype.android.feature.player.host.PlayerHostController
 import javax.inject.Inject
@@ -43,6 +44,7 @@ class PlayerViewModel @Inject constructor(
     private val libraryRepository: LibraryRepository,
     private val videoMetaRepository: VideoMetaRepository,
     private val preferencesRepository: PreferencesRepository,
+    private val userSettingsRepository: UserSettingsRepository,
     private val playerHostController: PlayerHostController,
     val commentsRepository: CommentsRepository,
 ) : ViewModel() {
@@ -95,6 +97,7 @@ class PlayerViewModel @Inject constructor(
             }
         }
         observePreferences()
+        observeUserSettings()
         viewModelScope.launch {
             libraryRepository.observePlaylists().collect { playlists ->
                 _state.update { it.copy(playlists = playlists) }
@@ -136,11 +139,28 @@ class PlayerViewModel @Inject constructor(
                             swipeBrightnessVolumeEnabled = prefs.playerSwipeBrightnessVolumeEnabled,
                             longPressSpeedEnabled = prefs.playerLongPressSpeedEnabled,
                         ),
-                        autoplayEnabled = prefs.playerAutoplayEnabled,
                     )
                 }
             }
         }
+    }
+
+    private fun observeUserSettings() {
+        viewModelScope.launch {
+            userSettingsRepository.observe().collect { settings ->
+                _state.update {
+                    it.copy(
+                        autoplayEnabled = settings.autoplay,
+                        defaultQuality = settings.defaultQuality,
+                        defaultAudioLanguage = settings.defaultAudioLanguage,
+                        subtitlesEnabled = settings.subtitlesEnabled,
+                        defaultSubtitleLanguage = settings.defaultSubtitleLanguage,
+                        preferOriginalLanguage = settings.preferOriginalLanguage,
+                    )
+                }
+            }
+        }
+        viewModelScope.launch { userSettingsRepository.refresh() }
     }
 
     fun onAction(action: PlayerAction) {
