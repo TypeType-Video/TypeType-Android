@@ -4,11 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Audiotrack
-import androidx.compose.material.icons.filled.ClosedCaption
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -20,27 +15,39 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.media3.common.Player
 import dev.typetype.android.R
 import dev.typetype.android.domain.stream.Stream
-import dev.typetype.android.domain.stream.StreamAudioSource
-import dev.typetype.android.domain.stream.StreamSubtitleSource
 import dev.typetype.android.feature.player.state.PLAYBACK_SPEEDS
+import dev.typetype.android.feature.player.state.ResizeMode
 
 @kotlin.OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaybackOptionsSheet(
+    player: Player,
     stream: Stream,
     selectedQuality: String,
     selectedAudioKey: String?,
     selectedSubtitleKey: String?,
     selectedSpeed: Float,
+    resizeMode: ResizeMode,
     onSelectQuality: (String) -> Unit,
     onSelectAudio: (String?) -> Unit,
     onSelectSubtitle: (String?) -> Unit,
     onSelectSpeed: (Float) -> Unit,
+    onSelectResizeMode: (ResizeMode) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val currentVideoHeight = rememberCurrentVideoHeight(player)
+    val autoLabel = stringResource(R.string.playback_options_auto)
+    val selectedQualityLabel = if (selectedQuality == AUTO_QUALITY_KEY && currentVideoHeight != null) {
+        stringResource(R.string.playback_options_quality_auto_current, autoLabel, "${currentVideoHeight}p")
+    } else if (selectedQuality == AUTO_QUALITY_KEY) {
+        autoLabel
+    } else {
+        selectedQuality
+    }
     val defaultLabel = stringResource(R.string.playback_options_default)
     val captionsLabel = stringResource(R.string.playback_options_captions)
     val originalLabel = stringResource(R.string.playback_options_original)
@@ -61,7 +68,7 @@ fun PlaybackOptionsSheet(
     ) {
         when (page) {
             PlaybackOptionsPage.Main -> PlaybackOptionsMainPage(
-                qualityLabel = selectedQuality,
+                qualityLabel = selectedQualityLabel,
                 captionsLabel = captionOptions
                     .firstOrNull { it.key == selectedSubtitleKey }
                     ?.label
@@ -71,96 +78,71 @@ fun PlaybackOptionsSheet(
                     ?.label
                     ?: stringResource(R.string.playback_options_default),
                 speedLabel = "${formatSpeed(selectedSpeed)}x",
+                resizeLabel = resizeMode.label(),
                 onOpenQuality = { page = PlaybackOptionsPage.Quality },
                 onOpenCaptions = { page = PlaybackOptionsPage.Captions },
                 onOpenAudio = { page = PlaybackOptionsPage.Audio },
                 onOpenSpeed = { page = PlaybackOptionsPage.Speed },
+                onOpenResize = { page = PlaybackOptionsPage.Resize },
             )
             PlaybackOptionsPage.Quality -> PickerPage(
                 title = stringResource(R.string.playback_options_quality),
                 options = listOf(
-                    PickerOption("auto", stringResource(R.string.playback_options_auto)),
-                ) + qualityOptions.map { PickerOption(it, it) },
+                    PlaybackPickerOption(AUTO_QUALITY_KEY, stringResource(R.string.playback_options_auto)),
+                ) + qualityOptions.map { PlaybackPickerOption(it, it) },
                 selectedKey = selectedQuality,
                 emptyLabel = stringResource(R.string.playback_options_auto),
                 onBack = { page = PlaybackOptionsPage.Main },
-                onSelect = { key -> key?.let(onSelectQuality) },
+                onSelect = { key ->
+                    key?.let(onSelectQuality)
+                    onDismiss()
+                },
             )
             PlaybackOptionsPage.Audio -> PickerPage(
                 title = stringResource(R.string.playback_options_audio),
-                options = listOf(PickerOption(null, stringResource(R.string.playback_options_default))) +
+                options = listOf(PlaybackPickerOption(null, stringResource(R.string.playback_options_default))) +
                     audioOptions,
                 selectedKey = selectedAudioKey,
                 emptyLabel = stringResource(R.string.playback_options_default),
                 onBack = { page = PlaybackOptionsPage.Main },
-                onSelect = { onSelectAudio(it) },
+                onSelect = {
+                    onSelectAudio(it)
+                    onDismiss()
+                },
             )
             PlaybackOptionsPage.Captions -> PickerPage(
                 title = stringResource(R.string.playback_options_captions),
-                options = listOf(PickerOption(null, stringResource(R.string.playback_options_off))) +
+                options = listOf(PlaybackPickerOption(null, stringResource(R.string.playback_options_off))) +
                     captionOptions,
                 selectedKey = selectedSubtitleKey,
                 emptyLabel = stringResource(R.string.playback_options_off),
                 onBack = { page = PlaybackOptionsPage.Main },
-                onSelect = { onSelectSubtitle(it) },
+                onSelect = {
+                    onSelectSubtitle(it)
+                    onDismiss()
+                },
             )
             PlaybackOptionsPage.Speed -> PickerPage(
                 title = stringResource(R.string.playback_options_speed),
-                options = PLAYBACK_SPEEDS.map { PickerOption(it.toString(), "${formatSpeed(it)}x") },
+                options = PLAYBACK_SPEEDS.map { PlaybackPickerOption(it.toString(), "${formatSpeed(it)}x") },
                 selectedKey = selectedSpeed.toString(),
                 emptyLabel = stringResource(R.string.playback_options_default),
                 onBack = { page = PlaybackOptionsPage.Main },
-                onSelect = { key -> key?.toFloatOrNull()?.let(onSelectSpeed) },
+                onSelect = { key ->
+                    key?.toFloatOrNull()?.let(onSelectSpeed)
+                    onDismiss()
+                },
             )
-        }
-    }
-}
-
-@Composable
-private fun PlaybackOptionsMainPage(
-    qualityLabel: String,
-    captionsLabel: String,
-    audioLabel: String,
-    speedLabel: String,
-    onOpenQuality: () -> Unit,
-    onOpenCaptions: () -> Unit,
-    onOpenAudio: () -> Unit,
-    onOpenSpeed: () -> Unit,
-) {
-    LazyColumn(
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        item {
-            PlaybackOptionsMenuRow(
-                icon = Icons.Filled.Settings,
-                title = stringResource(R.string.playback_options_quality),
-                value = qualityLabel,
-                onClick = onOpenQuality,
-            )
-        }
-        item {
-            PlaybackOptionsMenuRow(
-                icon = Icons.Filled.ClosedCaption,
-                title = stringResource(R.string.playback_options_captions),
-                value = captionsLabel,
-                onClick = onOpenCaptions,
-            )
-        }
-        item {
-            PlaybackOptionsMenuRow(
-                icon = Icons.Filled.Audiotrack,
-                title = stringResource(R.string.playback_options_audio),
-                value = audioLabel,
-                onClick = onOpenAudio,
-            )
-        }
-        item {
-            PlaybackOptionsMenuRow(
-                icon = Icons.Filled.Speed,
-                title = stringResource(R.string.playback_options_speed),
-                value = speedLabel,
-                onClick = onOpenSpeed,
+            PlaybackOptionsPage.Resize -> PickerPage(
+                title = stringResource(R.string.playback_options_image),
+                options = resizeModeOptions(),
+                selectedKey = resizeMode.name,
+                emptyLabel = resizeMode.label(),
+                onBack = { page = PlaybackOptionsPage.Main },
+                onSelect = { key ->
+                    key?.let(ResizeMode::valueOf)?.let(onSelectResizeMode)
+                    onDismiss()
+                },
             )
         }
     }
@@ -169,7 +151,7 @@ private fun PlaybackOptionsMainPage(
 @Composable
 private fun PickerPage(
     title: String,
-    options: List<PickerOption>,
+    options: List<PlaybackPickerOption>,
     selectedKey: String?,
     emptyLabel: String,
     onBack: () -> Unit,
@@ -193,61 +175,28 @@ private fun PickerPage(
     }
 }
 
-private fun Stream.qualityOptions(): List<String> =
-    (videoOnlyStreams + muxedVideoStreams)
-        .filter { it.url.isNotBlank() && it.height > 0 }
-        .map { it.height }
-        .distinct()
-        .sortedDescending()
-        .map { "${it}p" }
-private fun Stream.audioOptions(defaultLabel: String, originalLabel: String): List<PickerOption> =
-    audioStreams
-        .filter { it.url.isNotBlank() }
-        .distinctBy { it.key }
-        .map { PickerOption(it.key, it.label(defaultLabel, originalLabel)) }
-private fun Stream.captionOptions(captionsLabel: String, autoGeneratedLabel: String): List<PickerOption> =
-    subtitles
-        .filter { it.url.isNotBlank() }
-        .distinctBy { it.key }
-        .map { PickerOption(it.key, it.label(captionsLabel, autoGeneratedLabel)) }
-private val StreamAudioSource.key: String
-    get() = audioTrackId?.takeIf { it.isNotBlank() }
-        ?: audioLocale?.takeIf { it.isNotBlank() }
-        ?: url
-private fun StreamAudioSource.label(defaultLabel: String, originalLabel: String): String {
-    val locale = audioLocale?.takeIf { it.isNotBlank() }
-    val trackName = audioTrackName?.takeIf { it.isNotBlank() }
-    val baseName = trackName ?: locale
-    val format = mimeType.substringBefore(";").substringAfter("/").takeIf { it.isNotBlank() }
-    val label = listOfNotNull(
-        baseName,
-        bitrate?.let { "$it kbps" },
-        format,
-    ).joinToString(" - ").ifBlank { defaultLabel }
-    val alreadyOriginal = trackName?.contains(originalLabel, ignoreCase = true) == true
-    return if (isOriginal && !alreadyOriginal) "$label - $originalLabel" else label
-}
-private val StreamSubtitleSource.key: String
-    get() = languageTag.takeIf { it.isNotBlank() }
-        ?.let { "$it:${isAutoGenerated}" }
-        ?: url
-private fun StreamSubtitleSource.label(captionsLabel: String, autoGeneratedLabel: String): String =
-    buildString {
-        append(displayLanguageName.ifBlank { languageTag.ifBlank { captionsLabel } })
-        if (isAutoGenerated) append(" ($autoGeneratedLabel)")
-    }
-private data class PickerOption(
-    val key: String?,
-    val label: String,
-)
-
 private enum class PlaybackOptionsPage {
     Main,
     Quality,
     Captions,
     Audio,
     Speed,
+    Resize,
 }
 
 private fun formatSpeed(value: Float): String =
     if (value % 1f == 0f) value.toInt().toString() else value.toString()
+
+@Composable
+private fun ResizeMode.label(): String = when (this) {
+    ResizeMode.Fit -> stringResource(R.string.player_resize_fit)
+    ResizeMode.Crop -> stringResource(R.string.player_resize_crop)
+    ResizeMode.Stretch -> stringResource(R.string.player_resize_stretch)
+}
+
+@Composable
+private fun resizeModeOptions(): List<PlaybackPickerOption> =
+    listOf(ResizeMode.Fit, ResizeMode.Stretch, ResizeMode.Crop)
+        .map { PlaybackPickerOption(it.name, it.label()) }
+
+private const val AUTO_QUALITY_KEY = "auto"
