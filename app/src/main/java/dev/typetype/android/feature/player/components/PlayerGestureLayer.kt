@@ -11,8 +11,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
+import dev.typetype.android.R
 import dev.typetype.android.feature.player.state.DragMode
 import dev.typetype.android.feature.player.state.GestureSide
 import dev.typetype.android.feature.player.state.PlayerGestureState
@@ -156,13 +158,13 @@ fun PlayerGestureLayer(
         DragSliderOverlay(
             visible = state.brightnessOverlayActive.value,
             fraction = state.brightnessFraction.floatValue,
-            label = "Brightness",
+            label = stringResource(R.string.player_gesture_brightness),
             modifier = Modifier.align(Alignment.CenterStart).padding(start = 24.dp),
         )
         DragSliderOverlay(
             visible = state.volumeOverlayActive.value,
             fraction = state.volumeFraction.floatValue,
-            label = "Volume",
+            label = stringResource(R.string.player_gesture_volume),
             modifier = Modifier.align(Alignment.CenterEnd).padding(end = 24.dp),
         )
         SeekDragOverlay(state = state, durationMs = player.duration)
