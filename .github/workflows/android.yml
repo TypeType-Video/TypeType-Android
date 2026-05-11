@@ -1,0 +1,125 @@
+name: Android
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+      - dev
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: Publish a GitHub release
+        required: true
+        type: boolean
+        default: false
+      tag_name:
+        description: Release tag
+        required: true
+        default: v1.0.0
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Build and check
+        run: ./gradlew :app:assembleDebug lint :app:testDebugUnitTest
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v5
+        with:
+          name: typetype-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+  release:
+    needs: verify
+    if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish_release)) }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Prepare release tag
+        env:
+          INPUT_TAG_NAME: ${{ inputs.tag_name }}
+        run: |
+          if [ -n "$INPUT_TAG_NAME" ]; then
+            echo "RELEASE_TAG=$INPUT_TAG_NAME" >> "$GITHUB_ENV"
+          else
+            echo "RELEASE_TAG=v1.0.0" >> "$GITHUB_ENV"
+          fi
+
+      - name: Prepare signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          test -n "$ANDROID_KEYSTORE_PASSWORD"
+          test -n "$ANDROID_KEY_ALIAS"
+          test -n "$ANDROID_KEY_PASSWORD"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > release.keystore
+          {
+            printf 'storeFile=%s\n' "$PWD/release.keystore"
+            printf 'storePassword=%s\n' "$ANDROID_KEYSTORE_PASSWORD"
+            printf 'keyAlias=%s\n' "$ANDROID_KEY_ALIAS"
+            printf 'keyPassword=%s\n' "$ANDROID_KEY_PASSWORD"
+          } > keystore.properties
+
+      - name: Build release APK
+        run: ./gradlew :app:assembleRelease lint :app:testDebugUnitTest
+
+      - name: Prepare APK artifact
+        run: |
+          mkdir -p artifacts
+          apk="$(find app/build/outputs/apk/release -name '*.apk' | head -n 1)"
+          test -n "$apk"
+          cp "$apk" "artifacts/TypeType-Android-$RELEASE_TAG.apk"
+
+      - name: Upload release APK
+        uses: actions/upload-artifact@v5
+        with:
+          name: typetype-release-apk
+          path: artifacts/*.apk
+          if-no-files-found: error
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: TypeType Android ${{ env.RELEASE_TAG }}
+          files: artifacts/*.apk
+          fail_on_unmatched_files: true
