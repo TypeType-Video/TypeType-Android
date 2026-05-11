@@ -109,11 +109,11 @@ fun DescriptionSection(
         }
     }
 
-    if (pendingUrl != null) {
+    pendingUrl?.let { url ->
         ExternalLinkDialog(
-            url = pendingUrl!!,
+            url = url,
             onConfirm = {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(pendingUrl))
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                 context.startActivity(intent)
                 pendingUrl = null
             },
