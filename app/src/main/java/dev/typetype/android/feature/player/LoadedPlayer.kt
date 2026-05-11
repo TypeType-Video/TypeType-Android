@@ -50,6 +50,7 @@ import dev.typetype.android.feature.player.components.PlaylistPickerSheet
 import dev.typetype.android.feature.player.components.RelatedStreamsSection
 import dev.typetype.android.feature.player.components.UploaderCard
 import dev.typetype.android.feature.player.components.applyAutoEnterPipParams
+import dev.typetype.android.feature.menu.rememberVideoMenuScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 
@@ -62,6 +63,11 @@ fun LoadedPlayer(
     isInWatchLater: Boolean,
     gestureConfig: PlayerGestureConfig,
     autoplayEnabled: Boolean,
+    defaultQuality: String,
+    defaultAudioLanguage: String,
+    subtitlesEnabled: Boolean,
+    defaultSubtitleLanguage: String,
+    preferOriginalLanguage: Boolean,
     playlists: List<Playlist>,
     playlistPickerVisible: Boolean,
     playlistActionInFlight: Boolean,
@@ -76,10 +82,45 @@ fun LoadedPlayer(
     val scrollState = rememberScrollState()
     var commentsVisible by remember { mutableStateOf(false) }
     var isFullscreen by remember { mutableStateOf(false) }
+    var selectedQuality by remember(stream.id, defaultQuality) {
+        mutableStateOf(stream.initialQuality(defaultQuality))
+    }
+    var selectedAudioKey by remember(stream.id, defaultAudioLanguage, preferOriginalLanguage) {
+        mutableStateOf(stream.initialAudioKey(defaultAudioLanguage, preferOriginalLanguage))
+    }
+    var selectedSubtitleKey by remember(stream.id, subtitlesEnabled, defaultSubtitleLanguage) {
+        mutableStateOf(stream.initialSubtitleKey(subtitlesEnabled, defaultSubtitleLanguage))
+    }
+    var selectedSpeed by remember(stream.id) { mutableStateOf(1f) }
+    val videoMenuScope = rememberVideoMenuScope(onOpenChannel = onOpenChannel)
     val activity = LocalActivity.current
 
-    LaunchedEffect(stream.id, controller) {
-        controller?.let { ctrl -> bindStreamToController(ctrl, stream, videoUrl, resumeAtMillis) }
+    LaunchedEffect(
+        stream.id,
+        controller,
+        selectedQuality,
+        selectedAudioKey,
+        selectedSubtitleKey,
+        defaultAudioLanguage,
+        preferOriginalLanguage,
+    ) {
+        controller?.let { ctrl ->
+            bindStreamToController(
+                controller = ctrl,
+                stream = stream,
+                videoUrl = videoUrl,
+                startMillis = resumeAtMillis,
+                selectedQuality = selectedQuality,
+                selectedAudioKey = selectedAudioKey,
+                selectedSubtitleKey = selectedSubtitleKey,
+                defaultAudioLanguage = defaultAudioLanguage,
+                preferOriginalLanguage = preferOriginalLanguage,
+            )
+        }
+    }
+
+    LaunchedEffect(controller, selectedSpeed) {
+        controller?.setPlaybackSpeed(selectedSpeed)
     }
 
     val durationMs = stream.durationSeconds * 1000L
@@ -195,6 +236,15 @@ fun LoadedPlayer(
                 if (controller != null) {
                     PlayerSurfaceBox(
                         player = controller,
+                        stream = stream,
+                        selectedQuality = selectedQuality,
+                        selectedAudioKey = selectedAudioKey,
+                        selectedSubtitleKey = selectedSubtitleKey,
+                        selectedSpeed = selectedSpeed,
+                        onSelectQuality = { selectedQuality = it },
+                        onSelectAudio = { selectedAudioKey = it },
+                        onSelectSubtitle = { selectedSubtitleKey = it },
+                        onSelectSpeed = { selectedSpeed = it },
                         onNavigateBack = {
                             if (isFullscreen) isFullscreen = false else onNavigateBack()
                         },
@@ -239,7 +289,12 @@ fun LoadedPlayer(
                     )
                     CommentsBar(onClick = { commentsVisible = true })
                     Spacer(Modifier.height(4.dp))
-                    RelatedStreamsSection(videos = stream.relatedStreams, onPlayVideo = onPlayVideo)
+                    RelatedStreamsSection(
+                        videos = stream.relatedStreams,
+                        onPlayVideo = onPlayVideo,
+                        menuScope = videoMenuScope,
+                        onOpenChannel = onOpenChannel,
+                    )
                 }
             }
         }

@@ -33,6 +33,7 @@ import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
 import androidx.media3.ui.compose.state.rememberPresentationState
 import dev.typetype.android.domain.stream.Chapter
 import dev.typetype.android.domain.stream.SponsorBlockSegment
+import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.feature.player.state.PlayerGestureState
 import dev.typetype.android.feature.player.state.ResizeMode
 import dev.typetype.android.feature.player.state.next
@@ -44,6 +45,15 @@ private const val AUTO_HIDE_DELAY_MS = 3_500L
 @Composable
 fun PlayerSurfaceBox(
     player: Player,
+    stream: Stream,
+    selectedQuality: String,
+    selectedAudioKey: String?,
+    selectedSubtitleKey: String?,
+    selectedSpeed: Float,
+    onSelectQuality: (String) -> Unit,
+    onSelectAudio: (String?) -> Unit,
+    onSelectSubtitle: (String?) -> Unit,
+    onSelectSpeed: (Float) -> Unit,
     onNavigateBack: () -> Unit,
     isFullscreen: Boolean = false,
     onToggleFullscreen: () -> Unit = {},
@@ -114,6 +124,12 @@ fun PlayerSurfaceBox(
             )
         }
 
+        PlayerSubtitleOverlay(
+            player = player,
+            controlsVisible = controlsVisible,
+            modifier = Modifier.fillMaxSize(),
+        )
+
         if (presentationState.coverSurface) {
             Box(
                 modifier = Modifier.fillMaxSize().background(Color.Black),
@@ -174,7 +190,15 @@ fun PlayerSurfaceBox(
 
         if (optionsVisible) {
             PlaybackOptionsSheet(
-                player = player,
+                stream = stream,
+                selectedQuality = selectedQuality,
+                selectedAudioKey = selectedAudioKey,
+                selectedSubtitleKey = selectedSubtitleKey,
+                selectedSpeed = selectedSpeed,
+                onSelectQuality = onSelectQuality,
+                onSelectAudio = onSelectAudio,
+                onSelectSubtitle = onSelectSubtitle,
+                onSelectSpeed = onSelectSpeed,
                 onDismiss = { optionsVisible = false },
             )
         }
