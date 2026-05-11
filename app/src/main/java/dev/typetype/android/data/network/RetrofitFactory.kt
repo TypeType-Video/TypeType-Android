@@ -13,13 +13,15 @@ class RetrofitFactory @Inject constructor(
     private val okHttpClient: OkHttpClient,
     private val json: Json,
 ) {
-    fun create(baseUrl: String): TypeTypeApi {
+    fun create(baseUrl: String): TypeTypeApi = create(baseUrl, TypeTypeApi::class.java)
+
+    fun <T> create(baseUrl: String, type: Class<T>): T {
         val normalized = if (baseUrl.endsWith('/')) baseUrl else "$baseUrl/"
         return Retrofit.Builder()
             .baseUrl(normalized)
             .client(okHttpClient)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
-            .create(TypeTypeApi::class.java)
+            .create(type)
     }
 }
