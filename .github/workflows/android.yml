@@ -199,7 +199,7 @@ jobs:
           mkdir -p artifacts
           apk="$(find app/build/outputs/apk/release -name '*.apk' | head -n 1)"
           test -n "$apk"
-          cp "$apk" "artifacts/TypeType-Android-$RELEASE_TAG.apk"
+          cp "$apk" "artifacts/TypeType-$RELEASE_TAG.apk"
 
       - name: Upload release APK
         uses: actions/upload-artifact@v5
@@ -214,5 +214,9 @@ jobs:
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           name: TypeType ${{ env.RELEASE_TAG }}
+          body: |
+            Premiere version de TypeType.
+
+            Une base stable pour regarder les videos, gerer la bibliotheque, utiliser les telechargements et regler le lecteur.
           files: artifacts/*.apk
           fail_on_unmatched_files: true
