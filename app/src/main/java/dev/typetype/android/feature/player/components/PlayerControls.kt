@@ -1,12 +1,11 @@
 package dev.typetype.android.feature.player.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -22,7 +21,6 @@ import androidx.compose.material.icons.filled.FitScreen
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,10 +31,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
-import androidx.media3.common.util.UnstableApi
-import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
-import androidx.media3.ui.compose.state.rememberSeekBackButtonState
-import androidx.media3.ui.compose.state.rememberSeekForwardButtonState
 import dev.typetype.android.R
 import dev.typetype.android.domain.stream.SponsorBlockSegment
 import dev.typetype.android.feature.player.state.ResizeMode
@@ -77,8 +71,9 @@ fun PlayerControls(
                 .align(Alignment.TopEnd)
                 .windowInsetsPadding(WindowInsets.statusBars),
         )
-        CenterControls(
+        PlayerCenterControls(
             player = player,
+            isFullscreen = isFullscreen,
             modifier = Modifier.align(Alignment.Center),
         )
         BottomBar(
@@ -89,7 +84,8 @@ fun PlayerControls(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .padding(start = 12.dp, end = 4.dp, bottom = 4.dp),
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(start = 12.dp, end = 6.dp, bottom = if (isFullscreen) 10.dp else 4.dp),
         )
     }
 }
@@ -99,10 +95,10 @@ private fun TopScrim(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(84.dp)
+            .height(112.dp)
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(Color.Black.copy(alpha = 0.55f), Color.Transparent),
+                    colors = listOf(Color.Black.copy(alpha = 0.68f), Color.Transparent),
                 ),
             ),
     )
@@ -113,10 +109,10 @@ private fun BottomScrim(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(120.dp)
+            .height(152.dp)
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f)),
+                    colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.72f)),
                 ),
             ),
     )
@@ -124,7 +120,10 @@ private fun BottomScrim(modifier: Modifier = Modifier) {
 
 @Composable
 private fun BackButton(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
-    IconButton(onClick = onNavigateBack, modifier = modifier.padding(8.dp)) {
+    OverlayIconButton(
+        onClick = onNavigateBack,
+        modifier = modifier.padding(8.dp),
+    ) {
         Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
             contentDescription = stringResource(R.string.player_back),
@@ -146,7 +145,7 @@ private fun TopActions(
 ) {
     Row(modifier = modifier.padding(8.dp)) {
         if (isFullscreen) {
-            IconButton(onClick = onCycleResizeMode) {
+            OverlayIconButton(onClick = onCycleResizeMode) {
                 Icon(
                     imageVector = resizeMode.icon(),
                     contentDescription = stringResource(R.string.player_resize_mode),
@@ -154,7 +153,7 @@ private fun TopActions(
                 )
             }
         }
-        IconButton(onClick = onEnterPip) {
+        OverlayIconButton(onClick = onEnterPip) {
             Icon(
                 painter = painterResource(R.drawable.ic_pip),
                 contentDescription = stringResource(R.string.player_pip),
@@ -162,7 +161,7 @@ private fun TopActions(
             )
         }
         if (chaptersAvailable) {
-            IconButton(onClick = onOpenChapters) {
+            OverlayIconButton(onClick = onOpenChapters) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.List,
                     contentDescription = stringResource(R.string.player_chapters),
@@ -170,13 +169,30 @@ private fun TopActions(
                 )
             }
         }
-        IconButton(onClick = onOpenOptions) {
+        OverlayIconButton(onClick = onOpenOptions) {
             Icon(
                 imageVector = Icons.Filled.Settings,
                 contentDescription = stringResource(R.string.player_playback_options),
                 tint = Color.White,
             )
         }
+    }
+}
+
+@Composable
+private fun OverlayIconButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = modifier
+            .padding(2.dp)
+            .size(40.dp)
+            .background(Color.Black.copy(alpha = 0.28f), CircleShape),
+    ) {
+        content()
     }
 }
 
@@ -212,75 +228,5 @@ private fun BottomBar(
                 tint = Color.White,
             )
         }
-    }
-}
-
-@OptIn(markerClass = [UnstableApi::class])
-@Composable
-private fun CenterControls(player: Player, modifier: Modifier = Modifier) {
-    val playPauseState = rememberPlayPauseButtonState(player)
-    val seekBackState = rememberSeekBackButtonState(player)
-    val seekForwardState = rememberSeekForwardButtonState(player)
-
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(40.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        ControlButton(
-            iconRes = R.drawable.ic_rewind,
-            contentDescription = stringResource(R.string.player_rewind),
-            enabled = seekBackState.isEnabled,
-            onClick = { seekBackState.onClick() },
-            buttonDp = 64,
-            iconDp = 36,
-        )
-        ControlButton(
-            iconRes = if (playPauseState.showPlay) R.drawable.ic_play else R.drawable.ic_pause,
-            contentDescription = stringResource(R.string.player_play_pause),
-            enabled = playPauseState.isEnabled,
-            onClick = { playPauseState.onClick() },
-            buttonDp = 80,
-            iconDp = 56,
-            withScrim = true,
-        )
-        ControlButton(
-            iconRes = R.drawable.ic_forward,
-            contentDescription = stringResource(R.string.player_forward),
-            enabled = seekForwardState.isEnabled,
-            onClick = { seekForwardState.onClick() },
-            buttonDp = 64,
-            iconDp = 36,
-        )
-    }
-}
-
-@Composable
-private fun ControlButton(
-    iconRes: Int,
-    contentDescription: String,
-    enabled: Boolean,
-    onClick: () -> Unit,
-    buttonDp: Int,
-    iconDp: Int,
-    withScrim: Boolean = false,
-) {
-    val baseModifier = Modifier.size(buttonDp.dp)
-    val modifier = if (withScrim) {
-        baseModifier.background(Color.Black.copy(alpha = 0.45f), CircleShape)
-    } else {
-        baseModifier
-    }
-    IconButton(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = modifier,
-    ) {
-        Icon(
-            painter = painterResource(iconRes),
-            contentDescription = contentDescription,
-            tint = Color.White,
-            modifier = Modifier.size(iconDp.dp),
-        )
     }
 }

@@ -57,7 +57,7 @@ fun HistoryTab(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = 4.dp),
     ) {
-        items(items, key = { it.id }) { item ->
+        items(items, key = { it.id }, contentType = { "history-video" }) { item ->
             HistoryRow(
                 item = item,
                 meta = metas[item.url],

@@ -2,8 +2,11 @@ package dev.typetype.android.feature.player.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -55,8 +58,9 @@ fun PlayerSubtitleOverlay(
             color = Color.White,
             textAlign = TextAlign.Center,
             modifier = Modifier
+                .windowInsetsPadding(WindowInsets.navigationBars)
                 .padding(horizontal = 24.dp)
-                .padding(bottom = if (controlsVisible) 96.dp else 28.dp)
+                .padding(bottom = if (controlsVisible) 132.dp else 34.dp)
                 .background(Color.Black.copy(alpha = 0.72f), RoundedCornerShape(4.dp))
                 .padding(horizontal = 8.dp, vertical = 4.dp),
         )

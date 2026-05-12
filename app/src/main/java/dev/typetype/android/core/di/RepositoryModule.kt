@@ -8,6 +8,7 @@ import dev.typetype.android.data.actions.VideoActionsRepositoryImpl
 import dev.typetype.android.data.auth.AuthRepositoryImpl
 import dev.typetype.android.data.channel.ChannelRepositoryImpl
 import dev.typetype.android.data.comments.CommentsRepositoryImpl
+import dev.typetype.android.data.download.AndroidDownloadRepository
 import dev.typetype.android.data.feed.HomeFeedRepositoryImpl
 import dev.typetype.android.data.library.OfflineLibraryRepository
 import dev.typetype.android.data.library.RoomVideoMetaRepository
@@ -24,6 +25,7 @@ import dev.typetype.android.domain.actions.VideoActionsRepository
 import dev.typetype.android.domain.auth.AuthRepository
 import dev.typetype.android.domain.channel.ChannelRepository
 import dev.typetype.android.domain.comments.CommentsRepository
+import dev.typetype.android.domain.download.DownloadRepository
 import dev.typetype.android.domain.feed.HomeFeedRepository
 import dev.typetype.android.domain.library.LibraryRepository
 import dev.typetype.android.domain.library.VideoMetaRepository
@@ -105,4 +107,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSubscriptionsRepository(impl: RemoteSubscriptionsRepository): SubscriptionsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindDownloadRepository(impl: AndroidDownloadRepository): DownloadRepository
 }

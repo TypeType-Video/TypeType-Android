@@ -22,4 +22,5 @@ data class PlayerState(
     val playlistPickerVisible: Boolean = false,
     val playlists: List<Playlist> = emptyList(),
     val playlistActionInFlight: Boolean = false,
+    val downloadInFlight: Boolean = false,
 )

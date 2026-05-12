@@ -13,6 +13,7 @@ import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CheckCircleOutline
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Person
@@ -40,6 +41,7 @@ sealed interface VideoMenuAction {
     data object ToggleWatchLater : VideoMenuAction
     data object AddToPlaylist : VideoMenuAction
     data object ToggleWatched : VideoMenuAction
+    data object Download : VideoMenuAction
     data object Share : VideoMenuAction
     data object OpenChannel : VideoMenuAction
     data object BlockVideo : VideoMenuAction
@@ -96,6 +98,11 @@ fun VideoCardMenu(
                     else R.string.video_menu_mark_as_watched,
                 ),
                 onClick = { onAction(VideoMenuAction.ToggleWatched); onDismiss() },
+            )
+            VideoMenuItem(
+                icon = Icons.Filled.Download,
+                label = stringResource(R.string.video_menu_download),
+                onClick = { onAction(VideoMenuAction.Download); onDismiss() },
             )
             VideoMenuItem(
                 icon = Icons.Filled.Share,

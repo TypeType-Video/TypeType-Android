@@ -28,6 +28,7 @@ import dev.typetype.android.core.ui.navigation.PlayerSettingsRoute
 import dev.typetype.android.core.ui.navigation.PlaylistRoute
 import dev.typetype.android.core.ui.navigation.SearchRoute
 import dev.typetype.android.core.ui.navigation.SettingsRoute
+import dev.typetype.android.core.ui.navigation.StorageSettingsRoute
 import dev.typetype.android.core.ui.navigation.SubscriptionsRoute
 import dev.typetype.android.core.ui.navigation.WelcomeRoute
 import dev.typetype.android.feature.channel.ChannelRoute as ChannelRouteScreen
@@ -43,6 +44,7 @@ import dev.typetype.android.feature.settings.blocked.BlockedSettingsRoute as Blo
 import dev.typetype.android.feature.settings.player.PlayerSettingsRoute as PlayerSettingsRouteScreen
 import dev.typetype.android.feature.settings.privacy.PrivacySettingsRoute as PrivacySettingsRouteScreen
 import dev.typetype.android.feature.settings.profile.ProfileSettingsRoute as ProfileSettingsRouteScreen
+import dev.typetype.android.feature.settings.storage.StorageSettingsRoute as StorageSettingsRouteScreen
 import dev.typetype.android.feature.setup.addserver.AddServerRoute as AddServerRouteScreen
 import dev.typetype.android.feature.setup.login.LoginRoute as LoginRouteScreen
 import dev.typetype.android.feature.setup.welcome.WelcomeRoute as WelcomeRouteScreen
@@ -230,6 +232,7 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
                     onOpenProfile = { navController.navigate(ProfileSettingsRoute) },
                     onOpenAppearance = { navController.navigate(AppearanceRoute) },
                     onOpenPlayer = { navController.navigate(PlayerSettingsRoute) },
+                    onOpenStorage = { navController.navigate(StorageSettingsRoute) },
                     onOpenPrivacy = { navController.navigate(PrivacySettingsRoute) },
                     onOpenBlocked = { navController.navigate(BlockedSettingsRoute) },
                     onOpenAbout = { navController.navigate(AboutRoute) },
@@ -251,6 +254,11 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
             }
             composable<PlayerSettingsRoute> {
                 PlayerSettingsRouteScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                )
+            }
+            composable<StorageSettingsRoute> {
+                StorageSettingsRouteScreen(
                     onNavigateBack = { navController.popBackStack() },
                 )
             }

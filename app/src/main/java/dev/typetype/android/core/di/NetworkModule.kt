@@ -4,6 +4,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import dev.typetype.android.BuildConfig
 import dev.typetype.android.data.network.AuthInterceptor
 import dev.typetype.android.data.network.PersistentCookieJar
 import dev.typetype.android.data.network.TokenAuthenticator
@@ -34,7 +35,6 @@ object NetworkModule {
         userAgent: UserAgentInterceptor,
         cookieJar: PersistentCookieJar,
     ): OkHttpClient {
-        val logging = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC }
         return OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
@@ -42,7 +42,7 @@ object NetworkModule {
             .callTimeout(45, TimeUnit.SECONDS)
             .cookieJar(cookieJar)
             .addInterceptor(userAgent)
-            .addInterceptor(logging)
+            .addDebugLogging()
             .build()
     }
 
@@ -54,7 +54,6 @@ object NetworkModule {
         cookieJar: PersistentCookieJar,
         authenticator: TokenAuthenticator,
     ): OkHttpClient {
-        val logging = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC }
         return OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
@@ -63,8 +62,15 @@ object NetworkModule {
             .cookieJar(cookieJar)
             .addInterceptor(userAgent)
             .addInterceptor(auth)
-            .addInterceptor(logging)
+            .addDebugLogging()
             .authenticator(authenticator)
             .build()
     }
+
+    private fun OkHttpClient.Builder.addDebugLogging(): OkHttpClient.Builder =
+        if (BuildConfig.DEBUG) {
+            addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC })
+        } else {
+            this
+        }
 }
