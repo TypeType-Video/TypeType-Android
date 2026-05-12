@@ -22,6 +22,7 @@ internal fun bindStreamToController(
     selectedAudioKey: String? = null,
     selectedSubtitleKey: String? = null,
     defaultAudioLanguage: String = "",
+    automaticQualityCap: String = "",
     preferOriginalLanguage: Boolean = false,
 ) {
     val source = pickPlayableSource(
@@ -29,6 +30,7 @@ internal fun bindStreamToController(
         selectedQuality = selectedQuality,
         selectedAudioKey = selectedAudioKey,
         defaultAudioLanguage = defaultAudioLanguage,
+        automaticQualityCap = automaticQualityCap,
         preferOriginalLanguage = preferOriginalLanguage,
     ) ?: return
     val subtitle = stream.subtitles.firstOrNull { it.key == selectedSubtitleKey }
@@ -36,6 +38,7 @@ internal fun bindStreamToController(
         controller = controller,
         selectedQuality = selectedQuality,
         defaultAudioLanguage = defaultAudioLanguage,
+        automaticQualityCap = automaticQualityCap,
         preferOriginalLanguage = preferOriginalLanguage,
         subtitlesEnabled = subtitle != null,
     )
@@ -84,11 +87,13 @@ private fun pickPlayableSource(
     selectedQuality: String,
     selectedAudioKey: String?,
     defaultAudioLanguage: String,
+    automaticQualityCap: String,
     preferOriginalLanguage: Boolean,
 ): PlayableSource? {
+    val effectiveQuality = selectedQuality.effectiveQuality(automaticQualityCap)
     val mergedSource = pickMergedSource(
         stream = stream,
-        selectedQuality = selectedQuality,
+        selectedQuality = effectiveQuality,
         selectedAudioKey = selectedAudioKey,
         defaultAudioLanguage = defaultAudioLanguage,
         preferOriginalLanguage = preferOriginalLanguage,
@@ -106,7 +111,7 @@ private fun pickPlayableSource(
     if (!stream.hlsUrl.isNullOrBlank()) {
         return PlayableSource(stream.hlsUrl, MimeTypes.APPLICATION_M3U8)
     }
-    return pickMuxedSource(stream, selectedQuality)
+    return pickMuxedSource(stream, effectiveQuality)
         ?: stream.progressiveUrl?.let { PlayableSource(it, MimeTypes.VIDEO_MP4) }
 }
 
@@ -177,10 +182,11 @@ private fun applyTrackSelectionDefaults(
     controller: MediaController,
     selectedQuality: String,
     defaultAudioLanguage: String,
+    automaticQualityCap: String,
     preferOriginalLanguage: Boolean,
     subtitlesEnabled: Boolean,
 ) {
-    val targetHeight = selectedQuality.qualityHeight()
+    val targetHeight = selectedQuality.effectiveQuality(automaticQualityCap).qualityHeight()
     val builder = controller.trackSelectionParameters.buildUpon()
         .clearOverridesOfType(C.TRACK_TYPE_VIDEO)
         .clearOverridesOfType(C.TRACK_TYPE_AUDIO)
@@ -217,6 +223,9 @@ private fun String.normalizedMimeType(): String? =
 private fun String.qualityHeight(): Int? =
     filter { it.isDigit() }.toIntOrNull()
 
+private fun String.effectiveQuality(automaticQualityCap: String): String =
+    if (this == AUTO_QUALITY_KEY) automaticQualityCap else this
+
 internal val StreamAudioSource.key: String
     get() = audioTrackId?.takeIf { it.isNotBlank() }
         ?: audioLocale?.takeIf { it.isNotBlank() }
@@ -234,3 +243,5 @@ private fun StreamSubtitleSource.toSubtitleConfiguration(): MediaItem.SubtitleCo
         .setLabel(displayLanguageName)
         .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
         .build()
+
+private const val AUTO_QUALITY_KEY = "auto"

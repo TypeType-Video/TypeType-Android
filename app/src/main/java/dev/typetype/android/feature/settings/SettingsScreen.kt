@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -51,6 +52,7 @@ fun SettingsScreen(
     onOpenProfile: () -> Unit = {},
     onOpenAppearance: () -> Unit,
     onOpenPlayer: () -> Unit = {},
+    onOpenStorage: () -> Unit = {},
     onOpenPrivacy: () -> Unit = {},
     onOpenBlocked: () -> Unit = {},
     onOpenAbout: () -> Unit = {},
@@ -60,6 +62,7 @@ fun SettingsScreen(
         SettingsEntry(R.string.settings_profile_title, R.string.settings_profile_subtitle, Icons.Filled.Person, onOpenProfile),
         SettingsEntry(R.string.settings_appearance_title, R.string.settings_appearance_subtitle, Icons.Filled.Palette, onOpenAppearance),
         SettingsEntry(R.string.settings_player_title, R.string.settings_player_subtitle, Icons.Filled.PlayCircle, onOpenPlayer),
+        SettingsEntry(R.string.settings_storage_title, R.string.settings_storage_subtitle, Icons.Filled.Storage, onOpenStorage),
         SettingsEntry(R.string.settings_privacy_title, R.string.settings_privacy_subtitle, Icons.Filled.Lock, onOpenPrivacy),
         SettingsEntry(R.string.settings_blocked_title, R.string.settings_blocked_subtitle, Icons.Filled.Block, onOpenBlocked),
         SettingsEntry(R.string.settings_about_title, R.string.settings_about_subtitle, Icons.Filled.Info, onOpenAbout),

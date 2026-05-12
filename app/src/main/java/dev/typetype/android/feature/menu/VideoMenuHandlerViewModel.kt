@@ -7,6 +7,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.typetype.android.R
 import dev.typetype.android.domain.actions.VideoActionsRepository
+import dev.typetype.android.domain.download.DownloadProgress
+import dev.typetype.android.domain.download.DownloadRepository
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.library.LibraryRepository
 import javax.inject.Inject
@@ -27,6 +29,7 @@ class VideoMenuHandlerViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val libraryRepository: LibraryRepository,
     private val videoActionsRepository: VideoActionsRepository,
+    private val downloadRepository: DownloadRepository,
 ) : ViewModel() {
 
     val playlists = libraryRepository.observePlaylists()
@@ -204,6 +207,36 @@ class VideoMenuHandlerViewModel @Inject constructor(
         }
     }
 
+    fun download(video: Video) {
+        viewModelScope.launch {
+            var queuedSent = false
+            runCatching {
+                downloadRepository.downloadVideo(
+                    videoUrl = video.url,
+                    title = video.title,
+                    quality = BEST_DOWNLOAD_QUALITY,
+                ).collect { progress ->
+                    when (progress) {
+                        is DownloadProgress.Queued -> {
+                            if (!queuedSent) {
+                                queuedSent = true
+                                val message = if (progress.cached) {
+                                    R.string.snackbar_download_cached
+                                } else {
+                                    R.string.snackbar_download_queued
+                                }
+                                _events.send(VideoMenuEvent.Snackbar(context.getString(message)))
+                            }
+                        }
+                        is DownloadProgress.Running -> Unit
+                        is DownloadProgress.Enqueued ->
+                            _events.send(VideoMenuEvent.Snackbar(context.getString(R.string.snackbar_download_enqueued)))
+                    }
+                }
+            }.onFailure { emitFailure(it) }
+        }
+    }
+
     fun blockVideoUrl(videoUrl: String) {
         viewModelScope.launch {
             emitResult(
@@ -299,5 +332,9 @@ class VideoMenuHandlerViewModel @Inject constructor(
         val msg = throwable.message?.takeIf { it.isNotBlank() }
             ?: context.getString(R.string.snackbar_action_failed)
         _events.send(VideoMenuEvent.Snackbar(msg))
+    }
+
+    private companion object {
+        const val BEST_DOWNLOAD_QUALITY = "best"
     }
 }

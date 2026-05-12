@@ -10,6 +10,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.typetype.android.data.comments.CommentsPagingSource
 import dev.typetype.android.domain.comments.Comment
 import dev.typetype.android.domain.comments.CommentsRepository
+import dev.typetype.android.domain.download.DownloadProgress
+import dev.typetype.android.domain.download.DownloadRepository
 import dev.typetype.android.domain.library.LibraryRepository
 import dev.typetype.android.domain.library.VideoMeta
 import dev.typetype.android.domain.library.VideoMetaRepository
@@ -46,6 +48,7 @@ class PlayerViewModel @Inject constructor(
     private val preferencesRepository: PreferencesRepository,
     private val userSettingsRepository: UserSettingsRepository,
     private val playerHostController: PlayerHostController,
+    private val downloadRepository: DownloadRepository,
     val commentsRepository: CommentsRepository,
 ) : ViewModel() {
 
@@ -84,6 +87,7 @@ class PlayerViewModel @Inject constructor(
                         errorMessage = null,
                         isFavorited = false,
                         isInWatchLater = false,
+                        downloadInFlight = false,
                     )
                 }
                 if (url.isNullOrBlank()) {
@@ -168,6 +172,7 @@ class PlayerViewModel @Inject constructor(
             PlayerAction.OnToggleFavorite -> toggleFavorite()
             PlayerAction.OnToggleWatchLater -> toggleWatchLater()
             PlayerAction.OnRetry -> currentUrl()?.let { loadStream(it) }
+            is PlayerAction.OnDownload -> downloadCurrentVideo(action.quality)
             PlayerAction.OnOpenPlaylistPicker ->
                 _state.update { it.copy(playlistPickerVisible = true) }
             PlayerAction.OnDismissPlaylistPicker ->
@@ -258,6 +263,38 @@ class PlayerViewModel @Inject constructor(
     }
 
     private fun currentUrl(): String? = playerHostController.state.value.videoUrl
+
+    private fun downloadCurrentVideo(quality: String) {
+        val url = currentUrl() ?: return
+        val stream = _state.value.stream ?: return
+        if (_state.value.downloadInFlight) return
+        viewModelScope.launch {
+            _state.update { if (it.videoUrl == url) it.copy(downloadInFlight = true) else it }
+            var queuedSent = false
+            runCatching {
+                downloadRepository.downloadVideo(
+                    videoUrl = url,
+                    title = stream.title,
+                    quality = quality,
+                ).collect { progress ->
+                    when (progress) {
+                        is DownloadProgress.Queued -> {
+                            if (!queuedSent) {
+                                queuedSent = true
+                                _events.send(PlayerEvent.DownloadQueued(progress.cached))
+                            }
+                        }
+                        is DownloadProgress.Running -> Unit
+                        is DownloadProgress.Enqueued ->
+                            _events.send(PlayerEvent.DownloadEnqueued(progress.fileName))
+                    }
+                }
+            }.onFailure { throwable ->
+                _events.send(PlayerEvent.ActionFailed(throwable.message ?: ""))
+            }
+            _state.update { if (it.videoUrl == url) it.copy(downloadInFlight = false) else it }
+        }
+    }
 
     private fun loadStream(url: String) {
         loadStreamJob?.cancel()

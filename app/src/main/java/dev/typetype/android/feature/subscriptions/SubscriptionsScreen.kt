@@ -98,7 +98,7 @@ fun SubscriptionsScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(top = 4.dp, bottom = 12.dp),
             ) {
-                items(visibleVideos, key = { it.id }) { video ->
+                items(visibleVideos, key = { it.id }, contentType = { "subscription-video" }) { video ->
                     VideoCard(
                         video = video,
                         onClick = { onPlayVideo(video.url) },

@@ -5,6 +5,7 @@ import dev.typetype.android.domain.stream.StreamSubtitleSource
 import dev.typetype.android.domain.stream.StreamVideoSource
 
 internal fun Stream.initialQuality(defaultQuality: String): String {
+    if (hasAdaptiveSource()) return AUTO_QUALITY_KEY
     val options = allVideoSources().qualityLabels()
     val targetHeight = defaultQuality.qualityHeight()
     return when {
@@ -40,6 +41,12 @@ internal fun Stream.initialSubtitleKey(
 private fun Stream.allVideoSources(): List<StreamVideoSource> =
     (videoOnlyStreams + muxedVideoStreams).filter { it.url.isNotBlank() && it.height > 0 }
 
+private fun Stream.hasAdaptiveSource(): Boolean =
+    !serverHlsManifestUrl.isNullOrBlank() ||
+        !serverDashManifestUrl.isNullOrBlank() ||
+        !hlsUrl.isNullOrBlank() ||
+        !dashMpdUrl.isNullOrBlank()
+
 private fun List<StreamVideoSource>.qualityLabels(): List<String> =
     map { it.height }
         .distinct()
@@ -53,3 +60,5 @@ private val StreamSubtitleSource.selectionKey: String
 
 private fun String.qualityHeight(): Int? =
     filter { it.isDigit() }.toIntOrNull()
+
+private const val AUTO_QUALITY_KEY = "auto"
