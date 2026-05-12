@@ -24,18 +24,18 @@ permissions:
   contents: write
 
 concurrency:
-  group: android-${{ github.ref }}
+  group: android-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
   CI: true
   JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
-  GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Djava.awt.headless=true -Dkotlin.daemon.jvm.options=-Djava.awt.headless=true
+  GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Djava.awt.headless=true
 
 jobs:
-  verify:
+  debug-apk:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -48,10 +48,12 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/dev' && github.ref != 'refs/heads/main' }}
 
-      - name: Build and check
-        timeout-minutes: 20
-        run: ./gradlew --no-daemon --no-parallel --stacktrace :app:assembleDebug lint :app:testDebugUnitTest
+      - name: Build debug APK
+        timeout-minutes: 15
+        run: ./gradlew --no-daemon --no-parallel --stacktrace :app:assembleDebug
 
       - name: Upload debug APK
         if: ${{ github.ref != 'refs/heads/main' }}
@@ -60,12 +62,11 @@ jobs:
           name: typetype-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+          retention-days: 14
 
-  release:
-    needs: verify
-    if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish_release)) }}
+  lint:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -78,6 +79,66 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/dev' && github.ref != 'refs/heads/main' }}
+
+      - name: Run lint
+        timeout-minutes: 15
+        run: ./gradlew --no-daemon --no-parallel --stacktrace lint
+
+      - name: Upload lint report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: lint-report
+          path: app/build/reports/lint-results-debug.html
+          if-no-files-found: ignore
+          retention-days: 14
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 26
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/dev' && github.ref != 'refs/heads/main' }}
+
+      - name: Run unit tests
+        timeout-minutes: 10
+        run: ./gradlew --no-daemon --no-parallel --stacktrace :app:testDebugUnitTest
+
+  release:
+    needs:
+      - debug-apk
+      - lint
+      - unit-tests
+    if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish_release)) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 26
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-read-only: false
 
       - name: Prepare release tag
         env:
@@ -109,8 +170,8 @@ jobs:
           } > keystore.properties
 
       - name: Build release APK
-        timeout-minutes: 30
-        run: ./gradlew --no-daemon --no-parallel --stacktrace :app:assembleRelease lint :app:testDebugUnitTest
+        timeout-minutes: 25
+        run: ./gradlew --no-daemon --no-parallel --stacktrace :app:assembleRelease
 
       - name: Prepare APK artifact
         run: |
@@ -125,6 +186,7 @@ jobs:
           name: typetype-release-apk
           path: artifacts/*.apk
           if-no-files-found: error
+          retention-days: 30
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
