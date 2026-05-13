@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
@@ -84,8 +84,18 @@ fun PlayerControls(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .windowInsetsPadding(WindowInsets.navigationBars)
-                .padding(start = 12.dp, end = 6.dp, bottom = if (isFullscreen) 10.dp else 4.dp),
+                .then(
+                    if (isFullscreen) {
+                        Modifier.windowInsetsPadding(WindowInsets.navigationBars)
+                    } else {
+                        Modifier
+                    },
+                )
+                .padding(
+                    start = if (isFullscreen) 12.dp else 4.dp,
+                    end = if (isFullscreen) 8.dp else 4.dp,
+                    bottom = if (isFullscreen) 12.dp else 0.dp,
+                ),
         )
     }
 }
@@ -189,8 +199,7 @@ private fun OverlayIconButton(
         onClick = onClick,
         modifier = modifier
             .padding(2.dp)
-            .size(40.dp)
-            .background(Color.Black.copy(alpha = 0.28f), CircleShape),
+            .size(40.dp),
     ) {
         content()
     }
@@ -210,16 +219,28 @@ private fun BottomBar(
     onToggleFullscreen: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val backgroundModifier = if (isFullscreen) {
+        Modifier.background(Color.Black.copy(alpha = 0.34f), RoundedCornerShape(14.dp))
+    } else {
+        Modifier
+    }
     Row(
-        modifier = modifier,
+        modifier = modifier
+            .height(if (isFullscreen) 52.dp else 40.dp)
+            .then(backgroundModifier)
+            .padding(start = if (isFullscreen) 8.dp else 2.dp, end = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         PlayerTimeBar(
             player = player,
             segments = sponsorBlockSegments,
-            modifier = Modifier.weight(1f).padding(vertical = 8.dp),
+            compact = !isFullscreen,
+            modifier = Modifier.weight(1f),
         )
-        IconButton(onClick = onToggleFullscreen) {
+        IconButton(
+            onClick = onToggleFullscreen,
+            modifier = Modifier.size(if (isFullscreen) 48.dp else 40.dp),
+        ) {
             Icon(
                 painter = painterResource(
                     if (isFullscreen) R.drawable.ic_fullscreen_exit else R.drawable.ic_fullscreen,

@@ -95,7 +95,7 @@ class LibraryNetworkSource @Inject constructor(
                         viewCount = v.viewCount,
                     )
                 }
-            }
+            }.distinctBy { it.playlistId to it.url }
             playlists to videos
         }
 

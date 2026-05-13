@@ -19,7 +19,8 @@ data class PlaylistWithVideos(
         description = playlist.description,
         createdAtMillis = playlist.createdAtMillis,
         videos = videos
-            .sortedBy { it.position }
+            .sortedWith(compareBy<PlaylistVideoEntity> { it.position }.thenBy { it.id })
+            .distinctBy { it.url }
             .map { v ->
                 PlaylistVideo(
                     id = v.id,
