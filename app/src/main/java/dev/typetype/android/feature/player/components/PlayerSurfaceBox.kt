@@ -165,7 +165,7 @@ fun PlayerSurfaceBox(
                 onOpenChapters = { chaptersVisible = true },
                 onEnterPip = {
                     controlsVisible = false
-                    enterPictureInPicture(activity)
+                    enterPictureInPicture(activity, isPlaying = playbackStatus.isPlaying)
                 },
                 onToggleFullscreen = onToggleFullscreen,
                 onCycleResizeMode = {
