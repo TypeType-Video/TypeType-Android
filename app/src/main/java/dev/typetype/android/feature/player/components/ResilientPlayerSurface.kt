@@ -108,10 +108,17 @@ internal fun ResilientPlayerSurface(
                 when (event) {
                     Lifecycle.Event.ON_START,
                     Lifecycle.Event.ON_RESUME,
-                    -> playerView.onResume()
+                    -> {
+                        if (playerView.player !== player) {
+                            playerView.player = player
+                        }
+                        playerView.onResume()
+                    }
                     Lifecycle.Event.ON_PAUSE,
                     Lifecycle.Event.ON_STOP,
-                    -> playerView.onPause()
+                    -> if (!player.isPlaying) {
+                        playerView.onPause()
+                    }
                     else -> Unit
                 }
             }
