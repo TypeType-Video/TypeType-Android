@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -85,7 +86,7 @@ fun PlayerControls(
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .windowInsetsPadding(WindowInsets.navigationBars)
-                .padding(start = 12.dp, end = 6.dp, bottom = if (isFullscreen) 10.dp else 4.dp),
+                .padding(start = 12.dp, end = 8.dp, bottom = if (isFullscreen) 12.dp else 8.dp),
         )
     }
 }
@@ -211,13 +212,16 @@ private fun BottomBar(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier,
+        modifier = modifier
+            .height(52.dp)
+            .background(Color.Black.copy(alpha = 0.34f), RoundedCornerShape(14.dp))
+            .padding(start = 8.dp, end = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         PlayerTimeBar(
             player = player,
             segments = sponsorBlockSegments,
-            modifier = Modifier.weight(1f).padding(vertical = 8.dp),
+            modifier = Modifier.weight(1f),
         )
         IconButton(onClick = onToggleFullscreen) {
             Icon(

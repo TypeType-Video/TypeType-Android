@@ -1,17 +1,18 @@
 package dev.typetype.android.feature.player.components
 
+import androidx.annotation.OptIn
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
-import androidx.annotation.OptIn
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,7 +20,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.Player
@@ -29,6 +35,11 @@ import dev.typetype.android.domain.stream.SponsorBlockSegment
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val TICK_INTERVAL_MS = 200L
+private val TIME_LABEL_WIDTH = 52.dp
+private val TIMELINE_HEIGHT = 36.dp
+private val TRACK_HEIGHT = 7.dp
+private val THUMB_WIDTH = 14.dp
+private val THUMB_HEIGHT = 22.dp
 
 @OptIn(markerClass = [UnstableApi::class])
 @Composable
@@ -43,37 +54,8 @@ fun PlayerTimeBar(
     val durationMs = progressState.durationMs.coerceAtLeast(0L)
     val displayedPosMs = scrubPositionMs ?: progressState.currentPositionMs.coerceIn(0L, durationMs)
 
-    Column(modifier = modifier) {
-        SliderRow(
-            displayedPosMs = displayedPosMs,
-            durationMs = durationMs,
-            onScrub = { scrubPositionMs = it },
-            onScrubFinished = {
-                scrubPositionMs?.let { player.seekTo(it) }
-                scrubPositionMs = null
-            },
-        )
-        if (segments.isNotEmpty()) {
-            Spacer(Modifier.height(4.dp))
-            SponsorBlockMarkers(
-                segments = segments,
-                durationMs = durationMs,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(3.dp),
-            )
-        }
-    }
-}
-
-@Composable
-private fun SliderRow(
-    displayedPosMs: Long,
-    durationMs: Long,
-    onScrub: (Long?) -> Unit,
-    onScrubFinished: () -> Unit,
-) {
     Row(
+        modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -81,28 +63,116 @@ private fun SliderRow(
             text = formatTime(displayedPosMs),
             style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp),
             color = Color.White,
+            modifier = Modifier.width(TIME_LABEL_WIDTH),
+            textAlign = TextAlign.End,
         )
-        Slider(
-            value = if (durationMs > 0) displayedPosMs.toFloat() / durationMs.toFloat() else 0f,
-            onValueChange = { fraction ->
-                if (durationMs > 0) onScrub((fraction * durationMs).toLong())
+        TimelineTrack(
+            positionMs = displayedPosMs,
+            durationMs = durationMs,
+            segments = segments,
+            onScrub = { scrubPositionMs = it },
+            onScrubFinished = { targetMs ->
+                player.seekTo(targetMs)
+                scrubPositionMs = null
             },
-            onValueChangeFinished = onScrubFinished,
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 4.dp),
-            colors = SliderDefaults.colors(
-                thumbColor = MaterialTheme.colorScheme.primary,
-                activeTrackColor = MaterialTheme.colorScheme.primary,
-                inactiveTrackColor = Color.White.copy(alpha = 0.3f),
-            ),
+                .padding(horizontal = 4.dp)
+                .height(TIMELINE_HEIGHT),
         )
         Text(
             text = formatTime(durationMs),
             style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp),
             color = Color.White.copy(alpha = 0.7f),
+            modifier = Modifier.width(TIME_LABEL_WIDTH),
         )
     }
+}
+
+@Composable
+private fun TimelineTrack(
+    positionMs: Long,
+    durationMs: Long,
+    segments: List<SponsorBlockSegment>,
+    onScrub: (Long) -> Unit,
+    onScrubFinished: (Long) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val activeColor = MaterialTheme.colorScheme.primary
+    val inactiveColor = Color.White.copy(alpha = 0.3f)
+    Box(
+        modifier = modifier
+            .pointerInput(durationMs) {
+                detectTapGestures { offset ->
+                    val targetMs = offset.x.toPositionMs(size.width.toFloat(), durationMs)
+                    onScrub(targetMs)
+                    onScrubFinished(targetMs)
+                }
+            }
+            .pointerInput(durationMs) {
+                var lastTargetMs = positionMs
+                detectDragGestures(
+                    onDragStart = { offset ->
+                        lastTargetMs = offset.x.toPositionMs(size.width.toFloat(), durationMs)
+                        onScrub(lastTargetMs)
+                    },
+                    onDrag = { change, _ ->
+                        lastTargetMs = change.position.x.toPositionMs(size.width.toFloat(), durationMs)
+                        onScrub(lastTargetMs)
+                    },
+                    onDragEnd = { onScrubFinished(lastTargetMs) },
+                    onDragCancel = { onScrubFinished(lastTargetMs) },
+                )
+            },
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val trackHeight = TRACK_HEIGHT.toPx()
+            val thumbWidth = THUMB_WIDTH.toPx()
+            val thumbHeight = THUMB_HEIGHT.toPx()
+            val trackTop = (size.height - trackHeight) / 2f
+            val trackRadius = trackHeight / 2f
+            val progress = if (durationMs > 0) positionMs.toFloat() / durationMs.toFloat() else 0f
+            val progressX = progress.coerceIn(0f, 1f) * size.width
+            drawRoundRect(
+                color = inactiveColor,
+                topLeft = Offset(0f, trackTop),
+                size = Size(size.width, trackHeight),
+                cornerRadius = CornerRadius(trackRadius, trackRadius),
+            )
+            drawRoundRect(
+                color = activeColor,
+                topLeft = Offset(0f, trackTop),
+                size = Size(progressX, trackHeight),
+                cornerRadius = CornerRadius(trackRadius, trackRadius),
+            )
+            segments.forEach { segment ->
+                val startFraction = (segment.startMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
+                val endFraction = (segment.endMs.toFloat() / durationMs.toFloat()).coerceIn(startFraction, 1f)
+                val xStart = startFraction * size.width
+                val xEnd = endFraction * size.width
+                drawRoundRect(
+                    color = sponsorBlockColorForCategory(segment.category),
+                    topLeft = Offset(xStart, trackTop),
+                    size = Size((xEnd - xStart).coerceAtLeast(3f), trackHeight),
+                    cornerRadius = CornerRadius(trackRadius, trackRadius),
+                )
+            }
+            drawRoundRect(
+                color = activeColor,
+                topLeft = Offset(
+                    x = (progressX - thumbWidth / 2f).coerceIn(0f, size.width - thumbWidth),
+                    y = (size.height - thumbHeight) / 2f,
+                ),
+                size = Size(thumbWidth, thumbHeight),
+                cornerRadius = CornerRadius(thumbWidth / 2f, thumbWidth / 2f),
+            )
+        }
+    }
+}
+
+private fun Float.toPositionMs(width: Float, durationMs: Long): Long {
+    if (durationMs <= 0 || width <= 0f) return 0L
+    return ((this / width).coerceIn(0f, 1f) * durationMs).toLong()
 }
 
 private fun formatTime(ms: Long): String {
