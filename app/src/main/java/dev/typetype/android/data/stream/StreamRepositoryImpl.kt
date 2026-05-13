@@ -133,8 +133,8 @@ class StreamRepositoryImpl @Inject constructor(
     }
 
     private fun SponsorBlockSegmentItem.toDomain(): SponsorBlockSegment = SponsorBlockSegment(
-        startMs = (startTime * 1_000).toLong(),
-        endMs = (endTime * 1_000).toLong(),
+        startMs = startTime.toLong(),
+        endMs = endTime.toLong(),
         category = SponsorCategory.fromKey(category),
         action = SponsorAction.fromKey(action),
     )
