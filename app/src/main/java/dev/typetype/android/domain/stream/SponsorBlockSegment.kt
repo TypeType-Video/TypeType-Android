@@ -11,6 +11,7 @@ enum class SponsorCategory {
     Sponsor,
     SelfPromo,
     Interaction,
+    Poi,
     Intro,
     Outro,
     Preview,
@@ -23,6 +24,7 @@ enum class SponsorCategory {
             "sponsor" -> Sponsor
             "selfpromo" -> SelfPromo
             "interaction" -> Interaction
+            "poi_highlight" -> Poi
             "intro" -> Intro
             "outro" -> Outro
             "preview" -> Preview

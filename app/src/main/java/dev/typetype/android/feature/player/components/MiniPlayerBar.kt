@@ -3,6 +3,8 @@ package dev.typetype.android.feature.player.components
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,7 +26,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -44,15 +49,46 @@ fun MiniPlayerBar(
     subtitle: String,
     artworkUri: String?,
     onExpand: () -> Unit,
+    onSendToBackground: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val playPauseState = rememberPlayPauseButtonState(player)
+    val density = LocalDensity.current
+    val swipeThresholdPx = with(density) { MINI_PLAYER_SWIPE_THRESHOLD.toPx() }
     Row(
         modifier = modifier
             .fillMaxWidth()
             .height(64.dp)
             .background(MaterialTheme.colorScheme.surface)
+            .pointerInput(onExpand, onSendToBackground) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(
+                        requireUnconsumed = false,
+                        pass = PointerEventPass.Initial,
+                    )
+                    val startY = down.position.y
+                    var handled = false
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                        if (!change.pressed || handled) break
+                        val deltaY = change.position.y - startY
+                        when {
+                            deltaY <= -swipeThresholdPx -> {
+                                change.consume()
+                                handled = true
+                                onExpand()
+                            }
+                            deltaY >= swipeThresholdPx -> {
+                                change.consume()
+                                handled = true
+                                onSendToBackground()
+                            }
+                        }
+                    }
+                }
+            }
             .clickable(onClick = onExpand),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -108,3 +144,5 @@ fun MiniPlayerBar(
         }
     }
 }
+
+private val MINI_PLAYER_SWIPE_THRESHOLD = 36.dp

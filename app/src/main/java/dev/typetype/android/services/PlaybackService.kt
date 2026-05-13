@@ -4,10 +4,12 @@ import android.app.PendingIntent
 import android.content.Intent
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
+import androidx.media3.session.CommandButton
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -25,6 +27,7 @@ class PlaybackService : MediaSessionService() {
         val player = buildPlayer()
         mediaSession = MediaSession.Builder(this, player)
             .setSessionActivity(buildSessionActivityPendingIntent())
+            .setMediaButtonPreferences(buildMediaButtonPreferences())
             .build()
     }
 
@@ -82,6 +85,25 @@ class PlaybackService : MediaSessionService() {
             .setChannelName(R.string.playback_channel_name)
             .build()
             .apply { setSmallIcon(R.drawable.ic_launcher_monochrome) }
+
+    private fun buildMediaButtonPreferences(): List<CommandButton> =
+        listOf(
+            CommandButton.Builder(CommandButton.ICON_SKIP_BACK_10)
+                .setDisplayName(getString(R.string.player_rewind))
+                .setPlayerCommand(Player.COMMAND_SEEK_BACK)
+                .setSlots(CommandButton.SLOT_BACK, CommandButton.SLOT_OVERFLOW)
+                .build(),
+            CommandButton.Builder(CommandButton.ICON_PLAY)
+                .setDisplayName(getString(R.string.player_play_pause))
+                .setPlayerCommand(Player.COMMAND_PLAY_PAUSE)
+                .setSlots(CommandButton.SLOT_CENTRAL)
+                .build(),
+            CommandButton.Builder(CommandButton.ICON_SKIP_FORWARD_10)
+                .setDisplayName(getString(R.string.player_forward))
+                .setPlayerCommand(Player.COMMAND_SEEK_FORWARD)
+                .setSlots(CommandButton.SLOT_FORWARD, CommandButton.SLOT_OVERFLOW)
+                .build(),
+        )
 
     private fun buildSessionActivityPendingIntent(): PendingIntent {
         val intent = Intent(this, MainActivity::class.java).apply {

@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 data class MainState(
     val isLoading: Boolean = true,
@@ -82,10 +83,19 @@ class MainViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            val initial = serverRepository.observeCurrentServer().first()
+            val initial = withTimeoutOrNull(STARTUP_TIMEOUT_MS) {
+                serverRepository.observeCurrentServer().first()
+            }
+            val sessionStatus = if (initial == null) {
+                SessionStatus.Invalid
+            } else {
+                withTimeoutOrNull(SESSION_VALIDATION_TIMEOUT_MS) {
+                    authRepository.validateSession()
+                } ?: SessionStatus.Unknown
+            }
             val startRoute = when {
                 initial == null -> WelcomeRoute
-                authRepository.validateSession() == SessionStatus.Invalid -> {
+                sessionStatus == SessionStatus.Invalid -> {
                     tokenStore.setAccessToken(null)
                     serverRepository.clearCurrentServer()
                     WelcomeRoute
@@ -100,6 +110,11 @@ class MainViewModel @Inject constructor(
                 launch { subscriptionsRepository.refresh() }
             }
         }
+    }
+
+    private companion object {
+        const val STARTUP_TIMEOUT_MS = 4_000L
+        const val SESSION_VALIDATION_TIMEOUT_MS = 6_000L
     }
 
     fun signOut() {
