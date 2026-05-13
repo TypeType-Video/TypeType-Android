@@ -3,18 +3,12 @@ package dev.typetype.android.feature.player.components
 import android.media.AudioManager
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.OptIn
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -30,8 +24,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.ui.compose.PlayerSurface
-import androidx.media3.ui.compose.SURFACE_TYPE_TEXTURE_VIEW
 import androidx.media3.ui.compose.state.rememberPresentationState
 import dev.typetype.android.domain.stream.Chapter
 import dev.typetype.android.domain.stream.SponsorBlockSegment
@@ -93,42 +85,14 @@ fun PlayerSurfaceBox(
     }
 
     val presentationState = rememberPresentationState(player)
+    val surfaceKey = rememberPlayerSurfaceKey(stream.id)
     Box(modifier = modifier.background(Color.Black).clipToBounds()) {
-        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-            val containerW = constraints.maxWidth.toFloat().coerceAtLeast(1f)
-            val containerH = constraints.maxHeight.toFloat().coerceAtLeast(1f)
-            val containerAspect = containerW / containerH
-            val videoSize = presentationState.videoSizeDp
-            val videoAspect = if (videoSize != null && videoSize.width > 0f && videoSize.height > 0f) {
-                videoSize.width / videoSize.height
-            } else {
-                containerAspect
-            }
-            val targetSize = targetVideoSurfaceSize(
-                resizeMode = gestureState.resizeMode.value,
-                containerWidth = maxWidth,
-                containerHeight = maxHeight,
-                containerAspect = containerAspect,
-                videoAspect = videoAspect,
-            )
-            val animatedWidth by animateDpAsState(
-                targetValue = targetSize.width,
-                animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing),
-                label = "playerSurfaceWidth",
-            )
-            val animatedHeight by animateDpAsState(
-                targetValue = targetSize.height,
-                animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing),
-                label = "playerSurfaceHeight",
-            )
-            PlayerSurface(
-                player = player,
-                surfaceType = SURFACE_TYPE_TEXTURE_VIEW,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(width = animatedWidth, height = animatedHeight),
-            )
-        }
+        ResilientPlayerSurface(
+            player = player,
+            surfaceKey = surfaceKey,
+            resizeMode = gestureState.resizeMode.value,
+            modifier = Modifier.fillMaxSize(),
+        )
 
         if (!isInPip) {
             PlayerSubtitleOverlay(
