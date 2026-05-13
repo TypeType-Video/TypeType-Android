@@ -31,35 +31,22 @@ env:
   CI: true
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
-  GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Djava.awt.headless=true
+  GRADLE_OPTS: -Dorg.gradle.daemon=true -Dorg.gradle.parallel=true -Djava.awt.headless=true
+  ANDROID_HOME: /opt/android-sdk
+  ANDROID_SDK_ROOT: /opt/android-sdk
+  JAVA_HOME: /usr/lib/jvm/java-26-openjdk
 
 jobs:
   debug-apk:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, arko, android]
     timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Set up JDK
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: 26
-
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches/modules-2
-            ~/.gradle/caches/transforms-*
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', 'gradle/libs.versions.toml', '**/*.gradle.kts') }}
-          restore-keys: gradle-${{ runner.os }}-
-
       - name: Build debug APK
         timeout-minutes: 15
-        run: ./gradlew --no-daemon --no-parallel --stacktrace :app:assembleDebug
+        run: ./gradlew --build-cache --stacktrace :app:assembleDebug
 
       - name: Upload debug APK
         if: ${{ github.ref != 'refs/heads/main' }}
@@ -71,31 +58,15 @@ jobs:
           retention-days: 14
 
   lint:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, arko, android]
     timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Set up JDK
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: 26
-
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches/modules-2
-            ~/.gradle/caches/transforms-*
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', 'gradle/libs.versions.toml', '**/*.gradle.kts') }}
-          restore-keys: gradle-${{ runner.os }}-
-
       - name: Run lint
         timeout-minutes: 15
-        run: ./gradlew --no-daemon --no-parallel --stacktrace lint
+        run: ./gradlew --build-cache --stacktrace lint
 
       - name: Upload lint report
         if: ${{ always() }}
@@ -107,31 +78,15 @@ jobs:
           retention-days: 14
 
   unit-tests:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, arko, android]
     timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Set up JDK
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: 26
-
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches/modules-2
-            ~/.gradle/caches/transforms-*
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', 'gradle/libs.versions.toml', '**/*.gradle.kts') }}
-          restore-keys: gradle-${{ runner.os }}-
-
       - name: Run unit tests
         timeout-minutes: 10
-        run: ./gradlew --no-daemon --no-parallel --stacktrace :app:testDebugUnitTest
+        run: ./gradlew --build-cache --stacktrace :app:testDebugUnitTest
 
   release:
     needs:
@@ -139,27 +94,11 @@ jobs:
       - lint
       - unit-tests
     if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish_release)) }}
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, arko, android]
     timeout-minutes: 35
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-
-      - name: Set up JDK
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: 26
-
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches/modules-2
-            ~/.gradle/caches/transforms-*
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties', 'gradle/libs.versions.toml', '**/*.gradle.kts') }}
-          restore-keys: gradle-${{ runner.os }}-
 
       - name: Prepare release tag
         env:
@@ -192,7 +131,7 @@ jobs:
 
       - name: Build release APK
         timeout-minutes: 25
-        run: ./gradlew --no-daemon --no-parallel --stacktrace :app:assembleRelease
+        run: ./gradlew --build-cache --stacktrace :app:assembleRelease
 
       - name: Prepare APK artifact
         run: |
