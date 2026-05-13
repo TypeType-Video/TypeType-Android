@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
@@ -200,8 +199,7 @@ private fun OverlayIconButton(
         onClick = onClick,
         modifier = modifier
             .padding(2.dp)
-            .size(40.dp)
-            .background(Color.Black.copy(alpha = 0.28f), CircleShape),
+            .size(40.dp),
     ) {
         content()
     }

@@ -21,7 +21,13 @@ import dev.typetype.android.R
 private val DEFAULT_ASPECT_RATIO = Rational(16, 9)
 
 const val PIP_ACTION_AUDIO_ONLY = "dev.typetype.android.PIP_AUDIO_ONLY"
+const val PIP_ACTION_REWIND = "dev.typetype.android.PIP_REWIND"
+const val PIP_ACTION_PLAY_PAUSE = "dev.typetype.android.PIP_PLAY_PAUSE"
+const val PIP_ACTION_FORWARD = "dev.typetype.android.PIP_FORWARD"
 private const val PIP_REQUEST_AUDIO_ONLY = 1010
+private const val PIP_REQUEST_REWIND = 1011
+private const val PIP_REQUEST_PLAY_PAUSE = 1012
+private const val PIP_REQUEST_FORWARD = 1013
 
 @Composable
 fun rememberIsInPipMode(): State<Boolean> {
@@ -46,9 +52,10 @@ fun rememberIsInPipMode(): State<Boolean> {
 fun enterPictureInPicture(
     activity: Activity?,
     aspectRatio: Rational = DEFAULT_ASPECT_RATIO,
+    isPlaying: Boolean = false,
 ) {
     activity ?: return
-    val params = buildParams(activity, aspectRatio)
+    val params = buildParams(activity, aspectRatio, isPlaying = isPlaying)
     runCatching { activity.enterPictureInPictureMode(params) }
 }
 
@@ -56,9 +63,10 @@ fun applyAutoEnterPipParams(
     activity: Activity?,
     autoEnter: Boolean,
     aspectRatio: Rational = DEFAULT_ASPECT_RATIO,
+    isPlaying: Boolean = false,
 ) {
     activity ?: return
-    val params = buildParams(activity, aspectRatio, autoEnter = autoEnter)
+    val params = buildParams(activity, aspectRatio, autoEnter = autoEnter, isPlaying = isPlaying)
     runCatching { activity.setPictureInPictureParams(params) }
 }
 
@@ -66,10 +74,42 @@ private fun buildParams(
     activity: Activity,
     aspectRatio: Rational,
     autoEnter: Boolean = false,
+    isPlaying: Boolean = false,
 ): PictureInPictureParams {
     val builder = PictureInPictureParams.Builder()
         .setAspectRatio(aspectRatio)
-        .setActions(listOf(buildHeadphonesAction(activity)))
+        .setActions(
+            listOf(
+                buildAction(
+                    activity = activity,
+                    action = PIP_ACTION_REWIND,
+                    requestCode = PIP_REQUEST_REWIND,
+                    icon = R.drawable.ic_rewind,
+                    title = R.string.player_rewind,
+                ),
+                buildAction(
+                    activity = activity,
+                    action = PIP_ACTION_PLAY_PAUSE,
+                    requestCode = PIP_REQUEST_PLAY_PAUSE,
+                    icon = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play,
+                    title = R.string.player_play_pause,
+                ),
+                buildAction(
+                    activity = activity,
+                    action = PIP_ACTION_FORWARD,
+                    requestCode = PIP_REQUEST_FORWARD,
+                    icon = R.drawable.ic_forward,
+                    title = R.string.player_forward,
+                ),
+                buildAction(
+                    activity = activity,
+                    action = PIP_ACTION_AUDIO_ONLY,
+                    requestCode = PIP_REQUEST_AUDIO_ONLY,
+                    icon = R.drawable.ic_headphones,
+                    title = R.string.player_audio_only,
+                ),
+            ),
+        )
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         builder.setAutoEnterEnabled(autoEnter)
             .setSeamlessResizeEnabled(true)
@@ -77,14 +117,21 @@ private fun buildParams(
     return builder.build()
 }
 
-private fun buildHeadphonesAction(activity: Activity): android.app.RemoteAction {
-    val intent = Intent(PIP_ACTION_AUDIO_ONLY).setPackage(activity.packageName)
+private fun buildAction(
+    activity: Activity,
+    action: String,
+    requestCode: Int,
+    icon: Int,
+    title: Int,
+): android.app.RemoteAction {
+    val intent = Intent(action).setPackage(activity.packageName)
     val pending = PendingIntent.getBroadcast(
         activity,
-        PIP_REQUEST_AUDIO_ONLY,
+        requestCode,
         intent,
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
-    val icon = Icon.createWithResource(activity, R.drawable.ic_headphones)
-    return android.app.RemoteAction(icon, "Audio only", "Continue audio in background", pending)
+    val actionIcon = Icon.createWithResource(activity, icon)
+    val label = activity.getString(title)
+    return android.app.RemoteAction(actionIcon, label, label, pending)
 }

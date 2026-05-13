@@ -155,7 +155,11 @@ fun LoadedPlayer(
                 }
 
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
-                    applyAutoEnterPipParams(activity, isPlaying)
+                    applyAutoEnterPipParams(
+                        activity = activity,
+                        autoEnter = isPlaying,
+                        isPlaying = isPlaying,
+                    )
                     if (!isPlaying) saveProgressIfEligible(ctrl.currentPosition)
                 }
 
@@ -170,7 +174,11 @@ fun LoadedPlayer(
                 }
             }
             ctrl.addListener(listener)
-            applyAutoEnterPipParams(activity, ctrl.isPlaying)
+            applyAutoEnterPipParams(
+                activity = activity,
+                autoEnter = ctrl.isPlaying,
+                isPlaying = ctrl.isPlaying,
+            )
             onDispose {
                 ctrl.removeListener(listener)
                 applyAutoEnterPipParams(activity, false)
