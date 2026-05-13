@@ -213,10 +213,22 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
-          name: TypeType ${{ env.RELEASE_TAG }}
+          name: ${{ env.RELEASE_TAG }}
           body: |
-            Premiere version de TypeType.
+            First stable release of TypeType for Android.
 
-            Une base stable pour regarder les videos, gerer la bibliotheque, utiliser les telechargements et regler le lecteur.
+            This version brings the native Android client to a usable 1.0 baseline with persistent login, account-backed home recommendations, subscriptions, history, favorites, Watch Later, playlists, profile and settings.
+
+            Highlights:
+            - Native Compose interface with dark theme, bottom navigation and library tabs.
+            - Persistent authenticated sessions with server-backed account state.
+            - Library sync for history, favorites, Watch Later, playlists and subscriptions.
+            - Video player with quality, audio, captions, playback speed, fullscreen, picture-in-picture and resize controls.
+            - Player progress saving and resume support.
+            - Download actions through the TypeType downloader gateway.
+            - Storage screen for downloaded videos.
+            - Share actions and TypeType server URLs from video menus.
+
+            This is the first public production APK for TypeType.
           files: artifacts/*.apk
           fail_on_unmatched_files: true
