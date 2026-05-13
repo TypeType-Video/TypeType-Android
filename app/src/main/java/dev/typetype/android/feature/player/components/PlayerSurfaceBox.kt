@@ -141,6 +141,13 @@ fun PlayerSurfaceBox(
                         manager.setStreamVolume(AudioManager.STREAM_MUSIC, target, 0)
                     }
                 },
+                isFullscreen = isFullscreen,
+                onEnterFullscreenGesture = {
+                    if (!isFullscreen) onToggleFullscreen()
+                },
+                onExitFullscreenGesture = {
+                    if (isFullscreen) onToggleFullscreen() else onNavigateBack()
+                },
                 config = gestureConfig,
                 modifier = Modifier.fillMaxSize(),
             )

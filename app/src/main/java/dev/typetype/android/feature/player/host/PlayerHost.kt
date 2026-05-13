@@ -1,13 +1,12 @@
 package dev.typetype.android.feature.player.host
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.animateTo
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.WindowInsets
@@ -17,19 +16,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.positionChange
-import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -38,8 +31,6 @@ import androidx.media3.session.MediaController
 import dev.typetype.android.feature.player.PlayerRoute as PlayerRouteScreen
 import dev.typetype.android.feature.player.components.MiniPlayerBar
 import dev.typetype.android.feature.player.components.rememberIsInPipMode
-import kotlin.math.abs
-import kotlinx.coroutines.launch
 
 private val MINI_PLAYER_HEIGHT = 64.dp
 
@@ -54,13 +45,11 @@ fun PlayerHost(
 ) {
     val state by controller.state.collectAsStateWithLifecycle()
     val density = LocalDensity.current
-    val coroutineScope = rememberCoroutineScope()
     val isInPip by rememberIsInPipMode()
+    val activity = LocalActivity.current
 
     val navigationBarsBottom = WindowInsets.navigationBars.asPaddingValues()
         .calculateBottomPadding()
-    val statusBarsTop = WindowInsets.statusBars.asPaddingValues()
-        .calculateTopPadding()
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val containerHeightPx = constraints.maxHeight.toFloat().coerceAtLeast(1f)
         val miniHeightPx = with(density) { MINI_PLAYER_HEIGHT.toPx() }
@@ -113,7 +102,7 @@ fun PlayerHost(
 
         if (hasVideo) {
             val isMini = !isInPip && (
-                anchoredState.currentValue == PlayerHostTarget.Mini ||
+                anchoredState.currentValue == PlayerHostTarget.Mini &&
                     anchoredState.targetValue == PlayerHostTarget.Mini
                 )
 
@@ -122,83 +111,16 @@ fun PlayerHost(
             } else {
                 containerHeightPx
             }
-            val miniProgress = if (miniAnchorPx > 0f) {
-                (rawOffsetPx / miniAnchorPx).coerceIn(0f, 1f)
-            } else {
-                0f
+            val hostHeightDp = with(density) {
+                if (isMini) miniHeightPx.toDp() else containerHeightPx.toDp()
             }
-            val effectiveHeightPx = (
-                containerHeightPx + (miniHeightPx - containerHeightPx) * miniProgress
-                ).coerceAtLeast(miniHeightPx)
-            val effectiveHeightDp = with(density) { effectiveHeightPx.toDp() }
 
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(effectiveHeightDp)
+                    .height(hostHeightDp)
                     .offset {
                         IntOffset(0, rawOffsetPx.toInt())
-                    }
-                    .pointerInput(anchoredState) {
-                        val playerAreaHeightPx = with(density) {
-                            statusBarsTop.toPx()
-                        } + (size.width.toFloat() * 9f / 16f)
-
-                        awaitEachGesture {
-                            val down = awaitFirstDown(
-                                requireUnconsumed = false,
-                                pass = PointerEventPass.Initial,
-                            )
-                            val startPos = down.position
-                            val tracker = VelocityTracker()
-                            tracker.addPosition(down.uptimeMillis, startPos)
-                            var intercepting = false
-
-                            while (true) {
-                                val event = awaitPointerEvent(PointerEventPass.Initial)
-                                val change = event.changes.firstOrNull { it.id == down.id }
-                                    ?: break
-                                if (!change.pressed) {
-                                    if (intercepting) {
-                                        change.consume()
-                                        val velocity = tracker.calculateVelocity().y
-                                        val target = when {
-                                            velocity > with(density) { 100.dp.toPx() } -> PlayerHostTarget.Mini
-                                            anchoredState.requireOffset() > miniAnchorPx * 0.5f -> PlayerHostTarget.Mini
-                                            else -> PlayerHostTarget.Expanded
-                                        }
-                                        coroutineScope.launch { anchoredState.animateTo(target) }
-                                    }
-                                    break
-                                }
-                                tracker.addPosition(change.uptimeMillis, change.position)
-                                val movement = change.position - startPos
-
-                                if (!intercepting) {
-                                    val absDy = abs(movement.y)
-                                    val absDx = abs(movement.x)
-                                    val isClearVertical = absDy > absDx * 1.5f && absDy > 60f
-                                    val current = anchoredState.currentValue
-                                    val triggered = isClearVertical && when (current) {
-                                        PlayerHostTarget.Expanded ->
-                                            movement.y > 60f && startPos.y < playerAreaHeightPx
-                                        PlayerHostTarget.Mini -> false
-                                        PlayerHostTarget.Hidden -> false
-                                    }
-                                    if (triggered) {
-                                        intercepting = true
-                                        change.consume()
-                                        anchoredState.dispatchRawDelta(movement.y)
-                                    }
-                                } else {
-                                    val delta = change.positionChange().y
-                                    if (delta != 0f) {
-                                        change.consume()
-                                        anchoredState.dispatchRawDelta(delta)
-                                    }
-                                }
-                            }
-                        }
                     }
                     .background(if (isMini) Color.Transparent else Color.Black),
             ) {
@@ -206,6 +128,7 @@ fun PlayerHost(
                     MiniSlot(
                         controller = mediaController,
                         onExpand = { controller.expand() },
+                        onSendToBackground = { activity?.moveTaskToBack(false) },
                         onClose = { controller.hide() },
                     )
                 } else {
@@ -235,6 +158,7 @@ fun PlayerHost(
 private fun MiniSlot(
     controller: MediaController?,
     onExpand: () -> Unit,
+    onSendToBackground: () -> Unit,
     onClose: () -> Unit,
 ) {
     val item = controller?.currentMediaItem
@@ -251,6 +175,7 @@ private fun MiniSlot(
                 subtitle = item.mediaMetadata.artist?.toString().orEmpty(),
                 artworkUri = item.mediaMetadata.artworkUri?.toString(),
                 onExpand = onExpand,
+                onSendToBackground = onSendToBackground,
                 onClose = onClose,
             )
         }

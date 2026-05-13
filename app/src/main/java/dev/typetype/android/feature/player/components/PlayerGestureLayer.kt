@@ -1,8 +1,9 @@
 package dev.typetype.android.feature.player.components
 
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -10,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -25,7 +27,7 @@ private const val BRIGHTNESS_DRAG_PIXELS_PER_FULL = 600f
 private const val VOLUME_DRAG_PIXELS_PER_FULL = 600f
 private const val DOUBLE_TAP_SEEK_INCREMENT_MS = 10_000L
 private const val SEEK_DRAG_MS_PER_PIXEL = 80f
-private const val DIRECTION_LOCK_THRESHOLD_PX = 8f
+private const val DIRECTION_LOCK_THRESHOLD_PX = 18f
 private const val LONG_PRESS_SPEED_FACTOR = 2f
 
 data class PlayerGestureConfig(
@@ -42,6 +44,9 @@ fun PlayerGestureLayer(
     onTogglePlayPause: () -> Unit,
     onAdjustBrightness: (Float) -> Unit,
     onAdjustVolume: (Float) -> Unit,
+    isFullscreen: Boolean = false,
+    onEnterFullscreenGesture: () -> Unit = {},
+    onExitFullscreenGesture: () -> Unit = {},
     config: PlayerGestureConfig = PlayerGestureConfig(),
     modifier: Modifier = Modifier,
 ) {
@@ -49,6 +54,81 @@ fun PlayerGestureLayer(
     Box(
         modifier = modifier
             .fillMaxSize()
+            .pointerInput(player, config, isFullscreen) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(
+                        requireUnconsumed = false,
+                        pass = PointerEventPass.Initial,
+                    )
+                    val startX = down.position.x
+                    var lastPosition = down.position
+                    var totalDrag = Offset.Zero
+                    var mode = DragMode.None
+                    state.dragMode.value = DragMode.None
+                    state.seekDragStartMs.longValue = player.currentPosition
+                    state.seekDragTargetMs.longValue = player.currentPosition
+
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                        if (!change.pressed) {
+                            when (mode) {
+                                DragMode.Seek -> player.seekTo(state.seekDragTargetMs.longValue)
+                                DragMode.FullscreenEnter -> onEnterFullscreenGesture()
+                                DragMode.FullscreenExit -> onExitFullscreenGesture()
+                                else -> Unit
+                            }
+                            resetDragState(state)
+                            break
+                        }
+                        val current = change.position
+                        val delta = current - lastPosition
+                        lastPosition = current
+                        totalDrag += delta
+                        if (mode == DragMode.None) {
+                            if (abs(totalDrag.x) < DIRECTION_LOCK_THRESHOLD_PX &&
+                                abs(totalDrag.y) < DIRECTION_LOCK_THRESHOLD_PX
+                            ) continue
+                            val candidate = pickDragMode(
+                                dragAmount = totalDrag,
+                                startX = startX,
+                                width = size.width.toFloat(),
+                            )
+                            val allowed = when (candidate) {
+                                DragMode.Seek -> isFullscreen && config.swipeSeekEnabled
+                                DragMode.Brightness,
+                                DragMode.Volume,
+                                -> isFullscreen && config.swipeBrightnessVolumeEnabled
+                                DragMode.FullscreenEnter -> !isFullscreen
+                                DragMode.FullscreenExit -> true
+                                DragMode.None -> false
+                            }
+                            if (!allowed) continue
+                            mode = candidate
+                            state.dragMode.value = candidate
+                            when (candidate) {
+                                DragMode.Brightness -> state.brightnessOverlayActive.value = true
+                                DragMode.Volume -> state.volumeOverlayActive.value = true
+                                DragMode.Seek -> state.seekDragOverlayActive.value = true
+                                DragMode.FullscreenEnter -> Unit
+                                DragMode.FullscreenExit -> Unit
+                                DragMode.None -> Unit
+                            }
+                        }
+                        if (mode != DragMode.None) {
+                            change.consume()
+                            handleDragMode(
+                                player = player,
+                                state = state,
+                                mode = mode,
+                                delta = delta,
+                                onAdjustBrightness = onAdjustBrightness,
+                                onAdjustVolume = onAdjustVolume,
+                            )
+                        }
+                    }
+                }
+            }
             .pointerInput(player, config) {
                 detectTapGestures(
                     onTap = { onTogglePlayPause() },
@@ -83,76 +163,19 @@ fun PlayerGestureLayer(
                     },
                 )
             }
-            .pointerInput(player, config) {
-                detectDragGestures(
-                    onDragStart = {
-                        state.dragMode.value = DragMode.None
-                        state.seekDragStartMs.longValue = player.currentPosition
-                        state.seekDragTargetMs.longValue = player.currentPosition
-                    },
-                    onDrag = { change, dragAmount ->
-                        change.consume()
-                        if (state.dragMode.value == DragMode.None) {
-                            if (abs(dragAmount.x) < DIRECTION_LOCK_THRESHOLD_PX &&
-                                abs(dragAmount.y) < DIRECTION_LOCK_THRESHOLD_PX
-                            ) return@detectDragGestures
-                            val candidate = pickDragMode(
-                                dragAmount = dragAmount,
-                                startX = change.position.x,
-                                width = size.width.toFloat(),
-                            )
-                            val allowed = when (candidate) {
-                                DragMode.Seek -> config.swipeSeekEnabled
-                                DragMode.Brightness, DragMode.Volume -> config.swipeBrightnessVolumeEnabled
-                                DragMode.None -> false
-                            }
-                            if (!allowed) return@detectDragGestures
-                            state.dragMode.value = candidate
-                            when (candidate) {
-                                DragMode.Brightness -> state.brightnessOverlayActive.value = true
-                                DragMode.Volume -> state.volumeOverlayActive.value = true
-                                DragMode.Seek -> state.seekDragOverlayActive.value = true
-                                DragMode.None -> Unit
+            .then(
+                if (!isFullscreen) {
+                    Modifier
+                } else {
+                    Modifier.pointerInput(Unit) {
+                        detectTransformGestures { _, _, zoom, _ ->
+                            if (abs(zoom - 1f) > 0.05f) {
+                                state.resizeMode.value = if (zoom > 1f) ResizeMode.Crop else ResizeMode.Fit
                             }
                         }
-                        when (state.dragMode.value) {
-                            DragMode.Brightness -> {
-                                val delta = -dragAmount.y / BRIGHTNESS_DRAG_PIXELS_PER_FULL
-                                val next = (state.brightnessFraction.floatValue + delta).coerceIn(0f, 1f)
-                                state.brightnessFraction.floatValue = next
-                                onAdjustBrightness(next)
-                            }
-                            DragMode.Volume -> {
-                                val delta = -dragAmount.y / VOLUME_DRAG_PIXELS_PER_FULL
-                                val next = (state.volumeFraction.floatValue + delta).coerceIn(0f, 1f)
-                                state.volumeFraction.floatValue = next
-                                onAdjustVolume(next)
-                            }
-                            DragMode.Seek -> {
-                                val deltaMs = (dragAmount.x * SEEK_DRAG_MS_PER_PIXEL).toLong()
-                                val duration = if (player.duration > 0) player.duration else Long.MAX_VALUE
-                                state.seekDragTargetMs.longValue =
-                                    (state.seekDragTargetMs.longValue + deltaMs).coerceIn(0L, duration)
-                            }
-                            DragMode.None -> Unit
-                        }
-                    },
-                    onDragEnd = {
-                        if (state.dragMode.value == DragMode.Seek) {
-                            player.seekTo(state.seekDragTargetMs.longValue)
-                        }
-                        resetDragState(state)
-                    },
-                    onDragCancel = { resetDragState(state) },
-                )
-            }
-            .pointerInput(Unit) {
-                detectTransformGestures { _, _, zoom, _ ->
-                    if (abs(zoom - 1f) > 0.05f) {
-                        state.resizeMode.value = if (zoom > 1f) ResizeMode.Crop else ResizeMode.Fit
                     }
-                }
-            },
+                },
+            ),
     ) {
         SeekHintOverlay(state = state)
         DragSliderOverlay(
@@ -172,8 +195,44 @@ fun PlayerGestureLayer(
     }
 }
 
+private fun handleDragMode(
+    player: Player,
+    state: PlayerGestureState,
+    mode: DragMode,
+    delta: Offset,
+    onAdjustBrightness: (Float) -> Unit,
+    onAdjustVolume: (Float) -> Unit,
+) {
+    when (mode) {
+        DragMode.Brightness -> {
+            val next = (state.brightnessFraction.floatValue - delta.y / BRIGHTNESS_DRAG_PIXELS_PER_FULL)
+                .coerceIn(0f, 1f)
+            state.brightnessFraction.floatValue = next
+            onAdjustBrightness(next)
+        }
+        DragMode.Volume -> {
+            val next = (state.volumeFraction.floatValue - delta.y / VOLUME_DRAG_PIXELS_PER_FULL)
+                .coerceIn(0f, 1f)
+            state.volumeFraction.floatValue = next
+            onAdjustVolume(next)
+        }
+        DragMode.Seek -> {
+            val deltaMs = (delta.x * SEEK_DRAG_MS_PER_PIXEL).toLong()
+            val duration = if (player.duration > 0) player.duration else Long.MAX_VALUE
+            state.seekDragTargetMs.longValue =
+                (state.seekDragTargetMs.longValue + deltaMs).coerceIn(0L, duration)
+        }
+        DragMode.FullscreenEnter,
+        DragMode.FullscreenExit,
+        DragMode.None,
+        -> Unit
+    }
+}
+
 private fun pickDragMode(dragAmount: Offset, startX: Float, width: Float): DragMode = when {
     abs(dragAmount.x) > abs(dragAmount.y) -> DragMode.Seek
+    startX in (width * 0.35f)..(width * 0.65f) && dragAmount.y < 0f -> DragMode.FullscreenEnter
+    startX in (width * 0.35f)..(width * 0.65f) && dragAmount.y > 0f -> DragMode.FullscreenExit
     startX < width / 2f -> DragMode.Brightness
     else -> DragMode.Volume
 }
