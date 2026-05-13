@@ -19,6 +19,7 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.AndroidEntryPoint
+import dev.typetype.android.core.ui.components.FullScreenLoader
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import dev.typetype.android.feature.player.components.PIP_ACTION_AUDIO_ONLY
 import dev.typetype.android.feature.player.components.PIP_ACTION_FORWARD
@@ -60,6 +61,8 @@ class MainActivity : ComponentActivity() {
                 val startRoute = state.startRoute
                 if (startRoute != null) {
                     AppNavHost(startRoute = startRoute, mainViewModel = viewModel)
+                } else {
+                    FullScreenLoader()
                 }
             }
         }

@@ -18,7 +18,7 @@ on:
       tag_name:
         description: Release tag
         required: true
-        default: v1.1.0
+        default: v1.1.1
 
 permissions:
   contents: write
@@ -107,7 +107,7 @@ jobs:
           if [ -n "$INPUT_TAG_NAME" ]; then
             echo "RELEASE_TAG=$INPUT_TAG_NAME" >> "$GITHUB_ENV"
           else
-            echo "RELEASE_TAG=v1.1.0" >> "$GITHUB_ENV"
+            echo "RELEASE_TAG=v1.1.1" >> "$GITHUB_ENV"
           fi
 
       - name: Prepare signing
@@ -154,20 +154,15 @@ jobs:
           tag_name: ${{ env.RELEASE_TAG }}
           name: ${{ env.RELEASE_TAG }}
           body: |
-            TypeType for Android 1.1.0 focuses on player polish, stability and production readiness.
+            TypeType for Android 1.1.1 is a production hotfix focused on player wake stability.
 
-            This version improves the video experience across embedded playback, fullscreen, mini player, picture-in-picture, notifications and lockscreen controls while keeping the account-backed TypeType experience stable.
+            This version fixes the gray screen that could appear after turning the phone screen off and back on while a video was still playing. Playback now keeps the media session alive and restores the video surface when Android resumes the app.
 
-            Highlights:
-            - Cleaner player quick actions without heavy pill backgrounds.
-            - More complete picture-in-picture controls with rewind, play/pause, forward and audio-only actions.
-            - Media notification and lockscreen controls for rewind, play/pause and forward.
-            - Smoother player resize mode transitions for Original, Zoom and Stretch.
-            - Better embedded player scrubber alignment and sizing.
-            - Improved mini-player and fullscreen drag behavior.
-            - SponsorBlock segments displayed directly in the player timeline.
-            - Playlist video deduplication for library surfaces such as Favorites.
-            - Startup route stability to avoid blank launch screens.
-            - Signed production release APK built from main.
+            Changes:
+            - Recreate the player surface after screen wake and unlock events.
+            - Reattach the active Media3 player view when the activity resumes.
+            - Avoid pausing the player view lifecycle while playback continues in the background.
+            - Show the startup loader if the app is still resolving its first route.
+            - Build and publish a signed production APK from main.
           files: artifacts/*.apk
           fail_on_unmatched_files: true
