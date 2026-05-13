@@ -12,6 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,16 +37,22 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private const val TICK_INTERVAL_MS = 200L
 private val TIME_LABEL_WIDTH = 52.dp
+private val COMPACT_TIME_LABEL_MIN_WIDTH = 30.dp
 private val TIMELINE_HEIGHT = 36.dp
+private val COMPACT_TIMELINE_HEIGHT = 18.dp
 private val TRACK_HEIGHT = 7.dp
+private val COMPACT_TRACK_HEIGHT = 5.dp
 private val THUMB_WIDTH = 14.dp
 private val THUMB_HEIGHT = 22.dp
+private val COMPACT_THUMB_WIDTH = 12.dp
+private val COMPACT_THUMB_HEIGHT = 18.dp
 
 @OptIn(markerClass = [UnstableApi::class])
 @Composable
 fun PlayerTimeBar(
     player: Player,
     segments: List<SponsorBlockSegment> = emptyList(),
+    compact: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val progressState = rememberProgressStateWithTickInterval(player, TICK_INTERVAL_MS)
@@ -63,13 +70,18 @@ fun PlayerTimeBar(
             text = formatTime(displayedPosMs),
             style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp),
             color = Color.White,
-            modifier = Modifier.width(TIME_LABEL_WIDTH),
+            modifier = if (compact) {
+                Modifier.widthIn(min = COMPACT_TIME_LABEL_MIN_WIDTH)
+            } else {
+                Modifier.width(TIME_LABEL_WIDTH)
+            },
             textAlign = TextAlign.End,
         )
         TimelineTrack(
             positionMs = displayedPosMs,
             durationMs = durationMs,
             segments = segments,
+            compact = compact,
             onScrub = { scrubPositionMs = it },
             onScrubFinished = { targetMs ->
                 player.seekTo(targetMs)
@@ -77,14 +89,18 @@ fun PlayerTimeBar(
             },
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 4.dp)
-                .height(TIMELINE_HEIGHT),
+                .padding(horizontal = if (compact) 2.dp else 4.dp)
+                .height(if (compact) COMPACT_TIMELINE_HEIGHT else TIMELINE_HEIGHT),
         )
         Text(
             text = formatTime(durationMs),
             style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp),
             color = Color.White.copy(alpha = 0.7f),
-            modifier = Modifier.width(TIME_LABEL_WIDTH),
+            modifier = if (compact) {
+                Modifier.widthIn(min = COMPACT_TIME_LABEL_MIN_WIDTH)
+            } else {
+                Modifier.width(TIME_LABEL_WIDTH)
+            },
         )
     }
 }
@@ -94,6 +110,7 @@ private fun TimelineTrack(
     positionMs: Long,
     durationMs: Long,
     segments: List<SponsorBlockSegment>,
+    compact: Boolean,
     onScrub: (Long) -> Unit,
     onScrubFinished: (Long) -> Unit,
     modifier: Modifier = Modifier,
@@ -126,9 +143,9 @@ private fun TimelineTrack(
             },
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val trackHeight = TRACK_HEIGHT.toPx()
-            val thumbWidth = THUMB_WIDTH.toPx()
-            val thumbHeight = THUMB_HEIGHT.toPx()
+            val trackHeight = if (compact) COMPACT_TRACK_HEIGHT.toPx() else TRACK_HEIGHT.toPx()
+            val thumbWidth = if (compact) COMPACT_THUMB_WIDTH.toPx() else THUMB_WIDTH.toPx()
+            val thumbHeight = if (compact) COMPACT_THUMB_HEIGHT.toPx() else THUMB_HEIGHT.toPx()
             val trackTop = (size.height - trackHeight) / 2f
             val trackRadius = trackHeight / 2f
             val progress = if (durationMs > 0) positionMs.toFloat() / durationMs.toFloat() else 0f
