@@ -85,8 +85,18 @@ fun PlayerControls(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .windowInsetsPadding(WindowInsets.navigationBars)
-                .padding(start = 12.dp, end = 8.dp, bottom = if (isFullscreen) 12.dp else 8.dp),
+                .then(
+                    if (isFullscreen) {
+                        Modifier.windowInsetsPadding(WindowInsets.navigationBars)
+                    } else {
+                        Modifier
+                    },
+                )
+                .padding(
+                    start = if (isFullscreen) 12.dp else 4.dp,
+                    end = if (isFullscreen) 8.dp else 4.dp,
+                    bottom = if (isFullscreen) 12.dp else 0.dp,
+                ),
         )
     }
 }
@@ -211,19 +221,28 @@ private fun BottomBar(
     onToggleFullscreen: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val backgroundModifier = if (isFullscreen) {
+        Modifier.background(Color.Black.copy(alpha = 0.34f), RoundedCornerShape(14.dp))
+    } else {
+        Modifier
+    }
     Row(
         modifier = modifier
-            .height(52.dp)
-            .background(Color.Black.copy(alpha = 0.34f), RoundedCornerShape(14.dp))
-            .padding(start = 8.dp, end = 2.dp),
+            .height(if (isFullscreen) 52.dp else 40.dp)
+            .then(backgroundModifier)
+            .padding(start = if (isFullscreen) 8.dp else 2.dp, end = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         PlayerTimeBar(
             player = player,
             segments = sponsorBlockSegments,
+            compact = !isFullscreen,
             modifier = Modifier.weight(1f),
         )
-        IconButton(onClick = onToggleFullscreen) {
+        IconButton(
+            onClick = onToggleFullscreen,
+            modifier = Modifier.size(if (isFullscreen) 48.dp else 40.dp),
+        ) {
             Icon(
                 painter = painterResource(
                     if (isFullscreen) R.drawable.ic_fullscreen_exit else R.drawable.ic_fullscreen,
