@@ -1,10 +1,12 @@
 package dev.typetype.android.data.actions
 
+import dev.typetype.android.data.account.AccountScopedValue
+import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.network.TypeTypeApiHolder
 import dev.typetype.android.data.network.dto.BlockChannelRequest
 import dev.typetype.android.data.network.dto.BlockVideoRequest
 import dev.typetype.android.data.network.dto.BlockedItemDto
-import dev.typetype.android.data.network.extractServerErrorMessage
+import dev.typetype.android.data.network.requireSuccessfulResponse
 import dev.typetype.android.domain.actions.BlockedItem
 import dev.typetype.android.domain.actions.VideoActionsRepository
 import javax.inject.Inject
@@ -12,7 +14,7 @@ import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
@@ -20,50 +22,61 @@ import kotlinx.coroutines.withContext
 @Singleton
 class VideoActionsRepositoryImpl @Inject constructor(
     private val apiHolder: TypeTypeApiHolder,
+    private val activeAccountScope: ActiveAccountScope,
 ) : VideoActionsRepository {
 
-    private val blockedVideosState = MutableStateFlow<List<BlockedItem>>(emptyList())
-    private val blockedChannelsState = MutableStateFlow<List<BlockedItem>>(emptyList())
+    private val blockedVideosState = MutableStateFlow<AccountScopedValue<List<BlockedItem>>?>(null)
+    private val blockedChannelsState = MutableStateFlow<AccountScopedValue<List<BlockedItem>>?>(null)
 
     override fun observeBlockedVideoUrls(): Flow<Set<String>> =
-        blockedVideosState.map { items -> items.map { it.url }.toSet() }
+        observeBlockedVideos().map { items -> items.map { it.url }.toSet() }
 
     override fun observeBlockedChannelUrls(): Flow<Set<String>> =
-        blockedChannelsState.map { items -> items.map { it.url }.toSet() }
+        observeBlockedChannels().map { items -> items.map { it.url }.toSet() }
 
-    override fun observeBlockedVideos(): Flow<List<BlockedItem>> = blockedVideosState.asStateFlow()
+    override fun observeBlockedVideos(): Flow<List<BlockedItem>> = visible(blockedVideosState)
 
-    override fun observeBlockedChannels(): Flow<List<BlockedItem>> = blockedChannelsState.asStateFlow()
+    override fun observeBlockedChannels(): Flow<List<BlockedItem>> = visible(blockedChannelsState)
 
     override suspend fun refreshBlocked(): Result<Unit> = runCatching {
-        val api = apiHolder.require()
+        val scope = activeAccountScope.require()
+        val api = apiHolder.require(scope)
         withContext(Dispatchers.IO) {
             val v = api.blockedVideos()
             val c = api.blockedChannels()
-            if (!v.isSuccessful) error(extractServerErrorMessage(v))
-            if (!c.isSuccessful) error(extractServerErrorMessage(c))
-            blockedVideosState.value = v.body().orEmpty().map { it.toDomain() }
-            blockedChannelsState.value = c.body().orEmpty().map { it.toDomain() }
+            v.requireSuccessfulResponse()
+            c.requireSuccessfulResponse()
+            activeAccountScope.verify(scope)
+            blockedVideosState.value = AccountScopedValue(scope, v.body().orEmpty().map { it.toDomain() })
+            blockedChannelsState.value = AccountScopedValue(scope, c.body().orEmpty().map { it.toDomain() })
         }
     }
 
     override suspend fun blockVideo(videoUrl: String): Result<Unit> = runCatching {
+        val scope = activeAccountScope.require()
         val response = withContext(Dispatchers.IO) {
-            apiHolder.require().blockVideo(BlockVideoRequest(url = videoUrl))
+            apiHolder.require(scope).blockVideo(BlockVideoRequest(url = videoUrl))
         }
-        if (!response.isSuccessful) error(extractServerErrorMessage(response))
-        blockedVideosState.update { current ->
-            if (current.any { it.url == videoUrl }) current
+        response.requireSuccessfulResponse()
+        activeAccountScope.verify(scope)
+        blockedVideosState.update { cached ->
+            val current = cached?.takeIf { it.scope == scope }?.value.orEmpty()
+            val next = if (current.any { it.url == videoUrl }) current
             else current + BlockedItem(videoUrl, "", "", System.currentTimeMillis())
+            AccountScopedValue(scope, next)
         }
     }
 
     override suspend fun unblockVideo(videoUrl: String): Result<Unit> = runCatching {
+        val scope = activeAccountScope.require()
         val response = withContext(Dispatchers.IO) {
-            apiHolder.require().unblockVideo(videoUrl)
+            apiHolder.require(scope).unblockVideo(videoUrl)
         }
-        if (!response.isSuccessful) error(extractServerErrorMessage(response))
-        blockedVideosState.update { it.filterNot { item -> item.url == videoUrl } }
+        response.requireSuccessfulResponse()
+        activeAccountScope.verify(scope)
+        blockedVideosState.update { cached ->
+            AccountScopedValue(scope, cached.current(scope).filterNot { it.url == videoUrl })
+        }
     }
 
     override suspend fun blockChannel(
@@ -71,8 +84,9 @@ class VideoActionsRepositoryImpl @Inject constructor(
         channelName: String?,
         avatarUrl: String?,
     ): Result<Unit> = runCatching {
+        val scope = activeAccountScope.require()
         val response = withContext(Dispatchers.IO) {
-            apiHolder.require().blockChannel(
+            apiHolder.require(scope).blockChannel(
                 BlockChannelRequest(
                     url = channelUrl,
                     name = channelName,
@@ -80,24 +94,30 @@ class VideoActionsRepositoryImpl @Inject constructor(
                 ),
             )
         }
-        if (!response.isSuccessful) error(extractServerErrorMessage(response))
-        blockedChannelsState.update { current ->
-            if (current.any { it.url == channelUrl }) current
-            else current + BlockedItem(
+        response.requireSuccessfulResponse()
+        activeAccountScope.verify(scope)
+        blockedChannelsState.update { cached ->
+            val current = cached.current(scope)
+            val next = if (current.any { it.url == channelUrl }) current else current + BlockedItem(
                 url = channelUrl,
                 name = channelName.orEmpty(),
                 thumbnailUrl = avatarUrl.orEmpty(),
                 blockedAt = System.currentTimeMillis(),
             )
+            AccountScopedValue(scope, next)
         }
     }
 
     override suspend fun unblockChannel(channelUrl: String): Result<Unit> = runCatching {
+        val scope = activeAccountScope.require()
         val response = withContext(Dispatchers.IO) {
-            apiHolder.require().unblockChannel(channelUrl)
+            apiHolder.require(scope).unblockChannel(channelUrl)
         }
-        if (!response.isSuccessful) error(extractServerErrorMessage(response))
-        blockedChannelsState.update { it.filterNot { item -> item.url == channelUrl } }
+        response.requireSuccessfulResponse()
+        activeAccountScope.verify(scope)
+        blockedChannelsState.update { cached ->
+            AccountScopedValue(scope, cached.current(scope).filterNot { it.url == channelUrl })
+        }
     }
 
     private fun BlockedItemDto.toDomain(): BlockedItem = BlockedItem(
@@ -106,4 +126,13 @@ class VideoActionsRepositoryImpl @Inject constructor(
         thumbnailUrl = thumbnailUrl.orEmpty(),
         blockedAt = blockedAt,
     )
+
+    private fun visible(
+        source: Flow<AccountScopedValue<List<BlockedItem>>?>,
+    ): Flow<List<BlockedItem>> = combine(activeAccountScope.observe(), source) { scope, cached ->
+        cached?.value?.takeIf { scope == cached.scope }.orEmpty()
+    }
+
+    private fun AccountScopedValue<List<BlockedItem>>?.current(scope: dev.typetype.android.data.account.AccountScope) =
+        this?.takeIf { it.scope == scope }?.value.orEmpty()
 }
