@@ -6,11 +6,18 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.typetype.android.R
+import dev.typetype.android.toPlaybackQueueEntry
+import dev.typetype.android.core.ui.error.UserErrorMapper
 import dev.typetype.android.domain.actions.VideoActionsRepository
 import dev.typetype.android.domain.download.DownloadProgress
 import dev.typetype.android.domain.download.DownloadRepository
+import dev.typetype.android.domain.download.DownloadSelection
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.library.LibraryRepository
+import dev.typetype.android.domain.playback.PlaybackQueueEntry
+import dev.typetype.android.domain.playback.PlaybackQueueMutationResult
+import dev.typetype.android.feature.player.host.PlayerHostController
+import dev.typetype.android.services.PlaybackQueueCoordinator
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -26,36 +33,35 @@ sealed interface VideoMenuEvent {
 
 @HiltViewModel
 class VideoMenuHandlerViewModel @Inject constructor(
-    @param:ApplicationContext private val context: Context,
-    private val libraryRepository: LibraryRepository,
-    private val videoActionsRepository: VideoActionsRepository,
+    @param:ApplicationContext internal val context: Context,
+    internal val libraryRepository: LibraryRepository,
+    internal val videoActionsRepository: VideoActionsRepository,
     private val downloadRepository: DownloadRepository,
+    private val errorMapper: UserErrorMapper,
+    private val playbackQueueCoordinator: PlaybackQueueCoordinator,
+    private val playerHostController: PlayerHostController,
 ) : ViewModel() {
 
-    val playlists = libraryRepository.observePlaylists()
+    private val playlistState = libraryRepository.observePlaylists()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    val favoriteUrls = libraryRepository.observePlaylists()
+    val playlists = playlistState
+
+    val favoriteUrls = playlistState
         .map { lists ->
             lists.firstOrNull { it.name.equals("Favorites", ignoreCase = true) }
                 ?.videos?.map { it.url }?.toSet() ?: emptySet()
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
 
-    val watchLaterUrls = libraryRepository.observePlaylists()
+    val watchLaterUrls = playlistState
         .map { lists ->
             lists.firstOrNull { it.name.equals("Watch Later", ignoreCase = true) }
                 ?.videos?.map { it.url }?.toSet() ?: emptySet()
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
 
-    val watchedUrls = libraryRepository.observeHistory()
-        .map { items ->
-            items.asSequence()
-                .filter { it.durationSeconds > 0 && it.progressSeconds >= it.durationSeconds * 0.9 }
-                .map { it.url }
-                .toSet()
-        }
+    val watchedUrls = libraryRepository.observeWatchedUrls()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
 
     val blockedVideoUrls = videoActionsRepository.observeBlockedVideoUrls()
@@ -207,14 +213,22 @@ class VideoMenuHandlerViewModel @Inject constructor(
         }
     }
 
-    fun download(video: Video) {
+    fun playNext(video: Video) = updateQueue(video.toPlaybackQueueEntry(), playNext = true)
+
+    fun addToQueue(video: Video) = updateQueue(video.toPlaybackQueueEntry(), playNext = false)
+
+    fun playNext(entry: PlaybackQueueEntry) = updateQueue(entry, playNext = true)
+
+    fun addToQueue(entry: PlaybackQueueEntry) = updateQueue(entry, playNext = false)
+
+    fun download(video: Video, selection: DownloadSelection) {
         viewModelScope.launch {
             var queuedSent = false
             runCatching {
                 downloadRepository.downloadVideo(
                     videoUrl = video.url,
                     title = video.title,
-                    quality = BEST_DOWNLOAD_QUALITY,
+                    selection = selection,
                 ).collect { progress ->
                     when (progress) {
                         is DownloadProgress.Queued -> {
@@ -237,77 +251,6 @@ class VideoMenuHandlerViewModel @Inject constructor(
         }
     }
 
-    fun blockVideoUrl(videoUrl: String) {
-        viewModelScope.launch {
-            emitResult(
-                videoActionsRepository.blockVideo(videoUrl),
-                R.string.snackbar_video_blocked,
-            )
-        }
-    }
-
-    fun removeFromPlaylist(playlistId: String, playlistName: String, videoUrl: String) {
-        viewModelScope.launch {
-            libraryRepository.removeVideoFromPlaylist(playlistId, videoUrl).fold(
-                onSuccess = {
-                    _events.send(
-                        VideoMenuEvent.Snackbar(
-                            context.getString(R.string.snackbar_removed_from_playlist, playlistName),
-                        ),
-                    )
-                },
-                onFailure = { emitFailure(it) },
-            )
-        }
-    }
-
-    fun removeFavoriteUrl(videoUrl: String) {
-        viewModelScope.launch {
-            emitResult(
-                libraryRepository.removeFavorite(videoUrl),
-                R.string.snackbar_removed_from_favorites,
-            )
-        }
-    }
-
-    fun removeWatchLaterUrl(videoUrl: String) {
-        viewModelScope.launch {
-            emitResult(
-                libraryRepository.removeWatchLater(videoUrl),
-                R.string.snackbar_removed_from_watch_later,
-            )
-        }
-    }
-
-    fun toggleWatchedUrl(
-        videoUrl: String,
-        title: String,
-        thumbnail: String,
-        duration: Long,
-        isCurrentlyWatched: Boolean,
-    ) {
-        viewModelScope.launch {
-            val result = if (isCurrentlyWatched) {
-                libraryRepository.removeFromHistory(videoUrl)
-            } else {
-                libraryRepository.addHistory(
-                    videoUrl = videoUrl,
-                    title = title,
-                    thumbnail = thumbnail,
-                    duration = duration,
-                    channelName = "",
-                    channelUrl = "",
-                )
-            }
-            val successRes = if (isCurrentlyWatched) {
-                R.string.snackbar_unmarked_as_watched
-            } else {
-                R.string.snackbar_marked_as_watched
-            }
-            emitResult(result, successRes)
-        }
-    }
-
     fun blockChannel(video: Video) {
         viewModelScope.launch {
             emitResult(
@@ -321,20 +264,45 @@ class VideoMenuHandlerViewModel @Inject constructor(
         }
     }
 
-    private suspend fun emitResult(result: Result<Unit>, successRes: Int) {
+    internal suspend fun emitResult(result: Result<Unit>, successRes: Int) {
         result.fold(
             onSuccess = { _events.send(VideoMenuEvent.Snackbar(context.getString(successRes))) },
             onFailure = { emitFailure(it) },
         )
     }
 
-    private suspend fun emitFailure(throwable: Throwable) {
-        val msg = throwable.message?.takeIf { it.isNotBlank() }
-            ?: context.getString(R.string.snackbar_action_failed)
-        _events.send(VideoMenuEvent.Snackbar(msg))
+    internal suspend fun emitFailure(throwable: Throwable) {
+        _events.send(
+            VideoMenuEvent.Snackbar(
+                errorMapper.message(throwable, R.string.snackbar_action_failed),
+            ),
+        )
     }
 
-    private companion object {
-        const val BEST_DOWNLOAD_QUALITY = "best"
+    internal suspend fun emitMessage(message: String) {
+        _events.send(VideoMenuEvent.Snackbar(message))
+    }
+
+    private fun updateQueue(entry: PlaybackQueueEntry, playNext: Boolean) {
+        val result = playbackQueueCoordinator.enqueue(entry, playNext)
+        val message = when (result) {
+            PlaybackQueueMutationResult.Added -> if (playNext) {
+                R.string.snackbar_queue_play_next
+            } else {
+                R.string.snackbar_added_to_queue
+            }
+            PlaybackQueueMutationResult.Moved -> R.string.snackbar_queue_moved_next
+            PlaybackQueueMutationResult.AlreadyQueued -> R.string.snackbar_already_in_queue
+            PlaybackQueueMutationResult.AlreadyPlaying -> R.string.snackbar_already_playing
+            PlaybackQueueMutationResult.NoActivePlayback -> {
+                playerHostController.openQueue(
+                    context.getString(R.string.playback_queue_title),
+                    listOf(entry),
+                    shuffle = false,
+                )
+                R.string.snackbar_queue_started
+            }
+        }
+        viewModelScope.launch { _events.send(VideoMenuEvent.Snackbar(context.getString(message))) }
     }
 }
