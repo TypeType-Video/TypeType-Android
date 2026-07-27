@@ -1,7 +1,17 @@
 package dev.typetype.android.data.search
 
+import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.network.TypeTypeApiHolder
-import dev.typetype.android.domain.feed.Video
+import dev.typetype.android.data.network.dto.SearchChannelDto
+import dev.typetype.android.data.network.dto.SearchFilterOptionDto
+import dev.typetype.android.data.network.dto.SearchPlaylistDto
+import dev.typetype.android.data.network.dto.toDomainVideo
+import dev.typetype.android.data.network.requireSuccessfulResponse
+import dev.typetype.android.domain.search.SearchChannel
+import dev.typetype.android.domain.search.SearchFilterOption
+import dev.typetype.android.domain.search.SearchFilters
+import dev.typetype.android.domain.search.SearchPage
+import dev.typetype.android.domain.search.SearchPlaylist
 import dev.typetype.android.domain.search.SearchRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -11,38 +21,84 @@ import javax.inject.Singleton
 @Singleton
 class SearchRepositoryImpl @Inject constructor(
     private val apiHolder: TypeTypeApiHolder,
+    private val activeAccountScope: ActiveAccountScope,
 ) : SearchRepository {
 
-    override suspend fun search(query: String, service: Int): Result<List<Video>> = runCatching {
-        val api = apiHolder.require()
-        val response = withContext(Dispatchers.IO) { api.search(query = query, service = service) }
-        if (!response.isSuccessful) error("Search failed (HTTP ${response.code()})")
-        val body = response.body() ?: error("Empty search body")
-        body.items.map { item ->
-            Video(
-                id = item.id,
-                url = item.url,
-                title = item.title,
-                thumbnailUrl = item.thumbnailUrl,
-                uploaderName = item.uploaderName,
-                uploaderUrl = item.uploaderUrl,
-                uploaderAvatarUrl = item.uploaderAvatarUrl,
-                uploaderVerified = item.uploaderVerified,
-                durationSeconds = item.duration,
-                viewCount = item.viewCount,
-                uploadedAtMillis = item.uploaded,
-                isShortFormContent = item.isShortFormContent,
-                shortDescription = item.shortDescription,
+    override suspend fun search(
+        query: String,
+        service: Int,
+        nextPage: String?,
+        contentFilter: String?,
+        sortFilter: String?,
+    ): Result<SearchPage> = runCatching {
+        val scope = activeAccountScope.require()
+        val api = apiHolder.require(scope)
+        val response = withContext(Dispatchers.IO) {
+            api.search(
+                query = query,
+                service = service,
+                nextpage = nextPage,
+                contentFilter = contentFilter,
+                sortFilter = sortFilter,
             )
         }
+        response.requireSuccessfulResponse()
+        val body = response.body() ?: error("Empty search body")
+        activeAccountScope.verify(scope)
+        SearchPage(
+            videos = body.items.map { it.toDomainVideo() },
+            channels = body.channels.map { it.toDomain() },
+            playlists = body.playlists.map { it.toDomain() },
+            nextPage = body.nextpage,
+            suggestion = body.searchSuggestion,
+            isCorrected = body.isCorrectedSearch,
+        )
+    }
+
+    override suspend fun filters(service: Int): Result<SearchFilters> = runCatching {
+        val scope = activeAccountScope.require()
+        val api = apiHolder.require(scope)
+        val response = withContext(Dispatchers.IO) { api.searchFilters(service) }
+        response.requireSuccessfulResponse()
+        val body = response.body() ?: error("Empty search filters body")
+        activeAccountScope.verify(scope)
+        SearchFilters(
+            content = body.contentFilters.map { it.toDomain() },
+            sort = body.sortFilters.map { it.toDomain() },
+        )
     }
 
     override suspend fun suggestions(query: String, service: Int): Result<List<String>> = runCatching {
-        val api = apiHolder.require()
+        val scope = activeAccountScope.require()
+        val api = apiHolder.require(scope)
         val response = withContext(Dispatchers.IO) {
             api.searchSuggestions(query = query, service = service)
         }
-        if (!response.isSuccessful) error("Suggestions failed (HTTP ${response.code()})")
+        response.requireSuccessfulResponse()
+        activeAccountScope.verify(scope)
         response.body() ?: emptyList()
     }
+
+    private fun SearchChannelDto.toDomain() = SearchChannel(
+        id = id,
+        name = name,
+        url = url,
+        thumbnailUrl = thumbnailUrl,
+        description = description,
+        subscriberCount = subscriberCount,
+        streamCount = streamCount,
+        isVerified = isVerified,
+    )
+
+    private fun SearchPlaylistDto.toDomain() = SearchPlaylist(
+        id = id,
+        title = title,
+        url = url,
+        thumbnailUrl = thumbnailUrl,
+        uploaderName = uploaderName,
+        streamCount = streamCount,
+        playlistType = playlistType,
+    )
+
+    private fun SearchFilterOptionDto.toDomain() = SearchFilterOption(value, label)
 }
