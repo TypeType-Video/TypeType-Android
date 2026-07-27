@@ -65,7 +65,9 @@ fun StreamErrorState(
     modifier: Modifier = Modifier,
     illustrationRes: Int = R.raw.error_cat,
     countryCode: String? = null,
+    requestId: String? = null,
     onRetry: (() -> Unit)? = null,
+    retryLabel: String? = null,
     onBack: (() -> Unit)? = null,
 ) {
     val ctx = LocalPlatformContext.current
@@ -122,6 +124,7 @@ fun StreamErrorState(
                         textAlign = TextAlign.Center,
                     )
                 }
+                requestId?.let { RequestIdRow(requestId = it) }
             }
             if (onRetry != null || onBack != null) {
                 Row(
@@ -130,7 +133,7 @@ fun StreamErrorState(
                 ) {
                     if (onRetry != null) {
                         ActionPill(
-                            label = stringResource(R.string.state_retry),
+                            label = retryLabel ?: stringResource(R.string.state_retry),
                             background = MaterialTheme.colorScheme.onBackground,
                             contentColor = MaterialTheme.colorScheme.background,
                             onClick = onRetry,
@@ -154,6 +157,7 @@ fun StreamErrorState(
 fun AnimatedError(
     message: String,
     modifier: Modifier = Modifier,
+    requestId: String? = null,
     onRetry: (() -> Unit)? = null,
 ) {
     StreamErrorState(
@@ -161,6 +165,7 @@ fun AnimatedError(
         message = message,
         modifier = modifier,
         illustrationRes = R.raw.error_cat,
+        requestId = requestId,
         onRetry = onRetry,
     )
 }
