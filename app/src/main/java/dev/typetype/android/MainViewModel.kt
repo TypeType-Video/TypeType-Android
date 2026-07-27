@@ -81,6 +81,14 @@ class MainViewModel @Inject constructor(
             initialValue = null,
         )
 
+    val currentServerId: StateFlow<String?> = serverRepository.observeCurrentServer()
+        .map { it?.id }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = null,
+        )
+
     val currentProfile: StateFlow<dev.typetype.android.domain.profile.Profile?> =
         profileRepository.observe()
             .stateIn(

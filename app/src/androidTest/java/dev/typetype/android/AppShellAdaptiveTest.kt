@@ -43,7 +43,19 @@ class AppShellAdaptiveTest {
         assertNodeCount(APP_NAVIGATION_RAIL_TAG, 0)
     }
 
+    @Test
+    fun landscapePhoneUsesBottomNavigation() {
+        setShellSize(width = 800.dp, height = 400.dp)
+
+        assertNodeCount(APP_BOTTOM_NAVIGATION_TAG, 1)
+        assertNodeCount(APP_NAVIGATION_RAIL_TAG, 0)
+    }
+
     private fun setShellWidth(width: Dp) {
+        setShellSize(width = width, height = 800.dp)
+    }
+
+    private fun setShellSize(width: Dp, height: Dp) {
         composeRule.setContent {
             val navController = rememberNavController()
             AppShell(
@@ -54,7 +66,7 @@ class AppShellAdaptiveTest {
                 onOpenChannel = {},
                 onOpenAccounts = {},
                 onClosePlayback = {},
-                modifier = Modifier.requiredWidth(width).requiredHeight(800.dp),
+                modifier = Modifier.requiredWidth(width).requiredHeight(height),
             ) { contentModifier ->
                 NavHost(
                     navController = navController,

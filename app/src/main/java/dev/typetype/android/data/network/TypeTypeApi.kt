@@ -7,5 +7,7 @@ interface TypeTypeApi :
     TypeTypeFeedApi,
     TypeTypeSearchApi,
     TypeTypePodcastApi,
+    TypeTypeNotificationsApi,
+    TypeTypeImportApi,
     TypeTypeLibraryApi,
     TypeTypeMediaApi

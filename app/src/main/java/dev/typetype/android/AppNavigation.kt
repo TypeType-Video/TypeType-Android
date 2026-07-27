@@ -17,6 +17,9 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -62,8 +65,11 @@ internal val topLevelTabs = listOf(
 @Composable
 internal fun AppTopBar(
     onOpenSearch: () -> Unit,
+    onOpenNotifications: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenProfile: () -> Unit,
+    notificationsAvailable: Boolean,
+    unreadNotificationsCount: Int,
     avatarUrl: String?,
     avatarFallbackLetter: String?,
 ) {
@@ -89,6 +95,30 @@ internal fun AppTopBar(
             actions = {
                 IconButton(onClick = onOpenSearch) {
                     Icon(Icons.Filled.Search, stringResource(R.string.search_submit))
+                }
+                if (notificationsAvailable) {
+                    IconButton(onClick = onOpenNotifications) {
+                        BadgedBox(
+                            badge = {
+                                if (unreadNotificationsCount > 0) {
+                                    Badge {
+                                        Text(
+                                            if (unreadNotificationsCount > 99) {
+                                                "99+"
+                                            } else {
+                                                unreadNotificationsCount.toString()
+                                            },
+                                        )
+                                    }
+                                }
+                            },
+                        ) {
+                            Icon(
+                                Icons.Outlined.Notifications,
+                                stringResource(R.string.notifications_title),
+                            )
+                        }
+                    }
                 }
                 IconButton(onClick = onOpenSettings) {
                     Icon(Icons.Filled.Settings, stringResource(R.string.settings_title))

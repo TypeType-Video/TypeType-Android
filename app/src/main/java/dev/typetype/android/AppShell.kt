@@ -26,6 +26,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.core.ui.components.LocalAppSnackbarHost
 import dev.typetype.android.core.ui.navigation.ChannelRoute
+import dev.typetype.android.core.ui.navigation.NotificationsRoute
 import dev.typetype.android.core.ui.navigation.PlaylistRoute
 import dev.typetype.android.core.ui.navigation.PodcastRoute
 import dev.typetype.android.core.ui.navigation.PublicPlaylistRoute
@@ -47,7 +48,10 @@ fun AppShell(
     onOpenAccounts: () -> Unit,
     modifier: Modifier = Modifier,
     onOpenSearch: () -> Unit = {},
+    onOpenNotifications: () -> Unit = {},
     onOpenProfile: () -> Unit = {},
+    notificationsAvailable: Boolean = false,
+    unreadNotificationsCount: Int = 0,
     avatarUrl: String? = null,
     avatarFallbackLetter: String? = null,
     onPlayVideo: (videoUrl: String) -> Unit,
@@ -63,10 +67,12 @@ fun AppShell(
         currentDestination?.hasRoute<PlaylistRoute>() == true ||
         currentDestination?.hasRoute<PublicPlaylistRoute>() == true ||
         currentDestination?.hasRoute<PodcastRoute>() == true ||
-        currentDestination?.hasRoute<SearchRoute>() == true
+        currentDestination?.hasRoute<SearchRoute>() == true ||
+        currentDestination?.hasRoute<NotificationsRoute>() == true
     var activeTabRoute by rememberSaveable { mutableStateOf<String?>(null) }
     var isPlayerFullscreen by remember { mutableStateOf(false) }
     val playerHostState by playerHostController.state.collectAsStateWithLifecycle()
+    val appChromeVisible = isAppChromeVisible(playerHostState.target, isPlayerFullscreen)
     LaunchedEffect(currentDestination) {
         topLevelTabs.firstOrNull { currentDestination.matchesRoute(it.route) }?.let {
             activeTabRoute = it.route::class.qualifiedName
@@ -80,9 +86,10 @@ fun AppShell(
         LocalAppSnackbarHost provides snackbarHostState,
     ) {
         BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-            val usesNavigationRail = maxWidth >= WIDE_NAVIGATION_THRESHOLD
+            val usesNavigationRail =
+                minOf(maxWidth, maxHeight) >= WIDE_NAVIGATION_THRESHOLD
             Row(modifier = Modifier.fillMaxSize()) {
-                if (usesNavigationRail && showsNavigation && !isPlayerFullscreen) {
+                if (usesNavigationRail && showsNavigation && appChromeVisible) {
                     AppNavigationRail(
                         currentDestination = currentDestination,
                         fallbackTabRouteQualifiedName = activeTabRoute,
@@ -97,18 +104,21 @@ fun AppShell(
                             WindowInsets.systemBars
                         },
                         topBar = {
-                            if (isTopLevel && !isPlayerFullscreen) {
+                            if (isTopLevel && appChromeVisible) {
                                 AppTopBar(
                                     onOpenSearch = onOpenSearch,
+                                    onOpenNotifications = onOpenNotifications,
                                     onOpenSettings = onOpenSettings,
                                     onOpenProfile = onOpenProfile,
+                                    notificationsAvailable = notificationsAvailable,
+                                    unreadNotificationsCount = unreadNotificationsCount,
                                     avatarUrl = avatarUrl,
                                     avatarFallbackLetter = avatarFallbackLetter,
                                 )
                             }
                         },
                         bottomBar = {
-                            if (!usesNavigationRail && showsNavigation && !isPlayerFullscreen) {
+                            if (!usesNavigationRail && showsNavigation && appChromeVisible) {
                                 AppBottomBar(
                                     currentDestination = currentDestination,
                                     fallbackTabRouteQualifiedName = activeTabRoute,
@@ -134,7 +144,7 @@ fun AppShell(
                     PlayerHost(
                         controller = playerHostController,
                         bottomBarHeightDp = if (
-                            !usesNavigationRail && showsNavigation && !isPlayerFullscreen
+                            !usesNavigationRail && showsNavigation && appChromeVisible
                         ) {
                             NAV_BAR_HEIGHT_DP
                         } else {
@@ -153,6 +163,11 @@ fun AppShell(
         }
     }
 }
+
+internal fun isAppChromeVisible(
+    playerTarget: PlayerHostTarget,
+    isPlayerFullscreen: Boolean,
+): Boolean = playerTarget != PlayerHostTarget.Expanded && !isPlayerFullscreen
 
 private fun NavHostController.navigateTopLevel(route: Any) {
     navigate(route) {

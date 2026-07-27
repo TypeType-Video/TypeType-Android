@@ -12,6 +12,9 @@ data object AddServerRoute
 data class LoginRoute(val serverId: String)
 
 @Serializable
+data class ResetPasswordRoute(val serverId: String)
+
+@Serializable
 data object HomeRoute
 
 @Serializable
@@ -39,6 +42,9 @@ data object StorageSettingsRoute
 data object ProfileSettingsRoute
 
 @Serializable
+data object ImportDataRoute
+
+@Serializable
 data object PrivacySettingsRoute
 
 @Serializable
@@ -55,6 +61,9 @@ data class PlayerRoute(val videoUrl: String)
 
 @Serializable
 data object SearchRoute
+
+@Serializable
+data object NotificationsRoute
 
 @Serializable
 data class ChannelRoute(val channelUrl: String)
