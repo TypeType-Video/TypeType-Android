@@ -16,11 +16,13 @@ import dev.typetype.android.R
 
 @Composable
 fun PlaybackOptionsMainPage(
+    codecLabel: String,
     qualityLabel: String,
     captionsLabel: String,
     audioLabel: String,
     speedLabel: String,
     resizeLabel: String,
+    onOpenCodec: () -> Unit,
     onOpenQuality: () -> Unit,
     onOpenCaptions: () -> Unit,
     onOpenAudio: () -> Unit,
@@ -34,6 +36,14 @@ fun PlaybackOptionsMainPage(
         item {
             PlaybackOptionsMenuRow(
                 icon = Icons.Filled.Settings,
+                title = stringResource(R.string.playback_options_codec),
+                value = codecLabel,
+                onClick = onOpenCodec,
+            )
+        }
+        item {
+            PlaybackOptionsMenuRow(
+                icon = Icons.Filled.AspectRatio,
                 title = stringResource(R.string.playback_options_quality),
                 value = qualityLabel,
                 onClick = onOpenQuality,

@@ -2,6 +2,7 @@ package dev.typetype.android.feature.player.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -92,7 +93,12 @@ fun PlaybackOptionsMenuRow(
 }
 
 @Composable
-fun PlaybackOptionsRadioRow(label: String, selected: Boolean, onSelect: () -> Unit) {
+fun PlaybackOptionsRadioRow(
+    label: String,
+    supportingLabel: String? = null,
+    selected: Boolean,
+    onSelect: () -> Unit,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -100,14 +106,24 @@ fun PlaybackOptionsRadioRow(label: String, selected: Boolean, onSelect: () -> Un
             .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            supportingLabel?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
         if (selected) {
             Icon(
                 imageVector = Icons.Filled.Check,
