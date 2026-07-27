@@ -1,5 +1,6 @@
 package dev.typetype.android.data.library
 
+import dev.typetype.android.data.account.AccountScope
 import dev.typetype.android.data.library.local.FavoriteEntity
 import dev.typetype.android.data.library.local.HistoryEntity
 import dev.typetype.android.data.library.local.PlaylistEntity
@@ -10,7 +11,10 @@ import dev.typetype.android.data.network.dto.AddHistoryRequest
 import dev.typetype.android.data.network.dto.AddPlaylistVideoRequest
 import dev.typetype.android.data.network.dto.AddWatchLaterRequest
 import dev.typetype.android.data.network.dto.CreatePlaylistRequest
+import dev.typetype.android.data.network.dto.PlaylistReorderRequest
 import dev.typetype.android.data.network.dto.SaveProgressRequest
+import dev.typetype.android.data.network.dto.SubscriptionItemDto
+import dev.typetype.android.data.network.requireSuccessfulResponse
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
@@ -21,108 +25,133 @@ class LibraryNetworkSource @Inject constructor(
     private val apiHolder: TypeTypeApiHolder,
 ) {
 
-    suspend fun fetchHistory(): List<HistoryEntity> = withContext(Dispatchers.IO) {
-        val response = apiHolder.require().history()
-        if (!response.isSuccessful) error("History failed (HTTP ${response.code()})")
+    internal suspend fun fetchHistory(
+        scope: AccountScope,
+        limit: Int = HISTORY_PAGE_SIZE,
+        offset: Int = 0,
+    ): HistoryPage = withContext(Dispatchers.IO) {
+        val response = apiHolder.require(scope).history(limit = limit, offset = offset)
+        response.requireSuccessfulResponse()
+        val totalCount = response.headers()["X-Total-Count"]
+            ?.toIntOrNull()
+            ?.takeIf { it >= 0 }
+            ?: error("History response is missing a valid X-Total-Count header")
+        val body = response.body() ?: emptyList()
         val seen = HashSet<String>()
-        (response.body() ?: emptyList()).asSequence()
+        val rows = body.asSequence()
             .filter { seen.add(it.url) }
-            .map { dto ->
-                HistoryEntity(
-                    id = dto.id,
-                    url = dto.url,
-                    title = dto.title,
-                    thumbnailUrl = dto.thumbnail,
-                    channelName = dto.channelName,
-                    channelUrl = dto.channelUrl,
-                    channelAvatarUrl = dto.channelAvatar,
-                    durationSeconds = dto.duration,
-                    progressSeconds = dto.progress,
-                    watchedAtMillis = dto.watchedAt,
-                )
-            }
+            .map { dto -> dto.toHistoryEntity(scope) }
             .toList()
+        HistoryPage(
+            rows = rows,
+            offset = offset,
+            receivedCount = body.size,
+            totalCount = totalCount,
+        )
     }
 
-    suspend fun fetchFavorites(): List<FavoriteEntity> = withContext(Dispatchers.IO) {
-        val response = apiHolder.require().favorites()
-        if (!response.isSuccessful) error("Favorites failed (HTTP ${response.code()})")
+    suspend fun fetchFavorites(scope: AccountScope): List<FavoriteEntity> = withContext(Dispatchers.IO) {
+        val response = apiHolder.require(scope).favorites()
+        response.requireSuccessfulResponse()
         (response.body() ?: emptyList()).map { dto ->
-            FavoriteEntity(videoUrl = dto.videoUrl, favoritedAtMillis = dto.favoritedAt)
+            FavoriteEntity(
+                serverId = scope.serverId,
+                accountId = scope.accountId,
+                videoUrl = dto.videoUrl,
+                favoritedAtMillis = dto.favoritedAt,
+                title = dto.title,
+                thumbnailUrl = dto.thumbnail,
+                durationSeconds = dto.duration,
+                channelName = dto.channelName,
+                channelUrl = dto.channelUrl,
+                channelAvatarUrl = dto.channelAvatar,
+                viewCount = dto.viewCount,
+            )
         }
     }
 
-    suspend fun fetchWatchLater(): List<WatchLaterEntity> = withContext(Dispatchers.IO) {
-        val response = apiHolder.require().watchLater()
-        if (!response.isSuccessful) error("Watch later failed (HTTP ${response.code()})")
+    suspend fun fetchWatchLater(scope: AccountScope): List<WatchLaterEntity> = withContext(Dispatchers.IO) {
+        val response = apiHolder.require(scope).watchLater()
+        response.requireSuccessfulResponse()
         (response.body() ?: emptyList()).map { dto ->
             WatchLaterEntity(
+                serverId = scope.serverId,
+                accountId = scope.accountId,
                 url = dto.url,
                 title = dto.title,
                 thumbnailUrl = dto.thumbnail,
                 durationSeconds = dto.duration,
                 addedAtMillis = dto.addedAt,
+                channelName = dto.channelName,
+                channelUrl = dto.channelUrl,
+                channelAvatarUrl = dto.channelAvatar,
+                viewCount = dto.viewCount,
             )
         }
     }
 
-    suspend fun fetchPlaylists(): Pair<List<PlaylistEntity>, List<PlaylistVideoEntity>> =
+    suspend fun fetchPlaylistSummaries(scope: AccountScope): List<PlaylistEntity> =
         withContext(Dispatchers.IO) {
-            val response = apiHolder.require().playlists()
-            if (!response.isSuccessful) error("Playlists failed (HTTP ${response.code()})")
-            val dtos = response.body() ?: emptyList()
-            val playlists = dtos.map { dto ->
-                PlaylistEntity(
-                    id = dto.id,
-                    name = dto.name,
-                    description = dto.description,
-                    createdAtMillis = dto.createdAt,
-                )
-            }
-            val videos = dtos.flatMap { dto ->
-                dto.videos.map { v ->
-                    PlaylistVideoEntity(
-                        playlistId = dto.id,
-                        id = v.id,
-                        url = v.url,
-                        title = v.title,
-                        thumbnailUrl = v.thumbnail,
-                        durationSeconds = v.duration,
-                        position = v.position,
-                        channelName = v.channelName,
-                        channelUrl = v.channelUrl,
-                        channelAvatarUrl = v.channelAvatar,
-                        viewCount = v.viewCount,
-                    )
-                }
-            }.distinctBy { it.playlistId to it.url }
-            playlists to videos
+            val response = apiHolder.require(scope).playlists()
+            response.requireSuccessfulResponse()
+            (response.body() ?: emptyList()).map { it.toPlaylistEntity(scope) }
         }
 
-    suspend fun postFavorite(videoUrl: String) = withContext(Dispatchers.IO) {
-        val response = apiHolder.require().addFavorite(videoUrl)
-        if (!response.isSuccessful) error("Add favorite failed (HTTP ${response.code()})")
+    suspend fun fetchPlaylist(
+        scope: AccountScope,
+        playlistId: String,
+    ): Pair<PlaylistEntity, List<PlaylistVideoEntity>> = withContext(Dispatchers.IO) {
+        val response = apiHolder.require(scope).playlist(playlistId)
+        response.requireSuccessfulResponse()
+        val dto = response.body() ?: error("Empty playlist response")
+        check(dto.id == playlistId) { "Playlist response id does not match the request" }
+        dto.toPlaylistEntity(scope) to dto.toVideoEntities(scope)
     }
 
-    suspend fun deleteFavorite(videoUrl: String) = withContext(Dispatchers.IO) {
-        val response = apiHolder.require().removeFavorite(videoUrl)
-        if (!response.isSuccessful) error("Remove favorite failed (HTTP ${response.code()})")
+    suspend fun postFavorite(scope: AccountScope, videoUrl: String) = withContext(Dispatchers.IO) {
+        val response = apiHolder.require(scope).addFavorite(videoUrl)
+        response.requireSuccessfulResponse()
     }
 
-    suspend fun postWatchLater(url: String, title: String, thumbnail: String, duration: Long) =
+    suspend fun deleteFavorite(scope: AccountScope, videoUrl: String) = withContext(Dispatchers.IO) {
+        val response = apiHolder.require(scope).removeFavorite(videoUrl)
+        response.requireSuccessfulResponse()
+    }
+
+    suspend fun postWatchLater(
+        scope: AccountScope,
+        url: String,
+        title: String,
+        thumbnail: String,
+        duration: Long,
+        channelName: String,
+        channelUrl: String,
+        channelAvatar: String,
+        viewCount: Long,
+    ) =
         withContext(Dispatchers.IO) {
-            val response = apiHolder.require().addWatchLater(
-                AddWatchLaterRequest(url = url, title = title, thumbnail = thumbnail, duration = duration),
+            val response = apiHolder.require(scope).addWatchLater(
+                AddWatchLaterRequest(
+                    url = url,
+                    title = title,
+                    thumbnail = thumbnail,
+                    duration = duration,
+                    channelName = channelName,
+                    channelUrl = channelUrl,
+                    channelAvatar = channelAvatar,
+                    viewCount = viewCount,
+                ),
             )
-            if (!response.isSuccessful) error("Add watch later failed (HTTP ${response.code()})")
+            response.requireSuccessfulResponse()
         }
 
-    suspend fun deleteWatchLater(url: String) = withContext(Dispatchers.IO) {
-        val response = apiHolder.require().removeWatchLater(url)
-        if (!response.isSuccessful) error("Remove watch later failed (HTTP ${response.code()})")
+    suspend fun deleteWatchLater(scope: AccountScope, url: String) = withContext(Dispatchers.IO) {
+        val response = apiHolder.require(scope).removeWatchLater(url)
+        response.requireSuccessfulResponse()
     }
 
     suspend fun postHistory(
+        scope: AccountScope,
         videoUrl: String,
         title: String,
         thumbnail: String,
@@ -130,8 +159,8 @@ class LibraryNetworkSource @Inject constructor(
         channelName: String,
         channelUrl: String,
         channelAvatar: String,
-    ) = withContext(Dispatchers.IO) {
-        val response = apiHolder.require().addHistory(
+    ): HistoryEntity? = withContext(Dispatchers.IO) {
+        val response = apiHolder.require(scope).addHistory(
             AddHistoryRequest(
                 url = videoUrl,
                 title = title,
@@ -142,33 +171,74 @@ class LibraryNetworkSource @Inject constructor(
                 channelAvatar = channelAvatar,
             ),
         )
-        if (!response.isSuccessful) error("Add history failed (HTTP ${response.code()})")
+        response.requireSuccessfulResponse()
+        val dto = response.body() ?: error("Empty history response")
+        dto.toPostedHistoryEntity(scope)
     }
 
-    suspend fun getProgress(videoUrl: String): Long? = withContext(Dispatchers.IO) {
-        val response = apiHolder.require().fetchProgress(videoUrl)
+    suspend fun deleteHistory(scope: AccountScope, id: String) = withContext(Dispatchers.IO) {
+        val response = apiHolder.require(scope).removeHistory(id)
+        if (!response.isSuccessful && response.code() != 404) response.requireSuccessfulResponse()
+    }
+
+    suspend fun getProgress(scope: AccountScope, videoUrl: String): Long? = withContext(Dispatchers.IO) {
+        val response = apiHolder.require(scope).fetchProgress(videoUrl)
         when {
             response.isSuccessful -> response.body()?.position
             response.code() == 404 -> null
-            else -> error("Fetch progress failed (HTTP ${response.code()})")
+            else -> {
+                response.requireSuccessfulResponse()
+                null
+            }
         }
     }
 
-    suspend fun putProgress(videoUrl: String, positionMillis: Long) = withContext(Dispatchers.IO) {
-        val response = apiHolder.require().saveProgress(
+    suspend fun putProgress(scope: AccountScope, videoUrl: String, positionMillis: Long) = withContext(Dispatchers.IO) {
+        val response = apiHolder.require(scope).saveProgress(
             videoUrl = videoUrl,
             body = SaveProgressRequest(position = positionMillis),
         )
-        if (!response.isSuccessful) error("Save progress failed (HTTP ${response.code()})")
+        response.requireSuccessfulResponse()
     }
 
-    suspend fun postCreatePlaylist(name: String): String = withContext(Dispatchers.IO) {
-        val response = apiHolder.require().createPlaylist(CreatePlaylistRequest(name = name))
-        if (!response.isSuccessful) error("Create playlist failed (HTTP ${response.code()})")
-        response.body()?.id ?: error("Empty playlist id in response")
+    suspend fun postCreatePlaylist(scope: AccountScope, name: String): PlaylistEntity = withContext(Dispatchers.IO) {
+        val response = apiHolder.require(scope).createPlaylist(CreatePlaylistRequest(name = name))
+        response.requireSuccessfulResponse()
+        response.body()?.toPlaylistEntity(scope) ?: error("Empty playlist response")
+    }
+
+    suspend fun putPlaylist(
+        scope: AccountScope,
+        playlistId: String,
+        name: String,
+        description: String,
+    ) = withContext(Dispatchers.IO) {
+        val response = apiHolder.require(scope).updatePlaylist(
+            playlistId = playlistId,
+            body = CreatePlaylistRequest(name = name, description = description),
+        )
+        response.requireSuccessfulResponse()
+    }
+
+    suspend fun deletePlaylist(scope: AccountScope, playlistId: String) = withContext(Dispatchers.IO) {
+        val response = apiHolder.require(scope).deletePlaylist(playlistId)
+        response.requireSuccessfulResponse()
+    }
+
+    suspend fun putPlaylistOrder(
+        scope: AccountScope,
+        playlistId: String,
+        orderedVideoUrls: List<String>,
+    ) = withContext(Dispatchers.IO) {
+        val response = apiHolder.require(scope).reorderPlaylist(
+            playlistId = playlistId,
+            body = PlaylistReorderRequest(orderedVideoUrls),
+        )
+        response.requireSuccessfulResponse()
     }
 
     suspend fun postAddVideoToPlaylist(
+        scope: AccountScope,
         playlistId: String,
         url: String,
         title: String,
@@ -179,7 +249,7 @@ class LibraryNetworkSource @Inject constructor(
         channelAvatar: String,
         viewCount: Long,
     ) = withContext(Dispatchers.IO) {
-        val response = apiHolder.require().addVideoToPlaylist(
+        val response = apiHolder.require(scope).addVideoToPlaylist(
             playlistId = playlistId,
             body = AddPlaylistVideoRequest(
                 url = url,
@@ -192,39 +262,53 @@ class LibraryNetworkSource @Inject constructor(
                 viewCount = viewCount,
             ),
         )
-        if (!response.isSuccessful) error("Add to playlist failed (HTTP ${response.code()})")
+        response.requireSuccessfulResponse()
     }
 
-    suspend fun deleteVideoFromPlaylist(playlistId: String, videoUrl: String) =
+    suspend fun deleteVideoFromPlaylist(scope: AccountScope, playlistId: String, videoUrl: String) =
         withContext(Dispatchers.IO) {
-            val response = apiHolder.require().removeVideoFromPlaylist(
+            val response = apiHolder.require(scope).removeVideoFromPlaylist(
                 playlistId = playlistId,
                 videoUrl = videoUrl,
             )
-            if (!response.isSuccessful) {
-                error("Remove from playlist failed (HTTP ${response.code()})")
-            }
+            response.requireSuccessfulResponse()
         }
 
-    suspend fun deleteAllHistory() = withContext(Dispatchers.IO) {
-        val response = apiHolder.require().clearHistory()
-        if (!response.isSuccessful) error("Clear history failed (HTTP ${response.code()})")
+    suspend fun deleteAllHistory(scope: AccountScope) = withContext(Dispatchers.IO) {
+        val response = apiHolder.require(scope).clearHistory()
+        response.requireSuccessfulResponse()
     }
 
-    suspend fun deleteAllSearchHistory() = withContext(Dispatchers.IO) {
-        val response = apiHolder.require().clearSearchHistory()
-        if (!response.isSuccessful) error("Clear search history failed (HTTP ${response.code()})")
+    suspend fun deleteAllSearchHistory(scope: AccountScope) = withContext(Dispatchers.IO) {
+        val response = apiHolder.require(scope).clearSearchHistory()
+        response.requireSuccessfulResponse()
     }
 
-    suspend fun fetchSubscriptions(): List<dev.typetype.android.data.network.dto.SubscriptionItemDto> =
+    suspend fun fetchSubscriptions(scope: AccountScope): List<dev.typetype.android.data.network.dto.SubscriptionItemDto> =
         withContext(Dispatchers.IO) {
-            val response = apiHolder.require().subscriptions()
-            if (!response.isSuccessful) error("Subscriptions failed (HTTP ${response.code()})")
+            val response = apiHolder.require(scope).subscriptions()
+            response.requireSuccessfulResponse()
             response.body() ?: emptyList()
         }
 
-    suspend fun deleteSubscription(channelUrl: String) = withContext(Dispatchers.IO) {
-        val response = apiHolder.require().unsubscribe(channelUrl)
-        if (!response.isSuccessful) error("Unsubscribe failed (HTTP ${response.code()})")
+    suspend fun postSubscription(
+        scope: AccountScope,
+        channelUrl: String,
+        name: String,
+        avatarUrl: String,
+    ) = withContext(Dispatchers.IO) {
+        val response = apiHolder.require(scope).subscribe(
+            SubscriptionItemDto(channelUrl = channelUrl, name = name, avatarUrl = avatarUrl),
+        )
+        response.requireSuccessfulResponse()
+    }
+
+    suspend fun deleteSubscription(scope: AccountScope, channelUrl: String) = withContext(Dispatchers.IO) {
+        val response = apiHolder.require(scope).unsubscribe(channelUrl)
+        response.requireSuccessfulResponse()
+        }
+
+    private companion object {
+        const val HISTORY_PAGE_SIZE = 60
     }
 }
