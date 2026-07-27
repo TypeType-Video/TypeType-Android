@@ -1,7 +1,12 @@
 package dev.typetype.android.feature.setup.addserver
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
@@ -34,9 +40,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -50,34 +56,60 @@ import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.SectionHeader
 import dev.typetype.android.core.ui.components.TypeTypePrimaryButton
 import dev.typetype.android.core.ui.components.TypeTypeTextField
+import dev.typetype.android.core.ui.components.RequestIdRow
+import dev.typetype.android.domain.setup.ServerAddress
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun AddServerRoute(
     onNavigateBack: () -> Unit,
-    onNavigateToLogin: (serverId: String, guestAllowed: Boolean, registrationAllowed: Boolean) -> Unit,
+    onNavigateToLogin: (serverId: String) -> Unit,
     viewModel: AddServerViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        viewModel.onAction(
+            if (granted) AddServerAction.OnConnectClick
+            else AddServerAction.OnLocalNetworkPermissionDenied,
+        )
+    }
+    val onConnect = {
+        val needsPermission = Build.VERSION.SDK_INT >= 37 &&
+            ServerAddress.requiresLocalNetworkAccess(state.url) &&
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_LOCAL_NETWORK,
+            ) != PackageManager.PERMISSION_GRANTED
+        if (needsPermission) {
+            permissionLauncher.launch(Manifest.permission.ACCESS_LOCAL_NETWORK)
+        } else {
+            viewModel.onAction(AddServerAction.OnConnectClick)
+        }
+    }
     LaunchedEffect(viewModel) {
         viewModel.events.collectLatest { event ->
             when (event) {
                 AddServerEvent.NavigateBack -> onNavigateBack()
-                is AddServerEvent.NavigateToLogin -> onNavigateToLogin(
-                    event.serverId,
-                    event.guestAllowed,
-                    event.registrationAllowed,
-                )
+                is AddServerEvent.NavigateToLogin -> onNavigateToLogin(event.serverId)
             }
         }
     }
-    AddServerScreen(state = state, onAction = viewModel::onAction)
+    AddServerScreen(
+        state = state,
+        onAction = viewModel::onAction,
+        onConnect = onConnect,
+    )
 }
 
 @Composable
 fun AddServerScreen(
     state: AddServerState,
     onAction: (AddServerAction) -> Unit,
+    onConnect: () -> Unit,
 ) {
     val focusRequester = remember { FocusRequester() }
     val scrollState = rememberScrollState()
@@ -91,7 +123,8 @@ fun AddServerScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.systemBars),
+                .windowInsetsPadding(WindowInsets.systemBars)
+                .imePadding(),
         ) {
             Column(
                 verticalArrangement = Arrangement.Center,
@@ -103,19 +136,22 @@ fun AddServerScreen(
                     .align(Alignment.Center)
                     .verticalScroll(scrollState),
             ) {
-                Box(
+                Surface(
                     modifier = Modifier
                         .size(96.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(MaterialTheme.colorScheme.errorContainer)
+                        .padding(4.dp)
                         .align(Alignment.CenterHorizontally),
-                    contentAlignment = Alignment.Center,
+                    shape = RoundedCornerShape(24.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                 ) {
-                    Image(
-                        painter = painterResource(R.drawable.ic_launcher_monochrome),
-                        contentDescription = null,
-                        modifier = Modifier.size(72.dp),
-                    )
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Image(
+                            painter = painterResource(R.drawable.ic_typetype_brand),
+                            contentDescription = null,
+                            modifier = Modifier.size(60.dp),
+                        )
+                    }
                 }
                 Spacer(Modifier.height(28.dp))
                 SectionHeader(text = stringResource(R.string.setup_section))
@@ -134,18 +170,31 @@ fun AddServerScreen(
                     onValueChange = { onAction(AddServerAction.OnUrlChange(it)) },
                     placeholder = stringResource(R.string.setup_server_placeholder),
                     enabled = !state.isConnecting,
-                    isError = state.errorMessage != null,
-                    supportingText = state.errorMessage,
+                    isError = state.errorMessage != null || state.localNetworkPermissionDenied,
+                    supportingText = if (state.localNetworkPermissionDenied) {
+                        stringResource(R.string.setup_local_network_permission_denied)
+                    } else {
+                        state.errorMessage
+                    },
                     keyboardOptions = KeyboardOptions(
                         autoCorrectEnabled = false,
                         keyboardType = KeyboardType.Uri,
                         imeAction = ImeAction.Go,
                     ),
-                    keyboardActions = KeyboardActions(onGo = { onAction(AddServerAction.OnConnectClick) }),
+                    keyboardActions = KeyboardActions(onGo = { onConnect() }),
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focusRequester),
                 )
+                state.errorRequestId?.let { RequestIdRow(requestId = it) }
+                if (ServerAddress.usesCleartextHttp(state.url)) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(R.string.setup_cleartext_warning),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
                 if (state.resolvedName != null) {
                     Spacer(Modifier.height(20.dp))
                     Text(
@@ -171,7 +220,7 @@ fun AddServerScreen(
                 Spacer(Modifier.height(24.dp))
                 TypeTypePrimaryButton(
                     text = stringResource(R.string.setup_connect),
-                    onClick = { onAction(AddServerAction.OnConnectClick) },
+                    onClick = onConnect,
                     enabled = state.url.isNotBlank(),
                     isLoading = state.isConnecting,
                 )

@@ -1,8 +1,12 @@
 package dev.typetype.android.feature.setup.addserver
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dev.typetype.android.R
+import dev.typetype.android.core.ui.error.UserErrorMapper
 import dev.typetype.android.domain.server.Server
 import dev.typetype.android.domain.setup.SetupRepository
 import java.util.UUID
@@ -16,6 +20,8 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class AddServerViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val errorMapper: UserErrorMapper,
     private val setupRepository: SetupRepository,
 ) : ViewModel() {
 
@@ -31,12 +37,21 @@ class AddServerViewModel @Inject constructor(
                 it.copy(
                     url = action.url,
                     errorMessage = null,
+                    errorRequestId = null,
+                    localNetworkPermissionDenied = false,
                     resolvedName = null,
                     resolvedTagline = null,
                     resolvedVersion = null,
                 )
             }
             AddServerAction.OnConnectClick -> connect()
+            AddServerAction.OnLocalNetworkPermissionDenied -> _state.update {
+                it.copy(
+                    localNetworkPermissionDenied = true,
+                    errorMessage = null,
+                    errorRequestId = null,
+                )
+            }
             AddServerAction.OnBackClick -> emit(AddServerEvent.NavigateBack)
         }
     }
@@ -44,10 +59,22 @@ class AddServerViewModel @Inject constructor(
     private fun connect() {
         val typedUrl = _state.value.url
         if (typedUrl.isBlank()) {
-            _state.update { it.copy(errorMessage = "Enter a server URL") }
+            _state.update {
+                it.copy(
+                    errorMessage = context.getString(R.string.setup_enter_server_url),
+                    errorRequestId = null,
+                )
+            }
             return
         }
-        _state.update { it.copy(isConnecting = true, errorMessage = null) }
+        _state.update {
+            it.copy(
+                isConnecting = true,
+                errorMessage = null,
+                errorRequestId = null,
+                localNetworkPermissionDenied = false,
+            )
+        }
         viewModelScope.launch {
             setupRepository.probeServer(typedUrl).fold(
                 onSuccess = { probe ->
@@ -56,6 +83,23 @@ class AddServerViewModel @Inject constructor(
                         baseUrl = probe.normalizedUrl,
                         displayName = probe.name,
                         addedAt = System.currentTimeMillis(),
+                        tagline = probe.tagline,
+                        version = probe.version,
+                        revision = probe.revision,
+                        apiVersion = probe.apiVersion,
+                        logoUrl = probe.logoUrl,
+                        bannerUrl = probe.bannerUrl,
+                        supportedServices = probe.supportedServices,
+                        minAndroidClientVersion = probe.minAndroidClientVersion,
+                        registrationAllowed = probe.registrationAllowed,
+                        guestAllowed = probe.guestAllowed,
+                        localLoginEnabled = probe.localLoginEnabled,
+                        oidcEnabled = probe.oidcEnabled,
+                        oidcProviderName = probe.oidcProviderName,
+                        oidcAutoRedirect = probe.oidcAutoRedirect,
+                        youtubeRemoteLoginEnabled = probe.youtubeRemoteLoginEnabled,
+                        youtubeRemoteLoginReady = probe.youtubeRemoteLoginReady,
+                        youtubeRemoteLoginUnavailableReason = probe.youtubeRemoteLoginUnavailableReason,
                     )
                     setupRepository.persistServer(server)
                     _state.update {
@@ -69,16 +113,16 @@ class AddServerViewModel @Inject constructor(
                     emit(
                         AddServerEvent.NavigateToLogin(
                             serverId = server.id,
-                            guestAllowed = probe.guestAllowed,
-                            registrationAllowed = probe.registrationAllowed,
                         ),
                     )
                 },
                 onFailure = { throwable ->
+                    val details = errorMapper.details(throwable, R.string.setup_server_unreachable)
                     _state.update {
                         it.copy(
                             isConnecting = false,
-                            errorMessage = throwable.message ?: "Could not reach server",
+                            errorMessage = details.message,
+                            errorRequestId = details.requestId,
                         )
                     }
                 },
