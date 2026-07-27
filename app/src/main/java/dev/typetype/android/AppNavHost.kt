@@ -14,15 +14,17 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.core.ui.navigation.AboutRoute
+import dev.typetype.android.core.ui.navigation.AccountsRoute
 import dev.typetype.android.core.ui.navigation.BlockedSettingsRoute
+import dev.typetype.android.core.ui.navigation.DiagnosticsRoute
 import dev.typetype.android.core.ui.navigation.PrivacySettingsRoute
+import dev.typetype.android.core.ui.navigation.PublicPlaylistRoute
 import dev.typetype.android.core.ui.navigation.ProfileSettingsRoute
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
 import dev.typetype.android.core.ui.navigation.AddServerRoute
 import dev.typetype.android.core.ui.navigation.AppearanceRoute
 import dev.typetype.android.core.ui.navigation.ChannelRoute
 import dev.typetype.android.core.ui.navigation.HomeRoute
-import dev.typetype.android.core.ui.navigation.LibraryRoute
 import dev.typetype.android.core.ui.navigation.LoginRoute
 import dev.typetype.android.core.ui.navigation.PlayerSettingsRoute
 import dev.typetype.android.core.ui.navigation.PlaylistRoute
@@ -31,16 +33,17 @@ import dev.typetype.android.core.ui.navigation.SettingsRoute
 import dev.typetype.android.core.ui.navigation.StorageSettingsRoute
 import dev.typetype.android.core.ui.navigation.SubscriptionsRoute
 import dev.typetype.android.core.ui.navigation.WelcomeRoute
-import dev.typetype.android.feature.channel.ChannelRoute as ChannelRouteScreen
+import dev.typetype.android.core.ui.components.resolveProfileAvatarUrl
 import dev.typetype.android.feature.home.HomeRoute as HomeRouteScreen
 import dev.typetype.android.feature.home.HomeViewModel
-import dev.typetype.android.feature.library.LibraryRoute as LibraryRouteScreen
 import dev.typetype.android.feature.library.playlist.PlaylistRoute as PlaylistRouteScreen
 import dev.typetype.android.feature.search.SearchRoute as SearchRouteScreen
 import dev.typetype.android.feature.settings.SettingsScreen
+import dev.typetype.android.feature.settings.accounts.AccountSettingsRoute as AccountSettingsRouteScreen
 import dev.typetype.android.feature.settings.about.AboutScreen
 import dev.typetype.android.feature.settings.appearance.AppearanceRoute as AppearanceRouteScreen
 import dev.typetype.android.feature.settings.blocked.BlockedSettingsRoute as BlockedSettingsRouteScreen
+import dev.typetype.android.feature.settings.diagnostics.DiagnosticsRoute as DiagnosticsRouteScreen
 import dev.typetype.android.feature.settings.player.PlayerSettingsRoute as PlayerSettingsRouteScreen
 import dev.typetype.android.feature.settings.privacy.PrivacySettingsRoute as PrivacySettingsRouteScreen
 import dev.typetype.android.feature.settings.profile.ProfileSettingsRoute as ProfileSettingsRouteScreen
@@ -75,8 +78,6 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
                     navController.navigate(
                         LoginRoute(
                             serverId = event.serverId,
-                            guestAllowed = false,
-                            registrationAllowed = false,
                         ),
                     ) {
                         popUpTo(0) { inclusive = true }
@@ -94,15 +95,13 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
 
     val avatarUrl = remember(currentProfile, serverBaseUrl) {
         val p = currentProfile ?: return@remember null
-        when {
-            p.avatarType == "emoji" && p.avatarCode.isNotBlank() ->
-                dev.typetype.android.core.openmoji.openMojiUrl(serverBaseUrl, p.avatarCode)
-            p.avatarUrl.isNotBlank() && p.avatarUrl.startsWith("http") -> p.avatarUrl
-            else -> dev.typetype.android.core.openmoji.openMojiUrl(
-                serverBaseUrl,
-                dev.typetype.android.core.openmoji.pickOpenMojiCode("${p.id}:${p.publicUsername}"),
-            )
-        }
+        resolveProfileAvatarUrl(
+            serverBaseUrl = serverBaseUrl,
+            avatarUrl = p.avatarUrl,
+            avatarType = p.avatarType,
+            avatarCode = p.avatarCode,
+            fallbackSeed = "${p.id}:${p.publicUsername}",
+        )
     }
     val avatarFallback = currentProfile?.publicUsername?.firstOrNull()?.toString()
 
@@ -112,11 +111,13 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
         playerHostController = playerHostController,
         onOpenSearch = { navController.navigate(SearchRoute) },
         onOpenSettings = { navController.navigate(SettingsRoute) },
+        onOpenAccounts = { navController.navigate(AccountsRoute) },
         onOpenProfile = { navController.navigate(ProfileSettingsRoute) },
         avatarUrl = avatarUrl,
         avatarFallbackLetter = avatarFallback,
         onPlayVideo = onPlayVideo,
         onOpenChannel = onOpenChannel,
+        onClosePlayback = mainViewModel::closePlayback,
     ) { innerModifier ->
         NavHost(
             navController = navController,
@@ -155,13 +156,9 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
             composable<AddServerRoute> {
                 AddServerRouteScreen(
                     onNavigateBack = { navController.popBackStack() },
-                    onNavigateToLogin = { serverId, guestAllowed, registrationAllowed ->
+                    onNavigateToLogin = { serverId ->
                         navController.navigate(
-                            LoginRoute(
-                                serverId = serverId,
-                                guestAllowed = guestAllowed,
-                                registrationAllowed = registrationAllowed,
-                            ),
+                            LoginRoute(serverId = serverId),
                         ) {
                             popUpTo(WelcomeRoute) { inclusive = false }
                         }
@@ -173,7 +170,7 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToHome = {
                         navController.navigate(HomeRoute) {
-                            popUpTo(WelcomeRoute) { inclusive = true }
+                            popUpTo(0) { inclusive = true }
                         }
                     },
                 )
@@ -198,6 +195,11 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
                             launchSingleTop = true
                         }
                     },
+                    onOpenPlaylist = { playlistUrl ->
+                        navController.navigate(PublicPlaylistRoute(playlistUrl)) {
+                            launchSingleTop = true
+                        }
+                    },
                 )
             }
             composable<SubscriptionsRoute> {
@@ -210,36 +212,61 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
                     },
                 )
             }
-            composable<LibraryRoute> {
-                LibraryRouteScreen(
-                    onPlayVideo = onPlayVideo,
-                    onOpenPlaylist = { playlistId ->
-                        navController.navigate(PlaylistRoute(playlistId = playlistId))
-                    },
-                    onOpenChannel = onOpenChannel,
-                )
-            }
+            libraryDestination(
+                navController = navController,
+                onPlayVideo = onPlayVideo,
+                onOpenChannel = onOpenChannel,
+            )
             composable<PlaylistRoute> {
                 PlaylistRouteScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onPlayVideo = onPlayVideo,
+                    onPlayQueue = { title, videos, shuffle ->
+                        playerHostController.openQueue(
+                            title = title,
+                            entries = videos.map { it.toPlaybackQueueEntry() },
+                            shuffle = shuffle,
+                        )
+                    },
                     onOpenChannel = onOpenChannel,
                 )
             }
+            publicPlaylistDestination(
+                navController = navController,
+                playerHostController = playerHostController,
+                onPlayVideo = onPlayVideo,
+                onOpenChannel = onOpenChannel,
+            )
             composable<SettingsRoute> {
                 SettingsScreen(
                     onNavigateBack = { navController.popBackStack() },
+                    onOpenAccounts = { navController.navigate(AccountsRoute) },
                     onOpenProfile = { navController.navigate(ProfileSettingsRoute) },
                     onOpenAppearance = { navController.navigate(AppearanceRoute) },
                     onOpenPlayer = { navController.navigate(PlayerSettingsRoute) },
                     onOpenStorage = { navController.navigate(StorageSettingsRoute) },
                     onOpenPrivacy = { navController.navigate(PrivacySettingsRoute) },
+                    onOpenDiagnostics = { navController.navigate(DiagnosticsRoute) },
                     onOpenBlocked = { navController.navigate(BlockedSettingsRoute) },
                     onOpenAbout = { navController.navigate(AboutRoute) },
                     onSignOut = {
                         navController.popBackStack()
                         mainViewModel.signOut()
                     },
+                )
+            }
+            composable<AccountsRoute> {
+                AccountSettingsRouteScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onAccountActivated = {
+                        mainViewModel.onAccountActivated()
+                        navController.navigate(HomeRoute) {
+                            popUpTo(HomeRoute) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    onSignIn = { serverId -> navController.navigate(LoginRoute(serverId)) },
+                    onAddInstance = { navController.navigate(AddServerRoute) },
                 )
             }
             composable<ProfileSettingsRoute> {
@@ -267,6 +294,11 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
                     onNavigateBack = { navController.popBackStack() },
                 )
             }
+            composable<DiagnosticsRoute> {
+                DiagnosticsRouteScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                )
+            }
             composable<BlockedSettingsRoute> {
                 BlockedSettingsRouteScreen(
                     onNavigateBack = { navController.popBackStack() },
@@ -277,12 +309,12 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
                     onNavigateBack = { navController.popBackStack() },
                 )
             }
-            composable<ChannelRoute> {
-                ChannelRouteScreen(
-                    onNavigateBack = { navController.popBackStack() },
-                    onPlayVideo = onPlayVideo,
-                )
-            }
+            channelAndPodcastDestinations(
+                navController = navController,
+                playerHostController = playerHostController,
+                onPlayVideo = onPlayVideo,
+                onOpenChannel = onOpenChannel,
+            )
         }
     }
     }
