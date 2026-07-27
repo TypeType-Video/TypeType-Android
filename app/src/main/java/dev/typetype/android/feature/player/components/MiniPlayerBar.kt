@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -52,6 +53,7 @@ fun MiniPlayerBar(
     onSendToBackground: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
+    sleepTimerLabel: String? = null,
 ) {
     val playPauseState = rememberPlayPauseButtonState(player)
     val density = LocalDensity.current
@@ -124,6 +126,14 @@ fun MiniPlayerBar(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+            )
+        }
+        if (sleepTimerLabel != null) {
+            Icon(
+                imageVector = Icons.Filled.Bedtime,
+                contentDescription = sleepTimerLabel,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(horizontal = 6.dp),
             )
         }
         IconButton(onClick = { if (playPauseState.isEnabled) playPauseState.onClick() }) {
