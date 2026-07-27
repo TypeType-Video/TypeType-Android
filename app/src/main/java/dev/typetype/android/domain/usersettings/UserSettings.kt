@@ -10,4 +10,7 @@ data class UserSettings(
     val defaultSubtitleLanguage: String = "",
     val defaultAudioLanguage: String = "",
     val preferOriginalLanguage: Boolean = false,
+    val hideHomeRecommendations: Boolean = false,
+    val hideContinueWatching: Boolean = false,
+    val disableWatchHistory: Boolean = false,
 )
