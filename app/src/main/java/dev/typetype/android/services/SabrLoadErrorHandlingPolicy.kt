@@ -5,6 +5,8 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy
 import dev.typetype.android.core.error.CodedFailure
+import dev.typetype.android.data.network.AlwaysAvailablePlaybackNetworkObserver
+import dev.typetype.android.data.network.PlaybackNetworkObserver
 import dev.typetype.android.data.network.isTransientHttpStatus
 import dev.typetype.android.data.network.retryAfterMillis
 import dev.typetype.android.data.network.transientHttpRetryDelayMs
@@ -13,7 +15,10 @@ import java.io.IOException
 @UnstableApi
 internal class SabrLoadErrorHandlingPolicy(
     private val delegate: LoadErrorHandlingPolicy,
+    network: PlaybackNetworkObserver = AlwaysAvailablePlaybackNetworkObserver,
 ) : LoadErrorHandlingPolicy {
+    private val transportRetryBudget = PlaybackLoadRetryBudget(network)
+
     override fun getFallbackSelectionFor(
         fallbackOptions: LoadErrorHandlingPolicy.FallbackOptions,
         loadErrorInfo: LoadErrorHandlingPolicy.LoadErrorInfo,
@@ -44,11 +49,8 @@ internal class SabrLoadErrorHandlingPolicy(
             return C.TIME_UNSET
         }
         if (failure.hasTransientHttpTransportFailure()) {
-            return transientHttpRetryDelayMs(
-                errorCount = loadErrorInfo.errorCount,
-                maximumRetries = MAX_MEDIA_LOAD_RETRIES,
-                requestedDelayMs = null,
-            ) ?: C.TIME_UNSET
+            return transportRetryBudget.retryDelayMs(loadErrorInfo.loadEventInfo.loadTaskId)
+                ?: C.TIME_UNSET
         }
         return delegate.getRetryDelayMsFor(loadErrorInfo)
     }
@@ -57,6 +59,7 @@ internal class SabrLoadErrorHandlingPolicy(
         delegate.getMinimumLoadableRetryCount(dataType)
 
     override fun onLoadTaskConcluded(loadTaskId: Long) {
+        transportRetryBudget.conclude(loadTaskId)
         delegate.onLoadTaskConcluded(loadTaskId)
     }
 }
