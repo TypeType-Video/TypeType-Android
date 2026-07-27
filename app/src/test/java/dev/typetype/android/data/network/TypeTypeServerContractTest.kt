@@ -2,9 +2,11 @@ package dev.typetype.android.data.network
 
 import dev.typetype.android.data.network.dto.AddHistoryRequest
 import dev.typetype.android.data.network.dto.AddWatchLaterRequest
+import dev.typetype.android.data.network.dto.AccountIdentityUpdateRequest
 import dev.typetype.android.data.network.dto.SabrPlaybackPositionRequestDto
 import dev.typetype.android.data.network.dto.SabrPlaybackRequest
 import dev.typetype.android.data.network.dto.SabrPlaybackWindowRequestDto
+import dev.typetype.android.data.network.dto.ResetPasswordRequest
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import kotlinx.coroutines.runBlocking
@@ -12,6 +14,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import okhttp3.OkHttpClient
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
@@ -116,6 +120,91 @@ class TypeTypeServerContractTest {
         assertEquals("/subscriptions/feed?limit=12&cursor=opaque", server.takeRequest().path)
         assertEquals(7L, response.body()?.generation)
         assertTrue(response.body()?.refreshing == true)
+    }
+
+    @Test
+    fun notificationsUseTheAuthenticatedServerContract() = runBlocking {
+        server.enqueue(jsonResponse("""{"unreadCount":3}""", 200))
+        server.enqueue(
+            jsonResponse(
+                """{"items":[],"unreadCount":3,"nextpage":"2"}""",
+                200,
+            ),
+        )
+        server.enqueue(jsonResponse("""{"readAt":42,"unreadCount":0}""", 200))
+
+        val count = requireNotNull(api.unreadNotificationsCount().body())
+        val page = requireNotNull(api.notifications(page = 1, limit = 20).body())
+        val read = requireNotNull(api.markAllNotificationsRead().body())
+
+        assertEquals(3, count.unreadCount)
+        assertEquals("2", page.nextpage)
+        assertEquals(0, read.unreadCount)
+        assertEquals("/notifications/unread-count", server.takeRequest().path)
+        assertEquals("/notifications?page=1&limit=20", server.takeRequest().path)
+        val readRequest = server.takeRequest()
+        assertEquals("POST", readRequest.method)
+        assertEquals("/notifications/read-all", readRequest.path)
+    }
+
+    @Test
+    fun profileAccountAndAvatarUseTheDedicatedServerContracts() = runBlocking {
+        server.enqueue(
+            jsonResponse(
+                """{"avatarUrl":"/avatar/custom/user/1","mediaType":"image/gif","size":4}""",
+                200,
+            ),
+        )
+        server.enqueue(
+            jsonResponse(
+                """{"email":"user@example.com","name":"User","managedByOidc":false}""",
+                200,
+            ),
+        )
+        server.enqueue(MockResponse().setResponseCode(204))
+
+        api.uploadCustomAvatar(
+            byteArrayOf(1, 2, 3, 4).toRequestBody("image/gif".toMediaType()),
+        )
+        val identity = requireNotNull(api.accountIdentity().body())
+        api.updateAccountIdentity(
+            AccountIdentityUpdateRequest(
+                email = "next@example.com",
+                name = "Next",
+                currentPassword = "secret",
+            ),
+        )
+
+        val avatarRequest = server.takeRequest()
+        assertEquals("PUT", avatarRequest.method)
+        assertEquals("/profile/avatar/custom", avatarRequest.path)
+        assertEquals("image/gif", avatarRequest.headers["Content-Type"])
+        assertEquals(4L, avatarRequest.bodySize)
+        assertEquals("user@example.com", identity.email)
+        assertEquals("/profile/account", server.takeRequest().path)
+        val identityRequest = server.takeRequest()
+        assertEquals("PUT", identityRequest.method)
+        assertEquals("/profile/account", identityRequest.path)
+        assertTrue(identityRequest.body.readUtf8().contains("\"currentPassword\":\"secret\""))
+    }
+
+    @Test
+    fun resetPasswordUsesThePublicAuthContract() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(204))
+
+        api.resetPassword(
+            ResetPasswordRequest(
+                resetToken = "one-time-token",
+                newPassword = "new-secret",
+            ),
+        )
+
+        val request = server.takeRequest()
+        assertEquals("POST", request.method)
+        assertEquals("/auth/reset-password", request.path)
+        val body = request.body.readUtf8()
+        assertTrue(body.contains("\"resetToken\":\"one-time-token\""))
+        assertTrue(body.contains("\"newPassword\":\"new-secret\""))
     }
 
     @Test
