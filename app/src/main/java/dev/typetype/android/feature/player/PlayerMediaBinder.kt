@@ -1,19 +1,24 @@
 package dev.typetype.android.feature.player
 
-import android.net.Uri
-import android.os.Bundle
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.MimeTypes
 import androidx.media3.session.MediaController
+import androidx.core.net.toUri
+import dev.typetype.android.domain.stream.SabrPlaybackBinding
+import dev.typetype.android.domain.stream.SabrPlaybackTarget
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.stream.StreamAudioSource
+import dev.typetype.android.domain.stream.StreamPlaybackContract
 import dev.typetype.android.domain.stream.StreamSubtitleSource
-import dev.typetype.android.domain.stream.StreamVideoSource
 import dev.typetype.android.services.MergedStreamMediaKeys
+import dev.typetype.android.services.sabrPlaybackBinding
+import dev.typetype.android.services.sabrPlaybackTarget
+import dev.typetype.android.services.sabrMediaTimeMs
+import dev.typetype.android.services.toSubtitleConfigurations
 
-internal fun bindStreamToController(
+internal suspend fun bindStreamToController(
     controller: MediaController,
     stream: Stream,
     videoUrl: String,
@@ -24,79 +29,188 @@ internal fun bindStreamToController(
     defaultAudioLanguage: String = "",
     automaticQualityCap: String = "",
     preferOriginalLanguage: Boolean = false,
+    initialPlayWhenReady: Boolean = true,
+    codecSupport: PlaybackCodecSupport,
+    prepareSabrPlayback: PrepareSabrPlayback,
+    selectedCodec: String = RECOMMENDED_CODEC_KEY,
 ) {
-    val source = pickPlayableSource(
+    val currentItem = controller.currentMediaItem
+    val sameMedia = currentItem?.mediaId == videoUrl
+    val sourceStartMillis = if (sameMedia) {
+        controller.sabrMediaTimeMs(controller.currentPosition, stream.isLive) ?: startMillis
+    } else {
+        startMillis
+    }
+    val sabrRequestKey = stream.sabrRequestKey(
+        selectedQuality = selectedQuality.effectiveQuality(automaticQualityCap),
+        selectedAudioKey = selectedAudioKey,
+        defaultAudioLanguage = defaultAudioLanguage,
+        preferOriginalLanguage = preferOriginalLanguage,
+        codecSupport = codecSupport,
+        selectedCodec = selectedCodec,
+    )
+    val reusableSabrSource = currentItem
+        ?.takeIf { sameMedia && controller.playerError == null }
+        ?.reusableSabrSource(sabrRequestKey)
+    val source = reusableSabrSource ?: pickPlayableSource(
         stream = stream,
         selectedQuality = selectedQuality,
         selectedAudioKey = selectedAudioKey,
         defaultAudioLanguage = defaultAudioLanguage,
         automaticQualityCap = automaticQualityCap,
         preferOriginalLanguage = preferOriginalLanguage,
+        codecSupport = codecSupport,
+        startTimeMs = sourceStartMillis,
+        prepareSabrPlayback = prepareSabrPlayback,
+        selectedCodec = selectedCodec,
     ) ?: return
-    val subtitle = stream.subtitles.firstOrNull { it.key == selectedSubtitleKey }
     applyTrackSelectionDefaults(
         controller = controller,
         selectedQuality = selectedQuality,
         defaultAudioLanguage = defaultAudioLanguage,
         automaticQualityCap = automaticQualityCap,
         preferOriginalLanguage = preferOriginalLanguage,
-        subtitlesEnabled = subtitle != null,
+        subtitlesEnabled = selectedSubtitleKey != null,
     )
-    val metadata = MediaMetadata.Builder()
-        .setTitle(stream.title)
-        .setArtist(stream.uploaderName)
-        .setArtworkUri(Uri.parse(stream.thumbnailUrl))
-        .build()
-    val mediaItem = MediaItem.Builder()
-        .setUri(source.url)
-        .setMediaId(videoUrl)
-        .setMediaMetadata(metadata)
-        .setRequestMetadata(source.toRequestMetadata(subtitle))
-        .apply { source.mimeType?.let { setMimeType(it) } }
-        .apply { subtitle?.let { setSubtitleConfigurations(listOf(it.toSubtitleConfiguration())) } }
-        .build()
-    val currentItem = controller.currentMediaItem
-    val sameMedia = currentItem?.mediaId == videoUrl
-    val sameSource = sameMedia &&
-        currentItem.localConfiguration?.uri?.toString() == source.url &&
-        currentItem.requestMetadata.extras
-            ?.getString(MergedStreamMediaKeys.EXTRA_AUDIO_URL) == source.audioUrl &&
-        currentItem.requestMetadata.extras
-            ?.getString(MergedStreamMediaKeys.EXTRA_SUBTITLE_URL) == subtitle?.url
+    val itemStartPosition = if (sameMedia) {
+        controller.currentPosition.coerceAtLeast(0L)
+    } else {
+        startMillis.coerceAtLeast(0L)
+    }
+    val mediaItem = buildResolvedMediaItem(
+        stream = stream,
+        videoUrl = videoUrl,
+        source = source,
+        subtitles = if (stream.playbackContract == StreamPlaybackContract.ServerSabr) {
+            emptyList()
+        } else {
+            source.playbackSubtitles(stream.subtitles)
+        },
+        startPositionMillis = itemStartPosition,
+    )
+    val extras = currentItem?.requestMetadata?.extras
+    val sameSource = sameMedia && samePlayableSource(
+        currentUrl = currentItem.localConfiguration?.uri?.toString(),
+        currentSourceKey = extras?.getString(MergedStreamMediaKeys.EXTRA_SOURCE_KEY),
+        currentAudioUrl = extras?.getString(MergedStreamMediaKeys.EXTRA_AUDIO_URL),
+        currentSabrBinding = extras?.sabrPlaybackBinding(),
+        currentSabrTarget = extras?.sabrPlaybackTarget(),
+        requestedSource = source,
+    )
+    val requestedPlayWhenReady = replacementPlayWhenReady(
+        stream.playbackContract,
+        sameMedia,
+        controller.playWhenReady,
+        initialPlayWhenReady,
+    )
     if (!sameSource) {
-        val startPosition = if (sameMedia) controller.currentPosition else startMillis
-        if (startPosition > 0) {
-            controller.setMediaItem(mediaItem, startPosition)
+        if (itemStartPosition > 0) {
+            controller.setMediaItem(mediaItem, itemStartPosition)
         } else {
             controller.setMediaItem(mediaItem)
         }
         controller.prepare()
+    } else if (controller.playerError != null) {
+        controller.prepare()
     }
-    controller.playWhenReady = true
+    controller.playWhenReady = requestedPlayWhenReady
 }
 
-private data class PlayableSource(
-    val url: String,
-    val mimeType: String?,
-    val audioUrl: String? = null,
-    val audioMimeType: String? = null,
-)
+internal fun buildResolvedMediaItem(
+    stream: Stream,
+    videoUrl: String,
+    source: PlayableSource,
+    subtitles: List<StreamSubtitleSource>,
+    startPositionMillis: Long,
+): MediaItem {
+    val metadata = MediaMetadata.Builder()
+        .setTitle(stream.title)
+        .setArtist(stream.uploaderName)
+        .setArtworkUri(stream.thumbnailUrl.toUri())
+        .build()
+    return MediaItem.Builder()
+        .setUri(source.url)
+        .setMediaId(videoUrl)
+        .setMediaMetadata(metadata)
+        .setRequestMetadata(
+            source.toRequestMetadata(
+                scope = stream.requestScope,
+                resumePositionMillis = startPositionMillis.coerceAtLeast(0L),
+                isLiveContent = stream.isLiveContent || stream.isLive,
+                stream = stream,
+            ),
+        )
+        .apply { source.mimeType?.let { setMimeType(it) } }
+        .setSubtitleConfigurations(subtitles.toSubtitleConfigurations())
+        .build()
+}
 
-private fun pickPlayableSource(
+internal fun replacementPlayWhenReady(
+    playbackContract: StreamPlaybackContract,
+    sameMedia: Boolean,
+    currentPlayWhenReady: Boolean,
+    initialPlayWhenReady: Boolean = true,
+): Boolean = if (sameMedia && playbackContract == StreamPlaybackContract.ServerSabr) {
+    currentPlayWhenReady
+} else {
+    initialPlayWhenReady
+}
+
+internal fun samePlayableSource(
+    currentUrl: String?,
+    currentSourceKey: String?,
+    currentAudioUrl: String?,
+    currentSabrBinding: SabrPlaybackBinding? = null,
+    currentSabrTarget: SabrPlaybackTarget? = null,
+    requestedSource: PlayableSource,
+): Boolean = currentUrl == requestedSource.url &&
+    currentSourceKey == requestedSource.sourceKey &&
+    currentAudioUrl == requestedSource.audioUrl &&
+    currentSabrBinding == requestedSource.sabrBinding &&
+    currentSabrTarget == requestedSource.sabrTarget
+
+internal suspend fun pickPlayableSource(
     stream: Stream,
     selectedQuality: String,
     selectedAudioKey: String?,
     defaultAudioLanguage: String,
     automaticQualityCap: String,
     preferOriginalLanguage: Boolean,
+    codecSupport: PlaybackCodecSupport,
+    startTimeMs: Long = 0L,
+    prepareSabrPlayback: PrepareSabrPlayback,
+    selectedCodec: String = RECOMMENDED_CODEC_KEY,
 ): PlayableSource? {
     val effectiveQuality = selectedQuality.effectiveQuality(automaticQualityCap)
+    if (stream.playbackContract == StreamPlaybackContract.ServerSabr) {
+        return pickSabrSource(
+            stream = stream,
+            selectedQuality = effectiveQuality,
+            selectedAudioKey = selectedAudioKey,
+            defaultAudioLanguage = defaultAudioLanguage,
+            preferOriginalLanguage = preferOriginalLanguage,
+            codecSupport = codecSupport,
+            startTimeMs = startTimeMs,
+            prepareSabrPlayback = prepareSabrPlayback,
+            selectedCodec = selectedCodec,
+        )
+    }
+    stream.pickExplicitProviderSource(
+        selectedQuality = effectiveQuality,
+        selectedAudioKey = selectedAudioKey,
+        defaultAudioLanguage = defaultAudioLanguage,
+        preferOriginalLanguage = preferOriginalLanguage,
+        codecSupport = codecSupport,
+        selectedCodec = selectedCodec,
+    )?.let { return it }
     val mergedSource = pickMergedSource(
         stream = stream,
         selectedQuality = effectiveQuality,
         selectedAudioKey = selectedAudioKey,
         defaultAudioLanguage = defaultAudioLanguage,
         preferOriginalLanguage = preferOriginalLanguage,
+        codecSupport = codecSupport,
+        selectedCodec = selectedCodec,
     )
     if (mergedSource != null) return mergedSource
     if (!stream.serverHlsManifestUrl.isNullOrBlank()) {
@@ -111,7 +225,7 @@ private fun pickPlayableSource(
     if (!stream.hlsUrl.isNullOrBlank()) {
         return PlayableSource(stream.hlsUrl, MimeTypes.APPLICATION_M3U8)
     }
-    return pickMuxedSource(stream, effectiveQuality)
+    return pickMuxedSource(stream, effectiveQuality, codecSupport, selectedCodec)
         ?: stream.progressiveUrl?.let { PlayableSource(it, MimeTypes.VIDEO_MP4) }
 }
 
@@ -121,13 +235,20 @@ private fun pickMergedSource(
     selectedAudioKey: String?,
     defaultAudioLanguage: String,
     preferOriginalLanguage: Boolean,
+    codecSupport: PlaybackCodecSupport,
+    selectedCodec: String,
 ): PlayableSource? {
     if (selectedAudioKey == null) return null
-    val video = stream.videoOnlyStreams.pickVideo(selectedQuality) ?: return null
+    val video = stream.videoOnlyStreams.pickVideo(
+        selectedQuality,
+        codecSupport,
+        selectedCodec,
+    ) ?: return null
     val audio = stream.audioStreams.pickAudio(
         selectedAudioKey = selectedAudioKey,
         defaultAudioLanguage = defaultAudioLanguage,
         preferOriginalLanguage = preferOriginalLanguage,
+        codecSupport = codecSupport,
     ) ?: return null
     return PlayableSource(
         url = video.url,
@@ -137,46 +258,18 @@ private fun pickMergedSource(
     )
 }
 
-private fun pickMuxedSource(stream: Stream, defaultQuality: String): PlayableSource? =
-    stream.muxedVideoStreams.pickVideo(defaultQuality)?.let { source ->
+private fun pickMuxedSource(
+    stream: Stream,
+    defaultQuality: String,
+    codecSupport: PlaybackCodecSupport,
+    selectedCodec: String,
+): PlayableSource? =
+    stream.muxedVideoStreams.pickVideo(defaultQuality, codecSupport, selectedCodec)?.let { source ->
         PlayableSource(
             url = source.url,
             mimeType = source.mimeType.normalizedMimeType() ?: MimeTypes.VIDEO_MP4,
         )
     }
-
-private fun List<StreamVideoSource>.pickVideo(defaultQuality: String): StreamVideoSource? {
-    val playable = filter { it.url.isNotBlank() && it.height > 0 }
-    val targetHeight = defaultQuality.qualityHeight()
-    if (targetHeight == null) {
-        return playable.maxWithOrNull(compareBy<StreamVideoSource> { it.height }.thenBy { it.bitrate ?: 0 })
-    }
-    return playable
-        .filter { it.height <= targetHeight }
-        .maxWithOrNull(compareBy<StreamVideoSource> { it.height }.thenBy { it.bitrate ?: 0 })
-        ?: playable
-            .minWithOrNull(compareBy<StreamVideoSource> { it.height }.thenByDescending { it.bitrate ?: 0 })
-}
-
-private fun List<StreamAudioSource>.pickAudio(
-    selectedAudioKey: String?,
-    defaultAudioLanguage: String,
-    preferOriginalLanguage: Boolean,
-): StreamAudioSource? {
-    val playable = filter { it.url.isNotBlank() }
-    val selected = selectedAudioKey?.let { key -> playable.firstOrNull { it.key == key } }
-    if (selected != null) return selected
-    val original = if (preferOriginalLanguage) playable.firstOrNull { it.isOriginal } else null
-    if (original != null) return original
-    val language = defaultAudioLanguage.takeIf { it.isNotBlank() }
-    val localized = language?.let { target ->
-        playable.firstOrNull { audio ->
-            audio.audioLocale?.equals(target, ignoreCase = true) == true ||
-                audio.audioLocale?.startsWith("$target-", ignoreCase = true) == true
-        }
-    }
-    return localized ?: playable.maxByOrNull { it.bitrate ?: 0 }
-}
 
 private fun applyTrackSelectionDefaults(
     controller: MediaController,
@@ -186,7 +279,7 @@ private fun applyTrackSelectionDefaults(
     preferOriginalLanguage: Boolean,
     subtitlesEnabled: Boolean,
 ) {
-    val targetHeight = selectedQuality.effectiveQuality(automaticQualityCap).qualityHeight()
+    val targetHeight = selectedQuality.effectiveQuality(automaticQualityCap).selectedQualityHeight()
     val builder = controller.trackSelectionParameters.buildUpon()
         .clearOverridesOfType(C.TRACK_TYPE_VIDEO)
         .clearOverridesOfType(C.TRACK_TYPE_AUDIO)
@@ -203,28 +296,15 @@ private fun applyTrackSelectionDefaults(
     controller.trackSelectionParameters = builder.build()
 }
 
-private fun PlayableSource.toRequestMetadata(subtitle: StreamSubtitleSource?): MediaItem.RequestMetadata {
-    val audio = audioUrl?.takeIf { it.isNotBlank() }
-    if (audio == null && subtitle == null) return MediaItem.RequestMetadata.EMPTY
-    val extras = Bundle().apply {
-        audio?.let { putString(MergedStreamMediaKeys.EXTRA_AUDIO_URL, it) }
-        audioMimeType?.let { putString(MergedStreamMediaKeys.EXTRA_AUDIO_MIME_TYPE, it) }
-        mimeType?.let { putString(MergedStreamMediaKeys.EXTRA_VIDEO_MIME_TYPE, it) }
-        subtitle?.let { putString(MergedStreamMediaKeys.EXTRA_SUBTITLE_URL, it.url) }
-    }
-    return MediaItem.RequestMetadata.Builder()
-        .setExtras(extras)
-        .build()
-}
-
 private fun String.normalizedMimeType(): String? =
     substringBefore(";").trim().takeIf { it.isNotBlank() }
 
-private fun String.qualityHeight(): Int? =
-    filter { it.isDigit() }.toIntOrNull()
-
 private fun String.effectiveQuality(automaticQualityCap: String): String =
-    if (this == AUTO_QUALITY_KEY) automaticQualityCap else this
+    if (this == AUTO_QUALITY_KEY || this == RECOMMENDED_QUALITY_KEY) {
+        automaticQualityCap
+    } else {
+        this
+    }
 
 internal val StreamAudioSource.key: String
     get() = audioTrackId?.takeIf { it.isNotBlank() }
@@ -232,16 +312,11 @@ internal val StreamAudioSource.key: String
         ?: url
 
 internal val StreamSubtitleSource.key: String
-    get() = languageTag.takeIf { it.isNotBlank() }
+    get() = trackId?.takeIf { it.isNotBlank() }
+        ?: languageTag.takeIf { it.isNotBlank() }
         ?.let { "$it:${isAutoGenerated}" }
         ?: url
 
-private fun StreamSubtitleSource.toSubtitleConfiguration(): MediaItem.SubtitleConfiguration =
-    MediaItem.SubtitleConfiguration.Builder(Uri.parse(url))
-        .setMimeType(MimeTypes.TEXT_VTT)
-        .setLanguage(languageTag.takeIf { it.isNotBlank() })
-        .setLabel(displayLanguageName)
-        .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
-        .build()
-
-private const val AUTO_QUALITY_KEY = "auto"
+internal fun PlayableSource.playbackSubtitles(
+    fallback: List<StreamSubtitleSource>,
+): List<StreamSubtitleSource> = fallback
