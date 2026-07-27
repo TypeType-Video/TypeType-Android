@@ -2,15 +2,14 @@ package dev.typetype.android.core.ui.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -40,40 +40,38 @@ import dev.typetype.android.domain.feed.availabilityAt
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun HorizontalVideoCard(
+fun RelatedVideoCard(
     video: Video,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit = {},
-    onChannelClick: (() -> Unit)? = null,
-    onMenuAction: ((VideoMenuAction) -> Unit)? = null,
     menuItemState: VideoMenuItemState = VideoMenuItemState(),
+    onMenuAction: ((VideoMenuAction) -> Unit)? = null,
+    onClick: () -> Unit = {},
+    onChannelClick: () -> Unit = {},
 ) {
     var menuVisible by remember { mutableStateOf(false) }
     var availabilityVisible by remember { mutableStateOf(false) }
     val availability = video.availabilityAt(System.currentTimeMillis())
-    val openVideo = {
-        if (availability == VideoAvailability.Playable) onClick() else availabilityVisible = true
-    }
-    val rootModifier = modifier
-        .width(260.dp)
-        .let { base ->
-            if (onMenuAction != null) {
-                base.combinedClickable(
-                    onClick = openVideo,
-                    onLongClick = { menuVisible = true },
-                    role = Role.Button,
-                )
-            } else {
-                base.clickable(onClick = openVideo, role = Role.Button)
-            }
-        }
-
-    Column(modifier = rootModifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = {
+                    if (availability == VideoAvailability.Playable) {
+                        onClick()
+                    } else {
+                        availabilityVisible = true
+                    }
+                },
+                onLongClick = if (onMenuAction == null) null else ({ menuVisible = true }),
+                role = Role.Button,
+            ),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
+                .width(148.dp)
                 .aspectRatio(16f / 9f)
-                .clip(RoundedCornerShape(10.dp))
+                .clip(RoundedCornerShape(8.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
             AsyncImage(
@@ -82,62 +80,62 @@ fun HorizontalVideoCard(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
             )
+            if (menuItemState.isWatched) {
+                Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.35f)))
+            }
             VideoThumbnailBadges(
                 video = video,
-                edgePadding = 6.dp,
+                edgePadding = 5.dp,
                 compact = true,
             )
         }
-        Spacer(Modifier.height(8.dp))
-        Row(verticalAlignment = Alignment.Top) {
-            if (video.uploaderAvatarUrl.isNotBlank()) {
-                val avatarModifier = Modifier
-                    .size(28.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .let {
-                        if (onChannelClick != null) {
-                            it.clickable(onClick = onChannelClick, role = Role.Button)
-                        } else {
-                            it
-                        }
-                    }
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
+        ) {
+            Text(
+                text = video.title,
+                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 AsyncImage(
                     model = video.uploaderAvatarUrl,
-                    contentDescription = if (onChannelClick != null) {
-                        stringResource(R.string.video_open_channel_accessibility, video.uploaderName)
-                    } else {
-                        null
-                    },
+                    contentDescription = stringResource(
+                        R.string.video_open_channel_accessibility,
+                        video.uploaderName,
+                    ),
                     contentScale = ContentScale.Crop,
-                    modifier = avatarModifier,
+                    modifier = Modifier
+                        .size(18.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .combinedClickable(onClick = onChannelClick, role = Role.Button),
                 )
-                Spacer(Modifier.width(8.dp))
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = video.title,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                    color = MaterialTheme.colorScheme.onBackground,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Spacer(Modifier.width(6.dp))
                 Text(
                     text = video.uploaderName,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = if (onChannelClick != null) {
-                        Modifier.clickable(onClick = onChannelClick, role = Role.Button)
-                    } else {
-                        Modifier
-                    },
+                    modifier = Modifier.combinedClickable(
+                        onClick = onChannelClick,
+                        role = Role.Button,
+                    ),
                 )
             }
-            if (onMenuAction != null) {
-                VideoMoreActionsButton(onClick = { menuVisible = true })
-            }
+            Text(
+                text = stringResource(R.string.video_views_short, formatRelatedViews(video.viewCount)),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.outlineVariant,
+                maxLines = 1,
+            )
+        }
+        if (onMenuAction != null) {
+            VideoMoreActionsButton(onClick = { menuVisible = true })
         }
     }
 
@@ -154,4 +152,11 @@ fun HorizontalVideoCard(
             onDismiss = { availabilityVisible = false },
         )
     }
+}
+
+private fun formatRelatedViews(views: Long): String = when {
+    views >= 1_000_000_000 -> "%.1fB".format(views / 1_000_000_000.0)
+    views >= 1_000_000 -> "%.1fM".format(views / 1_000_000.0)
+    views >= 1_000 -> "%.1fK".format(views / 1_000.0)
+    else -> views.toString()
 }
