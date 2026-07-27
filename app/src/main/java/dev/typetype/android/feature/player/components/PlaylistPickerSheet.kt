@@ -33,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -121,9 +122,10 @@ fun PlaylistPickerSheet(
                                     color = MaterialTheme.colorScheme.onSurface,
                                 )
                                 Text(
-                                    text = stringResource(
-                                        R.string.playlist_picker_video_count,
-                                        playlist.videos.size,
+                                    text = pluralStringResource(
+                                        R.plurals.playlist_picker_video_count,
+                                        playlist.videoCount,
+                                        playlist.videoCount,
                                     ),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
