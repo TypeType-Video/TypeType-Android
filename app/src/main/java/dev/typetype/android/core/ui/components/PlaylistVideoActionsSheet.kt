@@ -1,6 +1,8 @@
 package dev.typetype.android.core.ui.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,11 +11,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CheckCircleOutline
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.RemoveCircleOutline
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -34,6 +40,12 @@ import dev.typetype.android.R
 fun PlaylistVideoActionsSheet(
     removeLabel: String,
     isWatched: Boolean,
+    canMoveUp: Boolean = false,
+    canMoveDown: Boolean = false,
+    onMoveUp: (() -> Unit)? = null,
+    onMoveDown: (() -> Unit)? = null,
+    onPlayNext: () -> Unit,
+    onAddToQueue: () -> Unit,
     onRemoveFromList: () -> Unit,
     onToggleWatched: () -> Unit,
     onShare: () -> Unit,
@@ -46,7 +58,33 @@ fun PlaylistVideoActionsSheet(
         sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
-        Column(modifier = Modifier.padding(bottom = 24.dp)) {
+        Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) {
+            ActionRow(
+                icon = Icons.Filled.SkipNext,
+                label = stringResource(R.string.video_menu_play_next),
+                onClick = { onPlayNext(); onDismiss() },
+            )
+            ActionRow(
+                icon = Icons.AutoMirrored.Filled.QueueMusic,
+                label = stringResource(R.string.video_menu_add_to_queue),
+                onClick = { onAddToQueue(); onDismiss() },
+            )
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+            if (onMoveUp != null && onMoveDown != null) {
+                ActionRow(
+                    icon = Icons.Filled.KeyboardArrowUp,
+                    label = stringResource(R.string.playlist_action_move_up),
+                    onClick = { onMoveUp(); onDismiss() },
+                    enabled = canMoveUp,
+                )
+                ActionRow(
+                    icon = Icons.Filled.KeyboardArrowDown,
+                    label = stringResource(R.string.playlist_action_move_down),
+                    onClick = { onMoveDown(); onDismiss() },
+                    enabled = canMoveDown,
+                )
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+            }
             ActionRow(
                 icon = Icons.Filled.RemoveCircleOutline,
                 label = removeLabel,
@@ -83,12 +121,17 @@ private fun ActionRow(
     label: String,
     onClick: () -> Unit,
     emphasized: Boolean = false,
+    enabled: Boolean = true,
 ) {
-    val tint = if (emphasized) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+    val tint = when {
+        !enabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+        emphasized -> MaterialTheme.colorScheme.error
+        else -> MaterialTheme.colorScheme.onSurface
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 20.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
