@@ -21,6 +21,7 @@ import dev.typetype.android.core.ui.components.VideoMenuItemState
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
 import dev.typetype.android.core.ui.share.buildShareUrl
 import dev.typetype.android.domain.feed.Video
+import dev.typetype.android.feature.download.DownloadSelectionSheet
 import dev.typetype.android.feature.player.components.PlaylistPickerSheet
 
 @Stable
@@ -58,6 +59,7 @@ fun rememberVideoMenuScope(
     val serverBaseUrl = LocalServerBaseUrl.current
 
     var pickerVideo by remember { mutableStateOf<Video?>(null) }
+    var downloadVideo by remember { mutableStateOf<Video?>(null) }
 
     val effectiveHost: SnackbarHostState =
         LocalAppSnackbarHost.current ?: remember { SnackbarHostState() }
@@ -88,13 +90,26 @@ fun rememberVideoMenuScope(
         )
     }
 
+    downloadVideo?.let { video ->
+        DownloadSelectionSheet(
+            isInFlight = false,
+            onSelect = { selection ->
+                viewModel.download(video, selection)
+                downloadVideo = null
+            },
+            onDismiss = { downloadVideo = null },
+        )
+    }
+
     val onAction: (VideoMenuAction, Video) -> Unit = { action, video ->
         when (action) {
+            VideoMenuAction.PlayNext -> viewModel.playNext(video)
+            VideoMenuAction.AddToQueue -> viewModel.addToQueue(video)
             VideoMenuAction.ToggleFavorite -> viewModel.toggleFavorite(video, video.url in favorites)
             VideoMenuAction.ToggleWatchLater -> viewModel.toggleWatchLater(video, video.url in watchLater)
             VideoMenuAction.AddToPlaylist -> pickerVideo = video
             VideoMenuAction.ToggleWatched -> viewModel.toggleWatched(video, video.url in watched)
-            VideoMenuAction.Download -> viewModel.download(video)
+            VideoMenuAction.Download -> downloadVideo = video
             VideoMenuAction.Share -> {
                 val intent = Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
