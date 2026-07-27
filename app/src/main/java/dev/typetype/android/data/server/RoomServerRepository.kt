@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
 
 @Singleton
 class RoomServerRepository @Inject constructor(
@@ -37,7 +38,10 @@ class RoomServerRepository @Inject constructor(
 
     override suspend fun deleteServer(id: String) {
         dao.deleteById(id)
-        preferences.edit { it.remove(CURRENT_SERVER_ID_KEY) }
+        val selectedId = preferences.data.map { it[CURRENT_SERVER_ID_KEY] }.first()
+        if (selectedId == id) {
+            preferences.edit { it.remove(CURRENT_SERVER_ID_KEY) }
+        }
     }
 
     override suspend fun setCurrentServer(id: String) {
