@@ -28,6 +28,7 @@ internal class SabrPlaybackWindowLoader(
     private val target: SabrPlaybackTarget,
     private val transportState: SabrPlaybackTransportState,
     private val recoveryDispatcher: SabrPlaybackRecoveryDispatcher,
+    private val playbackRate: () -> Float,
 ) : PlaybackWindowLoader {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
@@ -45,6 +46,7 @@ internal class SabrPlaybackWindowLoader(
                 SabrPlaybackSnapshot(
                     playerTimeMs = current.positionUs.toMilliseconds(),
                     bufferedRanges = current.bufferedRanges.mapNotNull(::toDomainRange),
+                    playbackRate = playbackRate(),
                 )
             }
         }

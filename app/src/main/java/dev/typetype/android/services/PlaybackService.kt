@@ -153,6 +153,7 @@ class PlaybackService : MediaSessionService() {
                     sabrPlaybackRepository,
                     sabrPlaybackWindowCache,
                     playbackClock::currentPositionUs,
+                    playbackClock::currentPlaybackRate,
                     recoveryDispatcher,
                 )
                     .setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(MIN_LOADABLE_RETRY_COUNT)),
