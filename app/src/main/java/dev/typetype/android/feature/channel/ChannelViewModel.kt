@@ -5,10 +5,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.typetype.android.R
+import dev.typetype.android.core.ui.error.UserErrorMapper
 import dev.typetype.android.core.ui.navigation.ChannelRoute
 import dev.typetype.android.domain.channel.ChannelRepository
 import dev.typetype.android.domain.library.VideoMetaRepository
 import dev.typetype.android.domain.library.cacheVideos
+import dev.typetype.android.domain.podcast.PodcastRepository
 import dev.typetype.android.domain.subscriptions.SubscriptionsRepository
 import javax.inject.Inject
 import kotlinx.coroutines.Job
@@ -23,6 +26,8 @@ class ChannelViewModel @Inject constructor(
     private val channelRepository: ChannelRepository,
     private val videoMetaRepository: VideoMetaRepository,
     private val subscriptionsRepository: SubscriptionsRepository,
+    private val podcastRepository: PodcastRepository,
+    private val errorMapper: UserErrorMapper,
 ) : ViewModel() {
 
     private val channelUrl = savedStateHandle.toRoute<ChannelRoute>().channelUrl
@@ -32,30 +37,63 @@ class ChannelViewModel @Inject constructor(
 
     private var loadJob: Job? = null
     private var subscribeJob: Job? = null
+    private var podcastsJob: Job? = null
 
     init {
         load()
+        loadPodcasts()
         observeSubscription()
     }
 
     fun onAction(action: ChannelAction) {
         when (action) {
-            ChannelAction.OnRefresh -> load()
+            ChannelAction.OnRefresh -> {
+                load()
+                loadPodcasts()
+            }
             ChannelAction.OnToggleSubscribe -> toggleSubscribe()
+        }
+    }
+
+    private fun loadPodcasts() {
+        if (!channelUrl.isYouTubeChannel()) return
+        podcastsJob?.cancel()
+        podcastsJob = viewModelScope.launch {
+            _state.update { it.copy(podcastsLoading = true) }
+            podcastRepository.channelPodcasts(channelUrl).fold(
+                onSuccess = { page ->
+                    videoMetaRepository.cacheVideos(page.episodes)
+                    _state.update {
+                        it.copy(podcasts = page.podcasts, podcastsLoading = false)
+                    }
+                },
+                onFailure = {
+                    _state.update { it.copy(podcasts = emptyList(), podcastsLoading = false) }
+                },
+            )
         }
     }
 
     private fun load() {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null) }
+            _state.update {
+                it.copy(isLoading = true, errorMessage = null, errorRequestId = null)
+            }
             channelRepository.loadChannel(channelUrl).fold(
                 onSuccess = { channel ->
                     videoMetaRepository.cacheVideos(channel.videos)
                     _state.update { it.copy(isLoading = false, channel = channel) }
                 },
                 onFailure = { error ->
-                    _state.update { it.copy(isLoading = false, errorMessage = error.message) }
+                    val details = errorMapper.details(error, R.string.channel_load_failed)
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = details.message,
+                            errorRequestId = details.requestId,
+                        )
+                    }
                 },
             )
         }
@@ -75,7 +113,9 @@ class ChannelViewModel @Inject constructor(
         val channel = current.channel ?: return
         subscribeJob?.cancel()
         subscribeJob = viewModelScope.launch {
-            _state.update { it.copy(subscribeInFlight = true) }
+            _state.update {
+                it.copy(subscribeInFlight = true, errorMessage = null, errorRequestId = null)
+            }
             val result = if (current.isSubscribed) {
                 subscriptionsRepository.unsubscribe(channelUrl)
             } else {
@@ -86,9 +126,15 @@ class ChannelViewModel @Inject constructor(
                 )
             }
             result.onFailure { e ->
-                _state.update { it.copy(errorMessage = e.message) }
+                val details = errorMapper.details(e, R.string.channel_action_failed)
+                _state.update {
+                    it.copy(errorMessage = details.message, errorRequestId = details.requestId)
+                }
             }
             _state.update { it.copy(subscribeInFlight = false) }
         }
     }
 }
+
+private fun String.isYouTubeChannel(): Boolean =
+    contains("youtube.com", ignoreCase = true) || startsWith("/channel/") || startsWith("/c/")
