@@ -36,9 +36,11 @@ class ScopedApiFactory @Inject constructor(
 internal fun okhttp3.OkHttpClient.sabrControlClient(): okhttp3.OkHttpClient = newBuilder()
     .followRedirects(false)
     .followSslRedirects(false)
+    .retryOnConnectionFailure(false)
+    .addNetworkInterceptor(PlaybackRetryOwnershipInterceptor)
     .readTimeout(SABR_CONTROL_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
     .callTimeout(SABR_CONTROL_CALL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
     .build()
 
-private const val SABR_CONTROL_READ_TIMEOUT_SECONDS = 120L
-private const val SABR_CONTROL_CALL_TIMEOUT_SECONDS = 150L
+private const val SABR_CONTROL_READ_TIMEOUT_SECONDS = 30L
+private const val SABR_CONTROL_CALL_TIMEOUT_SECONDS = 45L
