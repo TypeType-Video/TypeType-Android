@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -34,6 +35,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.LocalAppSnackbarHost
+import dev.typetype.android.core.ui.components.RequestIdRow
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
 
 @Composable
@@ -57,7 +59,12 @@ fun ProfileSettingsRoute(
     }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.systemBars)
+                .imePadding(),
+        ) {
             TopBar(onNavigateBack = onNavigateBack)
             LazyColumn(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -81,6 +88,9 @@ fun ProfileSettingsRoute(
                         singleLine = true,
                         errorMessage = errorMessageFor(state.errorKey),
                     )
+                }
+                state.errorRequestId?.let { requestId ->
+                    item { RequestIdRow(requestId = requestId) }
                 }
                 item {
                     LabeledField(

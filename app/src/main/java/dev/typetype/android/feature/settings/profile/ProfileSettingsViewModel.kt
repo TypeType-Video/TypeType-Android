@@ -3,6 +3,7 @@ package dev.typetype.android.feature.settings.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.typetype.android.core.error.CodedFailure
 import dev.typetype.android.domain.profile.Profile
 import dev.typetype.android.domain.profile.ProfileRepository
 import javax.inject.Inject
@@ -21,6 +22,7 @@ data class ProfileSettingsState(
     val bioDraft: String = "",
     val isSaving: Boolean = false,
     val errorKey: String? = null,
+    val errorRequestId: String? = null,
 )
 
 sealed interface ProfileSettingsEvent {
@@ -52,15 +54,17 @@ class ProfileSettingsViewModel @Inject constructor(
                 }
             }
         }
-        viewModelScope.launch { profileRepository.refresh() }
+        viewModelScope.launch { profileRepository.refresh().onFailure(::showFailure) }
     }
 
     fun setUsernameDraft(value: String) {
-        _state.update { it.copy(usernameDraft = value, errorKey = null) }
+        _state.update {
+            it.copy(usernameDraft = value, errorKey = null, errorRequestId = null)
+        }
     }
 
     fun setBioDraft(value: String) {
-        _state.update { it.copy(bioDraft = value, errorKey = null) }
+        _state.update { it.copy(bioDraft = value, errorKey = null, errorRequestId = null) }
     }
 
     fun save() {
@@ -69,25 +73,35 @@ class ProfileSettingsViewModel @Inject constructor(
         val username = current.usernameDraft.trim().takeIf { it.isNotEmpty() }
         val bio = current.bioDraft
         viewModelScope.launch {
-            _state.update { it.copy(isSaving = true) }
+            _state.update { it.copy(isSaving = true, errorKey = null, errorRequestId = null) }
             profileRepository.updateProfile(publicUsername = username, bio = bio)
                 .onSuccess {
                     _state.update { it.copy(isSaving = false) }
                     _events.send(ProfileSettingsEvent.Saved)
                 }
                 .onFailure { error ->
-                    val key = error.message.orEmpty()
-                    _state.update { it.copy(isSaving = false, errorKey = key) }
-                    _events.send(ProfileSettingsEvent.Error(key))
+                    showFailure(error)
+                    _state.update { it.copy(isSaving = false) }
+                    _events.send(ProfileSettingsEvent.Error(_state.value.errorKey.orEmpty()))
                 }
         }
     }
 
     fun clearAvatar() {
-        viewModelScope.launch { profileRepository.clearAvatar() }
+        viewModelScope.launch { profileRepository.clearAvatar().onFailure(::showFailure) }
     }
 
     fun setAvatarEmoji(code: String) {
-        viewModelScope.launch { profileRepository.setAvatarEmoji(code) }
+        viewModelScope.launch { profileRepository.setAvatarEmoji(code).onFailure(::showFailure) }
+    }
+
+    private fun showFailure(error: Throwable) {
+        val coded = error as? CodedFailure
+        _state.update {
+            it.copy(
+                errorKey = coded?.failureCode ?: error.message.orEmpty(),
+                errorRequestId = coded?.requestId,
+            )
+        }
     }
 }
