@@ -1,15 +1,16 @@
 package dev.typetype.android.feature.library
 
 import dev.typetype.android.core.ui.components.LibrarySortMode
-import dev.typetype.android.domain.library.HistoryItem
 import dev.typetype.android.domain.library.Playlist
 import dev.typetype.android.domain.library.PlaylistVideo
+import dev.typetype.android.domain.publicplaylist.SavedPublicPlaylist
 
 fun defaultSortFor(tab: LibraryTab): LibrarySortMode = when (tab) {
     LibraryTab.History -> LibrarySortMode.RecentFirst
     LibraryTab.Favorites -> LibrarySortMode.RecentFirst
     LibraryTab.WatchLater -> LibrarySortMode.RecentFirst
     LibraryTab.Playlists -> LibrarySortMode.RecentFirst
+    LibraryTab.SavedPlaylists -> LibrarySortMode.RecentFirst
 }
 
 fun sortOptionsFor(tab: LibraryTab): List<LibrarySortMode> = when (tab) {
@@ -21,19 +22,13 @@ fun sortOptionsFor(tab: LibraryTab): List<LibrarySortMode> = when (tab) {
         LibrarySortMode.TitleAZ,
         LibrarySortMode.TitleZA,
     )
-    LibraryTab.Playlists -> listOf(
+    LibraryTab.Playlists,
+    LibraryTab.SavedPlaylists -> listOf(
         LibrarySortMode.RecentFirst,
         LibrarySortMode.OldestFirst,
         LibrarySortMode.NameAZ,
         LibrarySortMode.NameZA,
     )
-}
-
-fun sortHistory(items: List<HistoryItem>, mode: LibrarySortMode): List<HistoryItem> = when (mode) {
-    LibrarySortMode.OldestFirst -> items.sortedBy { it.watchedAtMillis }
-    LibrarySortMode.TitleAZ -> items.sortedBy { it.title.lowercase() }
-    LibrarySortMode.TitleZA -> items.sortedByDescending { it.title.lowercase() }
-    else -> items.sortedByDescending { it.watchedAtMillis }
 }
 
 fun sortPlaylistVideos(
@@ -56,10 +51,6 @@ fun sortPlaylists(items: List<Playlist>, mode: LibrarySortMode): List<Playlist> 
 private fun matchesFilter(text: String, filter: String): Boolean =
     filter.isBlank() || text.contains(filter.trim(), ignoreCase = true)
 
-fun filterHistory(items: List<HistoryItem>, filter: String): List<HistoryItem> =
-    if (filter.isBlank()) items
-    else items.filter { matchesFilter(it.title, filter) || matchesFilter(it.channelName, filter) }
-
 fun filterPlaylistVideos(items: List<PlaylistVideo>, filter: String): List<PlaylistVideo> =
     if (filter.isBlank()) items
     else items.filter { matchesFilter(it.title, filter) }
@@ -67,3 +58,24 @@ fun filterPlaylistVideos(items: List<PlaylistVideo>, filter: String): List<Playl
 fun filterPlaylists(items: List<Playlist>, filter: String): List<Playlist> =
     if (filter.isBlank()) items
     else items.filter { matchesFilter(it.name, filter) }
+
+fun sortSavedPlaylists(
+    items: List<SavedPublicPlaylist>,
+    mode: LibrarySortMode,
+): List<SavedPublicPlaylist> = when (mode) {
+    LibrarySortMode.OldestFirst -> items.sortedBy { it.savedAtMillis }
+    LibrarySortMode.NameAZ -> items.sortedBy { it.title.lowercase() }
+    LibrarySortMode.NameZA -> items.sortedByDescending { it.title.lowercase() }
+    else -> items.sortedByDescending { it.savedAtMillis }
+}
+
+fun filterSavedPlaylists(
+    items: List<SavedPublicPlaylist>,
+    filter: String,
+): List<SavedPublicPlaylist> = if (filter.isBlank()) {
+    items
+} else {
+    items.filter {
+        matchesFilter(it.title, filter) || matchesFilter(it.uploaderName, filter)
+    }
+}
