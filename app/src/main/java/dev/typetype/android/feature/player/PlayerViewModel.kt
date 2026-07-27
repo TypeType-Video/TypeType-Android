@@ -2,37 +2,27 @@ package dev.typetype.android.feature.player
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
-import androidx.paging.PagingData
-import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.typetype.android.data.comments.CommentsPagingSource
-import dev.typetype.android.domain.comments.Comment
 import dev.typetype.android.domain.comments.CommentsRepository
 import dev.typetype.android.domain.download.DownloadProgress
 import dev.typetype.android.domain.download.DownloadRepository
+import dev.typetype.android.domain.download.DownloadSelection
 import dev.typetype.android.domain.library.LibraryRepository
-import dev.typetype.android.domain.library.VideoMeta
-import dev.typetype.android.domain.library.VideoMetaRepository
-import dev.typetype.android.domain.library.cacheVideos
 import dev.typetype.android.domain.preferences.PreferencesRepository
 import dev.typetype.android.domain.stream.Stream
-import dev.typetype.android.domain.stream.StreamRepository
 import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import dev.typetype.android.feature.player.components.PlayerGestureConfig
+import dev.typetype.android.feature.player.error.classifyStreamError
 import dev.typetype.android.feature.player.host.PlayerHostController
+import dev.typetype.android.services.PlaybackQueueCoordinator
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
@@ -42,34 +32,38 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class PlayerViewModel @Inject constructor(
-    private val streamRepository: StreamRepository,
     private val libraryRepository: LibraryRepository,
-    private val videoMetaRepository: VideoMetaRepository,
+    private val playerStreamLoader: PlayerStreamLoader,
+    private val playerLibraryActions: PlayerLibraryActions,
     private val preferencesRepository: PreferencesRepository,
     private val userSettingsRepository: UserSettingsRepository,
     private val playerHostController: PlayerHostController,
     private val downloadRepository: DownloadRepository,
+    sabrPlaybackFactory: PlayerSabrPlaybackFactory,
+    private val playbackQueueCoordinator: PlaybackQueueCoordinator,
     val commentsRepository: CommentsRepository,
+    val subtitleCueLoader: PlayerSubtitleCueLoader,
 ) : ViewModel() {
-
-    private val videoUrlFlow = playerHostController.state
-        .map { it.videoUrl }
+    private val videoUrlFlow = combine(
+        playerHostController.state.map { it.videoUrl },
+        playbackQueueCoordinator.state,
+    ) { hostUrl, queue -> queue.current?.videoUrl ?: hostUrl }
         .distinctUntilChanged()
 
     private val _state = MutableStateFlow(PlayerState())
     val state = _state.asStateFlow()
+    internal val sabrPlayback = sabrPlaybackFactory.create(
+        onFailure = { stream, failure ->
+            val current = _state.value.stream
+            if (current?.id == stream.id && current.requestScope == stream.requestScope) {
+                _state.update { it.copy(error = classifyStreamError(failure)) }
+            }
+        },
+    )
 
     private val _events = Channel<PlayerEvent>(Channel.BUFFERED)
     val events: Flow<PlayerEvent> = _events.receiveAsFlow()
-
-    val comments: Flow<PagingData<Comment>> = videoUrlFlow
-        .flatMapLatest { url ->
-            if (url.isNullOrBlank()) flowOf(PagingData.empty())
-            else Pager(
-                config = PagingConfig(pageSize = 30, prefetchDistance = 10, enablePlaceholders = false),
-                pagingSourceFactory = { CommentsPagingSource(commentsRepository, url) },
-            ).flow
-        }.cachedIn(viewModelScope)
+    val comments = playerCommentsFlow(commentsRepository, videoUrlFlow, viewModelScope)
 
     private var loadStreamJob: Job? = null
     private var favoriteJob: Job? = null
@@ -78,18 +72,20 @@ class PlayerViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             videoUrlFlow.collect { url ->
+                val hostState = playerHostController.state.value
                 _state.update {
                     it.copy(
                         videoUrl = url.orEmpty(),
                         stream = null,
-                        resumeAtMillis = 0L,
+                        resumeAtMillis = hostState.resumePositionMillis ?: 0L,
+                        initialPlayWhenReady = hostState.initialPlayWhenReady,
                         isLoading = !url.isNullOrBlank(),
-                        errorMessage = null,
+                        error = null,
                         isFavorited = false,
                         isInWatchLater = false,
                         downloadInFlight = false,
                     )
-                }
+            }
                 if (url.isNullOrBlank()) {
                     loadStreamJob?.cancel()
                     favoriteJob?.cancel()
@@ -98,10 +94,15 @@ class PlayerViewModel @Inject constructor(
                     loadStream(url)
                     observeLibraryStatus(url)
                 }
-            }
+                }
         }
         observePreferences()
         observeUserSettings()
+        viewModelScope.launch {
+            playbackQueueCoordinator.state.collect { queue ->
+                _state.update { it.copy(playbackQueue = queue) }
+                }
+        }
         viewModelScope.launch {
             libraryRepository.observePlaylists().collect { playlists ->
                 _state.update { it.copy(playlists = playlists) }
@@ -171,8 +172,8 @@ class PlayerViewModel @Inject constructor(
         when (action) {
             PlayerAction.OnToggleFavorite -> toggleFavorite()
             PlayerAction.OnToggleWatchLater -> toggleWatchLater()
-            PlayerAction.OnRetry -> currentUrl()?.let { loadStream(it) }
-            is PlayerAction.OnDownload -> downloadCurrentVideo(action.quality)
+            PlayerAction.OnRetry -> if (_state.value.stream == null) currentUrl()?.let(::loadStream) else _state.update(PlayerState::retryPlayback)
+            is PlayerAction.OnDownload -> downloadCurrentVideo(action.selection)
             PlayerAction.OnOpenPlaylistPicker ->
                 _state.update { it.copy(playlistPickerVisible = true) }
             PlayerAction.OnDismissPlaylistPicker ->
@@ -194,17 +195,7 @@ class PlayerViewModel @Inject constructor(
         val playlistName = _state.value.playlists.firstOrNull { it.id == playlistId }?.name.orEmpty()
         viewModelScope.launch {
             _state.update { it.copy(playlistActionInFlight = true) }
-            libraryRepository.addVideoToPlaylist(
-                playlistId = playlistId,
-                videoUrl = url,
-                title = stream.title,
-                thumbnail = stream.thumbnailUrl,
-                duration = stream.durationSeconds,
-                channelName = stream.uploaderName,
-                channelUrl = stream.uploaderUrl,
-                channelAvatarUrl = stream.uploaderAvatarUrl,
-                viewCount = stream.viewCount,
-            ).fold(
+            playerLibraryActions.addToPlaylist(playlistId, url, stream).fold(
                 onSuccess = {
                     _state.update {
                         it.copy(playlistActionInFlight = false, playlistPickerVisible = false)
@@ -213,7 +204,7 @@ class PlayerViewModel @Inject constructor(
                 },
                 onFailure = {
                     _state.update { it.copy(playlistActionInFlight = false) }
-                    _events.send(PlayerEvent.ActionFailed(it.message ?: ""))
+                    _events.send(PlayerEvent.ActionFailed)
                 },
             )
         }
@@ -226,45 +217,28 @@ class PlayerViewModel @Inject constructor(
         val stream = _state.value.stream ?: return
         viewModelScope.launch {
             _state.update { it.copy(playlistActionInFlight = true) }
-            libraryRepository.createPlaylist(cleanedName).fold(
-                onSuccess = { newId ->
-                    libraryRepository.addVideoToPlaylist(
-                        playlistId = newId,
-                        videoUrl = url,
-                        title = stream.title,
-                        thumbnail = stream.thumbnailUrl,
-                        duration = stream.durationSeconds,
-                        channelName = stream.uploaderName,
-                        channelUrl = stream.uploaderUrl,
-                        channelAvatarUrl = stream.uploaderAvatarUrl,
-                        viewCount = stream.viewCount,
-                    ).fold(
-                        onSuccess = {
-                            _state.update {
-                                it.copy(
-                                    playlistActionInFlight = false,
-                                    playlistPickerVisible = false,
-                                )
-                            }
-                            _events.send(PlayerEvent.AddedToPlaylist(cleanedName))
-                        },
-                        onFailure = {
-                            _state.update { it.copy(playlistActionInFlight = false) }
-                            _events.send(PlayerEvent.ActionFailed(it.message ?: ""))
-                        },
-                    )
+            playerLibraryActions.createPlaylistAndAdd(cleanedName, url, stream).fold(
+                onSuccess = {
+                    _state.update {
+                        it.copy(
+                            playlistActionInFlight = false,
+                            playlistPickerVisible = false,
+                        )
+                    }
+                    _events.send(PlayerEvent.AddedToPlaylist(cleanedName))
                 },
                 onFailure = {
                     _state.update { it.copy(playlistActionInFlight = false) }
-                    _events.send(PlayerEvent.ActionFailed(it.message ?: ""))
+                    _events.send(PlayerEvent.ActionFailed)
                 },
             )
         }
     }
 
-    private fun currentUrl(): String? = playerHostController.state.value.videoUrl
+    private fun currentUrl(): String? = playbackQueueCoordinator.state.value.current?.videoUrl
+        ?: playerHostController.state.value.videoUrl
 
-    private fun downloadCurrentVideo(quality: String) {
+    private fun downloadCurrentVideo(selection: DownloadSelection) {
         val url = currentUrl() ?: return
         val stream = _state.value.stream ?: return
         if (_state.value.downloadInFlight) return
@@ -275,7 +249,7 @@ class PlayerViewModel @Inject constructor(
                 downloadRepository.downloadVideo(
                     videoUrl = url,
                     title = stream.title,
-                    quality = quality,
+                    selection = selection,
                 ).collect { progress ->
                     when (progress) {
                         is DownloadProgress.Queued -> {
@@ -289,8 +263,8 @@ class PlayerViewModel @Inject constructor(
                             _events.send(PlayerEvent.DownloadEnqueued(progress.fileName))
                     }
                 }
-            }.onFailure { throwable ->
-                _events.send(PlayerEvent.ActionFailed(throwable.message ?: ""))
+            }.onFailure {
+                _events.send(PlayerEvent.DownloadFailed)
             }
             _state.update { if (it.videoUrl == url) it.copy(downloadInFlight = false) else it }
         }
@@ -298,90 +272,19 @@ class PlayerViewModel @Inject constructor(
 
     private fun loadStream(url: String) {
         loadStreamJob?.cancel()
-        _state.update { it.copy(isLoading = true, errorMessage = null) }
+        _state.update { it.copy(isLoading = true, error = null) }
         loadStreamJob = viewModelScope.launch {
-            val (streamResult, savedMs) = coroutineScope {
-                val streamDeferred = async { streamRepository.loadStream(url) }
-                val progressDeferred = async {
-                    libraryRepository.fetchProgressMillis(url).getOrNull()
+            playerStreamLoader.load(url).collect { update ->
+                if (currentUrl() != url) return@collect
+                _state.update { it.applyStreamUpdate(update, playerHostController.state.value) }
+                when (update) {
+                    is PlayerStreamUpdate.PlaybackReady ->
+                        launch { playerStreamLoader.record(url, update.loaded.stream) }
+                    is PlayerStreamUpdate.MetadataEnriched ->
+                        launch { playerStreamLoader.cacheMetadata(url, update.stream) }
+                    is PlayerStreamUpdate.Failed -> Unit
                 }
-                streamDeferred.await() to (progressDeferred.await() ?: 0L)
             }
-            streamResult.fold(
-                onSuccess = { stream ->
-                    if (currentUrl() == url) {
-                        val resumeMs = computeResumeMillis(
-                            savedMs = savedMs,
-                            serverStartMs = stream.startPositionMillis,
-                            durationMs = stream.durationSeconds * 1000L,
-                        )
-                        _state.update {
-                            it.copy(
-                                isLoading = false,
-                                stream = stream,
-                                resumeAtMillis = resumeMs,
-                            )
-                        }
-                        postHistory(url, stream)
-                        cacheStreamMeta(url, stream)
-                    }
-                },
-                onFailure = { throwable ->
-                    if (currentUrl() == url) {
-                        _state.update {
-                            it.copy(
-                                isLoading = false,
-                                errorMessage = throwable.message ?: "Could not load stream",
-                            )
-                        }
-                    }
-                },
-            )
-        }
-    }
-
-    private fun computeResumeMillis(
-        savedMs: Long,
-        serverStartMs: Long,
-        durationMs: Long,
-    ): Long {
-        val candidate = if (savedMs > 0) savedMs else serverStartMs
-        if (candidate < RESUME_MIN_MS) return 0L
-        if (durationMs > 0 && candidate >= durationMs * RESUME_MAX_FRACTION) return 0L
-        return candidate
-    }
-
-    private companion object {
-        const val RESUME_MIN_MS = 5_000L
-        const val RESUME_MAX_FRACTION = 0.95
-    }
-
-    private fun postHistory(url: String, stream: Stream) {
-        viewModelScope.launch {
-            libraryRepository.addHistory(
-                videoUrl = url,
-                title = stream.title,
-                thumbnail = stream.thumbnailUrl,
-                duration = stream.durationSeconds,
-                channelName = stream.uploaderName,
-                channelUrl = stream.uploaderUrl,
-                channelAvatarUrl = stream.uploaderAvatarUrl,
-            )
-        }
-    }
-
-    private fun cacheStreamMeta(url: String, stream: Stream) {
-        viewModelScope.launch {
-            videoMetaRepository.put(
-                VideoMeta(
-                    videoUrl = url,
-                    channelName = stream.uploaderName,
-                    channelUrl = stream.uploaderUrl,
-                    channelAvatarUrl = stream.uploaderAvatarUrl,
-                    viewCount = stream.viewCount,
-                ),
-            )
-            videoMetaRepository.cacheVideos(stream.relatedStreams)
         }
     }
 
@@ -391,25 +294,12 @@ class PlayerViewModel @Inject constructor(
         val stream = _state.value.stream
         val title = stream?.title.orEmpty()
         viewModelScope.launch {
-            val result = if (favorited) {
-                libraryRepository.removeFavorite(url)
-            } else {
-                libraryRepository.addFavorite(
-                    videoUrl = url,
-                    title = title,
-                    thumbnail = stream?.thumbnailUrl.orEmpty(),
-                    duration = stream?.durationSeconds ?: 0L,
-                    channelName = stream?.uploaderName.orEmpty(),
-                    channelUrl = stream?.uploaderUrl.orEmpty(),
-                    channelAvatarUrl = stream?.uploaderAvatarUrl.orEmpty(),
-                    viewCount = stream?.viewCount ?: 0L,
-                )
-            }
+            val result = playerLibraryActions.toggleFavorite(url, stream, favorited)
             result.fold(
                 onSuccess = {
                     _events.send(if (favorited) PlayerEvent.FavoriteRemoved else PlayerEvent.FavoriteAdded(title))
                 },
-                onFailure = { _events.send(PlayerEvent.ActionFailed(it.message ?: "")) },
+                onFailure = { _events.send(PlayerEvent.ActionFailed) },
             )
         }
     }
@@ -419,20 +309,7 @@ class PlayerViewModel @Inject constructor(
         val inWatchLater = _state.value.isInWatchLater
         val stream = _state.value.stream ?: return
         viewModelScope.launch {
-            val result = if (inWatchLater) {
-                libraryRepository.removeWatchLater(url)
-            } else {
-                libraryRepository.addWatchLater(
-                    url = url,
-                    title = stream.title,
-                    thumbnail = stream.thumbnailUrl,
-                    duration = stream.durationSeconds,
-                    channelName = stream.uploaderName,
-                    channelUrl = stream.uploaderUrl,
-                    channelAvatarUrl = stream.uploaderAvatarUrl,
-                    viewCount = stream.viewCount,
-                )
-            }
+            val result = playerLibraryActions.toggleWatchLater(url, stream, inWatchLater)
             result.fold(
                 onSuccess = {
                     _events.send(
@@ -440,7 +317,7 @@ class PlayerViewModel @Inject constructor(
                         else PlayerEvent.WatchLaterAdded(stream.title),
                     )
                 },
-                onFailure = { _events.send(PlayerEvent.ActionFailed(it.message ?: "")) },
+                onFailure = { _events.send(PlayerEvent.ActionFailed) },
             )
         }
     }
