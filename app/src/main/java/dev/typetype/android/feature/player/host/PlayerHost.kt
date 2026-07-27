@@ -20,7 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
@@ -29,7 +28,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.session.MediaController
 import dev.typetype.android.feature.player.PlayerRoute as PlayerRouteScreen
-import dev.typetype.android.feature.player.components.MiniPlayerBar
 import dev.typetype.android.feature.player.components.rememberIsInPipMode
 
 private val MINI_PLAYER_HEIGHT = 64.dp
@@ -39,8 +37,12 @@ private val MINI_PLAYER_HEIGHT = 64.dp
 fun PlayerHost(
     controller: PlayerHostController,
     bottomBarHeightDp: Float,
+    isFullscreen: Boolean,
+    onFullscreenChange: (Boolean) -> Unit,
     mediaController: MediaController?,
     onOpenChannel: (channelUrl: String) -> Unit,
+    onOpenAccounts: () -> Unit,
+    onClosePlayback: () -> Unit,
     content: @Composable () -> Unit,
 ) {
     val state by controller.state.collectAsStateWithLifecycle()
@@ -69,16 +71,12 @@ fun PlayerHost(
 
         val anchoredState = remember {
             AnchoredDraggableState(
-                initialValue = PlayerHostTarget.Hidden,
+                initialValue = state.target,
             )
         }
-
-        LaunchedEffect(anchors) {
-            anchoredState.updateAnchors(anchors)
-        }
-
-        LaunchedEffect(state.requestStamp) {
+        LaunchedEffect(anchors, state.requestStamp, mediaController) {
             val target = state.target
+            anchoredState.updateAnchors(anchors, target)
             if (anchoredState.currentValue != target) {
                 anchoredState.animateTo(target)
             }
@@ -89,9 +87,10 @@ fun PlayerHost(
                 }
             }
         }
-
-        LaunchedEffect(anchoredState.settledValue) {
-            controller.onAnchorSettled(anchoredState.settledValue)
+        LaunchedEffect(state.target, isFullscreen) {
+            if (state.target != PlayerHostTarget.Expanded && isFullscreen) {
+                onFullscreenChange(false)
+            }
         }
 
         content()
@@ -106,11 +105,6 @@ fun PlayerHost(
                     anchoredState.targetValue == PlayerHostTarget.Mini
                 )
 
-            val rawOffsetPx = if (anchoredState.anchors.size > 0) {
-                anchoredState.requireOffset()
-            } else {
-                containerHeightPx
-            }
             val hostHeightDp = with(density) {
                 if (isMini) miniHeightPx.toDp() else containerHeightPx.toDp()
             }
@@ -120,20 +114,31 @@ fun PlayerHost(
                     .fillMaxWidth()
                     .height(hostHeightDp)
                     .offset {
-                        IntOffset(0, rawOffsetPx.toInt())
+                        val offset = if (anchoredState.anchors.size > 0) {
+                            anchoredState.requireOffset()
+                        } else {
+                            containerHeightPx
+                        }
+                        IntOffset(0, offset.toInt())
                     }
                     .background(if (isMini) Color.Transparent else Color.Black),
             ) {
                 if (isMini) {
-                    MiniSlot(
+                    MiniPlayerRuntime(
                         controller = mediaController,
                         onExpand = { controller.expand() },
                         onSendToBackground = { activity?.moveTaskToBack(false) },
-                        onClose = { controller.hide() },
+                        onClose = onClosePlayback,
                     )
                 } else {
                     PlayerRouteScreen(
+                        isFullscreen = isFullscreen,
+                        onFullscreenChange = onFullscreenChange,
                         onNavigateBack = { controller.minimize() },
+                        onOpenAccounts = {
+                            controller.minimize()
+                            onOpenAccounts()
+                        },
                         onPlayVideo = { url -> controller.openVideo(url) },
                         onOpenChannel = { url ->
                             controller.minimize()
@@ -143,41 +148,13 @@ fun PlayerHost(
                 }
             }
 
-            BackHandler(enabled = state.target != PlayerHostTarget.Hidden) {
-                when (anchoredState.currentValue) {
-                    PlayerHostTarget.Expanded -> controller.minimize()
-                    PlayerHostTarget.Mini -> controller.hide()
-                    PlayerHostTarget.Hidden -> Unit
+            BackHandler(enabled = isFullscreen || state.target == PlayerHostTarget.Expanded) {
+                if (isFullscreen) {
+                    onFullscreenChange(false)
+                } else {
+                    controller.minimize()
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun MiniSlot(
-    controller: MediaController?,
-    onExpand: () -> Unit,
-    onSendToBackground: () -> Unit,
-    onClose: () -> Unit,
-) {
-    val item = controller?.currentMediaItem
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(MINI_PLAYER_HEIGHT),
-        contentAlignment = Alignment.TopStart,
-    ) {
-        if (controller != null && item != null) {
-            MiniPlayerBar(
-                player = controller,
-                title = item.mediaMetadata.title?.toString().orEmpty(),
-                subtitle = item.mediaMetadata.artist?.toString().orEmpty(),
-                artworkUri = item.mediaMetadata.artworkUri?.toString(),
-                onExpand = onExpand,
-                onSendToBackground = onSendToBackground,
-                onClose = onClose,
-            )
         }
     }
 }
