@@ -31,6 +31,7 @@ fun LibraryTabs(
                             LibraryTab.Favorites -> stringResource(R.string.library_tab_favorites)
                             LibraryTab.WatchLater -> stringResource(R.string.library_tab_watch_later)
                             LibraryTab.Playlists -> stringResource(R.string.library_tab_playlists)
+                            LibraryTab.SavedPlaylists -> stringResource(R.string.library_tab_saved_playlists)
                         },
                     )
                 },
