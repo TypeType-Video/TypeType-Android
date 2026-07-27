@@ -55,19 +55,25 @@ jobs:
             test -f "$platform/android.jar"
           ) 9>"$ANDROID_HOME/.platform-install.lock"
 
-  debug-apk:
+  verify:
     needs: prepare-sdk
     runs-on: [self-hosted, Linux, X64, arko, android]
-    timeout-minutes: 20
+    timeout-minutes: 30
     env:
       GRADLE_USER_HOME: ${{ github.workspace }}/../.gradle-user-home
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Build debug APK
-        timeout-minutes: 15
-        run: ./gradlew --no-daemon --build-cache --stacktrace :app:assembleDebug
+      - name: Verify Android project
+        timeout-minutes: 25
+        run: |
+          ./gradlew --no-daemon --build-cache --stacktrace \
+            :player:testDebugUnitTest \
+            :app:testDebugUnitTest \
+            :player:lintDebug \
+            :app:lintDebug \
+            :app:assembleDebug
 
       - name: Upload debug APK
         if: ${{ github.ref != 'refs/heads/main' }}
@@ -77,20 +83,6 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
-
-  lint:
-    needs: prepare-sdk
-    runs-on: [self-hosted, Linux, X64, arko, android]
-    timeout-minutes: 20
-    env:
-      GRADLE_USER_HOME: ${{ github.workspace }}/../.gradle-user-home
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Run lint
-        timeout-minutes: 15
-        run: ./gradlew --no-daemon --build-cache --stacktrace :player:lintDebug :app:lintDebug
 
       - name: Upload lint report
         if: ${{ always() }}
@@ -103,25 +95,8 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-  unit-tests:
-    needs: prepare-sdk
-    runs-on: [self-hosted, Linux, X64, arko, android]
-    timeout-minutes: 15
-    env:
-      GRADLE_USER_HOME: ${{ github.workspace }}/../.gradle-user-home
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Run unit tests
-        timeout-minutes: 10
-        run: ./gradlew --no-daemon --build-cache --stacktrace :app:testDebugUnitTest
-
   release:
-    needs:
-      - debug-apk
-      - lint
-      - unit-tests
+    needs: verify
     if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish_release)) }}
     runs-on: [self-hosted, Linux, X64, arko, android]
     timeout-minutes: 35
