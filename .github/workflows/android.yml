@@ -97,7 +97,7 @@ jobs:
 
   release:
     needs: verify
-    if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish_release)) }}
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && inputs.publish_release }}
     runs-on: [self-hosted, Linux, X64, arko, android]
     timeout-minutes: 35
     env:
