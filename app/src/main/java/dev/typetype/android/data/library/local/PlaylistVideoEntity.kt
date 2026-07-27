@@ -10,15 +10,16 @@ import androidx.room.Index
     foreignKeys = [
         ForeignKey(
             entity = PlaylistEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["playlistId"],
+            parentColumns = ["cacheKey"],
+            childColumns = ["playlistCacheKey"],
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    primaryKeys = ["playlistId", "id"],
-    indices = [Index("playlistId")],
+    primaryKeys = ["playlistCacheKey", "id"],
+    indices = [Index("playlistCacheKey")],
 )
 data class PlaylistVideoEntity(
+    val playlistCacheKey: String,
     val playlistId: String,
     val id: String,
     val url: String,

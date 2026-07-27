@@ -8,8 +8,8 @@ import dev.typetype.android.domain.library.PlaylistVideo
 data class PlaylistWithVideos(
     @Embedded val playlist: PlaylistEntity,
     @Relation(
-        parentColumn = "id",
-        entityColumn = "playlistId",
+        parentColumn = "cacheKey",
+        entityColumn = "playlistCacheKey",
     )
     val videos: List<PlaylistVideoEntity>,
 ) {
@@ -18,6 +18,7 @@ data class PlaylistWithVideos(
         name = playlist.name,
         description = playlist.description,
         createdAtMillis = playlist.createdAtMillis,
+        videoCount = maxOf(playlist.videoCount, videos.size),
         videos = videos
             .sortedWith(compareBy<PlaylistVideoEntity> { it.position }.thenBy { it.id })
             .distinctBy { it.url }
