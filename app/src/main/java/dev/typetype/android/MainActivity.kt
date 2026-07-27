@@ -5,16 +5,20 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
@@ -25,11 +29,21 @@ import dev.typetype.android.feature.player.components.PIP_ACTION_AUDIO_ONLY
 import dev.typetype.android.feature.player.components.PIP_ACTION_FORWARD
 import dev.typetype.android.feature.player.components.PIP_ACTION_PLAY_PAUSE
 import dev.typetype.android.feature.player.components.PIP_ACTION_REWIND
+import dev.typetype.android.domain.session.ActiveSessionRepository
+import javax.inject.Inject
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
+    @Inject
+    lateinit var activeSessionRepository: ActiveSessionRepository
+
     private val viewModel: MainViewModel by viewModels()
+    private var activityReportingJob: Job? = null
 
     private val pipReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -46,7 +60,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val splash = installSplashScreen()
         splash.setKeepOnScreenCondition { viewModel.state.value.isLoading }
-        enableEdgeToEdge()
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+        )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             window.attributes = window.attributes.apply {
                 layoutInDisplayCutoutMode =
@@ -54,6 +71,7 @@ class MainActivity : ComponentActivity() {
             }
         }
         super.onCreate(savedInstanceState)
+        registerPipReceiver()
         setContent {
             val preferences by viewModel.preferences.collectAsStateWithLifecycle()
             TypeTypeTheme(accentColor = preferences.accentColor) {
@@ -70,23 +88,39 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        activityReportingJob?.cancel()
+        activityReportingJob = lifecycleScope.launch {
+            while (isActive) {
+                activeSessionRepository.reportActivity()
+                delay(ACTIVITY_REPORT_INTERVAL_MILLIS)
+            }
+        }
+    }
+
+    override fun onStop() {
+        activityReportingJob?.cancel()
+        activityReportingJob = null
+        super.onStop()
+    }
+
+    override fun onDestroy() {
+        runCatching { unregisterReceiver(pipReceiver) }
+        super.onDestroy()
+    }
+
+    private fun registerPipReceiver() {
         val filter = IntentFilter().apply {
             addAction(PIP_ACTION_AUDIO_ONLY)
             addAction(PIP_ACTION_REWIND)
             addAction(PIP_ACTION_PLAY_PAUSE)
             addAction(PIP_ACTION_FORWARD)
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(pipReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
-        } else {
-            @Suppress("UnspecifiedRegisterReceiverFlag")
-            registerReceiver(pipReceiver, filter)
-        }
-    }
-
-    override fun onStop() {
-        runCatching { unregisterReceiver(pipReceiver) }
-        super.onStop()
+        ContextCompat.registerReceiver(
+            this,
+            pipReceiver,
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
     }
 
     private fun enterAudioOnlyMode() {
@@ -122,5 +156,9 @@ class MainActivity : ComponentActivity() {
             },
             MoreExecutors.directExecutor(),
         )
+    }
+
+    private companion object {
+        const val ACTIVITY_REPORT_INTERVAL_MILLIS = 60_000L
     }
 }
