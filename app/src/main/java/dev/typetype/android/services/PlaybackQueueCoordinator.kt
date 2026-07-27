@@ -198,10 +198,69 @@ class PlaybackQueueCoordinator @Inject constructor(
 
     private fun startTicker() {
         tickerJob?.cancel()
+        tickerJob = scope.launch {
+            while (isActive) {
+                delay(TICK_INTERVAL_MILLIS)
+                val currentPlayer = player ?: continue
+                val queue = mutableState.value
+                if (!queue.isActive || queue.next == null) continue
+                val duration = currentPlayer.duration
+                val remaining = if (duration == C.TIME_UNSET || duration <= 0L) {
+                    Long.MAX_VALUE
+                } else {
+                    duration - currentPlayer.currentPosition
+                }
+                val stale = resolvedNextAtMillis > 0L &&
+                    System.currentTimeMillis() - resolvedNextAtMillis >= RESOLUTION_MAX_AGE_MILLIS
+                when {
+                    resolvedNextUrl == null -> prepareNext(forceRefresh = false)
+                    stale && remaining <= REFRESH_WINDOW_MILLIS -> prepareNext(forceRefresh = true)
+                }
+            }
+        }
     }
 
     private fun prepareNext(forceRefresh: Boolean) {
-        if (forceRefresh) resolvedNextUrl = null
+        val currentPlayer = player ?: return
+        val queue = mutableState.value
+        val next = queue.next ?: return
+        val now = System.currentTimeMillis()
+        if (preparationJob?.isActive == true || now < retryAfterMillis) return
+        val existingIndex = currentPlayer.indexOfMediaId(next.videoUrl)
+        if (!forceRefresh && existingIndex >= 0) {
+            resolvedNextUrl = next.videoUrl
+            return
+        }
+        val requestedGeneration = generation
+        val requestedIndex = queue.currentIndex
+        mutableState.update { it.copy(isPreparingNext = true, failedVideoUrl = null) }
+        preparationJob = scope.launch {
+            resolver.resolve(next.videoUrl).fold(
+                onSuccess = { item ->
+                    val latest = mutableState.value
+                    if (
+                        generation != requestedGeneration || latest.currentIndex != requestedIndex ||
+                        latest.next?.videoUrl != next.videoUrl
+                    ) return@fold
+                    val target = player ?: return@fold
+                    val replacementIndex = target.indexOfMediaId(next.videoUrl)
+                    if (replacementIndex >= 0) target.replaceMediaItem(replacementIndex, item)
+                    else target.addMediaItem(item)
+                    resolvedNextUrl = next.videoUrl
+                    resolvedNextAtMillis = System.currentTimeMillis()
+                    retryAfterMillis = 0L
+                    mutableState.update { it.copy(isPreparingNext = false, failedVideoUrl = null) }
+                    target.resumeQueueCycleIfNeeded(latest)
+                },
+                onFailure = {
+                    if (generation != requestedGeneration) return@fold
+                    retryAfterMillis = System.currentTimeMillis() + RETRY_DELAY_MILLIS
+                    mutableState.update {
+                        it.copy(isPreparingNext = false, failedVideoUrl = next.videoUrl)
+                    }
+                },
+            )
+        }
     }
 
     private fun removeFinishedItems() {
