@@ -19,11 +19,22 @@ data class WatchLaterItem(
     val thumbnailUrl: String,
     val durationSeconds: Long,
     val addedAtMillis: Long,
+    val channelName: String = "",
+    val channelUrl: String = "",
+    val channelAvatarUrl: String = "",
+    val viewCount: Long = 0L,
 )
 
 data class FavoriteItem(
     val videoUrl: String,
     val favoritedAtMillis: Long,
+    val title: String = "",
+    val thumbnailUrl: String = "",
+    val durationSeconds: Long = 0L,
+    val channelName: String = "",
+    val channelUrl: String = "",
+    val channelAvatarUrl: String = "",
+    val viewCount: Long = 0L,
 )
 
 data class PlaylistVideo(
@@ -45,4 +56,5 @@ data class Playlist(
     val description: String,
     val videos: List<PlaylistVideo>,
     val createdAtMillis: Long,
+    val videoCount: Int = videos.size,
 )
