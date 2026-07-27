@@ -6,6 +6,7 @@ import dev.typetype.android.data.network.dto.OidcCallbackRequest
 import dev.typetype.android.data.network.dto.OidcCallbackResponse
 import dev.typetype.android.data.network.dto.OidcStartResponse
 import dev.typetype.android.data.network.dto.RefreshRequest
+import dev.typetype.android.data.network.dto.ResetPasswordRequest
 import dev.typetype.android.data.network.dto.RegisterRequest
 import dev.typetype.android.data.network.dto.SessionResponse
 import dev.typetype.android.data.network.dto.UserProfile
@@ -28,6 +29,9 @@ interface TypeTypeAuthApi {
 
     @POST("auth/refresh")
     suspend fun refresh(@Body body: RefreshRequest): Response<SessionResponse>
+
+    @POST("auth/reset-password")
+    suspend fun resetPassword(@Body body: ResetPasswordRequest): Response<Unit>
 
     @POST("auth/logout")
     suspend fun logout(@Header("Authorization") authorization: String? = null): Response<Unit>
