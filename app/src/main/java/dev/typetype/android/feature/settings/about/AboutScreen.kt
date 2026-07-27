@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.typetype.android.BuildConfig
 import dev.typetype.android.R
 
 private data class AboutLink(val labelRes: Int, val url: String)
@@ -73,7 +74,7 @@ fun AboutScreen(
                 item {
                     InfoCard {
                         InfoRow(label = stringResource(R.string.about_app_name), value = "TypeType")
-                        InfoRow(label = stringResource(R.string.about_version), value = "0.1.0")
+                        InfoRow(label = stringResource(R.string.about_version), value = BuildConfig.VERSION_NAME)
                         InfoRow(label = "License", value = "GPL v3")
                     }
                 }

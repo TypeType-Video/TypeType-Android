@@ -37,14 +37,14 @@ private val QUALITY_OPTIONS = listOf("144p", "240p", "360p", "480p", "720p", "10
 private data class ServiceOption(
     val id: Int,
     val labelRes: Int,
-    val initial: String,
+    val iconRes: Int,
     val brandColor: androidx.compose.ui.graphics.Color,
 )
 
 private val SERVICES = listOf(
-    ServiceOption(0, R.string.settings_default_service_youtube, "Y", androidx.compose.ui.graphics.Color(0xFFFF0000)),
-    ServiceOption(6, R.string.settings_default_service_niconico, "N", androidx.compose.ui.graphics.Color(0xFF202020)),
-    ServiceOption(5, R.string.settings_default_service_bilibili, "B", androidx.compose.ui.graphics.Color(0xFF00A1D6)),
+    ServiceOption(0, R.string.settings_default_service_youtube, R.drawable.ic_service_youtube, androidx.compose.ui.graphics.Color(0xFFFF0000)),
+    ServiceOption(6, R.string.settings_default_service_niconico, R.drawable.ic_service_niconico, androidx.compose.ui.graphics.Color(0xFF231815)),
+    ServiceOption(5, R.string.settings_default_service_bilibili, R.drawable.ic_service_bilibili, androidx.compose.ui.graphics.Color(0xFF00A1D6)),
 )
 
 private data class LanguageOption(val code: String, val display: String)
@@ -95,8 +95,8 @@ fun PlayerSettingsScreen(
         Column(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars)) {
             TopBar(onNavigateBack = onNavigateBack)
             LazyColumn(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 item { SectionHeader(stringResource(R.string.settings_player_section_playback)) }
                 item {
@@ -126,7 +126,7 @@ fun PlayerSettingsScreen(
                 }
 
                 if (state.defaultService == 0) {
-                    item { Spacer(Modifier.size(8.dp)) }
+                    item { Spacer(Modifier.size(4.dp)) }
                     item { SectionHeader(stringResource(R.string.settings_player_section_subtitles)) }
                     item {
                         SwitchRow(
@@ -170,20 +170,20 @@ fun PlayerSettingsScreen(
                     }
                 }
 
-                item { Spacer(Modifier.size(8.dp)) }
+                item { Spacer(Modifier.size(4.dp)) }
                 item { SectionHeader(stringResource(R.string.settings_section_default_service)) }
                 items(SERVICES.size, key = { i -> "svc-${SERVICES[i].id}" }) { i ->
                     val svc = SERVICES[i]
                     ServiceRow(
                         title = stringResource(svc.labelRes),
-                        initial = svc.initial,
+                        iconRes = svc.iconRes,
                         brandColor = svc.brandColor,
                         selected = state.defaultService == svc.id,
                         onClick = { onAction(PlayerSettingsAction.SetDefaultService(svc.id)) },
                     )
                 }
 
-                item { Spacer(Modifier.size(8.dp)) }
+                item { Spacer(Modifier.size(4.dp)) }
                 item { SectionHeader(stringResource(R.string.settings_player_section_gestures)) }
                 item {
                     SwitchRow(
