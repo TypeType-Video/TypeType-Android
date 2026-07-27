@@ -9,11 +9,7 @@ data object WelcomeRoute
 data object AddServerRoute
 
 @Serializable
-data class LoginRoute(
-    val serverId: String,
-    val guestAllowed: Boolean,
-    val registrationAllowed: Boolean,
-)
+data class LoginRoute(val serverId: String)
 
 @Serializable
 data object HomeRoute
@@ -26,6 +22,9 @@ data object LibraryRoute
 
 @Serializable
 data object SettingsRoute
+
+@Serializable
+data object AccountsRoute
 
 @Serializable
 data object AppearanceRoute
@@ -41,6 +40,9 @@ data object ProfileSettingsRoute
 
 @Serializable
 data object PrivacySettingsRoute
+
+@Serializable
+data object DiagnosticsRoute
 
 @Serializable
 data object BlockedSettingsRoute
@@ -59,3 +61,9 @@ data class ChannelRoute(val channelUrl: String)
 
 @Serializable
 data class PlaylistRoute(val playlistId: String)
+
+@Serializable
+data class PublicPlaylistRoute(val playlistUrl: String)
+
+@Serializable
+data class PodcastRoute(val podcastUrl: String)

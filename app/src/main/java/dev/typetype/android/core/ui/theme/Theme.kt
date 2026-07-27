@@ -41,12 +41,12 @@ private fun colorsFor(accentColor: AccentColor): Pair<Color, Color> = when (acce
     AccentColor.Purple -> AccentPurple to Color(0xFFE9D5FF)
     AccentColor.Violet -> AccentViolet to Color(0xFFC4B5FD)
     AccentColor.Monochrome -> AccentMonochrome to Zinc300
-    AccentColor.System -> AccentRed to Red300
+    AccentColor.System -> AccentBlue to Blue300
 }
 
 @Composable
 fun TypeTypeTheme(
-    accentColor: AccentColor = AccentColor.Red,
+    accentColor: AccentColor = AccentColor.Blue,
     content: @Composable () -> Unit,
 ) {
     val (accent, accentSoft) = colorsFor(accentColor)
