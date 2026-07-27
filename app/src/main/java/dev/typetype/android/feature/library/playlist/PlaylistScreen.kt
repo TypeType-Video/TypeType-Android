@@ -4,16 +4,11 @@ import android.content.Intent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
@@ -28,12 +23,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.R
+import dev.typetype.android.toPlaybackQueueEntry
 import dev.typetype.android.core.ui.components.LibraryFilterBar
 import dev.typetype.android.core.ui.components.LibrarySortMode
 import dev.typetype.android.core.ui.components.LocalAppSnackbarHost
@@ -41,25 +35,45 @@ import dev.typetype.android.core.ui.components.PlaylistVideoActionsSheet
 import dev.typetype.android.core.ui.components.PlaylistVideoCard
 import dev.typetype.android.domain.library.PlaylistVideo
 import dev.typetype.android.feature.library.components.rememberVideoMetas
+import dev.typetype.android.feature.library.LibrarySyncStatusBar
 import dev.typetype.android.feature.menu.VideoMenuEvent
 import dev.typetype.android.feature.menu.VideoMenuHandlerViewModel
+import dev.typetype.android.feature.menu.blockVideoUrl
+import dev.typetype.android.feature.menu.removeFromPlaylist
+import dev.typetype.android.feature.menu.toggleWatchedUrl
 
 @Composable
 fun PlaylistRoute(
     onNavigateBack: () -> Unit,
     onPlayVideo: (videoUrl: String) -> Unit,
+    onPlayQueue: (title: String, videos: List<PlaylistVideo>, shuffle: Boolean) -> Unit,
     onOpenChannel: (channelUrl: String) -> Unit = {},
     viewModel: PlaylistViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    LaunchedEffect(viewModel, onNavigateBack) {
+        viewModel.events.collect { event ->
+            if (event == PlaylistDetailEvent.Deleted) onNavigateBack()
+        }
+    }
     PlaylistScreen(
         playlistId = state.playlistId,
         title = state.title,
         videos = state.videos,
         isLoading = state.isLoading,
+        isRefreshing = state.isRefreshing,
+        isReordering = state.isReordering,
+        isMutationInFlight = state.isMutationInFlight,
+        errorMessage = state.errorMessage,
+        errorRequestId = state.errorRequestId,
         onNavigateBack = onNavigateBack,
         onPlayVideo = onPlayVideo,
+        onPlayQueue = onPlayQueue,
         onOpenChannel = onOpenChannel,
+        onRetry = viewModel::retry,
+        onMoveVideo = viewModel::moveVideo,
+        onRenamePlaylist = viewModel::renamePlaylist,
+        onDeletePlaylist = viewModel::deletePlaylist,
     )
 }
 
@@ -69,9 +83,19 @@ private fun PlaylistScreen(
     title: String,
     videos: List<PlaylistVideo>,
     isLoading: Boolean,
+    isRefreshing: Boolean,
+    isReordering: Boolean,
+    isMutationInFlight: Boolean,
+    errorMessage: String?,
+    errorRequestId: String?,
     onNavigateBack: () -> Unit,
     onPlayVideo: (String) -> Unit,
+    onPlayQueue: (title: String, videos: List<PlaylistVideo>, shuffle: Boolean) -> Unit,
     onOpenChannel: (String) -> Unit,
+    onRetry: () -> Unit,
+    onMoveVideo: (videoUrl: String, direction: Int) -> Unit,
+    onRenamePlaylist: (String) -> Unit,
+    onDeletePlaylist: () -> Unit,
 ) {
     var filter by rememberSaveable { mutableStateOf("") }
     var sort by rememberSaveable { mutableStateOf(LibrarySortMode.DefaultOrder) }
@@ -112,24 +136,29 @@ private fun PlaylistScreen(
     var pendingMenu by remember { mutableStateOf<PlaylistVideo?>(null) }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            IconButton(onClick = onNavigateBack) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.player_back),
-                    tint = MaterialTheme.colorScheme.onBackground,
-                )
-            }
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                color = MaterialTheme.colorScheme.onBackground,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(start = 4.dp),
+        PlaylistDetailTopBar(
+            title = title,
+            isMutationInFlight = isMutationInFlight,
+            onNavigateBack = onNavigateBack,
+            onRename = onRenamePlaylist,
+            onDelete = onDeletePlaylist,
+        )
+
+        LibrarySyncStatusBar(
+            isRefreshing = isRefreshing || isReordering || isMutationInFlight,
+            lastSuccessfulSyncAtMillis = null,
+            errorMessage = errorMessage,
+            requestId = errorRequestId,
+            pendingWriteCount = 0,
+            failedWriteCount = 0,
+            onRetry = onRetry,
+        )
+
+        if (videos.isNotEmpty()) {
+            PlaylistPlaybackActions(
+                enabled = !isLoading && !isRefreshing && !isReordering && !isMutationInFlight,
+                onPlayAll = { onPlayQueue(title, videos.sortedBy { it.position }, false) },
+                onShuffle = { onPlayQueue(title, videos, true) },
             )
         }
 
@@ -174,9 +203,10 @@ private fun PlaylistScreen(
             .filter { it.channelAvatarUrl.isBlank() || it.channelName.isBlank() }
             .map { it.url }
         val metas = rememberVideoMetas(urlsMissingInfo)
-        LazyColumn(
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 360.dp),
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(vertical = 4.dp),
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
         ) {
             items(visible, key = { it.id }) { video ->
                 PlaylistVideoCard(
@@ -186,15 +216,33 @@ private fun PlaylistScreen(
                     isWatched = video.url in watchedUrls,
                     meta = metas[video.url],
                     onChannelClick = onOpenChannel,
+                    onMoreClick = { pendingMenu = video },
                 )
             }
         }
     }
 
     pendingMenu?.let { video ->
+        val orderedVideos = videos.sortedBy { it.position }
+        val videoIndex = orderedVideos.indexOfFirst { it.url == video.url }
+        val canReorder = filter.isBlank() && sort == LibrarySortMode.DefaultOrder && !isReordering
         PlaylistVideoActionsSheet(
             removeLabel = stringResource(R.string.playlist_action_remove_from_playlist, title),
             isWatched = video.url in watchedUrls,
+            canMoveUp = canReorder && videoIndex > 0,
+            canMoveDown = canReorder && videoIndex in 0 until orderedVideos.lastIndex,
+            onMoveUp = if (filter.isBlank() && sort == LibrarySortMode.DefaultOrder) {
+                { onMoveVideo(video.url, -1) }
+            } else {
+                null
+            },
+            onMoveDown = if (filter.isBlank() && sort == LibrarySortMode.DefaultOrder) {
+                { onMoveVideo(video.url, 1) }
+            } else {
+                null
+            },
+            onPlayNext = { menuVm.playNext(video.toPlaybackQueueEntry()) },
+            onAddToQueue = { menuVm.addToQueue(video.toPlaybackQueueEntry()) },
             onRemoveFromList = { menuVm.removeFromPlaylist(playlistId, title, video.url) },
             onToggleWatched = {
                 menuVm.toggleWatchedUrl(
