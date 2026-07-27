@@ -12,6 +12,9 @@ interface VideoMetaDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(entries: List<VideoMetaEntity>)
 
-    @Query("SELECT * FROM video_meta WHERE videoUrl IN (:urls)")
-    fun observeForUrls(urls: List<String>): Flow<List<VideoMetaEntity>>
+    @Query(
+        "SELECT * FROM video_meta WHERE serverId = :serverId AND accountId = :accountId " +
+            "AND videoUrl IN (:urls)",
+    )
+    fun observeForUrls(serverId: String, accountId: String, urls: List<String>): Flow<List<VideoMetaEntity>>
 }
