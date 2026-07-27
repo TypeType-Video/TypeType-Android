@@ -150,6 +150,105 @@ class SabrPlaybackSourceTest {
         )
     }
 
+    @Test
+    fun `server SABR contract never falls through to classic media`() = runBlocking {
+        val stream = sabrStream().copy(
+            serverSabrManifestUrl = null,
+            sabrVideoStreams = emptyList(),
+            sabrAudioStreams = emptyList(),
+        )
+
+        val source = pickPlayableSource(
+            stream = stream,
+            selectedQuality = "auto",
+            selectedAudioKey = null,
+            defaultAudioLanguage = "",
+            automaticQualityCap = "1080p",
+            preferOriginalLanguage = false,
+            codecSupport = SupportedCodecs,
+            prepareSabrPlayback = { _, _, _ -> error("SABR preparation must not run without formats") },
+        )
+
+        assertNull(source)
+    }
+
+    @Test
+    fun `server SABR contract rejects a format without an itag`() = runBlocking {
+        var preparationCalled = false
+        val source = pickPlayableSource(
+            stream = sabrStream().copy(sabrVideoStreams = listOf(video().copy(itag = 0))),
+            selectedQuality = "1080p",
+            selectedAudioKey = "en.0",
+            defaultAudioLanguage = "en",
+            automaticQualityCap = "1080p",
+            preferOriginalLanguage = true,
+            codecSupport = SupportedCodecs,
+            prepareSabrPlayback = { _, _, _ ->
+                preparationCalled = true
+                preparedSession()
+            },
+        )
+
+        assertNull(source)
+        assertFalse(preparationCalled)
+    }
+
+    @Test
+    fun `server SABR contract rejects a format without a server source`() = runBlocking {
+        var preparationCalled = false
+        val source = pickPlayableSource(
+            stream = sabrStream().copy(sabrVideoStreams = listOf(video().copy(url = ""))),
+            selectedQuality = "1080p",
+            selectedAudioKey = "en.0",
+            defaultAudioLanguage = "en",
+            automaticQualityCap = "1080p",
+            preferOriginalLanguage = true,
+            codecSupport = SupportedCodecs,
+            prepareSabrPlayback = { _, _, _ ->
+                preparationCalled = true
+                preparedSession()
+            },
+        )
+
+        assertNull(source)
+        assertFalse(preparationCalled)
+    }
+
+    @Test
+    fun `server SABR selection excludes formats rejected by the server`() = runBlocking {
+        var acceptedVideoItag = 0
+        var acceptedAudioItag = 0
+        var recoveryVideoItags = emptySet<Int>()
+        val source = pickSabrSource(
+            stream = sabrStream().copy(
+                sabrVideoStreams = listOf(
+                    video(),
+                    video().copy(codec = "hvc1.1.6.L120", height = 720, itag = 136),
+                ),
+                sabrAudioStreams = listOf(
+                    audio().copy(mimeType = "audio/webm", codec = "opus", bitrate = 256_000, itag = 251),
+                    audio(),
+                ),
+            ),
+            selectedQuality = "1080p",
+            selectedAudioKey = null,
+            defaultAudioLanguage = "",
+            preferOriginalLanguage = false,
+            codecSupport = SupportedCodecs,
+            prepareSabrPlayback = { _, selection, _ ->
+                acceptedVideoItag = selection.video.itag
+                acceptedAudioItag = selection.audio.itag
+                recoveryVideoItags = selection.recoveryVideoItags
+                preparedSession()
+            },
+        )
+
+        requireNotNull(source)
+        assertEquals(137, acceptedVideoItag)
+        assertEquals(140, acceptedAudioItag)
+        assertTrue(recoveryVideoItags.isEmpty())
+    }
+
     private fun sabrStream() = Stream(
         playbackContract = StreamPlaybackContract.ServerSabr,
         id = "video",
