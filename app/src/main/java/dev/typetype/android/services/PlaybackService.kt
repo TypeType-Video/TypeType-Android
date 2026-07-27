@@ -2,6 +2,7 @@ package dev.typetype.android.services
 
 import android.app.PendingIntent
 import android.content.Intent
+import dagger.hilt.android.AndroidEntryPoint
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.Player
@@ -15,19 +16,78 @@ import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import dev.typetype.android.MainActivity
 import dev.typetype.android.R
+import dev.typetype.android.domain.stream.SabrPlaybackRepository
+import dev.typetype.android.domain.playback.PlaybackResumeRepository
+import dev.typetype.android.domain.library.LibraryRepository
+import dev.typetype.android.domain.session.ActiveSessionRepository
+import dev.typetype.android.domain.usersettings.UserSettingsRepository
+import javax.inject.Inject
 
 @UnstableApi
+@AndroidEntryPoint
 class PlaybackService : MediaSessionService() {
 
+    @Inject
+    lateinit var mediaClientFactory: ScopedMediaClientFactory
+
+    @Inject
+    lateinit var sabrPlaybackRepository: SabrPlaybackRepository
+
+    @Inject
+    lateinit var sabrPlaybackWindowCache: SabrPlaybackWindowCache
+
+    @Inject
+    lateinit var playbackResumeRepository: PlaybackResumeRepository
+
+    @Inject
+    lateinit var userSettingsRepository: UserSettingsRepository
+
+    @Inject
+    lateinit var activeSessionRepository: ActiveSessionRepository
+
+    @Inject
+    lateinit var libraryRepository: LibraryRepository
+
+    @Inject
+    lateinit var playbackQueueCoordinator: PlaybackQueueCoordinator
+
+    @Inject
+    lateinit var playbackSleepTimer: PlaybackSleepTimer
+
     private var mediaSession: MediaSession? = null
+    private var sabrPlaybackBridge: SabrPlaybackServiceBridge? = null
+    private var playbackResumeRecorder: PlaybackResumeRecorder? = null
+    private var activePlaybackReporter: ActivePlaybackReporter? = null
+    private var playbackHistoryRecorder: PlaybackHistoryRecorder? = null
+    private var playbackPlayer: ExoPlayer? = null
 
     override fun onCreate() {
         super.onCreate()
         setMediaNotificationProvider(buildNotificationProvider())
-        val player = buildPlayer()
+        val playbackClock = SabrPlaybackClock()
+        val recoveryDispatcher = SabrPlaybackRecoveryDispatcher()
+        val player = buildPlayer(playbackClock, recoveryDispatcher)
+        playbackPlayer = player
+        sabrPlaybackBridge = SabrPlaybackServiceBridge(
+            player,
+            sabrPlaybackRepository,
+            sabrPlaybackWindowCache,
+            playbackClock,
+            recoveryDispatcher,
+        )
+        playbackResumeRecorder = PlaybackResumeRecorder(
+            player,
+            playbackResumeRepository,
+            userSettingsRepository,
+        )
+        activePlaybackReporter = ActivePlaybackReporter(player, activeSessionRepository)
+        playbackHistoryRecorder = PlaybackHistoryRecorder(player, libraryRepository)
+        playbackQueueCoordinator.attach(player)
+        playbackSleepTimer.attach(player)
         mediaSession = MediaSession.Builder(this, player)
             .setSessionActivity(buildSessionActivityPendingIntent())
             .setMediaButtonPreferences(buildMediaButtonPreferences())
+            .setCallback(PlaybackSessionCallback(packageName, applicationInfo.uid))
             .build()
     }
 
@@ -42,15 +102,29 @@ class PlaybackService : MediaSessionService() {
     }
 
     override fun onDestroy() {
+        activePlaybackReporter?.close()
+        activePlaybackReporter = null
+        playbackHistoryRecorder?.close()
+        playbackHistoryRecorder = null
+        playbackPlayer?.let(playbackSleepTimer::detach)
+        mediaSession?.player?.let(playbackQueueCoordinator::detach)
+        playbackResumeRecorder?.close()
+        playbackResumeRecorder = null
+        sabrPlaybackBridge?.close()
+        sabrPlaybackBridge = null
         mediaSession?.run {
             player.release()
             release()
             mediaSession = null
         }
+        playbackPlayer = null
         super.onDestroy()
     }
 
-    private fun buildPlayer(): ExoPlayer {
+    private fun buildPlayer(
+        playbackClock: SabrPlaybackClock,
+        recoveryDispatcher: SabrPlaybackRecoveryDispatcher,
+    ): ExoPlayer {
         val audioAttributes = AudioAttributes.Builder()
             .setUsage(C.USAGE_MEDIA)
             .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
@@ -70,7 +144,14 @@ class PlaybackService : MediaSessionService() {
             .setWakeMode(C.WAKE_MODE_NETWORK)
             .setLoadControl(loadControl)
             .setMediaSourceFactory(
-                MergedStreamMediaSourceFactory(this)
+                MergedStreamMediaSourceFactory(
+                    this,
+                    mediaClientFactory,
+                    sabrPlaybackRepository,
+                    sabrPlaybackWindowCache,
+                    playbackClock::currentPositionUs,
+                    recoveryDispatcher,
+                )
                     .setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(MIN_LOADABLE_RETRY_COUNT)),
             )
             .setSeekBackIncrementMs(SEEK_BACK_INCREMENT_MS)
@@ -103,6 +184,11 @@ class PlaybackService : MediaSessionService() {
                 .setPlayerCommand(Player.COMMAND_SEEK_FORWARD)
                 .setSlots(CommandButton.SLOT_FORWARD, CommandButton.SLOT_OVERFLOW)
                 .build(),
+            CommandButton.Builder(CommandButton.ICON_NEXT)
+                .setDisplayName(getString(R.string.playback_queue_next))
+                .setPlayerCommand(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
+                .setSlots(CommandButton.SLOT_FORWARD_SECONDARY, CommandButton.SLOT_OVERFLOW)
+                .build(),
         )
 
     private fun buildSessionActivityPendingIntent(): PendingIntent {
@@ -123,7 +209,7 @@ class PlaybackService : MediaSessionService() {
         const val NOTIFICATION_ID = 1001
         const val NOTIFICATION_CHANNEL_ID = "typetype.playback"
         const val MIN_BUFFER_MS = 30_000
-        const val MAX_BUFFER_MS = 120_000
+        const val MAX_BUFFER_MS = 30_000
         const val BUFFER_FOR_PLAYBACK_MS = 2_500
         const val BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS = 5_000
         const val BACK_BUFFER_MS = 30_000
