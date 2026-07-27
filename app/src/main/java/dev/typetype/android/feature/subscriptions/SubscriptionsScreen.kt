@@ -1,21 +1,27 @@
 package dev.typetype.android.feature.subscriptions
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Subscriptions
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -23,15 +29,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.core.ui.components.AnimatedError
-import dev.typetype.android.core.ui.components.AnimatedLoader
-import dev.typetype.android.core.ui.components.FullScreenLoader
+import dev.typetype.android.core.ui.components.LazyPaginationFooter
 import dev.typetype.android.core.ui.components.VideoCard
 import dev.typetype.android.feature.menu.rememberVideoMenuScope
+import dev.typetype.android.feature.library.LibrarySyncStatusBar
 import dev.typetype.android.R
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
-
-private const val LOAD_MORE_THRESHOLD = 6
 
 @Composable
 fun SubscriptionsRoute(
@@ -45,6 +47,7 @@ fun SubscriptionsRoute(
         onPlayVideo = onPlayVideo,
         onOpenChannel = onOpenChannel,
         onRetry = { viewModel.onAction(SubscriptionsAction.OnRefresh) },
+        onRetrySync = { viewModel.onAction(SubscriptionsAction.OnRetrySync) },
         onLoadMore = { viewModel.onAction(SubscriptionsAction.OnLoadMore) },
     )
 }
@@ -55,48 +58,75 @@ fun SubscriptionsScreen(
     onPlayVideo: (videoUrl: String) -> Unit,
     onOpenChannel: (channelUrl: String) -> Unit,
     onRetry: () -> Unit,
+    onRetrySync: () -> Unit,
     onLoadMore: () -> Unit,
 ) {
     val menuScope = rememberVideoMenuScope(onOpenChannel = onOpenChannel)
     val visibleVideos = state.videos.filterNot(menuScope::isHidden)
-    when {
-        state.isLoading && state.videos.isEmpty() -> FullScreenLoader()
-        state.errorMessage != null && state.videos.isEmpty() ->
-            AnimatedError(message = state.errorMessage, onRetry = onRetry)
-        visibleVideos.isEmpty() && !state.isLoading -> Box(
-            modifier = Modifier.fillMaxSize().padding(24.dp),
-            contentAlignment = Alignment.Center,
+    Column(modifier = Modifier.fillMaxSize()) {
+        LibrarySyncStatusBar(
+            isRefreshing = false,
+            lastSuccessfulSyncAtMillis = null,
+            errorMessage = state.syncErrorMessage,
+            requestId = state.syncRequestId,
+            pendingWriteCount = state.pendingWriteCount,
+            failedWriteCount = state.failedWriteCount,
+            onRetry = onRetrySync,
+        )
+        SubscriptionsFeedStatusBar(
+            isRefreshing = state.isLoading,
+            isServerRefreshing = state.isServerRefreshing,
+            errorMessage = state.errorMessage,
+            requestId = state.errorRequestId,
+            hasContent = state.videos.isNotEmpty(),
+            onRetry = onRetry,
+        )
+        PullToRefreshBox(
+            isRefreshing = state.isLoading && state.videos.isNotEmpty(),
+            onRefresh = onRetry,
+            modifier = Modifier.fillMaxWidth().weight(1f),
         ) {
-            Text(
-                text = stringResource(R.string.subscriptions_empty),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Box(modifier = Modifier.fillMaxSize()) {
+                SubscriptionsContent(
+                    state = state,
+                    visibleVideos = visibleVideos,
+                    onPlayVideo = onPlayVideo,
+                    onOpenChannel = onOpenChannel,
+                    onRetry = onRetry,
+                    onLoadMore = onLoadMore,
+                    menuScope = menuScope,
+                )
+            }
         }
-        else -> {
-            val listState = rememberLazyListState()
-            val shouldLoadMore by remember(state.videos.size, state.hasMore, state.isLoadingMore) {
-                derivedStateOf {
-                    if (!state.hasMore || state.isLoadingMore || state.videos.isEmpty()) {
-                        false
-                    } else {
-                        val lastVisible = listState.layoutInfo.visibleItemsInfo
-                            .lastOrNull()?.index ?: -1
-                        lastVisible >= state.videos.size - LOAD_MORE_THRESHOLD
-                    }
-                }
-            }
-            LaunchedEffect(listState, state.hasMore, state.isLoadingMore) {
-                snapshotFlow { shouldLoadMore }
-                    .distinctUntilChanged()
-                    .filter { it }
-                    .collect { onLoadMore() }
-            }
+    }
+}
 
-            LazyColumn(
-                state = listState,
+@Composable
+private fun SubscriptionsContent(
+    state: SubscriptionsState,
+    visibleVideos: List<dev.typetype.android.domain.feed.Video>,
+    onPlayVideo: (videoUrl: String) -> Unit,
+    onOpenChannel: (channelUrl: String) -> Unit,
+    onRetry: () -> Unit,
+    onLoadMore: () -> Unit,
+    menuScope: dev.typetype.android.feature.menu.VideoMenuScope,
+) {
+    when {
+        state.isLoading && state.videos.isEmpty() -> SubscriptionsLoadingGrid()
+        state.errorMessage != null && state.videos.isEmpty() ->
+            AnimatedError(
+                message = state.errorMessage,
+                requestId = state.errorRequestId,
+                onRetry = onRetry,
+            )
+        visibleVideos.isEmpty() && !state.isLoading -> SubscriptionsEmptyState()
+        else -> {
+            val gridState = rememberLazyGridState()
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 320.dp),
+                state = gridState,
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(top = 4.dp, bottom = 12.dp),
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
             ) {
                 items(visibleVideos, key = { it.id }, contentType = { "subscription-video" }) { video ->
                     VideoCard(
@@ -105,20 +135,54 @@ fun SubscriptionsScreen(
                         onChannelClick = { onOpenChannel(video.uploaderUrl) },
                         onMenuAction = { action -> menuScope.onAction(action, video) },
                         menuItemState = menuScope.stateFor(video),
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
                     )
                 }
-                if (state.isLoadingMore) {
-                    item(key = "load-more") {
-                        Box(
-                            modifier = Modifier.fillMaxWidth().padding(16.dp),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            AnimatedLoader(size = 56.dp)
-                        }
-                    }
+                item(key = "subscriptions-pagination", span = { GridItemSpan(maxLineSpan) }) {
+                    LazyPaginationFooter(
+                        continuationKey = state.videos.size.takeIf { state.hasMore },
+                        isLoading = state.isLoadingMore,
+                        hasError = state.loadMoreError,
+                        onLoadMore = onLoadMore,
+                    )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun SubscriptionsEmptyState() {
+    Box(
+        modifier = Modifier.fillMaxSize().padding(32.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Surface(
+                shape = androidx.compose.foundation.shape.CircleShape,
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Subscriptions,
+                    contentDescription = null,
+                    modifier = Modifier.padding(18.dp).size(36.dp),
+                )
+            }
+            Text(
+                text = stringResource(R.string.subscriptions_empty_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+            Text(
+                text = stringResource(R.string.subscriptions_empty_description),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            )
         }
     }
 }
