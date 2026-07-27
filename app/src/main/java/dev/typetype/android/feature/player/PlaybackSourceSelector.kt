@@ -25,10 +25,15 @@ internal fun List<StreamVideoSource>.pickVideo(
     }
     if (codecCandidates.isEmpty()) return null
     val targetHeight = quality.selectedQualityHeight()
-    if (targetHeight == null) return codecCandidates.maxWithOrNull(videoComparator)?.source
+    val comparator = if (selectedCodec == RECOMMENDED_CODEC_KEY) {
+        recommendedVideoComparator
+    } else {
+        qualityFirstComparator
+    }
+    if (targetHeight == null) return codecCandidates.maxWithOrNull(comparator)?.source
     return codecCandidates
         .filter { it.source.height <= targetHeight }
-        .maxWithOrNull(qualityFirstComparator)
+        .maxWithOrNull(comparator)
         ?.source
         ?: codecCandidates.minWithOrNull(
             compareBy<VideoCandidate> { it.source.height }
@@ -79,9 +84,9 @@ private data class VideoCandidate(
     val decoder: DecoderSupport,
 )
 
-private val videoComparator = compareBy<VideoCandidate> { it.decoder.rank }
-    .thenBy { it.source.height }
+private val recommendedVideoComparator = compareBy<VideoCandidate> { it.decoder.rank }
     .thenBy { it.source.codecReliability() }
+    .thenBy { it.source.height }
     .thenBy { it.source.fps }
     .thenBy { it.source.bitrate ?: 0 }
 
