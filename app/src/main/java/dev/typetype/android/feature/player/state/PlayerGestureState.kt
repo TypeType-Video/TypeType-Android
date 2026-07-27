@@ -21,6 +21,7 @@ fun ResizeMode.next(): ResizeMode = when (this) {
 class PlayerGestureState {
     val seekHintSide: MutableState<GestureSide?> = mutableStateOf(null)
     val seekHintSeconds = mutableFloatStateOf(0f)
+    val seekHintPulse: MutableLongState = mutableLongStateOf(0L)
     val brightnessOverlayActive: MutableState<Boolean> = mutableStateOf(false)
     val brightnessFraction = mutableFloatStateOf(0.5f)
     val volumeOverlayActive: MutableState<Boolean> = mutableStateOf(false)
