@@ -1,5 +1,6 @@
 package dev.typetype.android.core.ui.components
 
+import android.text.format.DateUtils
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -32,12 +33,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
 import dev.typetype.android.domain.feed.Video
+import dev.typetype.android.domain.feed.VideoAvailability
+import dev.typetype.android.domain.feed.availabilityAt
+import dev.typetype.android.domain.feed.releaseTimeMillis
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -50,11 +55,17 @@ fun VideoCard(
     onChannelClick: (() -> Unit)? = null,
 ) {
     var menuVisible by remember { mutableStateOf(false) }
+    var availabilityVisible by remember { mutableStateOf(false) }
+    val availability = video.availabilityAt(System.currentTimeMillis())
+    val metadata = video.metadataText()
 
     Column(
         modifier = modifier.fillMaxWidth().combinedClickable(
-            onClick = onClick,
+            onClick = {
+                if (availability == VideoAvailability.Playable) onClick() else availabilityVisible = true
+            },
             onLongClick = if (onMenuAction != null) ({ menuVisible = true }) else null,
+            role = Role.Button,
         ),
     ) {
         Box(
@@ -77,24 +88,12 @@ fun VideoCard(
                         .aspectRatio(16f / 9f)
                         .background(Color.Black.copy(alpha = 0.45f)),
                 )
-                WatchedBadge(modifier = Modifier.align(Alignment.TopStart).padding(8.dp))
+                WatchedBadge(modifier = Modifier.align(Alignment.TopEnd).padding(8.dp))
             }
-            if (video.durationSeconds > 0) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(8.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(MaterialTheme.colorScheme.background.copy(alpha = 0.85f))
-                        .padding(horizontal = 6.dp, vertical = 2.dp),
-                ) {
-                    Text(
-                        text = formatDuration(video.durationSeconds),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onBackground,
-                    )
-                }
-            }
+            VideoThumbnailBadges(
+                video = video,
+                edgePadding = 8.dp,
+            )
         }
         Spacer(Modifier.height(10.dp))
         Row(verticalAlignment = Alignment.Top) {
@@ -102,10 +101,20 @@ fun VideoCard(
                 .size(36.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                .let { if (onChannelClick != null) it.combinedClickable(onClick = onChannelClick) else it }
+                .let {
+                    if (onChannelClick != null) {
+                        it.combinedClickable(onClick = onChannelClick, role = Role.Button)
+                    } else {
+                        it
+                    }
+                }
             AsyncImage(
                 model = video.uploaderAvatarUrl,
-                contentDescription = null,
+                contentDescription = if (onChannelClick != null) {
+                    stringResource(R.string.video_open_channel_accessibility, video.uploaderName)
+                } else {
+                    null
+                },
                 contentScale = ContentScale.Crop,
                 modifier = avatarModifier,
             )
@@ -125,16 +134,21 @@ fun VideoCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = if (onChannelClick != null) {
-                        Modifier.combinedClickable(onClick = onChannelClick)
+                        Modifier.combinedClickable(onClick = onChannelClick, role = Role.Button)
                     } else {
                         Modifier
                     },
                 )
-                Text(
-                    text = "${formatViews(video.viewCount)} views",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                )
+                metadata?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                    )
+                }
+            }
+            if (onMenuAction != null) {
+                VideoMoreActionsButton(onClick = { menuVisible = true })
             }
         }
     }
@@ -144,6 +158,12 @@ fun VideoCard(
             onAction = onMenuAction,
             onDismiss = { menuVisible = false },
             state = menuItemState,
+        )
+    }
+    if (availabilityVisible) {
+        VideoAvailabilityDialog(
+            availability = availability,
+            onDismiss = { availabilityVisible = false },
         )
     }
 }
@@ -172,16 +192,25 @@ private fun WatchedBadge(modifier: Modifier = Modifier) {
     }
 }
 
-private fun formatDuration(seconds: Long): String {
-    val h = seconds / 3600
-    val m = (seconds % 3600) / 60
-    val s = seconds % 60
-    return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%d:%02d".format(m, s)
+@Composable
+private fun Video.metadataText(): String? {
+    val views = formatViews(viewCount)?.let { stringResource(R.string.video_views_short, it) }
+    val published = releaseTimeMillis()?.let(::formatPublishedDate)
+    return listOfNotNull(views, published).takeIf { it.isNotEmpty() }?.joinToString(" · ")
 }
 
-private fun formatViews(views: Long): String = when {
+private fun formatViews(views: Long): String? = when {
+    views < 0L -> null
     views >= 1_000_000_000 -> "%.1fB".format(views / 1_000_000_000.0)
     views >= 1_000_000 -> "%.1fM".format(views / 1_000_000.0)
     views >= 1_000 -> "%.1fK".format(views / 1_000.0)
     else -> views.toString()
 }
+
+private fun formatPublishedDate(timestampMillis: Long): String =
+    DateUtils.getRelativeTimeSpanString(
+        timestampMillis,
+        System.currentTimeMillis(),
+        DateUtils.MINUTE_IN_MILLIS,
+        DateUtils.FORMAT_ABBREV_RELATIVE,
+    ).toString()
