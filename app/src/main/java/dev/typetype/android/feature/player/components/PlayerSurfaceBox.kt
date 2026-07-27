@@ -2,7 +2,6 @@ package dev.typetype.android.feature.player.components
 
 import android.media.AudioManager
 import android.graphics.Rect
-import android.view.WindowManager
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -71,6 +69,8 @@ internal fun PlayerSurfaceBox(
     sponsorBlockSegments: List<SponsorBlockSegment> = emptyList(),
     chapters: List<Chapter> = emptyList(),
     gestureConfig: PlayerGestureConfig = PlayerGestureConfig(),
+    playbackBrightnessPercent: Int?,
+    onPlaybackBrightnessChange: (Int) -> Unit,
     loadSubtitleCues: LoadSubtitleCues,
 ) {
     val activity = LocalActivity.current
@@ -93,8 +93,11 @@ internal fun PlayerSurfaceBox(
     }
 
     LaunchedEffect(Unit) {
-        gestureState.brightnessFraction.floatValue = activity?.window?.attributes?.screenBrightness
-            ?.takeIf { it in 0f..1f } ?: 0.5f
+        gestureState.brightnessFraction.floatValue = playbackBrightnessPercent
+            ?.let { it / 100f }
+            ?: activity?.window?.attributes?.screenBrightness
+                ?.takeIf { it in 0f..1f }
+            ?: 0.5f
         val maxVolume = audioManager?.getStreamMaxVolume(AudioManager.STREAM_MUSIC) ?: 1
         val currentVolume = audioManager?.getStreamVolume(AudioManager.STREAM_MUSIC) ?: 0
         gestureState.volumeFraction.floatValue =
@@ -102,15 +105,11 @@ internal fun PlayerSurfaceBox(
         appliedVolumeLevel = currentVolume
     }
 
-    LaunchedEffect(isFullscreen) {
-        if (!isFullscreen) activity?.window?.clearPlaybackBrightnessOverride()
-    }
-
-    DisposableEffect(activity) {
-        onDispose {
-            activity?.window?.clearPlaybackBrightnessOverride()
-        }
-    }
+    PlaybackBrightnessEffect(
+        window = activity?.window,
+        isFullscreen = isFullscreen,
+        selectedPercent = playbackBrightnessPercent,
+    )
 
     LaunchedEffect(controlsVisible, playbackStatus.isPlaying) {
         if (controlsVisible && playbackStatus.isPlaying) {
@@ -170,9 +169,8 @@ internal fun PlayerSurfaceBox(
                     val percent = (fraction * 100).toInt()
                     if (percent != appliedBrightnessPercent) activity?.window?.let { window ->
                         appliedBrightnessPercent = percent
-                        val params = window.attributes
-                        params.screenBrightness = percent / 100f
-                        window.attributes = params
+                        onPlaybackBrightnessChange(percent)
+                        window.applyPlaybackBrightness(percent)
                     }
                 },
                 onAdjustVolume = { fraction ->
@@ -279,11 +277,4 @@ internal fun PlayerSurfaceBox(
             )
         }
     }
-}
-
-private fun android.view.Window.clearPlaybackBrightnessOverride() {
-    val params = attributes
-    if (params.screenBrightness == WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE) return
-    params.screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
-    attributes = params
 }
