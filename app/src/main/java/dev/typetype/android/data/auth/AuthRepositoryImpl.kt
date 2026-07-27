@@ -11,6 +11,7 @@ import dev.typetype.android.data.network.TypeTypeApi
 import dev.typetype.android.data.network.requireSuccessfulResponse
 import dev.typetype.android.data.network.dto.LoginRequest
 import dev.typetype.android.data.network.dto.OidcCallbackRequest
+import dev.typetype.android.data.network.dto.ResetPasswordRequest
 import dev.typetype.android.domain.auth.AuthRepository
 import dev.typetype.android.domain.auth.OidcAuthorization
 import dev.typetype.android.domain.auth.OidcCallbackParser
@@ -62,6 +63,23 @@ class AuthRepositoryImpl @Inject constructor(
         val token = response.body()?.token ?: error("Empty token in response")
         establishSession(serverId, api, token)
     }.onFailure { cookieJar.cancelAuthentication(serverId) }
+
+    override suspend fun resetPassword(
+        serverId: String,
+        resetToken: String,
+        newPassword: String,
+    ): Result<Unit> = runCatching {
+        val server = requireNotNull(serverRepository.getServer(serverId)) { "Server not found" }
+        val response = withContext(Dispatchers.IO) {
+            retrofitFactory.create(server.baseUrl).resetPassword(
+                ResetPasswordRequest(
+                    resetToken = resetToken,
+                    newPassword = newPassword,
+                ),
+            )
+        }
+        response.requireSuccessfulResponse()
+    }
 
     override suspend fun validateSession(): SessionStatus {
         val server = serverRepository.observeCurrentServer().first() ?: return SessionStatus.Invalid
