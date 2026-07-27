@@ -8,5 +8,6 @@ sealed interface PlayerEvent {
     data class AddedToPlaylist(val playlistName: String) : PlayerEvent
     data class DownloadQueued(val cached: Boolean) : PlayerEvent
     data class DownloadEnqueued(val fileName: String) : PlayerEvent
-    data class ActionFailed(val message: String) : PlayerEvent
+    data object DownloadFailed : PlayerEvent
+    data object ActionFailed : PlayerEvent
 }
