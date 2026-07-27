@@ -151,6 +151,85 @@ class SabrPlaybackSessionPreparerTest {
         )
     }
 
+    @Test
+    fun seekAdvancesTheGenerationWithoutChangingTheSession() = runBlocking {
+        enqueueCreate(startTimeMs = 60_000, ready = true, generation = 1)
+        enqueuePosition(60_000, generation = 1)
+        enqueuePrefetch(ready = true, generation = 1)
+        enqueueWindow(
+            startTimeMs = 60_000,
+            endOfStream = false,
+            segmentStartMs = 60_000,
+            generation = 1,
+        )
+
+        val session = preparer().seek(api, baseUrl, target(), binding(), 60_000)
+
+        assertEquals("session", session.sessionId)
+        assertEquals(1, session.generation)
+        assertEquals("/api/sabr/playback/session/seek", server.takeRequest().path)
+        assertEquals("/api/sabr/playback/session/position", server.takeRequest().path)
+    }
+
+    @Test
+    fun serverRequestedLowerItagMustBelongToTheAndroidRecoverySet() = runBlocking {
+        enqueueCreate()
+        enqueuePosition(0)
+        server.enqueue(
+            jsonResponse(
+                """{"sessionId":"session","generation":0,"ready":false,"status":"failed","terminalError":"retry lower","recoveryAction":"retry_fresh_session_lower_video_itag","retryVideoItags":[136]}""",
+            ),
+        )
+        enqueueCreate(ready = true, sessionId = "fresh", videoItag = 136)
+        enqueuePosition(0, sessionId = "fresh")
+        enqueuePrefetch(ready = true, sessionId = "fresh")
+        enqueueWindow(0, false, sessionId = "fresh", videoItag = 136)
+
+        val session = preparer().prepare(
+            api,
+            baseUrl,
+            target(recoveryVideoItags = setOf(136)),
+        )
+
+        assertEquals(136, session.videoItag)
+        repeat(3) { server.takeRequest() }
+        val retryBody = Json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject
+        assertEquals("136", retryBody.getValue("videoItag").jsonPrimitive.content)
+    }
+
+    @Test
+    fun terminalWindowFailureStopsPolling() = runBlocking {
+        enqueueCreate()
+        enqueuePosition(0)
+        server.enqueue(
+            jsonResponse(
+                """{"sessionId":"session","generation":0,"ready":false,"retryAfterMs":250,"status":"failed","terminalError":"reload failed"}""",
+            ),
+        )
+
+        val failure = runCatching { preparer().prepare(api, baseUrl, target()) }.exceptionOrNull()
+
+        assertTrue(failure is SabrPlaybackRecoveryException)
+        assertEquals(
+            "youtube_sabr_window_failed",
+            (failure as SabrPlaybackRecoveryException).failureCode,
+        )
+        assertEquals(3, server.requestCount)
+    }
+
+    @Test
+    fun windowMediaMustStayOnTheTypeTypeOrigin() = runBlocking {
+        enqueueCreate()
+        enqueuePosition(0)
+        enqueuePrefetch(ready = true)
+        enqueueWindow(startTimeMs = 0, endOfStream = false, audioInitUrl = "https://media.example/init")
+
+        val failure = runCatching { preparer().prepare(api, baseUrl, target()) }.exceptionOrNull()
+
+        assertTrue(failure is IllegalStateException)
+        assertTrue(failure?.message.orEmpty().contains("origin"))
+    }
+
     private fun preparer() = SabrPlaybackSessionPreparer(pause = {}, maxWindowPolls = 4)
 
     private fun target(
