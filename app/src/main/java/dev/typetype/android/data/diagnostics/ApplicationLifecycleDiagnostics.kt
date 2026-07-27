@@ -42,7 +42,7 @@ class ApplicationLifecycleDiagnostics @Inject constructor(
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             try {
-                repository.recordApplicationEvent("/app/crash")
+                repository.recordLocalEvent("/app/crash")
             } finally {
                 if (previous != null) {
                     previous.uncaughtException(thread, throwable)
@@ -64,7 +64,7 @@ class ApplicationLifecycleDiagnostics @Inject constructor(
             .sortedBy(ApplicationExitInfo::getTimestamp)
         exits.forEach { info ->
             exitRoute(info.reason)?.let { route ->
-                repository.recordApplicationEvent(route, info.timestamp)
+                repository.recordLocalEvent(route, info.timestamp)
             }
         }
         exits.maxOfOrNull(ApplicationExitInfo::getTimestamp)?.let { marker.writeText(it.toString()) }
