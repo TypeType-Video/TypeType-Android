@@ -28,6 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -46,6 +47,7 @@ fun PlaylistVideoCard(
     modifier: Modifier = Modifier,
     meta: VideoMeta? = null,
     onChannelClick: ((channelUrl: String) -> Unit)? = null,
+    onMoreClick: (() -> Unit)? = null,
 ) {
     val avatarUrl = video.channelAvatarUrl.takeIf { it.isNotBlank() }
         ?: meta?.channelAvatarUrl?.takeIf { it.isNotBlank() }
@@ -54,11 +56,16 @@ fun PlaylistVideoCard(
     val channelUrl = video.channelUrl.takeIf { it.isNotBlank() }
         ?: meta?.channelUrl?.takeIf { it.isNotBlank() }
     val hasChannelInfo = avatarUrl != null || channelName != null
+    val channelActionDescription = when {
+        onChannelClick == null || channelUrl == null -> null
+        channelName != null -> stringResource(R.string.video_open_channel_accessibility, channelName)
+        else -> stringResource(R.string.video_menu_open_channel)
+    }
 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .combinedClickable(onClick = onClick, onLongClick = onLongPress)
+            .combinedClickable(onClick = onClick, onLongClick = onLongPress, role = Role.Button)
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         Box(
@@ -103,6 +110,13 @@ fun PlaylistVideoCard(
                     )
                 }
             }
+            if (onMoreClick != null) {
+                VideoMoreActionsButton(
+                    onClick = onMoreClick,
+                    overlay = true,
+                    modifier = Modifier.align(Alignment.TopEnd).padding(6.dp),
+                )
+            }
             if (video.durationSeconds > 0) {
                 Box(
                     modifier = Modifier
@@ -129,14 +143,17 @@ fun PlaylistVideoCard(
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .let { base ->
                         if (onChannelClick != null && channelUrl != null) {
-                            base.combinedClickable(onClick = { onChannelClick(channelUrl) })
+                            base.combinedClickable(
+                                onClick = { onChannelClick(channelUrl) },
+                                role = Role.Button,
+                            )
                         } else {
                             base
                         }
                     }
                 AsyncImage(
                     model = avatarUrl,
-                    contentDescription = null,
+                    contentDescription = channelActionDescription,
                     contentScale = ContentScale.Crop,
                     modifier = avatarModifier,
                 )
@@ -158,7 +175,10 @@ fun PlaylistVideoCard(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             modifier = if (onChannelClick != null && channelUrl != null) {
-                                Modifier.combinedClickable(onClick = { onChannelClick(channelUrl) })
+                                Modifier.combinedClickable(
+                                    onClick = { onChannelClick(channelUrl) },
+                                    role = Role.Button,
+                                )
                             } else {
                                 Modifier
                             },
