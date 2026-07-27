@@ -5,6 +5,7 @@ import dev.typetype.android.domain.stream.SabrPlaybackRepository
 import dev.typetype.android.domain.stream.SabrPlaybackSession
 import dev.typetype.android.domain.stream.SabrPlaybackTarget
 import dev.typetype.android.domain.stream.StreamRequestScope
+import dev.typetype.android.data.stream.SabrPlaybackRecoveryException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.runBlocking
@@ -172,6 +173,107 @@ class SabrPlaybackSeekCoordinatorTest {
         }.join()
 
         assertTrue(!applied)
+        assertTrue(requireNotNull(completion).exceptionOrNull() === failure)
+    }
+
+    @Test
+    fun `bounded recovery uses remaining attempts without nested preparation`() = runBlocking {
+        val state = state()
+        val requestedItags = mutableListOf<Int>()
+        val repository = object : SabrPlaybackRepository {
+            override suspend fun prepare(target: SabrPlaybackTarget) = error("Not used")
+
+            override suspend fun recoverOnce(
+                target: SabrPlaybackTarget,
+                startTimeMs: Long,
+            ): Result<SabrPlaybackSession> {
+                requestedItags += target.videoItag
+                return if (requestedItags.size == 1) {
+                    Result.failure(
+                        SabrPlaybackRecoveryException(
+                            "lower",
+                            "retry_fresh_session_lower_video_itag",
+                            listOf(135),
+                        ),
+                    )
+                } else {
+                    Result.success(
+                        session(0).copy(
+                            sessionId = "fresh",
+                            videoItag = target.videoItag,
+                        ),
+                    )
+                }
+            }
+
+            override suspend fun seek(
+                target: SabrPlaybackTarget,
+                binding: SabrPlaybackBinding,
+                startTimeMs: Long,
+            ) = error("Not used")
+        }
+        val recoveryTarget = state.target.copy(
+            videoItag = 136,
+            recoveryVideoItags = setOf(135),
+        )
+        var attempts = 0
+        var appliedItag: Int? = null
+        val coordinator = SabrPlaybackSeekCoordinator(repository, this, { state }) {
+                _, target, _ ->
+            appliedItag = target.videoItag
+        }
+
+        coordinator.recoverBounded(
+            state = state,
+            target = recoveryTarget,
+            positionMs = 67_000,
+            initialFailure = IllegalStateException("initial"),
+            takeAttempt = { ++attempts <= 2 },
+        ).join()
+
+        assertEquals(listOf(136, 135), requestedItags)
+        assertEquals(135, appliedItag)
+    }
+
+    @Test
+    fun `bounded recovery stops when no attempt remains`() = runBlocking {
+        val state = state()
+        var requested = false
+        val repository = object : SabrPlaybackRepository {
+            override suspend fun prepare(target: SabrPlaybackTarget) = error("Not used")
+
+            override suspend fun recoverOnce(
+                target: SabrPlaybackTarget,
+                startTimeMs: Long,
+            ): Result<SabrPlaybackSession> {
+                requested = true
+                return Result.success(session(0))
+            }
+
+            override suspend fun seek(
+                target: SabrPlaybackTarget,
+                binding: SabrPlaybackBinding,
+                startTimeMs: Long,
+            ) = error("Not used")
+        }
+        val failure = IllegalStateException("exhausted")
+        var completion: Result<Unit>? = null
+        val coordinator = SabrPlaybackSeekCoordinator(repository, this, { state }) {
+                _, _, _ ->
+            error("Must not apply")
+        }
+
+        coordinator.recoverBounded(
+            state = state,
+            target = state.target,
+            positionMs = 67_000,
+            initialFailure = failure,
+            takeAttempt = { false },
+        ) {
+            completion = it
+        }.join()
+
+        assertTrue(!requested)
         assertTrue(requireNotNull(completion).exceptionOrNull() === failure)
     }
 
