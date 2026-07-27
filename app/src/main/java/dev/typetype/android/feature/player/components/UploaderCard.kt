@@ -24,10 +24,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import dev.typetype.android.R
 
 @Composable
 fun UploaderCard(
@@ -35,9 +37,11 @@ fun UploaderCard(
     avatarUrl: String,
     subscriberCount: Long,
     verified: Boolean,
+    modifier: Modifier = Modifier,
+    isSubscribed: Boolean = false,
+    subscriptionInFlight: Boolean = false,
     onCardClick: () -> Unit = {},
     onSubscribeClick: () -> Unit = {},
-    modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier.fillMaxWidth().clickable(onClick = onCardClick),
@@ -72,9 +76,9 @@ fun UploaderCard(
                     )
                 }
             }
-            if (subscriberCount > 0) {
+            if (subscriberCount >= 0) {
                 Text(
-                    text = "${formatCompact(subscriberCount)} subscribers",
+                    text = stringResource(R.string.uploader_subscribers_short, formatCompact(subscriberCount)),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -83,10 +87,19 @@ fun UploaderCard(
         Spacer(Modifier.width(8.dp))
         Button(
             onClick = onSubscribeClick,
+            enabled = !subscriptionInFlight,
             shape = RoundedCornerShape(20.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.onBackground,
-                contentColor = MaterialTheme.colorScheme.background,
+                containerColor = if (isSubscribed) {
+                    MaterialTheme.colorScheme.surfaceVariant
+                } else {
+                    MaterialTheme.colorScheme.onBackground
+                },
+                contentColor = if (isSubscribed) {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                } else {
+                    MaterialTheme.colorScheme.background
+                },
             ),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(
                 horizontal = 16.dp,
@@ -94,7 +107,9 @@ fun UploaderCard(
             ),
         ) {
             Text(
-                text = "Subscribe",
+                text = stringResource(
+                    if (isSubscribed) R.string.channel_subscribed else R.string.channel_subscribe,
+                ),
                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
             )
         }
