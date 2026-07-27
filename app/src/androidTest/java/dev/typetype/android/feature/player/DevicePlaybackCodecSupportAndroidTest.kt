@@ -24,6 +24,11 @@ class DevicePlaybackCodecSupportAndroidTest {
     }
 
     @Test
+    fun unknownFrameRateDoesNotRejectBaselineH264() {
+        assertFalse(support.video(h264().copy(fps = 0)) == DecoderSupport.Unsupported)
+    }
+
+    @Test
     fun baselineH264DecoderCanStart() {
         val format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 640, 360)
         format.setInteger(MediaFormat.KEY_FRAME_RATE, 30)

@@ -46,16 +46,18 @@ internal fun List<StreamVideoSource>.playableLowerVideoItags(
     selected: StreamVideoSource,
     codecSupport: PlaybackCodecSupport,
     selectedCodec: String = RECOMMENDED_CODEC_KEY,
-): Set<Int> = asSequence()
-    .filter { it.itag > 0 && it.url.isNotBlank() && it.height > 0 }
-    .filter { codecSupport.video(it) != DecoderSupport.Unsupported }
-    .filter {
-        selectedCodec == RECOMMENDED_CODEC_KEY || it.codecSelectionKey() == selectedCodec
-    }
-    .filter { videoQualityComparator.compare(it, selected) < 0 }
-    .sortedWith(videoQualityComparator.reversed())
-    .map { it.itag }
-    .toCollection(linkedSetOf())
+): Set<Int> {
+    val recoveryCodec = selectedCodec.takeUnless { it == RECOMMENDED_CODEC_KEY }
+        ?: selected.codecSelectionKey()
+    return asSequence()
+        .filter { it.itag > 0 && it.url.isNotBlank() && it.height > 0 }
+        .filter { codecSupport.video(it) != DecoderSupport.Unsupported }
+        .filter { it.codecSelectionKey() == recoveryCodec }
+        .filter { videoQualityComparator.compare(it, selected) < 0 }
+        .sortedWith(videoQualityComparator.reversed())
+        .map { it.itag }
+        .toCollection(linkedSetOf())
+}
 
 internal fun List<StreamAudioSource>.pickAudio(
     selectedAudioKey: String?,

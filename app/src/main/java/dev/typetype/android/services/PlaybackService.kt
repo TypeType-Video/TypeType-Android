@@ -7,7 +7,6 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
@@ -130,22 +129,13 @@ class PlaybackService : MediaSessionService() {
             .setUsage(C.USAGE_MEDIA)
             .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
             .build()
-        val loadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(
-                MIN_BUFFER_MS,
-                MAX_BUFFER_MS,
-                BUFFER_FOR_PLAYBACK_MS,
-                BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS,
-            )
-            .setBackBuffer(BACK_BUFFER_MS, true)
-            .build()
         val renderersFactory = DefaultRenderersFactory(this)
             .setEnableDecoderFallback(true)
         return ExoPlayer.Builder(this, renderersFactory)
             .setAudioAttributes(audioAttributes, true)
             .setHandleAudioBecomingNoisy(true)
             .setWakeMode(C.WAKE_MODE_NETWORK)
-            .setLoadControl(loadControl)
+            .setLoadControl(createPlaybackLoadControl())
             .setMediaSourceFactory(
                 MergedStreamMediaSourceFactory(
                     this,
@@ -212,11 +202,6 @@ class PlaybackService : MediaSessionService() {
     private companion object {
         const val NOTIFICATION_ID = 1001
         const val NOTIFICATION_CHANNEL_ID = "typetype.playback"
-        const val MIN_BUFFER_MS = 30_000
-        const val MAX_BUFFER_MS = 30_000
-        const val BUFFER_FOR_PLAYBACK_MS = 2_500
-        const val BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS = 5_000
-        const val BACK_BUFFER_MS = 30_000
         const val MIN_LOADABLE_RETRY_COUNT = 5
         const val SEEK_BACK_INCREMENT_MS = 10_000L
         const val SEEK_FORWARD_INCREMENT_MS = 10_000L
