@@ -44,7 +44,9 @@ internal class DevicePlaybackCodecSupport(
             .setCodecs(source.codec)
             .setWidth(source.width)
             .setHeight(source.height)
-            .setFrameRate(source.fps.toFloat())
+            .apply {
+                if (source.fps > 0) setFrameRate(source.fps.toFloat())
+            }
             .build()
         val support = decoderSupport(format)
         return videoCache.putIfAbsent(key, support) ?: support

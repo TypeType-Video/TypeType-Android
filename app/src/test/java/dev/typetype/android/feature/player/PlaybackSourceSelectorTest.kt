@@ -190,6 +190,28 @@ class PlaybackSourceSelectorTest {
     }
 
     @Test
+    fun `recommended SABR recovery keeps the active codec`() {
+        val selected = video("selected", height = 1080, codec = "avc1.640028", itag = 137)
+        val lowerH264 = video("lower-h264", height = 720, codec = "avc1.64001f", itag = 136)
+        val lowerVp9 = video("lower-vp9", height = 720, codec = "vp09.00.31.08", itag = 247)
+        val support = FakeCodecSupport(
+            video = mapOf(
+                selected.url to DecoderSupport.Hardware,
+                lowerH264.url to DecoderSupport.Hardware,
+                lowerVp9.url to DecoderSupport.Hardware,
+            ),
+        )
+
+        assertEquals(
+            setOf(136),
+            listOf(lowerVp9, selected, lowerH264).playableLowerVideoItags(
+                selected,
+                support,
+            ),
+        )
+    }
+
+    @Test
     fun `unsupported selected audio falls back to supported language`() {
         val unsupported = audio("selected", locale = "en")
         val french = audio("french", locale = "fr")
