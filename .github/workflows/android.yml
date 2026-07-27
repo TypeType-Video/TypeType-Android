@@ -156,8 +156,11 @@ jobs:
           apk_version="$("$ANDROID_HOME/cmdline-tools/latest/bin/apkanalyzer" manifest version-name "$apk")"
           test "$apk_version" = "$RELEASE_VERSION"
           cp "$apk" "artifacts/TypeType-$RELEASE_TAG.apk"
-          sha256sum "artifacts/TypeType-$RELEASE_TAG.apk" \
-            > "artifacts/TypeType-$RELEASE_TAG.apk.sha256"
+          (
+            cd artifacts
+            sha256sum "TypeType-$RELEASE_TAG.apk" \
+              > "TypeType-$RELEASE_TAG.apk.sha256"
+          )
 
       - name: Upload release APK
         uses: actions/upload-artifact@v7.0.1
