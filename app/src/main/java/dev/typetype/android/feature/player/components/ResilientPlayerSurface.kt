@@ -2,6 +2,8 @@ package dev.typetype.android.feature.player.components
 
 import android.graphics.Color
 import android.view.LayoutInflater
+import android.view.View
+import android.widget.FrameLayout
 import androidx.annotation.OptIn
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -40,6 +42,7 @@ internal fun ResilientPlayerSurface(
     player: Player,
     surfaceKey: String,
     resizeMode: ResizeMode,
+    showNativeSubtitles: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -63,10 +66,13 @@ internal fun ResilientPlayerSurface(
         key(surfaceKey) {
             AndroidView(
                 factory = { context ->
-                    (LayoutInflater.from(context).inflate(R.layout.player_view_texture, null) as PlayerView).apply {
+                    val parent = FrameLayout(context)
+                    (LayoutInflater.from(context).inflate(R.layout.player_view_texture, parent, false) as PlayerView).apply {
                         useController = false
                         setShutterBackgroundColor(Color.BLACK)
                         this.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                        subtitleView?.visibility =
+                            if (showNativeSubtitles) View.VISIBLE else View.GONE
                         this.player = player
                         view = this
                         onResume()
@@ -74,6 +80,8 @@ internal fun ResilientPlayerSurface(
                 },
                 update = { playerView ->
                     playerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                    playerView.subtitleView?.visibility =
+                        if (showNativeSubtitles) View.VISIBLE else View.GONE
                     if (playerView.player !== player) {
                         playerView.player = player
                     }

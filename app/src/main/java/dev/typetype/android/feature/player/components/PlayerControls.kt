@@ -2,11 +2,12 @@ package dev.typetype.android.feature.player.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBarsIgnoringVisibility
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -36,9 +37,11 @@ import dev.typetype.android.domain.stream.SponsorBlockSegment
 import dev.typetype.android.feature.player.state.ResizeMode
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 fun PlayerControls(
     player: Player,
     onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier,
     onOpenOptions: () -> Unit = {},
     onOpenChapters: () -> Unit = {},
     onEnterPip: () -> Unit = {},
@@ -46,9 +49,9 @@ fun PlayerControls(
     onCycleResizeMode: () -> Unit = {},
     resizeMode: ResizeMode = ResizeMode.Fit,
     isFullscreen: Boolean = false,
+    isPipAvailable: Boolean = false,
     chaptersAvailable: Boolean = false,
     sponsorBlockSegments: List<SponsorBlockSegment> = emptyList(),
-    modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier) {
         TopScrim(modifier = Modifier.align(Alignment.TopCenter))
@@ -66,6 +69,7 @@ fun PlayerControls(
             onCycleResizeMode = onCycleResizeMode,
             resizeMode = resizeMode,
             isFullscreen = isFullscreen,
+            isPipAvailable = isPipAvailable,
             chaptersAvailable = chaptersAvailable,
             modifier = Modifier
                 .align(Alignment.TopEnd)
@@ -86,7 +90,7 @@ fun PlayerControls(
                 .fillMaxWidth()
                 .then(
                     if (isFullscreen) {
-                        Modifier.windowInsetsPadding(WindowInsets.navigationBars)
+                        Modifier.windowInsetsPadding(WindowInsets.navigationBarsIgnoringVisibility)
                     } else {
                         Modifier
                     },
@@ -150,6 +154,7 @@ private fun TopActions(
     onCycleResizeMode: () -> Unit,
     resizeMode: ResizeMode,
     isFullscreen: Boolean,
+    isPipAvailable: Boolean,
     chaptersAvailable: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -163,12 +168,14 @@ private fun TopActions(
                 )
             }
         }
-        OverlayIconButton(onClick = onEnterPip) {
-            Icon(
-                painter = painterResource(R.drawable.ic_pip),
-                contentDescription = stringResource(R.string.player_pip),
-                tint = Color.White,
-            )
+        if (isPipAvailable) {
+            OverlayIconButton(onClick = onEnterPip) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_pip),
+                    contentDescription = stringResource(R.string.player_pip),
+                    tint = Color.White,
+                )
+            }
         }
         if (chaptersAvailable) {
             OverlayIconButton(onClick = onOpenChapters) {

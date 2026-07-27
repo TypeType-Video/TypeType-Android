@@ -51,9 +51,9 @@ private val COMPACT_THUMB_HEIGHT = 18.dp
 @Composable
 fun PlayerTimeBar(
     player: Player,
+    modifier: Modifier = Modifier,
     segments: List<SponsorBlockSegment> = emptyList(),
     compact: Boolean = false,
-    modifier: Modifier = Modifier,
 ) {
     val progressState = rememberProgressStateWithTickInterval(player, TICK_INTERVAL_MS)
     var scrubPositionMs by remember { mutableStateOf<Long?>(null) }
