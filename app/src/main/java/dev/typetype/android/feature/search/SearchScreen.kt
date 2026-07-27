@@ -8,17 +8,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -52,13 +50,14 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.R
-import dev.typetype.android.core.ui.components.VideoCard
+import dev.typetype.android.core.ui.components.AnimatedError
 
 @Composable
 fun SearchRoute(
     onNavigateBack: () -> Unit,
     onPlayVideo: (videoUrl: String) -> Unit,
     onOpenChannel: (channelUrl: String) -> Unit = {},
+    onOpenPlaylist: (playlistUrl: String) -> Unit = {},
     viewModel: SearchViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -67,6 +66,7 @@ fun SearchRoute(
         onNavigateBack = onNavigateBack,
         onPlayVideo = onPlayVideo,
         onOpenChannel = onOpenChannel,
+        onOpenPlaylist = onOpenPlaylist,
         onAction = viewModel::onAction,
     )
 }
@@ -77,17 +77,13 @@ fun SearchScreen(
     onNavigateBack: () -> Unit,
     onPlayVideo: (videoUrl: String) -> Unit,
     onOpenChannel: (channelUrl: String) -> Unit,
+    onOpenPlaylist: (playlistUrl: String) -> Unit,
     onAction: (SearchAction) -> Unit,
 ) {
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
-    val menuScope = dev.typetype.android.feature.menu.rememberVideoMenuScope(
-        onOpenChannel = onOpenChannel,
-    )
-    val visibleResults = state.results.filterNot(menuScope::isHidden)
-
     fun submit() {
         keyboardController?.hide()
         focusManager.clearFocus()
@@ -100,7 +96,7 @@ fun SearchScreen(
         onAction(SearchAction.OnSuggestionClick(term))
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize().imePadding()) {
         SearchTopBar(
             query = state.query,
             onQueryChange = { onAction(SearchAction.OnQueryChange(it)) },
@@ -108,6 +104,14 @@ fun SearchScreen(
             onClear = { onAction(SearchAction.OnClearQuery) },
             onNavigateBack = onNavigateBack,
             focusRequester = focusRequester,
+        )
+        SearchFilterBar(
+            contentFilters = state.contentFilters,
+            sortFilters = state.sortFilters,
+            selectedContent = state.selectedContentFilter,
+            selectedSort = state.selectedSortFilter,
+            onContentSelect = { onAction(SearchAction.OnContentFilterSelect(it)) },
+            onSortSelect = { onAction(SearchAction.OnSortFilterSelect(it)) },
         )
 
         when {
@@ -117,16 +121,11 @@ fun SearchScreen(
             ) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
-            state.errorMessage != null -> Box(
-                modifier = Modifier.fillMaxSize().padding(24.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = state.errorMessage,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
-                )
-            }
+            state.errorMessage != null -> AnimatedError(
+                message = state.errorMessage,
+                requestId = state.errorRequestId,
+                onRetry = { onAction(SearchAction.OnSearch) },
+            )
             !state.hasSearched -> SuggestionsAndHistory(
                 query = state.query,
                 suggestions = state.suggestions,
@@ -136,32 +135,14 @@ fun SearchScreen(
                 onHistoryClick = ::submitTerm,
                 onDeleteHistory = { onAction(SearchAction.OnDeleteHistoryEntry(it)) },
             )
-            visibleResults.isEmpty() -> Box(
-                modifier = Modifier.fillMaxSize().padding(24.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = stringResource(R.string.search_no_results, state.query),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            else -> LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                items(visibleResults, key = { it.id }) { video ->
-                    VideoCard(
-                        video = video,
-                        onClick = { onPlayVideo(video.url) },
-                        onChannelClick = { onOpenChannel(video.uploaderUrl) },
-                        onMenuAction = { action -> menuScope.onAction(action, video) },
-                        menuItemState = menuScope.stateFor(video),
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                    )
-                }
-            }
+            else -> SearchResultsGrid(
+                state = state,
+                onPlayVideo = onPlayVideo,
+                onOpenChannel = onOpenChannel,
+                onOpenPlaylist = onOpenPlaylist,
+                onSearchSuggestion = { onAction(SearchAction.OnSuggestionClick(it)) },
+                onLoadMore = { onAction(SearchAction.OnLoadMore) },
+            )
         }
     }
 }
@@ -253,99 +234,5 @@ private fun SearchTopBar(
                 },
             )
         }
-    }
-}
-
-@Composable
-private fun SuggestionsAndHistory(
-    query: String,
-    suggestions: List<String>,
-    history: List<String>,
-    onSuggestionClick: (String) -> Unit,
-    onSuggestionFill: (String) -> Unit,
-    onHistoryClick: (String) -> Unit,
-    onDeleteHistory: (String) -> Unit,
-) {
-    val trimmed = query.trim()
-    val showSuggestions = trimmed.isNotEmpty() && suggestions.isNotEmpty()
-    val showHistory = trimmed.isEmpty() && history.isNotEmpty()
-
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-        if (showSuggestions) {
-            items(suggestions, key = { "sug-$it" }) { term ->
-                SuggestionRow(
-                    term = term,
-                    icon = Icons.Filled.Search,
-                    onClick = { onSuggestionClick(term) },
-                    trailing = {
-                        IconButton(onClick = { onSuggestionFill(term) }) {
-                            Icon(
-                                imageVector = Icons.Filled.NorthWest,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    },
-                )
-            }
-        }
-
-        if (showHistory) {
-            item(key = "history-header") {
-                Text(
-                    text = stringResource(R.string.search_recent_searches),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                )
-            }
-            items(history, key = { "hist-$it" }) { term ->
-                SuggestionRow(
-                    term = term,
-                    icon = Icons.Filled.History,
-                    onClick = { onHistoryClick(term) },
-                    trailing = {
-                        IconButton(onClick = { onDeleteHistory(term) }) {
-                            Icon(
-                                imageVector = Icons.Filled.Clear,
-                                contentDescription = stringResource(R.string.search_clear),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    },
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun SuggestionRow(
-    term: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    onClick: () -> Unit,
-    trailing: @Composable () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp),
-        )
-        Spacer(Modifier.width(14.dp))
-        Text(
-            text = term,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.weight(1f),
-        )
-        trailing()
     }
 }
