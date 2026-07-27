@@ -6,6 +6,9 @@ import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 @Singleton
@@ -15,14 +18,25 @@ class ApiBaseUrlHolder @Inject constructor(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     @Volatile
-    var currentBaseUrl: String? = null
+    var currentEndpoint: CurrentServerEndpoint? = null
         private set
+
+    private val endpointFlow = MutableStateFlow<CurrentServerEndpoint?>(null)
+
+    val currentBaseUrl: String?
+        get() = currentEndpoint?.baseUrl
 
     init {
         scope.launch {
             serverRepository.observeCurrentServer().collect { server ->
-                currentBaseUrl = server?.baseUrl
+                currentEndpoint = server?.let(CurrentServerEndpoint::from)
+                endpointFlow.value = currentEndpoint
             }
         }
     }
+
+    suspend fun await(serverId: String): CurrentServerEndpoint =
+        endpointFlow.filterNotNull().first { it.serverId == serverId }
+
+    suspend fun awaitCurrent(): CurrentServerEndpoint = endpointFlow.filterNotNull().first()
 }
