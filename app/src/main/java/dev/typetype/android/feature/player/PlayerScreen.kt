@@ -21,25 +21,45 @@ import dev.typetype.android.R
 import dev.typetype.android.domain.comments.Comment
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.merge
 
 private const val PLAYLIST_NAME_PLACEHOLDER = "__PLAYLIST_NAME__"
 
 @Composable
 fun PlayerRoute(
+    isFullscreen: Boolean,
+    onFullscreenChange: (Boolean) -> Unit,
     onNavigateBack: () -> Unit,
+    onOpenAccounts: () -> Unit,
     onPlayVideo: (videoUrl: String) -> Unit,
     onOpenChannel: (channelUrl: String) -> Unit = {},
     viewModel: PlayerViewModel = hiltViewModel(),
+    channelActionsViewModel: PlayerChannelActionsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val channelState by channelActionsViewModel.state.collectAsStateWithLifecycle()
+    val playerEvents = remember(viewModel.events, channelActionsViewModel.events) {
+        merge(viewModel.events, channelActionsViewModel.events)
+    }
+    val channelUrl = state.stream?.uploaderUrl.orEmpty()
     PlayerScreen(
         state = state,
         commentsFlow = viewModel.comments,
-        eventsFlow = viewModel.events,
+        eventsFlow = playerEvents,
         commentsRepository = viewModel.commentsRepository,
+        prepareSabrPlayback = viewModel.sabrPlayback::prepare,
+        loadSubtitleCues = viewModel.subtitleCueLoader::load,
+        isFullscreen = isFullscreen,
+        onFullscreenChange = onFullscreenChange,
         onNavigateBack = onNavigateBack,
+        onOpenAccounts = onOpenAccounts,
         onPlayVideo = onPlayVideo,
         onOpenChannel = onOpenChannel,
+        isSubscribed = channelState.isSubscribed(channelUrl),
+        subscriptionInFlight = channelState.isUpdating(channelUrl),
+        onToggleSubscription = {
+            state.stream?.let(channelActionsViewModel::toggle)
+        },
         onAction = viewModel::onAction,
     )
 }
@@ -50,9 +70,17 @@ fun PlayerScreen(
     commentsFlow: Flow<PagingData<Comment>>,
     eventsFlow: Flow<PlayerEvent> = emptyFlow(),
     commentsRepository: dev.typetype.android.domain.comments.CommentsRepository? = null,
+    prepareSabrPlayback: PrepareSabrPlayback = { _, _, _ -> null },
+    loadSubtitleCues: LoadSubtitleCues = { Result.success(emptyList()) },
+    isFullscreen: Boolean = false,
+    onFullscreenChange: (Boolean) -> Unit = {},
     onNavigateBack: () -> Unit,
+    onOpenAccounts: () -> Unit,
     onPlayVideo: (videoUrl: String) -> Unit,
     onOpenChannel: (channelUrl: String) -> Unit = {},
+    isSubscribed: Boolean = false,
+    subscriptionInFlight: Boolean = false,
+    onToggleSubscription: () -> Unit = {},
     onAction: (PlayerAction) -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -63,6 +91,8 @@ fun PlayerScreen(
     val downloadQueued = stringResource(R.string.player_snackbar_download_queued)
     val downloadCached = stringResource(R.string.player_snackbar_download_cached)
     val downloadEnqueued = stringResource(R.string.player_snackbar_download_enqueued)
+    val downloadFailed = stringResource(R.string.player_snackbar_download_failed)
+    val actionFailed = stringResource(R.string.snackbar_action_failed)
     val addedToPlaylist = stringResource(
         R.string.player_snackbar_added_to_playlist,
         PLAYLIST_NAME_PLACEHOLDER,
@@ -76,6 +106,8 @@ fun PlayerScreen(
         downloadQueued,
         downloadCached,
         downloadEnqueued,
+        downloadFailed,
+        actionFailed,
         addedToPlaylist,
     ) {
         eventsFlow.collect { event ->
@@ -88,7 +120,8 @@ fun PlayerScreen(
                     addedToPlaylist.replace(PLAYLIST_NAME_PLACEHOLDER, event.playlistName)
                 is PlayerEvent.DownloadQueued -> if (event.cached) downloadCached else downloadQueued
                 is PlayerEvent.DownloadEnqueued -> downloadEnqueued
-                is PlayerEvent.ActionFailed -> event.message
+                PlayerEvent.DownloadFailed -> downloadFailed
+                PlayerEvent.ActionFailed -> actionFailed
             }
             snackbarHostState.showSnackbar(message, duration = SnackbarDuration.Short)
         }
@@ -104,15 +137,18 @@ fun PlayerScreen(
         ) {
             when {
                 state.isLoading -> LoadingState()
-                state.errorMessage != null -> ErrorState(
-                    message = state.errorMessage,
+                state.error != null -> ErrorState(
+                    classification = state.error,
                     onNavigateBack = onNavigateBack,
                     onRetry = { onAction(PlayerAction.OnRetry) },
+                    onOpenAccounts = onOpenAccounts,
                 )
                 state.stream != null -> LoadedPlayer(
                     stream = state.stream,
                     videoUrl = state.videoUrl,
                     resumeAtMillis = state.resumeAtMillis,
+                    initialPlayWhenReady = state.initialPlayWhenReady,
+                    playbackBindGeneration = state.playbackBindGeneration,
                     isFavorited = state.isFavorited,
                     isInWatchLater = state.isInWatchLater,
                     gestureConfig = state.gestureConfig,
@@ -126,11 +162,20 @@ fun PlayerScreen(
                     playlistPickerVisible = state.playlistPickerVisible,
                     playlistActionInFlight = state.playlistActionInFlight,
                     downloadInFlight = state.downloadInFlight,
+                    playbackQueue = state.playbackQueue,
                     commentsFlow = commentsFlow,
                     commentsRepository = commentsRepository,
+                    prepareSabrPlayback = prepareSabrPlayback,
+                    loadSubtitleCues = loadSubtitleCues,
+                    isFullscreen = isFullscreen,
+                    onFullscreenChange = onFullscreenChange,
                     onNavigateBack = onNavigateBack,
+                    onOpenAccounts = onOpenAccounts,
                     onPlayVideo = onPlayVideo,
                     onOpenChannel = onOpenChannel,
+                    isSubscribed = isSubscribed,
+                    subscriptionInFlight = subscriptionInFlight,
+                    onToggleSubscription = onToggleSubscription,
                     onAction = onAction,
                 )
             }
