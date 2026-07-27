@@ -13,7 +13,7 @@ fun buildDiagnosticReport(entries: List<DiagnosticEntry>): String {
         entries.asReversed().forEach { entry ->
             append(formatter.format(Date(entry.timestampEpochMillis)))
             append("  ${entry.method} ${entry.route}")
-            if (entry.method != "APP") {
+            if (entry.method != "LOCAL" && entry.method != "APP") {
                 append("  ")
                 append(entry.statusCode?.let { "HTTP $it" } ?: "network error")
                 append("  ${entry.durationMillis} ms")

@@ -86,12 +86,12 @@ class LocalDiagnosticsRepository @Inject constructor(
         }
     }
 
-    internal fun recordApplicationEvent(route: String, timestampEpochMillis: Long = System.currentTimeMillis()) {
-        if (route !in APPLICATION_EVENT_ROUTES) return
+    internal fun recordLocalEvent(route: String, timestampEpochMillis: Long = System.currentTimeMillis()) {
+        if (route !in LOCAL_EVENT_ROUTES) return
         val scope = currentScope()?.copy(route = route) ?: return
         val entry = DiagnosticEntry(
             timestampEpochMillis = timestampEpochMillis,
-            method = APPLICATION_METHOD,
+            method = LOCAL_METHOD,
             route = route,
             statusCode = null,
             durationMillis = 0,
@@ -144,7 +144,10 @@ class LocalDiagnosticsRepository @Inject constructor(
         val route = fields[2].takeIf { it.startsWith('/') && it.length <= 40 } ?: return null
         return DiagnosticEntry(
             timestampEpochMillis = fields[0].toLongOrNull() ?: return null,
-            method = fields[1].takeIf { it in ALLOWED_METHODS || it == "OTHER" || it == APPLICATION_METHOD }
+            method = fields[1].takeIf {
+                it in ALLOWED_METHODS || it == "OTHER" ||
+                    it == LOCAL_METHOD || it == LEGACY_APPLICATION_METHOD
+            }
                 ?: return null,
             route = route,
             statusCode = fields[3].toIntOrNull()?.takeIf { it in 100..599 },
@@ -167,14 +170,18 @@ class LocalDiagnosticsRepository @Inject constructor(
         const val MAX_DURATION_MILLIS = 15 * 60 * 1_000L
         val ALLOWED_METHODS = setOf("DELETE", "GET", "PATCH", "POST", "PUT")
         val REQUEST_ID_PATTERN = Regex("[A-Za-z0-9_-]{8,64}")
-        const val APPLICATION_METHOD = "APP"
-        val APPLICATION_EVENT_ROUTES = setOf(
+        const val LOCAL_METHOD = "LOCAL"
+        const val LEGACY_APPLICATION_METHOD = "APP"
+        val LOCAL_EVENT_ROUTES = setOf(
             "/app/crash",
             "/app/exit/anr",
             "/app/exit/crash",
             "/app/exit/low-memory",
             "/app/exit/system",
             "/app/exit/user",
+            "/network/available",
+            "/network/changed",
+            "/network/lost",
         )
     }
 }
