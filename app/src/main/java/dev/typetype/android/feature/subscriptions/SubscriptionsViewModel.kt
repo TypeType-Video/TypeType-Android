@@ -237,24 +237,38 @@ class SubscriptionsViewModel @Inject constructor(
                 if (generation != expectedGeneration) return@launch
                 if (page.generation != expectedGeneration) {
                     requestJob?.cancel()
-                    expectedGeneration = page.generation
-                    generation = page.generation
-                    nextCursor = page.nextCursor
+                    val targetVideoCount = _state.value.videos.size.coerceAtLeast(PAGE_SIZE)
+                    _state.update { it.copy(isLoadingMore = true) }
+                    val rebuiltPage = rebuildSubscriptionGeneration(
+                        firstPage = page,
+                        targetVideoCount = targetVideoCount,
+                    ) { cursor, pageGeneration ->
+                        feedRepository.loadSubscriptionsFeed(
+                            cursor = cursor,
+                            limit = PAGE_SIZE,
+                            expectedGeneration = pageGeneration,
+                        )
+                    }.getOrElse { failure ->
+                        showRefreshFailure(failure)
+                        return@launch
+                    }
+                    expectedGeneration = rebuiltPage.generation
+                    generation = rebuiltPage.generation
+                    nextCursor = rebuiltPage.nextCursor
                     persistCurrentGeneration = true
                     _state.update {
                         it.copy(
                             isLoading = false,
-                            isLoadingMore = true,
-                            videos = page.videos.distinctBy { video -> video.url },
-                            hasMore = page.hasMore,
-                            isServerRefreshing = page.refreshing,
-                            generatedAtMillis = page.generatedAtMillis,
+                            videos = rebuiltPage.videos,
+                            hasMore = rebuiltPage.hasMore,
+                            isServerRefreshing = rebuiltPage.refreshing,
+                            generatedAtMillis = rebuiltPage.generatedAtMillis,
                             errorMessage = null,
                             errorRequestId = null,
                             loadMoreError = false,
                         )
                     }
-                    persistPage(page, append = false)
+                    persistPage(rebuiltPage, append = false)
                     _state.update { it.copy(isLoadingMore = false) }
                 } else {
                     _state.update {
