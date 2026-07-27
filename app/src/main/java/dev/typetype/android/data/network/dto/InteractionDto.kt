@@ -8,6 +8,10 @@ data class AddWatchLaterRequest(
     val title: String,
     val thumbnail: String,
     val duration: Long,
+    val channelName: String = "",
+    val channelUrl: String = "",
+    val channelAvatar: String = "",
+    val viewCount: Long = 0L,
 )
 
 @Serializable
@@ -40,6 +44,9 @@ data class CreatePlaylistRequest(
     val name: String,
     val description: String = "",
 )
+
+@Serializable
+data class PlaylistReorderRequest(val order: List<String>)
 
 @Serializable
 data class AddPlaylistVideoRequest(
