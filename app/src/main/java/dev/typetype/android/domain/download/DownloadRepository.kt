@@ -10,8 +10,14 @@ interface DownloadRepository {
     fun downloadVideo(
         videoUrl: String,
         title: String,
-        quality: String,
+        selection: DownloadSelection,
     ): Flow<DownloadProgress>
 
-    suspend fun openDownload(downloadId: Long): Result<Unit>
+    suspend fun openDownload(requestId: String): Result<Unit>
+
+    suspend fun cancelDownload(requestId: String): Result<Unit>
+
+    suspend fun retryDownload(requestId: String): Result<Unit>
+
+    suspend fun removeDownload(requestId: String): Result<Unit>
 }
