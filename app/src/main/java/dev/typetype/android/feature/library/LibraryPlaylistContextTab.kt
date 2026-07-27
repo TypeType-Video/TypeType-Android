@@ -3,8 +3,9 @@ package dev.typetype.android.feature.library
 import android.content.Intent
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -56,6 +57,8 @@ fun PlaylistContextTab(
     watchedUrls: Set<String>,
     onPlayVideo: (String) -> Unit,
     onOpenChannel: (String) -> Unit,
+    onPlayNext: (PlaylistVideo) -> Unit,
+    onAddToQueue: (PlaylistVideo) -> Unit,
     buildRemoveLabel: @Composable (PlaylistVideo) -> String,
     onRemove: (PlaylistVideo) -> Unit,
     onToggleWatched: (PlaylistVideo, Boolean) -> Unit,
@@ -74,9 +77,10 @@ fun PlaylistContextTab(
         .map { it.url }
     val metas = rememberVideoMetas(urlsMissingInfo)
 
-    LazyColumn(
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(minSize = 360.dp),
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = 4.dp),
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
     ) {
         items(items, key = { it.id }) { video ->
             PlaylistVideoCard(
@@ -86,6 +90,7 @@ fun PlaylistContextTab(
                 isWatched = video.url in watchedUrls,
                 meta = metas[video.url],
                 onChannelClick = onOpenChannel,
+                onMoreClick = { pendingMenu = video },
             )
         }
     }
@@ -94,6 +99,8 @@ fun PlaylistContextTab(
         PlaylistVideoActionsSheet(
             removeLabel = buildRemoveLabel(video),
             isWatched = video.url in watchedUrls,
+            onPlayNext = { onPlayNext(video) },
+            onAddToQueue = { onAddToQueue(video) },
             onRemoveFromList = { onRemove(video) },
             onToggleWatched = { onToggleWatched(video, video.url in watchedUrls) },
             onShare = {
