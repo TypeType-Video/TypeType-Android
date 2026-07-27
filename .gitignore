@@ -34,3 +34,4 @@ google-services.json
 
 # Local documentation
 /docs/
+/.markdownlint.json
