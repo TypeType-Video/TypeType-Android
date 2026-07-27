@@ -14,6 +14,9 @@ interface AccountDao {
     fun observeForServer(serverId: String): Flow<List<AccountEntity>>
 
     @Query("SELECT * FROM accounts WHERE serverId = :serverId AND accountId = :accountId")
+    fun observe(serverId: String, accountId: String): Flow<AccountEntity?>
+
+    @Query("SELECT * FROM accounts WHERE serverId = :serverId AND accountId = :accountId")
     suspend fun get(serverId: String, accountId: String): AccountEntity?
 
     @Query(
