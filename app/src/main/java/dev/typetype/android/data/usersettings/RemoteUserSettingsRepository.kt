@@ -1,75 +1,73 @@
 package dev.typetype.android.data.usersettings
 
-import dev.typetype.android.data.network.TypeTypeApiHolder
-import dev.typetype.android.data.network.dto.UserSettingsDto
-import dev.typetype.android.data.network.extractServerErrorMessage
+import dev.typetype.android.data.account.AccountScope
+import dev.typetype.android.data.account.AccountScopedValue
+import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.domain.usersettings.UserSettings
 import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 
 @Singleton
 class RemoteUserSettingsRepository @Inject constructor(
-    private val apiHolder: TypeTypeApiHolder,
+    private val network: UserSettingsNetworkSource,
+    private val activeAccountScope: ActiveAccountScope,
 ) : UserSettingsRepository {
 
-    private val state = MutableStateFlow(UserSettings())
+    private val state = MutableStateFlow<AccountScopedValue<UserSettings>?>(null)
     private val mutex = Mutex()
 
-    override fun observe(): Flow<UserSettings> = state.asStateFlow()
+    override fun observe(): Flow<UserSettings> =
+        combine(activeAccountScope.observe(), state) { scope, cached ->
+            cached?.value?.takeIf { scope == cached.scope } ?: UserSettings()
+        }
 
-    override suspend fun refresh(): Result<Unit> = runCatching {
-        val response = withContext(Dispatchers.IO) { apiHolder.require().settings() }
-        if (!response.isSuccessful) error(extractServerErrorMessage(response))
-        state.value = response.body()?.toDomain() ?: UserSettings()
+    override suspend fun current(): Result<UserSettings> = captureResult {
+        mutex.withLock {
+            val scope = activeAccountScope.require()
+            state.value?.takeIf { it.scope == scope }?.value ?: refreshLocked(scope)
+        }
+    }
+
+    override suspend fun refresh(): Result<Unit> = captureResult {
+        mutex.withLock {
+            refreshLocked(activeAccountScope.require())
+        }
     }
 
     override suspend fun update(transform: (UserSettings) -> UserSettings): Result<Unit> =
-        mutex.withLock {
-            runCatching {
-                val previous = state.value
-                val next = transform(previous)
-                state.value = next
-                val response = withContext(Dispatchers.IO) {
-                    apiHolder.require().updateSettings(next.toDto())
+        captureResult {
+            mutex.withLock {
+                val scope = activeAccountScope.require()
+                val fresh = refreshLocked(scope)
+                val next = transform(fresh)
+                val patch = next.patchFrom(fresh)
+                if (patch.isNotEmpty()) {
+                    val updated = network.update(scope, patch)
+                    activeAccountScope.verify(scope)
+                    state.value = AccountScopedValue(scope, updated)
                 }
-                if (!response.isSuccessful) {
-                    state.value = previous
-                    error(extractServerErrorMessage(response))
-                }
-                val refreshed = response.body()?.toDomain()
-                if (refreshed != null) state.value = refreshed
             }
         }
 
-    private fun UserSettingsDto.toDomain(): UserSettings = UserSettings(
-        defaultService = defaultService,
-        defaultQuality = defaultQuality,
-        autoplay = autoplay,
-        volume = volume,
-        muted = muted,
-        subtitlesEnabled = subtitlesEnabled,
-        defaultSubtitleLanguage = defaultSubtitleLanguage,
-        defaultAudioLanguage = defaultAudioLanguage,
-        preferOriginalLanguage = preferOriginalLanguage,
-    )
+    private suspend fun refreshLocked(scope: AccountScope): UserSettings {
+        val fresh = network.fetch(scope)
+        activeAccountScope.verify(scope)
+        state.value = AccountScopedValue(scope, fresh)
+        return fresh
+    }
+}
 
-    private fun UserSettings.toDto(): UserSettingsDto = UserSettingsDto(
-        defaultService = defaultService,
-        defaultQuality = defaultQuality,
-        autoplay = autoplay,
-        volume = volume,
-        muted = muted,
-        subtitlesEnabled = subtitlesEnabled,
-        defaultSubtitleLanguage = defaultSubtitleLanguage,
-        defaultAudioLanguage = defaultAudioLanguage,
-        preferOriginalLanguage = preferOriginalLanguage,
-    )
+private suspend fun <T> captureResult(block: suspend () -> T): Result<T> = try {
+    Result.success(block())
+} catch (cancelled: CancellationException) {
+    throw cancelled
+} catch (failure: Throwable) {
+    Result.failure(failure)
 }
