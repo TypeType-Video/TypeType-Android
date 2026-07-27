@@ -4,13 +4,20 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.typetype.android.core.ui.navigation.HomeRoute
+import dev.typetype.android.core.ui.navigation.LoginRoute
 import dev.typetype.android.core.ui.navigation.WelcomeRoute
 import dev.typetype.android.data.network.AccessTokenStore
+import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.domain.actions.VideoActionsRepository
 import dev.typetype.android.domain.auth.AuthRepository
 import dev.typetype.android.domain.auth.SessionStatus
 import dev.typetype.android.domain.preferences.AppPreferences
+import dev.typetype.android.domain.library.LibraryRepository
 import dev.typetype.android.domain.preferences.PreferencesRepository
+import dev.typetype.android.domain.playback.PlaybackResumeRepository
+import dev.typetype.android.domain.playback.PlaybackQueueRepository
+import dev.typetype.android.domain.playback.PlaybackQueueSnapshot
+import dev.typetype.android.domain.playback.PlaybackResume
 import dev.typetype.android.domain.profile.ProfileRepository
 import dev.typetype.android.domain.server.ServerRepository
 import dev.typetype.android.domain.subscriptions.SubscriptionsRepository
@@ -48,6 +55,10 @@ class MainViewModel @Inject constructor(
     private val userSettingsRepository: UserSettingsRepository,
     private val profileRepository: ProfileRepository,
     private val subscriptionsRepository: SubscriptionsRepository,
+    private val libraryRepository: LibraryRepository,
+    private val activeAccountScope: ActiveAccountScope,
+    private val playbackResumeRepository: PlaybackResumeRepository,
+    private val playbackQueueRepository: PlaybackQueueRepository,
     val playerHostController: PlayerHostController,
     preferencesRepository: PreferencesRepository,
 ) : ViewModel() {
@@ -96,11 +107,16 @@ class MainViewModel @Inject constructor(
             val startRoute = when {
                 initial == null -> WelcomeRoute
                 sessionStatus == SessionStatus.Invalid -> {
-                    tokenStore.setAccessToken(null)
-                    serverRepository.clearCurrentServer()
-                    WelcomeRoute
+                    tokenStore.setAccessToken(initial.id, null)
+                    LoginRoute(serverId = initial.id)
                 }
                 else -> HomeRoute
+            }
+            if (startRoute == HomeRoute) {
+                val restore = withTimeoutOrNull(PLAYBACK_RESTORE_TIMEOUT_MS) {
+                    loadPlaybackRestore()
+                }
+                restore?.let(::applyPlaybackRestore)
             }
             _state.value = MainState(isLoading = false, startRoute = startRoute)
             if (startRoute == HomeRoute) {
@@ -108,6 +124,7 @@ class MainViewModel @Inject constructor(
                 launch { userSettingsRepository.refresh() }
                 launch { profileRepository.refresh() }
                 launch { subscriptionsRepository.refresh() }
+                launch { libraryRepository.resumePendingWrites() }
             }
         }
     }
@@ -115,17 +132,80 @@ class MainViewModel @Inject constructor(
     private companion object {
         const val STARTUP_TIMEOUT_MS = 4_000L
         const val SESSION_VALIDATION_TIMEOUT_MS = 6_000L
+        const val PLAYBACK_RESTORE_TIMEOUT_MS = 4_000L
     }
 
     fun signOut() {
         viewModelScope.launch {
-            tokenStore.setAccessToken(null)
             val server = serverRepository.observeCurrentServer().first()
             if (server == null) {
                 eventsChannel.send(MainEvent.NavigateToWelcome)
             } else {
+                authRepository.logout(server.id)
                 eventsChannel.send(MainEvent.NavigateToLogin(server.id))
             }
         }
     }
+
+    fun onAccountActivated() {
+        playerHostController.hide()
+        viewModelScope.launch {
+            launch { videoActionsRepository.refreshBlocked() }
+            launch { userSettingsRepository.refresh() }
+            launch { profileRepository.refresh() }
+            launch { subscriptionsRepository.refresh() }
+            launch { libraryRepository.resumePendingWrites() }
+            launch { restorePlayback() }
+        }
+    }
+
+    fun closePlayback() {
+        playerHostController.hide()
+        viewModelScope.launch {
+            val scope = activeAccountScope.observe().first() ?: return@launch
+            playbackResumeRepository.clear(scope.serverId, scope.accountId)
+            playbackQueueRepository.clear(scope.serverId, scope.accountId)
+        }
+    }
+
+    private suspend fun restorePlayback() {
+        loadPlaybackRestore()?.let(::applyPlaybackRestore)
+    }
+
+    private suspend fun loadPlaybackRestore(): PlaybackRestore? {
+        val scope = activeAccountScope.observe().first() ?: return null
+        val settings = userSettingsRepository.current().getOrNull() ?: return null
+        if (settings.disableWatchHistory) {
+            playbackResumeRepository.clear(scope.serverId, scope.accountId)
+            playbackQueueRepository.clear(scope.serverId, scope.accountId)
+            return null
+        }
+        val resume = playbackResumeRepository.get(scope.serverId, scope.accountId)
+        if (resume == null) {
+            playbackQueueRepository.clear(scope.serverId, scope.accountId)
+            return null
+        }
+        val queue = playbackQueueRepository.get(scope.serverId, scope.accountId)
+            ?.takeIf { it.current?.videoUrl == resume.videoUrl }
+        if (queue == null) playbackQueueRepository.clear(scope.serverId, scope.accountId)
+        if (activeAccountScope.observe().first() != scope) return null
+        return PlaybackRestore(resume, queue)
+    }
+
+    private fun applyPlaybackRestore(restore: PlaybackRestore) {
+        val queue = restore.queue
+        if (queue == null) {
+            playerHostController.restoreVideo(
+                restore.resume.videoUrl,
+                restore.resume.positionMillis,
+            )
+        } else {
+            playerHostController.restoreQueue(queue, restore.resume.positionMillis)
+        }
+    }
+
+    private data class PlaybackRestore(
+        val resume: PlaybackResume,
+        val queue: PlaybackQueueSnapshot?,
+    )
 }
