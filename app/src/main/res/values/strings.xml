@@ -612,5 +612,11 @@
     <string name="notifications_mark_all_read">Mark all read</string>
     <string name="notifications_empty">No notifications yet</string>
     <string name="notifications_load_failed">Couldn\'t load notifications</string>
+    <string name="notifications_new_video">New video</string>
+    <string name="notifications_scheduled_for">Scheduled %1$s</string>
+    <plurals name="notifications_unread_count">
+        <item quantity="one">%1$d unread</item>
+        <item quantity="other">%1$d unread</item>
+    </plurals>
     <string name="notifications_mark_read_failed">Couldn\'t mark notifications as read</string>
 </resources>
