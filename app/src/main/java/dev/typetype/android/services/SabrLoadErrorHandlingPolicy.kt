@@ -37,13 +37,18 @@ internal class SabrLoadErrorHandlingPolicy(
             if (isTransientHttpStatus(response.responseCode)) {
                 return transientHttpRetryDelayMs(
                     errorCount = loadErrorInfo.errorCount,
+                    maximumRetries = MAX_MEDIA_LOAD_RETRIES,
                     requestedDelayMs = response.headerFields.retryAfterMillis(),
                 ) ?: C.TIME_UNSET
             }
             return C.TIME_UNSET
         }
         if (failure.hasTransientHttpTransportFailure()) {
-            return transientHttpRetryDelayMs(loadErrorInfo.errorCount, null) ?: C.TIME_UNSET
+            return transientHttpRetryDelayMs(
+                errorCount = loadErrorInfo.errorCount,
+                maximumRetries = MAX_MEDIA_LOAD_RETRIES,
+                requestedDelayMs = null,
+            ) ?: C.TIME_UNSET
         }
         return delegate.getRetryDelayMsFor(loadErrorInfo)
     }
@@ -124,4 +129,5 @@ private const val MIN_SABR_RETRY_MS = 100L
 private const val MAX_SEGMENT_RETRY_DELAY_MS = 3_000L
 private const val MAX_CAUSE_DEPTH = 8
 private const val MAX_SEGMENT_RETRIES = 59
+private const val MAX_MEDIA_LOAD_RETRIES = 3
 private const val SABR_CONTRACT_FAILURE_CODE = "youtube_sabr_contract_mismatch"

@@ -16,7 +16,11 @@ internal suspend fun <T> transientPlaybackRequest(
             request()
         } catch (failure: IOException) {
             errorCount++
-            val retryDelayMs = transientHttpRetryDelayMs(errorCount, null) ?: throw failure
+            val retryDelayMs = transientHttpRetryDelayMs(
+                errorCount = errorCount,
+                maximumRetries = MAX_PLAYBACK_REQUEST_RETRIES,
+                requestedDelayMs = null,
+            ) ?: throw failure
             pause(retryDelayMs)
             continue
         }
@@ -24,9 +28,12 @@ internal suspend fun <T> transientPlaybackRequest(
         errorCount++
         val retryDelayMs = transientHttpRetryDelayMs(
             errorCount = errorCount,
+            maximumRetries = MAX_PLAYBACK_REQUEST_RETRIES,
             requestedDelayMs = response.headers().toMultimap().retryAfterMillis(),
         ) ?: return response
         response.errorBody()?.close()
         pause(retryDelayMs)
     }
 }
+
+private const val MAX_PLAYBACK_REQUEST_RETRIES = 2

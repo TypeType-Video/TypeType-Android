@@ -15,13 +15,11 @@ class SabrLoadErrorHandlingPolicyTest {
     }
 
     @Test
-    fun `transient network backoff matches the frontend budget`() {
-        assertEquals(500L, transientHttpRetryDelayMs(1, null))
-        assertEquals(1_000L, transientHttpRetryDelayMs(2, null))
-        assertEquals(2_000L, transientHttpRetryDelayMs(3, null))
-        assertEquals(3_000L, transientHttpRetryDelayMs(4, null))
-        assertEquals(3_000L, transientHttpRetryDelayMs(24, null))
-        assertNull(transientHttpRetryDelayMs(25, null))
+    fun `transient media load backoff is bounded to three retries`() {
+        assertEquals(500L, transientHttpRetryDelayMs(1, 3, null))
+        assertEquals(1_000L, transientHttpRetryDelayMs(2, 3, null))
+        assertEquals(2_000L, transientHttpRetryDelayMs(3, 3, null))
+        assertNull(transientHttpRetryDelayMs(4, 3, null))
     }
 
     @Test
@@ -30,7 +28,7 @@ class SabrLoadErrorHandlingPolicyTest {
 
         assertEquals(250L, body.sabrResponseRetryAfterMs())
         assertEquals(100L, sabrSegmentRetryDelayMs(1, 0L))
-        assertEquals(3_000L, transientHttpRetryDelayMs(1, 30_000L))
+        assertEquals(3_000L, transientHttpRetryDelayMs(1, 3, 30_000L))
         assertNull("""{"status":"preparing"}""".toByteArray().sabrResponseRetryAfterMs())
     }
 }
