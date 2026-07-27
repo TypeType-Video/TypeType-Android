@@ -17,11 +17,10 @@ dependencyResolutionManagement {
             }
         }
         mavenCentral()
-        maven("https://jitpack.io")
-        mavenLocal()
     }
 }
 
 rootProject.name = "TypeType-Android"
 
 include(":app")
+include(":player")
