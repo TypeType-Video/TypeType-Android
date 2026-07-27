@@ -44,6 +44,7 @@ data class SabrPlaybackPositionRequestDto(
     val videoItag: Int,
     val audioItag: Int,
     val audioTrackId: String? = null,
+    val playbackRate: Float = 1.0f,
     val bufferedRanges: List<SabrPlaybackBufferedRangeDto> = emptyList(),
     val audioOnly: Boolean = false,
 )
@@ -55,6 +56,7 @@ data class SabrPlaybackWindowRequestDto(
     val videoItag: Int,
     val audioItag: Int,
     val audioTrackId: String? = null,
+    val playbackRate: Float = 1.0f,
     val bufferGoalMs: Long = 30_000L,
     val backBufferMs: Long = 30_000L,
     val bufferedRanges: List<SabrPlaybackBufferedRangeDto> = emptyList(),

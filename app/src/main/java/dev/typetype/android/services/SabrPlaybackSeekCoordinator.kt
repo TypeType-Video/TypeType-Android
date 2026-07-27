@@ -28,8 +28,10 @@ internal class SabrPlaybackSeekCoordinator(
     private var seekJob: Job? = null
 
     fun seek(state: SabrPlaybackSeekState, positionMs: Long): Job {
-        return request(state, state.target, positionMs) {
-            repository.seek(state.target, state.binding, it)
+        return request(state, positionMs) {
+            repository.seek(state.target, state.binding, it).map { session ->
+                PreparedSabrSession(session, state.target)
+            }
         }
     }
 
@@ -39,34 +41,62 @@ internal class SabrPlaybackSeekCoordinator(
         positionMs: Long,
         complete: (Result<Unit>) -> Unit = {},
     ): Job {
-        return request(state, target, positionMs, complete) {
-            repository.prepare(target, it)
+        return request(state, positionMs, complete) {
+            repository.recoverOnce(target, it).map { session ->
+                PreparedSabrSession(session, target)
+            }
         }
+    }
+
+    fun recoverBounded(
+        state: SabrPlaybackSeekState,
+        target: SabrPlaybackTarget,
+        positionMs: Long,
+        initialFailure: Throwable,
+        takeAttempt: () -> Boolean,
+        complete: (Result<Unit>) -> Unit = {},
+    ): Job = request(state, positionMs, complete) { requestedPositionMs ->
+        var currentTarget = target
+        var lastFailure = initialFailure
+        while (takeAttempt()) {
+            val result = repository.recoverOnce(currentTarget, requestedPositionMs)
+            val session = result.getOrNull()
+            if (session != null) {
+                return@request Result.success(PreparedSabrSession(session, currentTarget))
+            }
+            lastFailure = result.exceptionOrNull() ?: lastFailure
+            val recovery = lastFailure.sabrPlaybackRecoveryFailure()
+                ?: return@request Result.failure(lastFailure)
+            currentTarget = currentTarget.recoveryTarget(recovery)
+                ?: return@request Result.failure(lastFailure)
+        }
+        Result.failure(lastFailure)
     }
 
     private fun request(
         state: SabrPlaybackSeekState,
-        target: SabrPlaybackTarget,
         positionMs: Long,
         complete: (Result<Unit>) -> Unit = {},
-        load: suspend (Long) -> Result<SabrPlaybackSession>,
+        load: suspend (Long) -> Result<PreparedSabrSession>,
     ): Job {
         seekJob?.cancel()
         val requestedId = ++requestId
         val requestedPositionMs = positionMs.coerceAtLeast(0L)
         return scope.launch {
             val result = load(requestedPositionMs)
-            val session = result.getOrElse {
+            val prepared = result.getOrElse {
                 complete(Result.failure(it))
                 return@launch
             }
-            val acceptedTarget = runCatching { target.accept(session) }.getOrElse {
+            val acceptedTarget = runCatching {
+                prepared.target.accept(prepared.session)
+            }.getOrElse {
                 complete(Result.failure(it))
                 return@launch
             }
             if (requestedId == requestId && currentState() == state) {
                 runCatching {
-                    apply(session, acceptedTarget, requestedPositionMs)
+                    apply(prepared.session, acceptedTarget, requestedPositionMs)
                 }.fold(
                     onSuccess = { complete(Result.success(Unit)) },
                     onFailure = { complete(Result.failure(it)) },
@@ -83,3 +113,8 @@ internal class SabrPlaybackSeekCoordinator(
         seekJob = null
     }
 }
+
+private data class PreparedSabrSession(
+    val session: SabrPlaybackSession,
+    val target: SabrPlaybackTarget,
+)

@@ -32,6 +32,13 @@ class SabrPlaybackRepositoryImpl @Inject constructor(
         preparer.prepare(api, target.requestScope.baseUrl, target, startTimeMs)
     }
 
+    override suspend fun recoverOnce(
+        target: SabrPlaybackTarget,
+        startTimeMs: Long,
+    ): Result<SabrPlaybackSession> = execute(target) { api ->
+        preparer.prepareOnce(api, target.requestScope.baseUrl, target, startTimeMs)
+    }
+
     override suspend fun seek(
         target: SabrPlaybackTarget,
         binding: SabrPlaybackBinding,
@@ -45,8 +52,9 @@ class SabrPlaybackRepositoryImpl @Inject constructor(
         binding: SabrPlaybackBinding,
         playerTimeMs: Long,
         bufferedRanges: List<SabrPlaybackBufferedRange>,
+        playbackRate: Float,
     ): Result<SabrPlaybackSession> = refresh(target, binding) {
-        SabrPlaybackSnapshot(playerTimeMs, bufferedRanges)
+        SabrPlaybackSnapshot(playerTimeMs, bufferedRanges, playbackRate)
     }
 
     override suspend fun refresh(
@@ -68,6 +76,7 @@ class SabrPlaybackRepositoryImpl @Inject constructor(
         binding: SabrPlaybackBinding,
         playerTimeMs: Long,
         bufferedRanges: List<SabrPlaybackBufferedRange>,
+        playbackRate: Float,
     ): Result<Unit> = execute(target) { api ->
         preparer.reportPosition(
             api = api,
@@ -76,6 +85,7 @@ class SabrPlaybackRepositoryImpl @Inject constructor(
             binding = binding,
             playerTimeMs = playerTimeMs,
             bufferedRanges = bufferedRanges,
+            playbackRate = playbackRate,
         )
     }
 
