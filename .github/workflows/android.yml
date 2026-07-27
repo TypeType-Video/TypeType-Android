@@ -31,7 +31,7 @@ env:
   CI: true
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
-  GRADLE_OPTS: -Dorg.gradle.daemon=true -Dorg.gradle.parallel=true -Djava.awt.headless=true
+  GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4 -Djava.awt.headless=true
   ANDROID_HOME: /opt/android-sdk
   ANDROID_SDK_ROOT: /opt/android-sdk
   JAVA_HOME: /usr/lib/jvm/java-26-openjdk
@@ -67,7 +67,7 @@ jobs:
 
       - name: Build debug APK
         timeout-minutes: 15
-        run: ./gradlew --build-cache --stacktrace :app:assembleDebug
+        run: ./gradlew --no-daemon --build-cache --stacktrace :app:assembleDebug
 
       - name: Upload debug APK
         if: ${{ github.ref != 'refs/heads/main' }}
@@ -90,7 +90,7 @@ jobs:
 
       - name: Run lint
         timeout-minutes: 15
-        run: ./gradlew --build-cache --stacktrace :player:lintDebug :app:lintDebug
+        run: ./gradlew --no-daemon --build-cache --stacktrace :player:lintDebug :app:lintDebug
 
       - name: Upload lint report
         if: ${{ always() }}
@@ -115,7 +115,7 @@ jobs:
 
       - name: Run unit tests
         timeout-minutes: 10
-        run: ./gradlew --build-cache --stacktrace :app:testDebugUnitTest
+        run: ./gradlew --no-daemon --build-cache --stacktrace :app:testDebugUnitTest
 
   release:
     needs:
@@ -162,7 +162,7 @@ jobs:
 
       - name: Build release APK
         timeout-minutes: 25
-        run: ./gradlew --build-cache --stacktrace :app:assembleRelease
+        run: ./gradlew --no-daemon --build-cache --stacktrace :app:assembleRelease
 
       - name: Prepare APK artifact
         run: |
