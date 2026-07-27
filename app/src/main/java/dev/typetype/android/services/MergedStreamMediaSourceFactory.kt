@@ -15,6 +15,7 @@ import androidx.media3.exoplayer.source.SingleSampleMediaSource
 import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
 import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy
 import dev.typetype.android.data.network.PlaybackRetryOwnershipInterceptor
+import dev.typetype.android.data.network.PlaybackNetworkMonitor
 import dev.typetype.android.domain.stream.SabrPlaybackBinding
 import dev.typetype.android.domain.stream.SabrPlaybackRepository
 import dev.typetype.android.domain.stream.StreamRequestScope
@@ -29,6 +30,7 @@ internal class MergedStreamMediaSourceFactory(
     private val playbackPositionUs: () -> Long,
     private val playbackRate: () -> Float,
     private val recoveryDispatcher: SabrPlaybackRecoveryDispatcher,
+    private val networkMonitor: PlaybackNetworkMonitor,
 ) : MediaSource.Factory {
 
     private val applicationContext = context.applicationContext
@@ -95,6 +97,7 @@ internal class MergedStreamMediaSourceFactory(
         )
         val policy = SabrLoadErrorHandlingPolicy(
             loadErrorHandlingPolicy ?: DefaultLoadErrorHandlingPolicy(),
+            networkMonitor,
         )
         val baseItem = mediaItem.buildUpon()
             .setSubtitleConfigurations(emptyList())
@@ -115,7 +118,7 @@ internal class MergedStreamMediaSourceFactory(
             loadErrorHandlingPolicy = policy,
         )
         val subtitleSources = mediaItem.localConfiguration?.subtitleConfigurations.orEmpty().map {
-            createSubtitleMediaSource(it, mediaDataSource, loadErrorHandlingPolicy)
+            createSubtitleMediaSource(it, mediaDataSource, policy)
         }
         return if (subtitleSources.isEmpty()) {
             videoSource
@@ -134,7 +137,12 @@ internal class MergedStreamMediaSourceFactory(
             DefaultMediaSourceFactory(DefaultDataSource.Factory(applicationContext, http))
         }
         drmSessionManagerProvider?.let(delegate::setDrmSessionManagerProvider)
-        loadErrorHandlingPolicy?.let(delegate::setLoadErrorHandlingPolicy)
+        delegate.setLoadErrorHandlingPolicy(
+            SabrLoadErrorHandlingPolicy(
+                loadErrorHandlingPolicy ?: DefaultLoadErrorHandlingPolicy(),
+                networkMonitor,
+            ),
+        )
         return delegate
     }
 
