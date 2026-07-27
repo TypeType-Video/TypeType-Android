@@ -3,6 +3,7 @@ package dev.typetype.android.data.stream
 import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.core.error.CodedFailure
 import dev.typetype.android.data.network.TypeTypeApiHolder
+import dev.typetype.android.data.network.PlaybackNetworkMonitor
 import dev.typetype.android.data.network.dto.AudioStreamItem
 import dev.typetype.android.data.network.dto.SponsorBlockSegmentItem
 import dev.typetype.android.data.network.dto.StreamResponse
@@ -31,6 +32,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
@@ -39,6 +41,7 @@ class StreamRepositoryImpl @Inject constructor(
     private val apiHolder: TypeTypeApiHolder,
     private val activeAccountScope: ActiveAccountScope,
     private val serverRepository: ServerRepository,
+    private val networkMonitor: PlaybackNetworkMonitor,
 ) : StreamRepository {
 
     override suspend fun loadStream(videoUrl: String): Result<Stream> =
@@ -63,10 +66,15 @@ class StreamRepositoryImpl @Inject constructor(
             apiHolder.require(scope)
         }
         val response = withContext(Dispatchers.IO) {
-            if (provider == StreamProvider.YouTube && playbackBootstrap) {
-                api.loadYouTubeSabrBootstrapResponse(videoUrl)
-            } else {
-                api.loadStreamResponse(videoUrl)
+            transientPlaybackRequest(
+                pause = { delay(it) },
+                network = networkMonitor,
+            ) {
+                if (provider == StreamProvider.YouTube && playbackBootstrap) {
+                    api.loadYouTubeSabrBootstrapResponse(videoUrl)
+                } else {
+                    api.loadStreamResponse(videoUrl)
+                }
             }
         }
         if (!response.isSuccessful) {

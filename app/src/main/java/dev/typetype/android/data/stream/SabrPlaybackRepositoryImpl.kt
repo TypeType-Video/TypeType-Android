@@ -3,6 +3,7 @@ package dev.typetype.android.data.stream
 import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.network.TypeTypeMediaApi
 import dev.typetype.android.data.network.TypeTypeApiHolder
+import dev.typetype.android.data.network.PlaybackNetworkMonitor
 import dev.typetype.android.domain.stream.SabrPlaybackBinding
 import dev.typetype.android.domain.stream.SabrPlaybackBufferedRange
 import dev.typetype.android.domain.stream.SabrPlaybackRepository
@@ -19,8 +20,9 @@ import kotlinx.coroutines.withContext
 class SabrPlaybackRepositoryImpl @Inject constructor(
     private val apiHolder: TypeTypeApiHolder,
     private val activeAccountScope: ActiveAccountScope,
+    networkMonitor: PlaybackNetworkMonitor,
 ) : SabrPlaybackRepository {
-    private val preparer = SabrPlaybackSessionPreparer()
+    private val preparer = SabrPlaybackSessionPreparer(network = networkMonitor)
 
     override suspend fun prepare(target: SabrPlaybackTarget): Result<SabrPlaybackSession> =
         prepare(target, 0L)
