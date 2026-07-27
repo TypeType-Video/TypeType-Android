@@ -57,6 +57,7 @@ import kotlinx.coroutines.flow.collectLatest
 fun LoginRoute(
     onNavigateBack: () -> Unit,
     onNavigateToHome: () -> Unit,
+    onNavigateToResetPassword: (String) -> Unit,
     viewModel: LoginViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -75,6 +76,8 @@ fun LoginRoute(
             when (event) {
                 LoginEvent.NavigateBack -> onNavigateBack()
                 LoginEvent.NavigateToHome -> onNavigateToHome()
+                is LoginEvent.NavigateToResetPassword ->
+                    onNavigateToResetPassword(event.serverId)
                 is LoginEvent.LaunchOidc -> {
                     val provider = CustomTabsClient.getPackageName(context, null)
                     if (provider == null || !CustomTabsClient.isAuthTabSupported(context, provider)) {
@@ -215,6 +218,17 @@ fun LoginScreen(
                         enabled = !state.isSubmitting,
                         isLoading = state.isSubmitting,
                     )
+                    Spacer(Modifier.height(12.dp))
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        TypeTypeTextLink(
+                            text = stringResource(R.string.reset_password_title),
+                            onClick = { onAction(LoginAction.OnResetPasswordClick) },
+                            enabled = !state.isSubmitting,
+                        )
+                    }
                 }
                 if (!state.isLoadingMethods &&
                     !state.localLoginEnabled &&
