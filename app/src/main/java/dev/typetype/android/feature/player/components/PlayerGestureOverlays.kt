@@ -1,60 +1,108 @@
 package dev.typetype.android.feature.player.components
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import dev.typetype.android.feature.player.state.GestureSide
 import dev.typetype.android.feature.player.state.PlayerGestureState
-import kotlinx.coroutines.delay
 import kotlin.math.abs
+import kotlin.math.sin
 
-private const val SEEK_HINT_VISIBLE_MS = 600L
+private const val SEEK_HINT_VISIBLE_MS = 650
 
 @Composable
 internal fun SeekHintOverlay(state: PlayerGestureState) {
     val side = state.seekHintSide.value
-    LaunchedEffect(side, state.seekHintSeconds.floatValue) {
+    val pulse = state.seekHintPulse.longValue
+    val animation = remember { Animatable(0f) }
+    LaunchedEffect(side, pulse) {
         if (side != null) {
-            delay(SEEK_HINT_VISIBLE_MS)
+            animation.snapTo(0f)
+            animation.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(SEEK_HINT_VISIBLE_MS, easing = LinearEasing),
+            )
             state.seekHintSide.value = null
         }
     }
     if (side != null) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            val alignment = if (side == GestureSide.Left) Alignment.CenterStart else Alignment.CenterEnd
-            val sign = if (side == GestureSide.Left) "-" else "+"
-            Box(
-                modifier = Modifier
-                    .align(alignment)
-                    .padding(horizontal = 48.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Color.Black.copy(alpha = 0.55f))
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
-            ) {
-                Text(
-                    text = "$sign${state.seekHintSeconds.floatValue.toInt()}s",
-                    color = Color.White,
-                    style = MaterialTheme.typography.titleMedium,
+        SeekTapWave(
+            side = side,
+            progress = animation.value,
+            seconds = state.seekHintSeconds.floatValue.toInt(),
+        )
+    }
+}
+
+@Composable
+private fun SeekTapWave(
+    side: GestureSide,
+    progress: Float,
+    seconds: Int,
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Canvas(
+            modifier = Modifier
+                .fillMaxHeight()
+                .fillMaxWidth(0.48f)
+                .align(if (side == GestureSide.Left) Alignment.CenterStart else Alignment.CenterEnd),
+        ) {
+            val originX = if (side == GestureSide.Left) size.width * 0.7f else size.width * 0.3f
+            val origin = Offset(originX, size.height / 2f)
+            repeat(3) { index ->
+                val phase = (progress - index * 0.18f).coerceIn(0f, 1f)
+                if (phase <= 0f || phase >= 1f) return@repeat
+                val radius = size.minDimension * (0.08f + phase * 0.5f)
+                drawArc(
+                    color = Color.White.copy(alpha = (1f - phase) * 0.9f),
+                    startAngle = if (side == GestureSide.Left) 125f else -55f,
+                    sweepAngle = 110f,
+                    useCenter = false,
+                    topLeft = Offset(origin.x - radius, origin.y - radius),
+                    size = androidx.compose.ui.geometry.Size(radius * 2f, radius * 2f),
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(
+                        width = 3.dp.toPx(),
+                        cap = StrokeCap.Round,
+                    ),
                 )
             }
         }
+        Text(
+            text = if (side == GestureSide.Left) "-${seconds}s" else "+${seconds}s",
+            modifier = Modifier
+                .align(if (side == GestureSide.Left) Alignment.CenterStart else Alignment.CenterEnd)
+                .padding(horizontal = 56.dp),
+            color = Color.White,
+            style = MaterialTheme.typography.headlineSmall,
+        )
     }
 }
 
@@ -68,16 +116,23 @@ internal fun SeekDragOverlay(state: PlayerGestureState, durationMs: Long) {
     val targetText = formatTimeMs(target)
     val durationText = if (durationMs > 0) " / ${formatTimeMs(durationMs)}" else ""
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Box(
+        Column(
             modifier = Modifier
-                .clip(RoundedCornerShape(16.dp))
-                .background(Color.Black.copy(alpha = 0.65f))
-                .padding(horizontal = 20.dp, vertical = 12.dp),
+                .width(288.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color.Black.copy(alpha = 0.72f))
+                .padding(horizontal = 18.dp, vertical = 14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
                 text = "${sign}${deltaSec}s ($targetText$durationText)",
                 color = Color.White,
                 style = MaterialTheme.typography.titleMedium,
+            )
+            SeekWave(
+                fraction = if (durationMs > 0L) target / durationMs.toFloat() else 0f,
+                modifier = Modifier.fillMaxWidth().height(32.dp),
             )
         }
     }
@@ -105,40 +160,113 @@ internal fun SpeedBoostBadge(visible: Boolean, factor: Float) {
 }
 
 @Composable
-internal fun DragSliderOverlay(
+internal fun LevelWaveOverlay(
     visible: Boolean,
     fraction: Float,
     label: String,
+    icon: ImageVector,
     modifier: Modifier = Modifier,
 ) {
     if (!visible) return
-    Column(
+    Row(
         modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color.Black.copy(alpha = 0.55f))
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .height(180.dp)
-            .width(48.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween,
+            .width(238.dp)
+            .height(76.dp)
+            .clip(RoundedCornerShape(22.dp))
+            .background(Color.Black.copy(alpha = 0.72f))
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = "${(fraction * 100).toInt()}%",
-            color = Color.White,
-            style = MaterialTheme.typography.labelSmall,
-        )
-        LinearProgressIndicator(
-            progress = { fraction },
+        Box(
             modifier = Modifier
-                .fillMaxHeight(0.7f)
-                .width(4.dp),
-            color = MaterialTheme.colorScheme.primary,
-            trackColor = Color.White.copy(alpha = 0.3f),
-        )
-        Text(
-            text = label,
-            color = Color.White.copy(alpha = 0.8f),
-            style = MaterialTheme.typography.labelSmall,
+                .size(42.dp)
+                .clip(RoundedCornerShape(21.dp))
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.24f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = Color.White,
+                modifier = Modifier.size(22.dp),
+            )
+        }
+        Column(
+            modifier = Modifier.weight(1f).padding(horizontal = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(text = label, color = Color.White, style = MaterialTheme.typography.labelMedium)
+                Text(
+                    text = "${(fraction * 100).toInt()}%",
+                    color = Color.White.copy(alpha = 0.82f),
+                    style = MaterialTheme.typography.labelSmall,
+                )
+            }
+            WaveLevelMeter(
+                fraction = fraction,
+                activeColor = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.fillMaxWidth().height(20.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun WaveLevelMeter(
+    fraction: Float,
+    activeColor: Color,
+    modifier: Modifier = Modifier,
+) {
+    Canvas(modifier = modifier) {
+        val bars = 28
+        val spacing = size.width / bars
+        val activeBars = (bars * fraction.coerceIn(0f, 1f)).toInt()
+        repeat(bars) { index ->
+            val amplitude = 0.24f + abs(sin(index * 0.76f)) * 0.76f
+            val halfHeight = size.height * amplitude / 2f
+            val x = spacing * (index + 0.5f)
+            drawLine(
+                color = if (index < activeBars) activeColor else Color.White.copy(alpha = 0.24f),
+                start = Offset(x, size.height / 2f - halfHeight),
+                end = Offset(x, size.height / 2f + halfHeight),
+                strokeWidth = 2.dp.toPx(),
+                cap = StrokeCap.Round,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SeekWave(
+    fraction: Float,
+    modifier: Modifier = Modifier,
+) {
+    val activeColor = MaterialTheme.colorScheme.primary
+    Canvas(modifier = modifier) {
+        val centerY = size.height / 2f
+        val progressX = size.width * fraction.coerceIn(0f, 1f)
+        val bars = 32
+        val spacing = size.width / bars
+        repeat(bars) { index ->
+            val x = spacing * (index + 0.5f)
+            val amplitude = 0.2f + abs(sin(index * 0.82f)) * 0.8f
+            val halfHeight = size.height * amplitude * 0.42f
+            drawLine(
+                color = if (x <= progressX) activeColor else Color.White.copy(alpha = 0.3f),
+                start = Offset(x, centerY - halfHeight),
+                end = Offset(x, centerY + halfHeight),
+                strokeWidth = if (x <= progressX) 3.dp.toPx() else 2.dp.toPx(),
+                cap = StrokeCap.Round,
+            )
+        }
+        drawCircle(
+            color = activeColor,
+            radius = 4.dp.toPx(),
+            center = Offset(progressX, centerY),
         )
     }
 }

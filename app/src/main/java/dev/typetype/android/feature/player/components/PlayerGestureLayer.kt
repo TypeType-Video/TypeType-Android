@@ -6,15 +6,20 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.Brightness6
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import dev.typetype.android.R
 import dev.typetype.android.feature.player.state.DragMode
@@ -44,13 +49,14 @@ fun PlayerGestureLayer(
     onTogglePlayPause: () -> Unit,
     onAdjustBrightness: (Float) -> Unit,
     onAdjustVolume: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+    onGestureFeedback: () -> Unit = {},
     isFullscreen: Boolean = false,
     onEnterFullscreenGesture: () -> Unit = {},
     onExitFullscreenGesture: () -> Unit = {},
     config: PlayerGestureConfig = PlayerGestureConfig(),
-    modifier: Modifier = Modifier,
 ) {
-    var savedSpeed = 1f
+    var savedSpeed by remember { mutableFloatStateOf(1f) }
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -105,6 +111,7 @@ fun PlayerGestureLayer(
                             }
                             if (!allowed) continue
                             mode = candidate
+                            onGestureFeedback()
                             state.dragMode.value = candidate
                             when (candidate) {
                                 DragMode.Brightness -> state.brightnessOverlayActive.value = true
@@ -134,6 +141,7 @@ fun PlayerGestureLayer(
                     onTap = { onTogglePlayPause() },
                     onDoubleTap = { offset ->
                         if (!config.doubleTapSeekEnabled) return@detectTapGestures
+                        onGestureFeedback()
                         val side = if (offset.x < size.width / 2f) GestureSide.Left else GestureSide.Right
                         val current = player.currentPosition
                         val target = if (side == GestureSide.Left) {
@@ -144,6 +152,7 @@ fun PlayerGestureLayer(
                         player.seekTo(target)
                         state.seekHintSide.value = side
                         state.seekHintSeconds.floatValue = (DOUBLE_TAP_SEEK_INCREMENT_MS / 1_000f)
+                        state.seekHintPulse.longValue += 1L
                     },
                     onLongPress = {
                         if (!config.longPressSpeedEnabled) return@detectTapGestures
@@ -178,17 +187,19 @@ fun PlayerGestureLayer(
             ),
     ) {
         SeekHintOverlay(state = state)
-        DragSliderOverlay(
+        LevelWaveOverlay(
             visible = state.brightnessOverlayActive.value,
             fraction = state.brightnessFraction.floatValue,
             label = stringResource(R.string.player_gesture_brightness),
-            modifier = Modifier.align(Alignment.CenterStart).padding(start = 24.dp),
+            icon = Icons.Filled.Brightness6,
+            modifier = Modifier.align(Alignment.Center),
         )
-        DragSliderOverlay(
+        LevelWaveOverlay(
             visible = state.volumeOverlayActive.value,
             fraction = state.volumeFraction.floatValue,
             label = stringResource(R.string.player_gesture_volume),
-            modifier = Modifier.align(Alignment.CenterEnd).padding(end = 24.dp),
+            icon = Icons.AutoMirrored.Filled.VolumeUp,
+            modifier = Modifier.align(Alignment.Center),
         )
         SeekDragOverlay(state = state, durationMs = player.duration)
         SpeedBoostBadge(visible = state.longPressBoostActive.value, factor = LONG_PRESS_SPEED_FACTOR)
