@@ -2,9 +2,7 @@ package dev.typetype.android.feature.player.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -14,7 +12,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.typetype.android.R
-import dev.typetype.android.core.ui.components.VideoCard
+import dev.typetype.android.core.ui.components.RelatedVideoCard
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.feature.menu.VideoMenuScope
 
@@ -30,7 +28,7 @@ fun RelatedStreamsSection(
     if (visibleVideos.isEmpty()) return
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Text(
             text = stringResource(R.string.player_up_next),
@@ -39,7 +37,7 @@ fun RelatedStreamsSection(
             modifier = Modifier.padding(horizontal = 4.dp),
         )
         visibleVideos.forEach { video ->
-            VideoCard(
+            RelatedVideoCard(
                 video = video,
                 menuItemState = menuScope.stateFor(video),
                 onMenuAction = { action -> menuScope.onAction(action, video) },
@@ -47,7 +45,6 @@ fun RelatedStreamsSection(
                 onChannelClick = { onOpenChannel(video.uploaderUrl) },
                 modifier = Modifier.fillMaxWidth(),
             )
-            Spacer(Modifier.height(4.dp))
         }
     }
 }
