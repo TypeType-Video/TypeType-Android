@@ -16,12 +16,12 @@ on:
         type: boolean
         default: false
       tag_name:
-        description: Release tag
-        required: true
-        default: v1.1.1
+        description: Release tag, leave empty to use the Gradle version
+        required: false
+        default: ""
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: android-${{ github.workflow }}-${{ github.ref }}
@@ -73,7 +73,8 @@ jobs:
             :app:testDebugUnitTest \
             :player:lintDebug \
             :app:lintDebug \
-            :app:assembleDebug
+            :app:assembleDebug \
+            :app:assembleRelease
 
       - name: Upload debug APK
         if: ${{ github.ref != 'refs/heads/main' }}
@@ -100,21 +101,25 @@ jobs:
     if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && inputs.publish_release }}
     runs-on: [self-hosted, Linux, X64, arko, android]
     timeout-minutes: 35
+    permissions:
+      contents: write
     env:
       GRADLE_USER_HOME: ${{ github.workspace }}/../.gradle-user-home
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
 
-      - name: Prepare release tag
+      - name: Prepare release metadata
         env:
           INPUT_TAG_NAME: ${{ inputs.tag_name }}
         run: |
-          if [ -n "$INPUT_TAG_NAME" ]; then
-            echo "RELEASE_TAG=$INPUT_TAG_NAME" >> "$GITHUB_ENV"
-          else
-            echo "RELEASE_TAG=v1.1.1" >> "$GITHUB_ENV"
-          fi
+          version="$(sed -nE 's/^[[:space:]]*versionName = "([^"]+)"/\1/p' app/build.gradle.kts)"
+          test -n "$version"
+          expected_tag="v$version"
+          release_tag="${INPUT_TAG_NAME:-$expected_tag}"
+          test "$release_tag" = "$expected_tag"
+          echo "RELEASE_VERSION=$version" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=$release_tag" >> "$GITHUB_ENV"
 
       - name: Prepare signing
         env:
@@ -144,13 +149,23 @@ jobs:
           mkdir -p artifacts
           apk="$(find app/build/outputs/apk/release -name '*.apk' | head -n 1)"
           test -n "$apk"
+          build_tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+          test -n "$build_tools"
+          "$build_tools/zipalign" -c -P 16 -v 4 "$apk"
+          "$build_tools/apksigner" verify --verbose --print-certs "$apk"
+          apk_version="$("$ANDROID_HOME/cmdline-tools/latest/bin/apkanalyzer" manifest version-name "$apk")"
+          test "$apk_version" = "$RELEASE_VERSION"
           cp "$apk" "artifacts/TypeType-$RELEASE_TAG.apk"
+          sha256sum "artifacts/TypeType-$RELEASE_TAG.apk" \
+            > "artifacts/TypeType-$RELEASE_TAG.apk.sha256"
 
       - name: Upload release APK
         uses: actions/upload-artifact@v7.0.1
         with:
           name: typetype-release-apk
-          path: artifacts/*.apk
+          path: |
+            artifacts/*.apk
+            artifacts/*.sha256
           if-no-files-found: error
           retention-days: 30
 
@@ -160,15 +175,13 @@ jobs:
           tag_name: ${{ env.RELEASE_TAG }}
           name: ${{ env.RELEASE_TAG }}
           body: |
-            TypeType for Android 1.1.1 is a production hotfix focused on player wake stability.
+            TypeType for Android ${{ env.RELEASE_VERSION }}.
 
-            This version fixes the gray screen that could appear after turning the phone screen off and back on while a video was still playing. Playback now keeps the media session alive and restores the video surface when Android resumes the app.
-
-            Changes:
-            - Recreate the player surface after screen wake and unlock events.
-            - Reattach the active Media3 player view when the activity resumes.
-            - Avoid pausing the player view lifecycle while playback continues in the background.
-            - Show the startup loader if the app is still resolving its first route.
-            - Build and publish a signed production APK from main.
-          files: artifacts/*.apk
+            The attached APK is built from the tagged source, signed by the
+            release workflow, checked for 16 KiB page alignment, and verified
+            against the Gradle application version.
+          generate_release_notes: true
+          files: |
+            artifacts/*.apk
+            artifacts/*.sha256
           fail_on_unmatched_files: true
