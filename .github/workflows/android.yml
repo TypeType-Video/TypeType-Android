@@ -59,6 +59,8 @@ jobs:
     needs: prepare-sdk
     runs-on: [self-hosted, Linux, X64, arko, android]
     timeout-minutes: 20
+    env:
+      GRADLE_USER_HOME: ${{ github.workspace }}/../.gradle-user-home
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -80,20 +82,24 @@ jobs:
     needs: prepare-sdk
     runs-on: [self-hosted, Linux, X64, arko, android]
     timeout-minutes: 20
+    env:
+      GRADLE_USER_HOME: ${{ github.workspace }}/../.gradle-user-home
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
       - name: Run lint
         timeout-minutes: 15
-        run: ./gradlew --build-cache --stacktrace lint
+        run: ./gradlew --build-cache --stacktrace :player:lintDebug :app:lintDebug
 
       - name: Upload lint report
         if: ${{ always() }}
         uses: actions/upload-artifact@v5
         with:
           name: lint-report
-          path: app/build/reports/lint-results-debug.html
+          path: |
+            app/build/reports/lint-results-debug.html
+            player/build/reports/lint-results-debug.html
           if-no-files-found: ignore
           retention-days: 14
 
@@ -101,6 +107,8 @@ jobs:
     needs: prepare-sdk
     runs-on: [self-hosted, Linux, X64, arko, android]
     timeout-minutes: 15
+    env:
+      GRADLE_USER_HOME: ${{ github.workspace }}/../.gradle-user-home
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -117,6 +125,8 @@ jobs:
     if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish_release)) }}
     runs-on: [self-hosted, Linux, X64, arko, android]
     timeout-minutes: 35
+    env:
+      GRADLE_USER_HOME: ${{ github.workspace }}/../.gradle-user-home
     steps:
       - name: Checkout
         uses: actions/checkout@v5
