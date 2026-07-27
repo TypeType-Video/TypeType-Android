@@ -22,7 +22,7 @@ class DataStorePreferencesRepository @Inject constructor(
         AppPreferences(
             accentColor = prefs[KEY_ACCENT_COLOR]
                 ?.let { runCatching { AccentColor.valueOf(it) }.getOrNull() }
-                ?: AccentColor.Red,
+                ?: AccentColor.Blue,
             playerDoubleTapSeekEnabled = prefs[KEY_PLAYER_DOUBLE_TAP_SEEK] ?: true,
             playerSwipeSeekEnabled = prefs[KEY_PLAYER_SWIPE_SEEK] ?: true,
             playerSwipeBrightnessVolumeEnabled = prefs[KEY_PLAYER_SWIPE_BRIGHT_VOL] ?: true,
