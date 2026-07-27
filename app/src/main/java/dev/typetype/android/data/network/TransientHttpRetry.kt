@@ -9,9 +9,10 @@ internal fun isTransientHttpStatus(statusCode: Int): Boolean =
 
 internal fun transientHttpRetryDelayMs(
     errorCount: Int,
+    maximumRetries: Int,
     requestedDelayMs: Long?,
 ): Long? {
-    if (errorCount > MAX_TRANSIENT_RETRIES) return null
+    if (errorCount > maximumRetries) return null
     val exponent = (errorCount - 1).coerceIn(0, 3)
     val backoffMs = DEFAULT_TRANSIENT_RETRY_MS * (1L shl exponent)
     return (requestedDelayMs ?: backoffMs).coerceIn(0L, MAX_TRANSIENT_RETRY_DELAY_MS)
@@ -44,4 +45,3 @@ private val TRANSIENT_HTTP_STATUS_CODES = setOf(502, 503, 504)
 private const val RETRY_AFTER_HEADER = "Retry-After"
 private const val DEFAULT_TRANSIENT_RETRY_MS = 500L
 private const val MAX_TRANSIENT_RETRY_DELAY_MS = 3_000L
-private const val MAX_TRANSIENT_RETRIES = 24

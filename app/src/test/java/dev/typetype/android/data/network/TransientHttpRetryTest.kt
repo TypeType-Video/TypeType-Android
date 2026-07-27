@@ -9,13 +9,11 @@ import org.junit.Test
 
 class TransientHttpRetryTest {
     @Test
-    fun `transient backoff matches the web player retry budget`() {
-        assertEquals(500L, transientHttpRetryDelayMs(1, null))
-        assertEquals(1_000L, transientHttpRetryDelayMs(2, null))
-        assertEquals(2_000L, transientHttpRetryDelayMs(3, null))
-        assertEquals(3_000L, transientHttpRetryDelayMs(4, null))
-        assertEquals(3_000L, transientHttpRetryDelayMs(24, null))
-        assertNull(transientHttpRetryDelayMs(25, null))
+    fun `transient backoff stops at the requested retry budget`() {
+        assertEquals(500L, transientHttpRetryDelayMs(1, 3, null))
+        assertEquals(1_000L, transientHttpRetryDelayMs(2, 3, null))
+        assertEquals(2_000L, transientHttpRetryDelayMs(3, 3, null))
+        assertNull(transientHttpRetryDelayMs(4, 3, null))
     }
 
     @Test
@@ -46,6 +44,6 @@ class TransientHttpRetryTest {
             "Retry-After" to listOf(Long.MAX_VALUE.toString()),
         ).retryAfterMillis()
 
-        assertEquals(3_000L, transientHttpRetryDelayMs(1, delay))
+        assertEquals(3_000L, transientHttpRetryDelayMs(1, 3, delay))
     }
 }
