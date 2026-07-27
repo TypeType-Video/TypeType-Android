@@ -9,3 +9,14 @@ data class Profile(
     val avatarType: String = "",
     val avatarCode: String = "",
 )
+
+data class AccountIdentity(
+    val email: String,
+    val name: String,
+    val managedByOidc: Boolean,
+)
+
+data class AvatarUpload(
+    val bytes: ByteArray,
+    val mediaType: String,
+)
