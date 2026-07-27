@@ -2,12 +2,32 @@ package dev.typetype.android.data.library.local
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
-import androidx.room.PrimaryKey
+import androidx.room.ForeignKey
+import androidx.room.Index
+import dev.typetype.android.data.account.AccountEntity
+import dev.typetype.android.data.account.AccountScope
 import dev.typetype.android.domain.library.HistoryItem
 
-@Entity(tableName = "history")
+@Entity(
+    tableName = "history",
+    primaryKeys = ["serverId", "accountId", "id"],
+    foreignKeys = [
+        ForeignKey(
+            entity = AccountEntity::class,
+            parentColumns = ["serverId", "accountId"],
+            childColumns = ["serverId", "accountId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [
+        Index(value = ["serverId", "accountId"]),
+        Index(value = ["serverId", "accountId", "url"]),
+    ],
+)
 data class HistoryEntity(
-    @PrimaryKey val id: String,
+    val serverId: String,
+    val accountId: String,
+    val id: String,
     val url: String,
     val title: String,
     val thumbnailUrl: String,
@@ -32,7 +52,9 @@ data class HistoryEntity(
     )
 
     companion object {
-        fun fromDomain(item: HistoryItem): HistoryEntity = HistoryEntity(
+        fun fromDomain(scope: AccountScope, item: HistoryItem): HistoryEntity = HistoryEntity(
+            serverId = scope.serverId,
+            accountId = scope.accountId,
             id = item.id,
             url = item.url,
             title = item.title,
