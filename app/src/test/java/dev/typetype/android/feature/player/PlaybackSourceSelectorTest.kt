@@ -74,7 +74,7 @@ class PlaybackSourceSelectorTest {
     }
 
     @Test
-    fun `explicit quality is honored before decoder class`() {
+    fun `recommended codec prefers hardware over the automatic quality cap`() {
         val hardware = video("hardware", height = 720, codec = "avc1.64001f")
         val software = video("software", height = 1080, codec = "vp09.00.40.08")
         val support = FakeCodecSupport(
@@ -84,7 +84,44 @@ class PlaybackSourceSelectorTest {
             ),
         )
 
-        assertEquals(software, listOf(software, hardware).pickVideo("1080p", support))
+        assertEquals(
+            hardware,
+            listOf(software, hardware).pickVideo("1080p", support),
+        )
+    }
+
+    @Test
+    fun `recommended codec prefers baseline hardware before resolution`() {
+        val baseline = video("baseline", height = 720, codec = "avc1.64001f")
+        val modern = video("modern", height = 1080, codec = "vp09.00.40.08")
+        val support = FakeCodecSupport(
+            video = mapOf(
+                baseline.url to DecoderSupport.Hardware,
+                modern.url to DecoderSupport.Hardware,
+            ),
+        )
+
+        assertEquals(
+            baseline,
+            listOf(modern, baseline).pickVideo("1080p", support),
+        )
+    }
+
+    @Test
+    fun `explicit codec keeps the requested quality`() {
+        val hardware = video("hardware", height = 720, codec = "vp09.00.31.08")
+        val software = video("software", height = 1080, codec = "vp09.00.40.08")
+        val support = FakeCodecSupport(
+            video = mapOf(
+                hardware.url to DecoderSupport.Hardware,
+                software.url to DecoderSupport.Software,
+            ),
+        )
+
+        assertEquals(
+            software,
+            listOf(software, hardware).pickVideo("1080p", support, VP9_CODEC_KEY),
+        )
     }
 
     @Test
