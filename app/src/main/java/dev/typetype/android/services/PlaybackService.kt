@@ -17,6 +17,7 @@ import androidx.media3.session.MediaSessionService
 import dev.typetype.android.MainActivity
 import dev.typetype.android.R
 import dev.typetype.android.domain.stream.SabrPlaybackRepository
+import dev.typetype.android.data.network.PlaybackNetworkMonitor
 import dev.typetype.android.domain.playback.PlaybackResumeRepository
 import dev.typetype.android.domain.library.LibraryRepository
 import dev.typetype.android.domain.session.ActiveSessionRepository
@@ -54,6 +55,9 @@ class PlaybackService : MediaSessionService() {
     @Inject
     lateinit var playbackSleepTimer: PlaybackSleepTimer
 
+    @Inject
+    lateinit var playbackNetworkMonitor: PlaybackNetworkMonitor
+
     private var mediaSession: MediaSession? = null
     private var sabrPlaybackBridge: SabrPlaybackServiceBridge? = null
     private var playbackResumeRecorder: PlaybackResumeRecorder? = null
@@ -74,6 +78,7 @@ class PlaybackService : MediaSessionService() {
             sabrPlaybackWindowCache,
             playbackClock,
             recoveryDispatcher,
+            playbackNetworkMonitor,
         )
         playbackResumeRecorder = PlaybackResumeRecorder(
             player,
@@ -145,6 +150,7 @@ class PlaybackService : MediaSessionService() {
                     playbackClock::currentPositionUs,
                     playbackClock::currentPlaybackRate,
                     recoveryDispatcher,
+                    playbackNetworkMonitor,
                 )
                     .setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(MIN_LOADABLE_RETRY_COUNT)),
             )

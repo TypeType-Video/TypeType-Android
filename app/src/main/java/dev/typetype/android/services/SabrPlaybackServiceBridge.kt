@@ -9,11 +9,15 @@ import dev.typetype.android.domain.stream.SabrPlaybackRepository
 import dev.typetype.android.domain.stream.SabrPlaybackSession
 import dev.typetype.android.domain.stream.SabrPlaybackTarget
 import dev.typetype.android.domain.stream.accept
+import dev.typetype.android.data.network.PlaybackNetworkMonitor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 internal class SabrPlaybackServiceBridge(
@@ -22,6 +26,7 @@ internal class SabrPlaybackServiceBridge(
     private val windowCache: SabrPlaybackWindowCache,
     private val playbackClock: SabrPlaybackClock,
     private val recoveryDispatcher: SabrPlaybackRecoveryDispatcher,
+    private val networkMonitor: PlaybackNetworkMonitor,
 ) : Player.Listener, SabrPlaybackRecoveryDispatcher.Listener, AutoCloseable {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val coordinator = SabrPlaybackSeekCoordinator(
@@ -31,11 +36,18 @@ internal class SabrPlaybackServiceBridge(
         apply = ::applySession,
     )
     private val recoveryGate = SabrPlaybackRecoveryGate()
+    private val networkRecoveryGate = PlaybackNetworkRecoveryGate()
     private var activeBinding: SabrPlaybackBinding? = null
+    private var networkRetryJob: Job? = null
 
     init {
         player.addListener(this)
         recoveryDispatcher.setListener(this)
+        scope.launch {
+            networkMonitor.states.drop(1).collect { state ->
+                scheduleNetworkRecovery(networkRecoveryGate.networkChanged(state))
+            }
+        }
         scope.launch {
             while (true) {
                 val positionMs = player.currentPosition
@@ -57,6 +69,9 @@ internal class SabrPlaybackServiceBridge(
         coordinator.cancel()
         val extras = mediaItem?.requestMetadata?.extras
         val nextBinding = extras?.sabrPlaybackBinding()
+        networkRecoveryGate.transition(mediaItem?.mediaId)
+        networkRetryJob?.cancel()
+        networkRetryJob = null
         recoveryGate.transition(
             mediaId = mediaItem?.mediaId,
             startsNewSession = startsNewSabrPlaybackSession(
@@ -71,7 +86,15 @@ internal class SabrPlaybackServiceBridge(
     }
 
     override fun onPlayerError(error: PlaybackException) {
-        if (!error.isRecoverableSabrSessionFailure()) return
+        if (!error.isRecoverableSabrSessionFailure()) {
+            if (error.isNetworkPlaybackFailure()) {
+                val mediaId = player.currentMediaItem?.mediaId ?: return
+                scheduleNetworkRecovery(
+                    networkRecoveryGate.failed(mediaId, networkMonitor.snapshot()),
+                )
+            }
+            return
+        }
         val state = player.currentMediaItem?.sabrPlaybackSeekState() ?: return
         val replacement = error.sabrSessionReplacementFailure()
         val recovery = error.sabrPlaybackRecoveryFailure()
@@ -107,6 +130,13 @@ internal class SabrPlaybackServiceBridge(
         ) {
             recoveryGate.finish(sessionId)
         }
+    }
+
+    override fun onPlaybackStateChanged(playbackState: Int) {
+        if (playbackState != Player.STATE_READY) return
+        networkRetryJob?.cancel()
+        networkRetryJob = null
+        networkRecoveryGate.recovered()
     }
 
     override fun onRecoveryRequired(
@@ -154,9 +184,26 @@ internal class SabrPlaybackServiceBridge(
         player.playWhenReady = playWhenReady
     }
 
+    private fun scheduleNetworkRecovery(action: PlaybackNetworkRecoveryAction) {
+        if (action !is PlaybackNetworkRecoveryAction.RetryAfter) return
+        val mediaId = player.currentMediaItem?.mediaId ?: return
+        networkRetryJob?.cancel()
+        networkRetryJob = scope.launch {
+            delay(action.delayMs)
+            if (
+                networkRecoveryGate.isPending(mediaId) &&
+                player.currentMediaItem?.mediaId == mediaId
+            ) {
+                player.prepare()
+            }
+        }
+    }
+
     override fun close() {
         player.removeListener(this)
         recoveryDispatcher.setListener(null)
+        networkRetryJob?.cancel()
+        networkRetryJob = null
         coordinator.cancel()
         scope.cancel()
     }
