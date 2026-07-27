@@ -1,65 +1,87 @@
 package dev.typetype.android.data.library
 
-import dev.typetype.android.data.library.local.FavoriteEntity
-import dev.typetype.android.data.library.local.FavoritesDao
+import androidx.paging.PagingData
+import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.library.local.HistoryDao
-import dev.typetype.android.data.library.local.HistoryEntity
+import dev.typetype.android.data.library.local.PlaylistEntity
 import dev.typetype.android.data.library.local.PlaylistsDao
-import dev.typetype.android.data.library.local.WatchLaterDao
-import dev.typetype.android.data.library.local.WatchLaterEntity
+import dev.typetype.android.data.library.sync.LibrarySyncTracker
 import dev.typetype.android.domain.library.FavoriteItem
 import dev.typetype.android.domain.library.HistoryItem
+import dev.typetype.android.domain.library.HistoryQuery
+import dev.typetype.android.domain.library.LibraryCollection
+import dev.typetype.android.domain.library.LibraryCollectionSyncState
 import dev.typetype.android.domain.library.LibraryRepository
 import dev.typetype.android.domain.library.Playlist
 import dev.typetype.android.domain.library.WatchLaterItem
+import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 
 @Singleton
+@OptIn(ExperimentalCoroutinesApi::class)
 class OfflineLibraryRepository @Inject constructor(
-    private val favoritesDao: FavoritesDao,
     private val historyDao: HistoryDao,
-    private val watchLaterDao: WatchLaterDao,
     private val playlistsDao: PlaylistsDao,
     private val network: LibraryNetworkSource,
+    private val activeAccountScope: ActiveAccountScope,
+    private val cacheObserver: LibraryCacheObserver,
+    private val progressSync: LibraryProgressSync,
+    private val refreshCoordinator: LibraryRefreshCoordinator,
+    private val syncTracker: LibrarySyncTracker,
+    private val mutations: LibraryOptimisticMutations,
+    private val userSettingsRepository: UserSettingsRepository,
 ) : LibraryRepository {
 
-    override fun observeHistory(): Flow<List<HistoryItem>> =
-        historyDao.observeAll().map { rows -> rows.map { it.toDomain() } }
+    override fun observeHistory(query: HistoryQuery): Flow<PagingData<HistoryItem>> =
+        cacheObserver.history(query)
 
-    override fun observeFavorites(): Flow<List<FavoriteItem>> =
-        favoritesDao.observeAll().map { rows -> rows.map { it.toDomain() } }
+    override fun observeHistoryCount(): Flow<Int> = combine(
+        cacheObserver.historyCount(),
+        refreshCoordinator.observeHistoryTotal(),
+    ) { cached, total -> total ?: cached }
 
-    override fun observeWatchLater(): Flow<List<WatchLaterItem>> =
-        watchLaterDao.observeAll().map { rows -> rows.map { it.toDomain() } }
+    override fun observeWatchedUrls(): Flow<Set<String>> = cacheObserver.watchedUrls()
 
-    override fun observePlaylists(): Flow<List<Playlist>> =
-        playlistsDao.observeAllWithVideos().map { rows -> rows.map { it.toDomain() } }
+    override fun observeContinueWatching(limit: Int): Flow<List<HistoryItem>> =
+        cacheObserver.continueWatching(limit)
+
+    override fun observeFavorites(): Flow<List<FavoriteItem>> = cacheObserver.favorites()
+
+    override fun observeWatchLater(): Flow<List<WatchLaterItem>> = cacheObserver.watchLater()
+
+    override fun observePlaylists(): Flow<List<Playlist>> = cacheObserver.playlists()
+
+    override fun observeSyncState(): Flow<Map<LibraryCollection, LibraryCollectionSyncState>> =
+        syncTracker.observe()
 
     override fun observeIsFavorite(videoUrl: String): Flow<Boolean> =
-        playlistsDao.observeIsVideoInPlaylistNamed(FAVORITES_NAME, videoUrl)
+        cacheObserver.favoriteMembership(videoUrl)
 
     override fun observeIsInWatchLater(url: String): Flow<Boolean> =
-        playlistsDao.observeIsVideoInPlaylistNamed(WATCH_LATER_NAME, url)
+        cacheObserver.watchLaterMembership(url)
 
-    override suspend fun refreshHistory(): Result<Unit> = runCatching {
-        historyDao.replaceAll(network.fetchHistory())
-    }
+    override suspend fun refreshHistory(): Result<Unit> = refreshCoordinator.history()
 
-    override suspend fun refreshFavorites(): Result<Unit> = runCatching {
-        favoritesDao.replaceAll(network.fetchFavorites())
-    }
+    override suspend fun loadMoreHistory(): Result<Boolean> = refreshCoordinator.loadMoreHistory()
 
-    override suspend fun refreshWatchLater(): Result<Unit> = runCatching {
-        watchLaterDao.replaceAll(network.fetchWatchLater())
-    }
+    override suspend fun refreshFavorites(): Result<Unit> = refreshCoordinator.favorites()
 
-    override suspend fun refreshPlaylists(): Result<Unit> = runCatching {
-        val (playlists, videos) = network.fetchPlaylists()
-        playlistsDao.replaceAll(playlists, videos)
-    }
+    override suspend fun refreshWatchLater(): Result<Unit> = refreshCoordinator.watchLater()
+
+    override suspend fun refreshPlaylists(): Result<Unit> = refreshCoordinator.playlists()
+
+    override suspend fun refreshPlaylist(playlistId: String): Result<Unit> =
+        refreshCoordinator.playlist(playlistId)
+
+    override suspend fun retryPendingWrites(collection: LibraryCollection): Result<Boolean> =
+        runCatching { mutations.retry(collection) }
+
+    override suspend fun resumePendingWrites(): Result<Boolean> = runCatching { mutations.resume() }
 
     override suspend fun addFavorite(
         videoUrl: String,
@@ -71,29 +93,23 @@ class OfflineLibraryRepository @Inject constructor(
         channelAvatarUrl: String,
         viewCount: Long,
     ): Result<Unit> = runCatching {
-        val playlistId = ensureSpecialPlaylist(FAVORITES_NAME)
-        network.postAddVideoToPlaylist(
-            playlistId = playlistId,
-            url = videoUrl,
-            title = title,
-            thumbnail = thumbnail,
-            duration = duration,
-            channelName = channelName,
-            channelUrl = channelUrl,
-            channelAvatar = channelAvatarUrl,
-            viewCount = viewCount,
+        mutations.favorite(
+            MutationVideo(
+                url = videoUrl,
+                title = title,
+                thumbnailUrl = thumbnail,
+                durationSeconds = duration,
+                channelName = channelName,
+                channelUrl = channelUrl,
+                channelAvatarUrl = channelAvatarUrl,
+                viewCount = viewCount,
+            ),
+            desiredPresent = true,
         )
-        runCatching { refreshPlaylists() }
     }
 
     override suspend fun removeFavorite(videoUrl: String): Result<Unit> = runCatching {
-        val playlistId = resolveFavoritesPlaylistId()
-        playlistId?.let { playlistsDao.deleteVideoFromPlaylist(it, videoUrl) }
-        removeFromSpecialPlaylistOrLegacy(
-            playlistId = playlistId,
-            videoUrl = videoUrl,
-            legacyDelete = { network.deleteFavorite(videoUrl) },
-        )
+        mutations.favorite(MutationVideo(videoUrl), desiredPresent = false)
     }
 
     override suspend fun addWatchLater(
@@ -106,70 +122,23 @@ class OfflineLibraryRepository @Inject constructor(
         channelAvatarUrl: String,
         viewCount: Long,
     ): Result<Unit> = runCatching {
-        val playlistId = ensureSpecialPlaylist(WATCH_LATER_NAME)
-        network.postAddVideoToPlaylist(
-            playlistId = playlistId,
-            url = url,
-            title = title,
-            thumbnail = thumbnail,
-            duration = duration,
-            channelName = channelName,
-            channelUrl = channelUrl,
-            channelAvatar = channelAvatarUrl,
-            viewCount = viewCount,
+        mutations.watchLater(
+            MutationVideo(
+                url = url,
+                title = title,
+                thumbnailUrl = thumbnail,
+                durationSeconds = duration,
+                channelName = channelName,
+                channelUrl = channelUrl,
+                channelAvatarUrl = channelAvatarUrl,
+                viewCount = viewCount,
+            ),
+            desiredPresent = true,
         )
-        runCatching { refreshPlaylists() }
     }
 
     override suspend fun removeWatchLater(url: String): Result<Unit> = runCatching {
-        val playlistId = resolveWatchLaterPlaylistId()
-        playlistId?.let { playlistsDao.deleteVideoFromPlaylist(it, url) }
-        removeFromSpecialPlaylistOrLegacy(
-            playlistId = playlistId,
-            videoUrl = url,
-            legacyDelete = { network.deleteWatchLater(url) },
-        )
-    }
-
-    private suspend fun ensureSpecialPlaylist(name: String): String {
-        playlistsDao.findIdByName(name)?.let { return it }
-        runCatching { refreshPlaylists() }
-        playlistsDao.findIdByName(name)?.let { return it }
-        val id = network.postCreatePlaylist(name)
-        runCatching { refreshPlaylists() }
-        return id
-    }
-
-    private suspend fun resolveFavoritesPlaylistId(): String? =
-        playlistsDao.findIdByName(FAVORITES_NAME)
-            ?: run {
-                runCatching { refreshPlaylists() }
-                playlistsDao.findIdByName(FAVORITES_NAME)
-            }
-
-    private suspend fun resolveWatchLaterPlaylistId(): String? =
-        playlistsDao.findIdByName(WATCH_LATER_NAME)
-            ?: run {
-                runCatching { refreshPlaylists() }
-                playlistsDao.findIdByName(WATCH_LATER_NAME)
-            }
-
-    private suspend fun removeFromSpecialPlaylistOrLegacy(
-        playlistId: String?,
-        videoUrl: String,
-        legacyDelete: suspend () -> Unit,
-    ) {
-        val playlistResult = playlistId?.let { id ->
-            runCatching { network.deleteVideoFromPlaylist(id, videoUrl) }
-        }
-        if (playlistResult?.isSuccess == true) return
-        val legacyResult = runCatching { legacyDelete() }
-        if (legacyResult.isSuccess) return
-        runCatching { refreshPlaylists() }
-        val cause = legacyResult.exceptionOrNull()
-            ?: playlistResult?.exceptionOrNull()
-            ?: error("Remove failed")
-        throw cause
+        mutations.watchLater(MutationVideo(url), desiredPresent = false)
     }
 
     override suspend fun addHistory(
@@ -180,56 +149,97 @@ class OfflineLibraryRepository @Inject constructor(
         channelName: String,
         channelUrl: String,
         channelAvatarUrl: String,
-    ): Result<Unit> = runCatching {
-        historyDao.deleteByUrl(videoUrl)
-        val entity = HistoryEntity(
-            id = videoUrl,
-            url = videoUrl,
-            title = title,
-            thumbnailUrl = thumbnail,
-            channelName = channelName,
-            channelUrl = channelUrl,
-            channelAvatarUrl = channelAvatarUrl,
-            durationSeconds = duration,
-            progressSeconds = historyDao.getProgressSeconds(videoUrl) ?: 0L,
-            watchedAtMillis = System.currentTimeMillis(),
+    ): Result<Unit> = captureLibraryResult {
+        if (userSettingsRepository.current().getOrThrow().disableWatchHistory) {
+            return@captureLibraryResult
+        }
+        val scope = activeAccountScope.require()
+        val progress = historyDao.getProgressSeconds(scope.serverId, scope.accountId, videoUrl) ?: 0L
+        val confirmed = network.postHistory(
+            scope,
+            videoUrl,
+            title,
+            thumbnail,
+            duration,
+            channelName,
+            channelUrl,
+            channelAvatarUrl,
         )
-        historyDao.upsert(entity)
-        runCatching {
-            network.postHistory(videoUrl, title, thumbnail, duration, channelName, channelUrl, channelAvatarUrl)
+        if (confirmed != null) {
+            historyDao.deleteByUrl(scope.serverId, scope.accountId, videoUrl)
+            historyDao.upsert(confirmed.copy(progressSeconds = maxOf(progress, confirmed.progressSeconds)))
+            refreshCoordinator.recordHistoryAdded(scope)
         }
     }
 
     override suspend fun removeFromHistory(videoUrl: String): Result<Unit> = runCatching {
-        historyDao.deleteByUrl(videoUrl)
+        val scope = activeAccountScope.require()
+        val id = historyDao.getIdByUrl(scope.serverId, scope.accountId, videoUrl)
+        if (id != null) network.deleteHistory(scope, id)
+        historyDao.deleteByUrl(scope.serverId, scope.accountId, videoUrl)
+        if (id != null) refreshCoordinator.recordHistoryRemoved(scope)
     }
 
     override suspend fun clearHistory(): Result<Unit> = runCatching {
-        historyDao.replaceAll(emptyList())
-        runCatching { network.deleteAllHistory() }
-            .onFailure {
-                runCatching { refreshHistory() }
-                throw it
-            }
+        val scope = activeAccountScope.require()
+        network.deleteAllHistory(scope)
+        historyDao.replaceAll(scope.serverId, scope.accountId, emptyList())
+        refreshCoordinator.recordHistoryCleared(scope)
     }
 
-    override suspend fun saveProgress(videoUrl: String, positionMillis: Long): Result<Unit> = runCatching {
-        historyDao.updateProgress(
-            url = videoUrl,
-            seconds = positionMillis / 1000,
-            watchedAtMillis = System.currentTimeMillis(),
-        )
-        runCatching { network.putProgress(videoUrl, positionMillis) }
+    override suspend fun saveProgress(videoUrl: String, positionMillis: Long): Result<Unit> = captureLibraryResult {
+        if (userSettingsRepository.current().getOrThrow().disableWatchHistory) {
+            return@captureLibraryResult
+        }
+        val scope = activeAccountScope.require()
+        progressSync.save(scope, videoUrl, positionMillis)
+    }
+
+    override suspend fun discardPendingProgress(): Result<Unit> = captureLibraryResult {
+        progressSync.discardPending(activeAccountScope.require())
     }
 
     override suspend fun fetchProgressMillis(videoUrl: String): Result<Long?> = runCatching {
-        network.getProgress(videoUrl)
+        val scope = activeAccountScope.require()
+        progressSync.fetch(scope, videoUrl)
     }
 
     override suspend fun createPlaylist(name: String): Result<String> = runCatching {
-        val playlistId = network.postCreatePlaylist(name)
-        runCatching { refreshPlaylists() }
-        playlistId
+        val scope = activeAccountScope.require()
+        val playlist = network.postCreatePlaylist(scope, name)
+        mutations.recordCreatedPlaylist(playlist)
+        playlist.id
+    }
+
+    override suspend fun renamePlaylist(playlistId: String, name: String): Result<Unit> = runCatching {
+        val scope = activeAccountScope.require()
+        val cacheKey = PlaylistEntity.cacheKey(scope, playlistId)
+        val playlist = checkNotNull(playlistsDao.getPlaylist(cacheKey)) { "Playlist not found" }
+        network.putPlaylist(scope, playlistId, name, playlist.description)
+        mutations.recordRenamedPlaylist(playlistId, name)
+    }
+
+    override suspend fun deletePlaylist(playlistId: String): Result<Unit> = runCatching {
+        val scope = activeAccountScope.require()
+        network.deletePlaylist(scope, playlistId)
+        mutations.recordDeletedPlaylist(playlistId)
+    }
+
+    override suspend fun reorderPlaylist(
+        playlistId: String,
+        orderedVideoUrls: List<String>,
+    ): Result<Unit> = runCatching {
+        val scope = activeAccountScope.require()
+        val cacheKey = PlaylistEntity.cacheKey(scope, playlistId)
+        val cachedUrls = playlistsDao.getVideoUrls(cacheKey)
+        require(orderedVideoUrls.size == orderedVideoUrls.distinct().size) {
+            "Playlist order contains duplicate videos"
+        }
+        require(orderedVideoUrls.toSet() == cachedUrls.toSet()) {
+            "Playlist order does not match cached videos"
+        }
+        network.putPlaylistOrder(scope, playlistId, orderedVideoUrls)
+        playlistsDao.reorderVideos(cacheKey, orderedVideoUrls)
     }
 
     override suspend fun addVideoToPlaylist(
@@ -243,31 +253,38 @@ class OfflineLibraryRepository @Inject constructor(
         channelAvatarUrl: String,
         viewCount: Long,
     ): Result<Unit> = runCatching {
-        network.postAddVideoToPlaylist(
+        mutations.playlistVideo(
             playlistId = playlistId,
-            url = videoUrl,
-            title = title,
-            thumbnail = thumbnail,
-            duration = duration,
-            channelName = channelName,
-            channelUrl = channelUrl,
-            channelAvatar = channelAvatarUrl,
-            viewCount = viewCount,
+            video = MutationVideo(
+                url = videoUrl,
+                title = title,
+                thumbnailUrl = thumbnail,
+                durationSeconds = duration,
+                channelName = channelName,
+                channelUrl = channelUrl,
+                channelAvatarUrl = channelAvatarUrl,
+                viewCount = viewCount,
+            ),
+            desiredPresent = true,
         )
-        runCatching { refreshPlaylists() }
     }
 
     override suspend fun removeVideoFromPlaylist(
         playlistId: String,
         videoUrl: String,
     ): Result<Unit> = runCatching {
-        playlistsDao.deleteVideoFromPlaylist(playlistId, videoUrl)
-        runCatching { network.deleteVideoFromPlaylist(playlistId = playlistId, videoUrl = videoUrl) }
-            .onFailure { runCatching { refreshPlaylists() }; throw it }
+        mutations.playlistVideo(
+            playlistId = playlistId,
+            video = MutationVideo(videoUrl),
+            desiredPresent = false,
+        )
     }
+}
 
-    private companion object {
-        const val FAVORITES_NAME = "Favorites"
-        const val WATCH_LATER_NAME = "Watch Later"
-    }
+private suspend fun <T> captureLibraryResult(block: suspend () -> T): Result<T> = try {
+    Result.success(block())
+} catch (cancelled: CancellationException) {
+    throw cancelled
+} catch (failure: Throwable) {
+    Result.failure(failure)
 }
