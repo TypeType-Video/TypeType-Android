@@ -20,6 +20,13 @@ data class HistoryItemDto(
 data class FavoriteItemDto(
     val videoUrl: String,
     val favoritedAt: Long,
+    val title: String = "",
+    val thumbnail: String = "",
+    val duration: Long = 0L,
+    val channelName: String = "",
+    val channelUrl: String = "",
+    val channelAvatar: String = "",
+    val viewCount: Long = 0L,
 )
 
 @Serializable
@@ -29,6 +36,10 @@ data class WatchLaterItemDto(
     val thumbnail: String,
     val duration: Long,
     val addedAt: Long,
+    val channelName: String = "",
+    val channelUrl: String = "",
+    val channelAvatar: String = "",
+    val viewCount: Long = 0L,
 )
 
 @Serializable
@@ -51,5 +62,24 @@ data class PlaylistDto(
     val name: String,
     val description: String = "",
     val videos: List<PlaylistVideoDto> = emptyList(),
+    val videoCount: Int = videos.size,
     val createdAt: Long,
+)
+
+@Serializable
+data class SavedPublicPlaylistDto(
+    val id: String,
+    val publicPlaylistId: String,
+    val url: String,
+    val title: String,
+    val thumbnailUrl: String,
+    val uploaderName: String,
+    val streamCount: Long,
+    val playlistType: String,
+    val savedAt: Long,
+)
+
+@Serializable
+data class SavePublicPlaylistRequest(
+    val url: String,
 )

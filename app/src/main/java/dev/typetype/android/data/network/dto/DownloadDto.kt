@@ -19,6 +19,10 @@ data class CreateDownloadJobResponse(
 data class DownloadJobOptionsDto(
     val mode: DownloadModeDto = DownloadModeDto.Video,
     val quality: String = "best",
+    val format: String = "mp4",
+    val height: Int? = null,
+    val videoCodec: String? = null,
+    val audioCodec: String? = null,
     val allowQualityFallback: Boolean = true,
     val subtitles: DownloadSubtitlesOptionsDto = DownloadSubtitlesOptionsDto(),
 )
@@ -48,6 +52,7 @@ data class DownloadJobResponse(
     val status: DownloadJobStatusDto,
     val durationMs: Long = 0L,
     val title: String = "",
+    val errorCode: String? = null,
     val error: String? = null,
     val artifactUrl: String? = null,
     val resolved: DownloadResolvedOutputDto? = null,
