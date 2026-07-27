@@ -88,6 +88,9 @@ class LoginViewModel @Inject constructor(
                 viewModelScope.launch { authRepository.cancelOidc(serverId) }
             }
             LoginAction.OnContinueAsGuestClick -> performGuest()
+            LoginAction.OnResetPasswordClick -> emit(
+                LoginEvent.NavigateToResetPassword(serverId),
+            )
             LoginAction.OnBackClick -> emit(LoginEvent.NavigateBack)
         }
     }

@@ -9,5 +9,6 @@ sealed interface LoginAction {
     data object OnOidcBrowserUnavailable : LoginAction
     data object OnOidcCancelled : LoginAction
     data object OnContinueAsGuestClick : LoginAction
+    data object OnResetPasswordClick : LoginAction
     data object OnBackClick : LoginAction
 }
