@@ -1,6 +1,8 @@
 package dev.typetype.android.feature.player.components
 
 import android.media.AudioManager
+import android.graphics.Rect
+import android.view.WindowManager
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
@@ -9,11 +11,14 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -22,12 +27,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.state.rememberPresentationState
 import dev.typetype.android.domain.stream.Chapter
 import dev.typetype.android.domain.stream.SponsorBlockSegment
 import dev.typetype.android.domain.stream.Stream
+import dev.typetype.android.domain.stream.StreamPlaybackContract
+import dev.typetype.android.feature.player.LoadSubtitleCues
+import dev.typetype.android.feature.player.PlaybackCodecSupport
+import dev.typetype.android.feature.player.key
 import dev.typetype.android.feature.player.state.PlayerGestureState
 import dev.typetype.android.feature.player.state.ResizeMode
 import dev.typetype.android.feature.player.state.next
@@ -37,24 +47,31 @@ private const val AUTO_HIDE_DELAY_MS = 3_500L
 
 @OptIn(markerClass = [UnstableApi::class])
 @Composable
-fun PlayerSurfaceBox(
+internal fun PlayerSurfaceBox(
     player: Player,
     stream: Stream,
+    selectedCodec: String,
     selectedQuality: String,
     selectedAudioKey: String?,
     selectedSubtitleKey: String?,
     selectedSpeed: Float,
+    codecSupport: PlaybackCodecSupport,
+    onSelectCodec: (String) -> Unit,
     onSelectQuality: (String) -> Unit,
     onSelectAudio: (String?) -> Unit,
     onSelectSubtitle: (String?) -> Unit,
     onSelectSpeed: (Float) -> Unit,
     onNavigateBack: () -> Unit,
+    onRetryPlayback: () -> Unit,
+    onOpenAccounts: () -> Unit,
+    modifier: Modifier = Modifier,
+    pipSourceRect: Rect? = null,
     isFullscreen: Boolean = false,
     onToggleFullscreen: () -> Unit = {},
     sponsorBlockSegments: List<SponsorBlockSegment> = emptyList(),
     chapters: List<Chapter> = emptyList(),
     gestureConfig: PlayerGestureConfig = PlayerGestureConfig(),
-    modifier: Modifier = Modifier,
+    loadSubtitleCues: LoadSubtitleCues,
 ) {
     val activity = LocalActivity.current
     val context = LocalContext.current
@@ -62,11 +79,18 @@ fun PlayerSurfaceBox(
         context.getSystemService(AudioManager::class.java)
     }
     val gestureState = remember { PlayerGestureState() }
+    var appliedBrightnessPercent by remember { mutableIntStateOf(-1) }
+    var appliedVolumeLevel by remember { mutableIntStateOf(-1) }
     var controlsVisible by remember { mutableStateOf(true) }
     var optionsVisible by remember { mutableStateOf(false) }
     var chaptersVisible by remember { mutableStateOf(false) }
     val playbackStatus = rememberPlayerPlaybackStatus(player)
     val isInPip by rememberIsInPipMode()
+    val isPipAvailable = remember(activity) { supportsPictureInPicture(activity) }
+    val externalSubtitle = stream.subtitles.firstOrNull {
+        stream.playbackContract == StreamPlaybackContract.ServerSabr &&
+            it.key == selectedSubtitleKey
+    }
 
     LaunchedEffect(Unit) {
         gestureState.brightnessFraction.floatValue = activity?.window?.attributes?.screenBrightness
@@ -75,6 +99,17 @@ fun PlayerSurfaceBox(
         val currentVolume = audioManager?.getStreamVolume(AudioManager.STREAM_MUSIC) ?: 0
         gestureState.volumeFraction.floatValue =
             if (maxVolume > 0) currentVolume / maxVolume.toFloat() else 0f
+        appliedVolumeLevel = currentVolume
+    }
+
+    LaunchedEffect(isFullscreen) {
+        if (!isFullscreen) activity?.window?.clearPlaybackBrightnessOverride()
+    }
+
+    DisposableEffect(activity) {
+        onDispose {
+            activity?.window?.clearPlaybackBrightnessOverride()
+        }
     }
 
     LaunchedEffect(controlsVisible, playbackStatus.isPlaying) {
@@ -91,13 +126,17 @@ fun PlayerSurfaceBox(
             player = player,
             surfaceKey = surfaceKey,
             resizeMode = gestureState.resizeMode.value,
+            showNativeSubtitles = isInPip && selectedSubtitleKey != null,
             modifier = Modifier.fillMaxSize(),
         )
 
-        if (!isInPip) {
+        if (!isInPip || externalSubtitle != null) {
             PlayerSubtitleOverlay(
                 player = player,
-                controlsVisible = controlsVisible,
+                controlsVisible = controlsVisible && !isInPip,
+                subtitlesVisible = selectedSubtitleKey != null,
+                externalSource = externalSubtitle,
+                loadExternalCues = loadSubtitleCues,
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -120,7 +159,7 @@ fun PlayerSurfaceBox(
             CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
         }
 
-        if (!isInPip) {
+        if (!isInPip && playbackStatus.error == null) {
             PlayerGestureLayer(
                 player = player,
                 state = gestureState,
@@ -128,9 +167,11 @@ fun PlayerSurfaceBox(
                     controlsVisible = !controlsVisible
                 },
                 onAdjustBrightness = { fraction ->
-                    activity?.window?.let { window ->
+                    val percent = (fraction * 100).toInt()
+                    if (percent != appliedBrightnessPercent) activity?.window?.let { window ->
+                        appliedBrightnessPercent = percent
                         val params = window.attributes
-                        params.screenBrightness = fraction
+                        params.screenBrightness = percent / 100f
                         window.attributes = params
                     }
                 },
@@ -138,9 +179,13 @@ fun PlayerSurfaceBox(
                     audioManager?.let { manager ->
                         val maxVolume = manager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
                         val target = (fraction * maxVolume).toInt().coerceIn(0, maxVolume)
-                        manager.setStreamVolume(AudioManager.STREAM_MUSIC, target, 0)
+                        if (target != appliedVolumeLevel) {
+                            appliedVolumeLevel = target
+                            manager.setStreamVolume(AudioManager.STREAM_MUSIC, target, 0)
+                        }
                     }
                 },
+                onGestureFeedback = { controlsVisible = false },
                 isFullscreen = isFullscreen,
                 onEnterFullscreenGesture = {
                     if (!isFullscreen) onToggleFullscreen()
@@ -154,7 +199,7 @@ fun PlayerSurfaceBox(
         }
 
         AnimatedVisibility(
-            visible = controlsVisible && !isInPip,
+            visible = controlsVisible && !isInPip && playbackStatus.error == null,
             enter = fadeIn(),
             exit = fadeOut(),
         ) {
@@ -165,7 +210,11 @@ fun PlayerSurfaceBox(
                 onOpenChapters = { chaptersVisible = true },
                 onEnterPip = {
                     controlsVisible = false
-                    enterPictureInPicture(activity, isPlaying = playbackStatus.isPlaying)
+                    enterPictureInPicture(
+                        activity,
+                        isPlaying = playbackStatus.isPlaying,
+                        sourceRect = pipSourceRect,
+                    )
                 },
                 onToggleFullscreen = onToggleFullscreen,
                 onCycleResizeMode = {
@@ -173,11 +222,18 @@ fun PlayerSurfaceBox(
                 },
                 resizeMode = gestureState.resizeMode.value,
                 isFullscreen = isFullscreen,
+                isPipAvailable = isPipAvailable,
                 chaptersAvailable = chapters.isNotEmpty(),
                 sponsorBlockSegments = sponsorBlockSegments,
                 modifier = Modifier.fillMaxSize(),
             )
         }
+
+        PipPlaybackStateOverlay(
+            visible = isInPip,
+            isPlaying = playbackStatus.isPlaying,
+            modifier = Modifier.align(Alignment.BottomStart).padding(8.dp),
+        )
 
         SponsorBlockSkipper(player = player, segments = sponsorBlockSegments)
 
@@ -185,11 +241,14 @@ fun PlayerSurfaceBox(
             PlaybackOptionsSheet(
                 player = player,
                 stream = stream,
+                selectedCodec = selectedCodec,
                 selectedQuality = selectedQuality,
                 selectedAudioKey = selectedAudioKey,
                 selectedSubtitleKey = selectedSubtitleKey,
                 selectedSpeed = selectedSpeed,
+                codecSupport = codecSupport,
                 resizeMode = gestureState.resizeMode.value,
+                onSelectCodec = onSelectCodec,
                 onSelectQuality = onSelectQuality,
                 onSelectAudio = onSelectAudio,
                 onSelectSubtitle = onSelectSubtitle,
@@ -210,5 +269,21 @@ fun PlayerSurfaceBox(
                 onDismiss = { chaptersVisible = false },
             )
         }
+
+        playbackStatus.error?.takeIf { !isInPip }?.let { error ->
+            PlaybackFailureOverlay(
+                error = error,
+                onRetry = onRetryPlayback,
+                onOpenAccounts = onOpenAccounts,
+                onBack = onNavigateBack,
+            )
+        }
     }
+}
+
+private fun android.view.Window.clearPlaybackBrightnessOverride() {
+    val params = attributes
+    if (params.screenBrightness == WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE) return
+    params.screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+    attributes = params
 }
