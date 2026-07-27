@@ -14,6 +14,7 @@ import androidx.media3.exoplayer.source.MergingMediaSource
 import androidx.media3.exoplayer.source.SingleSampleMediaSource
 import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
 import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy
+import dev.typetype.android.data.network.PlaybackRetryOwnershipInterceptor
 import dev.typetype.android.domain.stream.SabrPlaybackBinding
 import dev.typetype.android.domain.stream.SabrPlaybackRepository
 import dev.typetype.android.domain.stream.StreamRequestScope
@@ -82,6 +83,8 @@ internal class MergedStreamMediaSourceFactory(
             .newBuilder()
             .followRedirects(false)
             .followSslRedirects(false)
+            .retryOnConnectionFailure(false)
+            .addNetworkInterceptor(PlaybackRetryOwnershipInterceptor)
             .build()
         val http = OkHttpDataSource.Factory(client)
         val transportState = SabrPlaybackTransportState(binding)
