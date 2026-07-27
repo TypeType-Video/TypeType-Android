@@ -1,240 +1,281 @@
 package dev.typetype.android.data.download
 
-import android.app.DownloadManager
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import android.os.Environment
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dev.typetype.android.data.network.ApiBaseUrlHolder
-import dev.typetype.android.data.network.DownloaderGatewayApiHolder
-import dev.typetype.android.data.network.dto.CreateDownloadJobRequest
-import dev.typetype.android.data.network.dto.DownloadJobOptionsDto
-import dev.typetype.android.data.network.dto.DownloadJobResponse
-import dev.typetype.android.data.network.dto.DownloadJobStatusDto
-import dev.typetype.android.data.network.extractServerErrorMessage
+import dev.typetype.android.data.account.AccountScope
+import dev.typetype.android.data.account.ActiveAccountScope
+import dev.typetype.android.data.account.AccountDao
+import dev.typetype.android.data.network.AccessTokenStore
+import dev.typetype.android.data.network.DownloaderGatewayApi
+import dev.typetype.android.data.network.ScopedApiFactory
+import dev.typetype.android.data.network.extractServerError
+import dev.typetype.android.domain.download.DownloadFailure
 import dev.typetype.android.domain.download.DownloadItem
 import dev.typetype.android.domain.download.DownloadProgress
 import dev.typetype.android.domain.download.DownloadRepository
+import dev.typetype.android.domain.download.DownloadSelection
+import dev.typetype.android.domain.download.DownloadStage
 import dev.typetype.android.domain.download.DownloadStatus
+import dev.typetype.android.domain.server.ServerRepository
+import java.util.UUID
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.json.Json
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 
 @Singleton
+@OptIn(ExperimentalCoroutinesApi::class)
 class AndroidDownloadRepository @Inject constructor(
-    @param:ApplicationContext private val context: Context,
-    private val apiHolder: DownloaderGatewayApiHolder,
-    private val baseUrlHolder: ApiBaseUrlHolder,
-    private val json: Json,
+    @ApplicationContext context: Context,
+    private val activeAccountScope: ActiveAccountScope,
+    private val accountDao: AccountDao,
+    private val serverRepository: ServerRepository,
+    private val downloadDao: DownloadDao,
+    private val artifactManager: DownloadArtifactManager,
+    private val scopedApiFactory: ScopedApiFactory,
+    private val tokenStore: AccessTokenStore,
 ) : DownloadRepository {
-    private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    private val downloads = MutableStateFlow(loadStoredEntries().toDownloadItems())
+    private val workManager = WorkManager.getInstance(context)
+    private val refreshes = MutableStateFlow(0L)
 
-    override fun observeDownloads(): Flow<List<DownloadItem>> {
-        refreshDownloadItems()
-        return downloads.asStateFlow()
-    }
+    override fun observeDownloads(): Flow<List<DownloadItem>> = activeAccountScope.observe()
+        .flatMapLatest { scope ->
+            if (scope == null) {
+                flowOf(emptyList())
+            } else {
+                combine(downloadDao.observeAll(scope.serverId, scope.accountId), refreshes) { entries, _ ->
+                    entries.map { it.toItem() }
+                }
+            }
+        }
+        .flowOn(Dispatchers.IO)
 
     override fun refreshDownloads() {
-        refreshDownloadItems()
+        refreshes.update { it + 1L }
     }
 
     override fun downloadVideo(
         videoUrl: String,
         title: String,
-        quality: String,
+        selection: DownloadSelection,
     ): Flow<DownloadProgress> = flow {
-        val api = apiHolder.require()
-        val createdResponse = api.createJob(
-            CreateDownloadJobRequest(
-                url = videoUrl,
-                options = DownloadJobOptionsDto(quality = normalizedQuality(quality)),
+        val scope = activeAccountScope.require()
+        val baseUrl = requireServerBaseUrl(scope)
+        val generation = requireAccountGeneration(scope)
+        val requestId = UUID.randomUUID().toString()
+        val request = createWorkRequest(scope, baseUrl, generation)
+        val now = System.currentTimeMillis()
+        downloadDao.upsert(
+            DownloadEntity(
+                serverId = scope.serverId,
+                accountId = scope.accountId,
+                sessionGeneration = generation,
+                requestId = requestId,
+                workId = request.id.toString(),
+                videoUrl = videoUrl,
+                title = title.ifBlank { DEFAULT_VIDEO_NAME },
+                quality = selection.storageKey,
+                serverJobId = null,
+                systemDownloadId = null,
+                fileName = null,
+                status = STATUS_QUEUED,
+                progressPercent = null,
+                stage = null,
+                errorMessage = null,
+                cached = false,
+                createdAtMillis = now,
+                updatedAtMillis = now,
             ),
         )
-        if (!createdResponse.isSuccessful) error(extractServerErrorMessage(createdResponse))
-        val created = createdResponse.body() ?: error("Empty downloader response")
-        emit(DownloadProgress.Queued(cached = created.cached))
+        workManager.enqueueUniqueWork(workName(requestId), ExistingWorkPolicy.KEEP, request)
+        emit(DownloadProgress.Queued(cached = false))
 
-        repeat(MAX_JOB_POLLS) {
-            val jobResponse = api.job(created.id)
-            if (!jobResponse.isSuccessful) error(extractServerErrorMessage(jobResponse))
-            val job = jobResponse.body() ?: error("Empty downloader job")
-            when (job.status) {
-                DownloadJobStatusDto.Queued -> emit(DownloadProgress.Queued(cached = created.cached))
-                DownloadJobStatusDto.Running -> emit(
-                    DownloadProgress.Running(
-                        progressPercent = job.progressPercent,
-                        stage = job.stage,
-                    ),
-                )
-                DownloadJobStatusDto.Done -> {
-                    val fileName = job.outputFileName(title)
-                    val downloadId = enqueueArtifactDownload(job.id, fileName, title)
-                    saveStoredEntry(
-                        StoredDownloadEntry(
-                            downloadId = downloadId,
-                            title = title.ifBlank { job.title }.ifBlank { DEFAULT_VIDEO_NAME },
-                            fileName = fileName,
-                            createdAtMillis = System.currentTimeMillis(),
-                        ),
-                    )
-                    emit(DownloadProgress.Enqueued(downloadId, fileName))
-                    return@flow
+        val terminal = downloadDao.observe(scope.serverId, scope.accountId, requestId)
+            .filterNotNull()
+            .distinctUntilChanged()
+            .onEach { entry ->
+                when (entry.status) {
+                    STATUS_QUEUED -> emit(DownloadProgress.Queued(entry.cached))
+                    STATUS_RUNNING -> emit(DownloadProgress.Running(entry.progressPercent, entry.stage))
                 }
-                DownloadJobStatusDto.Failed -> error(job.error?.takeIf { it.isNotBlank() } ?: "Download failed")
             }
-            delay(JOB_POLL_DELAY_MS)
-        }
-        error("Download timed out")
+            .first { it.status == STATUS_ENQUEUED || it.status == STATUS_FAILED }
+        activeAccountScope.verify(scope)
+        if (terminal.status == STATUS_FAILED) error(terminal.errorMessage ?: "Download failed")
+        emit(
+            DownloadProgress.Enqueued(
+                downloadId = requireNotNull(terminal.systemDownloadId),
+                fileName = terminal.fileName ?: terminal.title,
+            ),
+        )
     }.flowOn(Dispatchers.IO)
 
-    override suspend fun openDownload(downloadId: Long): Result<Unit> = runCatching {
-        val uri = downloadManager().getUriForDownloadedFile(downloadId)
-            ?: error("Download is not ready")
-        val intent = Intent(Intent.ACTION_VIEW)
-            .setData(uri)
-            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        context.startActivity(intent)
+    override suspend fun openDownload(requestId: String): Result<Unit> = runCatching {
+        val scope = activeAccountScope.require()
+        val entry = downloadDao.get(scope.serverId, scope.accountId, requestId)
+            ?: error("Download not found")
+        artifactManager.open(requireNotNull(entry.systemDownloadId) { "Download is not ready" })
     }
 
-    private fun enqueueArtifactDownload(jobId: String, fileName: String, title: String): Long {
-        val baseUrl = baseUrlHolder.currentBaseUrl?.trimEnd('/') ?: error("No server is currently selected")
-        val uri = Uri.parse("$baseUrl/downloader/jobs/$jobId/artifact?download=1")
-        val request = DownloadManager.Request(uri)
-            .setTitle(title.ifBlank { fileName })
-            .setDescription(fileName)
-            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            .setAllowedOverMetered(true)
-            .setAllowedOverRoaming(false)
-            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
-        return downloadManager().enqueue(request)
-    }
-
-    private fun downloadManager(): DownloadManager =
-        context.getSystemService(DownloadManager::class.java) ?: error("Download manager unavailable")
-
-    private fun DownloadJobResponse.outputFileName(fallbackTitle: String): String {
-        val extension = resolved?.container?.takeIf { it.isNotBlank() }
-            ?: resolved?.fileName?.substringAfterLast('.', "")?.takeIf { it.isNotBlank() }
-            ?: DEFAULT_VIDEO_EXTENSION
-        val baseName = fallbackTitle.ifBlank { title }.ifBlank { DEFAULT_VIDEO_NAME }
-        return "${sanitizeFileName(baseName)}.$extension"
-    }
-
-    private fun saveStoredEntry(entry: StoredDownloadEntry) {
-        val updated = (loadStoredEntries().filterNot { it.downloadId == entry.downloadId } + entry)
-            .sortedByDescending { it.createdAtMillis }
-            .take(MAX_STORED_DOWNLOADS)
-        prefs.edit()
-            .putString(KEY_DOWNLOADS, json.encodeToString(ListSerializer(StoredDownloadEntry.serializer()), updated))
-            .apply()
-        downloads.value = updated.toDownloadItems()
-    }
-
-    private fun loadStoredEntries(): List<StoredDownloadEntry> {
-        val raw = prefs.getString(KEY_DOWNLOADS, null) ?: return emptyList()
-        return runCatching {
-            json.decodeFromString(ListSerializer(StoredDownloadEntry.serializer()), raw)
-        }.getOrDefault(emptyList())
-    }
-
-    private fun refreshDownloadItems() {
-        val storedItems = loadStoredEntries().toDownloadItems()
-        val storedIds = storedItems.map { it.downloadId }.toSet()
-        val managerItems = queryDownloadManagerItems().filterNot { it.downloadId in storedIds }
-        downloads.value = (storedItems + managerItems).sortedByDescending { it.createdAtMillis }
-    }
-
-    private fun List<StoredDownloadEntry>.toDownloadItems(): List<DownloadItem> =
-        map { entry ->
-            val status = queryDownloadStatus(entry.downloadId)
-            DownloadItem(
-                downloadId = entry.downloadId,
-                title = entry.title,
-                fileName = entry.fileName,
-                status = status.first,
-                progressPercent = status.second,
-                createdAtMillis = entry.createdAtMillis,
-            )
-        }.sortedByDescending { it.createdAtMillis }
-
-    private fun queryDownloadStatus(downloadId: Long): Pair<DownloadStatus, Int?> {
-        val query = DownloadManager.Query().setFilterById(downloadId)
-        downloadManager().query(query)?.use { cursor ->
-            if (!cursor.moveToFirst()) return DownloadStatus.Failed to null
-            val statusIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
-            val bytesIndex = cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)
-            val totalIndex = cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES)
-            return DownloadManagerCursorReader.status(cursor, statusIndex, bytesIndex, totalIndex)
+    override suspend fun cancelDownload(requestId: String): Result<Unit> = runCatching {
+        val scope = activeAccountScope.require()
+        val entry = requireEntry(scope, requestId)
+        if (entry.serverJobId != null && entry.status != STATUS_ENQUEUED) {
+            cancelServerJob(scope, entry.serverJobId)
         }
-        return DownloadStatus.Failed to null
+        workManager.cancelUniqueWork(workName(requestId))
+        val latest = requireEntry(scope, requestId)
+        latest.systemDownloadId?.let(artifactManager::remove)
+        downloadDao.updateProgress(
+            latest.workId,
+            STATUS_CANCELLED,
+            null,
+            null,
+            DownloadFailureCodes.Cancelled,
+            System.currentTimeMillis(),
+        )
     }
 
-    private fun queryDownloadManagerItems(): List<DownloadItem> {
-        downloadManager().query(DownloadManager.Query())?.use { cursor ->
-            val items = mutableListOf<DownloadItem>()
-            val idIndex = cursor.getColumnIndex(DownloadManager.COLUMN_ID)
-            val titleIndex = cursor.getColumnIndex(DownloadManager.COLUMN_TITLE)
-            val fileNameIndex = cursor.getColumnIndex(DownloadManager.COLUMN_DESCRIPTION)
-            val modifiedIndex = cursor.getColumnIndex(DownloadManager.COLUMN_LAST_MODIFIED_TIMESTAMP)
-            val statusIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
-            val bytesIndex = cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)
-            val totalIndex = cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES)
-            while (cursor.moveToNext()) {
-                val id = DownloadManagerCursorReader.longOrNull(cursor, idIndex) ?: continue
-                val status = DownloadManagerCursorReader.status(cursor, statusIndex, bytesIndex, totalIndex)
-                val title = DownloadManagerCursorReader.stringOrNull(cursor, titleIndex)
-                    ?.takeIf { it.isNotBlank() } ?: DEFAULT_VIDEO_NAME
-                val fileName = DownloadManagerCursorReader.stringOrNull(cursor, fileNameIndex)
-                    ?.takeIf { it.isNotBlank() } ?: title
-                val modified = DownloadManagerCursorReader.longOrNull(cursor, modifiedIndex)
-                    ?.takeIf { it > 0L } ?: 0L
-                items += DownloadItem(
-                    downloadId = id,
-                    title = title,
-                    fileName = fileName,
-                    status = status.first,
-                    progressPercent = status.second,
-                    createdAtMillis = modified,
-                )
-            }
-            return items
+    override suspend fun retryDownload(requestId: String): Result<Unit> = runCatching {
+        val scope = activeAccountScope.require()
+        val entry = requireEntry(scope, requestId)
+        require(entry.status == STATUS_FAILED || entry.status == STATUS_CANCELLED) { "Download is active" }
+        val baseUrl = requireServerBaseUrl(scope)
+        val generation = requireAccountGeneration(scope)
+        val request = createWorkRequest(scope, baseUrl, generation)
+        entry.systemDownloadId?.let(artifactManager::remove)
+        downloadDao.upsert(
+            entry.copy(
+                workId = request.id.toString(),
+                sessionGeneration = generation,
+                serverJobId = null,
+                systemDownloadId = null,
+                fileName = null,
+                status = STATUS_QUEUED,
+                progressPercent = null,
+                stage = null,
+                errorMessage = null,
+                cached = false,
+                updatedAtMillis = System.currentTimeMillis(),
+            ),
+        )
+        workManager.enqueueUniqueWork(workName(requestId), ExistingWorkPolicy.REPLACE, request)
+    }
+
+    override suspend fun removeDownload(requestId: String): Result<Unit> = runCatching {
+        val scope = activeAccountScope.require()
+        val entry = requireEntry(scope, requestId)
+        require(entry.status != STATUS_RUNNING && entry.status != STATUS_QUEUED) { "Cancel the download first" }
+        workManager.cancelUniqueWork(workName(requestId))
+        entry.systemDownloadId?.let(artifactManager::remove)
+        downloadDao.delete(scope.serverId, scope.accountId, requestId)
+    }
+
+    private suspend fun cancelServerJob(scope: AccountScope, jobId: String) {
+        val baseUrl = requireServerBaseUrl(scope)
+        val token = tokenStore.getAccessToken(scope.serverId, scope.accountId)
+            ?: error(DownloadFailureCodes.Authentication)
+        val api = scopedApiFactory.create(
+            baseUrl = baseUrl,
+            serverId = scope.serverId,
+            accountId = scope.accountId,
+            token = token,
+            type = DownloaderGatewayApi::class.java,
+        )
+        val response = api.cancelJob(jobId, "Bearer $token")
+        if (!response.isSuccessful && response.code() != 404) {
+            error(DownloadFailureCodes.fromHttp(response.code(), extractServerError(response)))
         }
-        return emptyList()
     }
 
-    private fun normalizedQuality(value: String): String {
-        val clean = value.trim()
-        return if (clean.isBlank() || clean.equals(AUTO_QUALITY, ignoreCase = true)) BEST_QUALITY else clean
+    private suspend fun requireEntry(scope: AccountScope, requestId: String): DownloadEntity =
+        downloadDao.get(scope.serverId, scope.accountId, requestId) ?: error("Download not found")
+
+    private suspend fun requireAccountGeneration(scope: AccountScope): Long =
+        accountDao.get(scope.serverId, scope.accountId)?.sessionGeneration
+            ?: error("Account not found")
+
+    private suspend fun requireServerBaseUrl(scope: AccountScope): String =
+        serverRepository.getServer(scope.serverId)?.baseUrl ?: error("Instance not found")
+
+    private fun createWorkRequest(scope: AccountScope, baseUrl: String, generation: Long) =
+        OneTimeWorkRequestBuilder<DownloadPreparationWorker>()
+            .setInputData(DownloadWorkContract.input(scope.serverId, scope.accountId, baseUrl, generation))
+            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, MIN_BACKOFF_SECONDS, TimeUnit.SECONDS)
+            .build()
+
+    private fun DownloadEntity.toItem(): DownloadItem {
+        val artifactStatus = systemDownloadId?.let(artifactManager::status)
+        val mappedStatus = when (status) {
+            STATUS_RUNNING -> DownloadStatus.Running to progressPercent
+            STATUS_ENQUEUED -> artifactStatus ?: (DownloadStatus.Pending to null)
+            STATUS_FAILED -> DownloadStatus.Failed to null
+            STATUS_CANCELLED -> DownloadStatus.Cancelled to null
+            else -> DownloadStatus.Pending to progressPercent
+        }
+        return DownloadItem(
+            requestId = requestId,
+            systemDownloadId = systemDownloadId,
+            title = title,
+            fileName = fileName ?: title,
+            selection = DownloadSelection.fromStorage(quality),
+            status = mappedStatus.first,
+            progressPercent = mappedStatus.second,
+            stage = stage.toDownloadStage(),
+            failure = when {
+                mappedStatus.first != DownloadStatus.Failed -> null
+                else -> errorMessage.toDownloadFailure()
+            },
+            createdAtMillis = createdAtMillis,
+        )
     }
 
-    private fun sanitizeFileName(value: String): String =
-        value.replace(Regex("""[\\/:*?"<>|]+"""), " ")
-            .replace(Regex("\\s+"), " ")
-            .trim()
-            .take(MAX_FILE_NAME_LENGTH)
-            .ifBlank { DEFAULT_VIDEO_NAME }
+    private fun String?.toDownloadStage(): DownloadStage? = when (this) {
+        "download", "downloading" -> DownloadStage.Downloading
+        "mux", "finalizing" -> DownloadStage.Finalizing
+        "extract", "running" -> DownloadStage.Preparing
+        else -> null
+    }
+
+    private fun String?.toDownloadFailure(): DownloadFailure = when (this) {
+        DownloadFailureCodes.Authentication -> DownloadFailure.Authentication
+        DownloadFailureCodes.InsufficientStorage -> DownloadFailure.InsufficientStorage
+        DownloadFailureCodes.Network -> DownloadFailure.Network
+        DownloadFailureCodes.Rejected -> DownloadFailure.Rejected
+        DownloadFailureCodes.ServerUnavailable -> DownloadFailure.ServerUnavailable
+        DownloadFailureCodes.TimedOut -> DownloadFailure.TimedOut
+        else -> DownloadFailure.Unknown
+    }
+
+    private fun workName(requestId: String) = "typetype-download-$requestId"
 
     private companion object {
-        const val AUTO_QUALITY = "auto"
-        const val BEST_QUALITY = "best"
-        const val DEFAULT_VIDEO_EXTENSION = "mp4"
         const val DEFAULT_VIDEO_NAME = "TypeType video"
-        const val JOB_POLL_DELAY_MS = 1_000L
-        const val MAX_JOB_POLLS = 900
-        const val MAX_FILE_NAME_LENGTH = 180
-        const val MAX_STORED_DOWNLOADS = 80
-        const val PREFS_NAME = "typetype_downloads"
-        const val KEY_DOWNLOADS = "downloads"
+        const val MIN_BACKOFF_SECONDS = 10L
+        const val STATUS_QUEUED = "QUEUED"
+        const val STATUS_RUNNING = "RUNNING"
+        const val STATUS_ENQUEUED = "ENQUEUED"
+        const val STATUS_FAILED = "FAILED"
+        const val STATUS_CANCELLED = "CANCELLED"
     }
 }
