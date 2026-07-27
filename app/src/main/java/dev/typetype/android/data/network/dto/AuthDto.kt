@@ -32,6 +32,24 @@ data class GuestResponse(
 )
 
 @Serializable
+data class OidcStartResponse(
+    val authorizationUrl: String,
+)
+
+@Serializable
+data class OidcCallbackRequest(
+    val code: String,
+    val state: String,
+    val redirectUri: String,
+)
+
+@Serializable
+data class OidcCallbackResponse(
+    val accessToken: String,
+    val returnTo: String,
+)
+
+@Serializable
 data class UserProfile(
     val id: String,
     val role: String? = null,
