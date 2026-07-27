@@ -9,24 +9,39 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface WatchLaterDao {
-    @Query("SELECT * FROM watch_later ORDER BY addedAtMillis DESC")
-    fun observeAll(): Flow<List<WatchLaterEntity>>
+    @Query(
+        "SELECT * FROM watch_later WHERE serverId = :serverId AND accountId = :accountId " +
+            "ORDER BY addedAtMillis DESC",
+    )
+    fun observeAll(serverId: String, accountId: String): Flow<List<WatchLaterEntity>>
 
-    @Query("SELECT EXISTS(SELECT 1 FROM watch_later WHERE url = :url)")
-    fun observeIsInWatchLater(url: String): Flow<Boolean>
+    @Query(
+        "SELECT * FROM watch_later WHERE serverId = :serverId AND accountId = :accountId " +
+            "ORDER BY addedAtMillis DESC",
+    )
+    suspend fun getAll(serverId: String, accountId: String): List<WatchLaterEntity>
+
+    @Query(
+        "SELECT EXISTS(SELECT 1 FROM watch_later WHERE serverId = :serverId " +
+            "AND accountId = :accountId AND url = :url)",
+    )
+    fun observeIsInWatchLater(serverId: String, accountId: String, url: String): Flow<Boolean>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(item: WatchLaterEntity)
 
-    @Query("DELETE FROM watch_later WHERE url = :url")
-    suspend fun deleteByUrl(url: String)
+    @Query(
+        "DELETE FROM watch_later WHERE serverId = :serverId " +
+            "AND accountId = :accountId AND url = :url",
+    )
+    suspend fun deleteByUrl(serverId: String, accountId: String, url: String)
 
-    @Query("DELETE FROM watch_later")
-    suspend fun deleteAll()
+    @Query("DELETE FROM watch_later WHERE serverId = :serverId AND accountId = :accountId")
+    suspend fun deleteAll(serverId: String, accountId: String)
 
     @Transaction
-    suspend fun replaceAll(items: List<WatchLaterEntity>) {
-        deleteAll()
+    suspend fun replaceAll(serverId: String, accountId: String, items: List<WatchLaterEntity>) {
+        deleteAll(serverId, accountId)
         items.forEach { upsert(it) }
     }
 }
