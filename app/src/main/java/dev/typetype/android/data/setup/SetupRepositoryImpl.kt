@@ -4,6 +4,7 @@ import dev.typetype.android.data.network.RetrofitFactory
 import dev.typetype.android.domain.server.Server
 import dev.typetype.android.domain.server.ServerRepository
 import dev.typetype.android.domain.setup.ProbeResult
+import dev.typetype.android.domain.setup.ServerAddress
 import dev.typetype.android.domain.setup.SetupRepository
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -17,19 +18,33 @@ class SetupRepositoryImpl @Inject constructor(
 ) : SetupRepository {
 
     override suspend fun probeServer(rawUrl: String): Result<ProbeResult> = runCatching {
-        val candidates = candidateBaseUrls(rawUrl)
-        val resolved = candidates.firstNotNullOfOrNull { tryCandidate(it) }
-            ?: error("No TypeType API found at this address")
+        val candidates = ServerAddress.candidateBaseUrls(rawUrl)
+        val attempts = candidates.map { tryCandidate(it) }
+        val resolved = attempts.filterIsInstance<Attempt.Resolved>().firstOrNull()?.value
+            ?: throw probeFailure(attempts)
+        require(resolved.instance.apiVersion == SUPPORTED_API_VERSION) {
+            "This instance uses API ${resolved.instance.apiVersion}, but this app supports API $SUPPORTED_API_VERSION"
+        }
         ProbeResult(
             normalizedUrl = resolved.baseUrl,
             name = resolved.instance.name,
             tagline = resolved.instance.tagline,
             version = resolved.instance.version,
+            revision = resolved.instance.revision,
             apiVersion = resolved.instance.apiVersion,
             registrationAllowed = resolved.instance.registrationAllowed,
             guestAllowed = resolved.instance.guestAllowed,
             supportedServices = resolved.instance.supportedServices,
             minAndroidClientVersion = resolved.instance.minClientVersion?.android,
+            logoUrl = resolved.instance.logoUrl,
+            bannerUrl = resolved.instance.bannerUrl,
+            localLoginEnabled = resolved.instance.localLoginEnabled,
+            oidcEnabled = resolved.instance.oidcEnabled,
+            oidcProviderName = resolved.instance.oidcProviderName,
+            oidcAutoRedirect = resolved.instance.oidcAutoRedirect,
+            youtubeRemoteLoginEnabled = resolved.instance.youtubeRemoteLoginEnabled,
+            youtubeRemoteLoginReady = resolved.instance.youtubeRemoteLoginReady,
+            youtubeRemoteLoginUnavailableReason = resolved.instance.youtubeRemoteLoginUnavailableReason,
         )
     }
 
@@ -38,31 +53,36 @@ class SetupRepositoryImpl @Inject constructor(
         if (makeCurrent) serverRepository.setCurrentServer(server.id)
     }
 
-    private suspend fun tryCandidate(baseUrl: String): Resolved? {
+    private suspend fun tryCandidate(baseUrl: String): Attempt {
         val api = retrofitFactory.create(baseUrl)
-        return runCatching {
+        return try {
+            val healthResponse = withContext(Dispatchers.IO) { api.health() }
+            if (!healthResponse.isSuccessful || healthResponse.body()?.status != "ok") {
+                return Attempt.UnexpectedResponse
+            }
             val instanceResponse = withContext(Dispatchers.IO) { api.instance() }
             val body = instanceResponse.body()
             if (instanceResponse.isSuccessful && body != null) {
-                Resolved(baseUrl, body)
+                Attempt.Resolved(Resolved(baseUrl, body))
             } else {
-                null
+                Attempt.UnexpectedResponse
             }
-        }.getOrNull()
+        } catch (error: java.io.IOException) {
+            Attempt.NetworkFailure(error)
+        } catch (error: Exception) {
+            Attempt.UnexpectedPayload(error)
+        }
     }
 
-    private fun candidateBaseUrls(raw: String): List<String> {
-        val trimmed = raw.trim().trimEnd('/')
-        require(trimmed.isNotEmpty()) { "URL cannot be empty" }
-        val withScheme = if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-            trimmed
-        } else {
-            "https://$trimmed"
-        }
-        return if (withScheme.contains("/api")) {
-            listOf(withScheme)
-        } else {
-            listOf(withScheme, "$withScheme/api")
+    private fun probeFailure(attempts: List<Attempt>): Exception {
+        val payloadFailure = attempts.filterIsInstance<Attempt.UnexpectedPayload>().firstOrNull()
+        return when {
+            payloadFailure != null || attempts.any { it == Attempt.UnexpectedResponse } ->
+                IllegalStateException("The address responded, but it is not a compatible TypeType instance")
+            else -> {
+                val cause = attempts.filterIsInstance<Attempt.NetworkFailure>().lastOrNull()?.cause
+                java.io.IOException("Could not reach a TypeType instance at this address", cause)
+            }
         }
     }
 
@@ -70,4 +90,15 @@ class SetupRepositoryImpl @Inject constructor(
         val baseUrl: String,
         val instance: dev.typetype.android.data.network.dto.InstanceResponse,
     )
+
+    private sealed interface Attempt {
+        data class Resolved(val value: SetupRepositoryImpl.Resolved) : Attempt
+        data class NetworkFailure(val cause: java.io.IOException) : Attempt
+        data class UnexpectedPayload(val cause: Exception) : Attempt
+        data object UnexpectedResponse : Attempt
+    }
+
+    private companion object {
+        const val SUPPORTED_API_VERSION = 1
+    }
 }
