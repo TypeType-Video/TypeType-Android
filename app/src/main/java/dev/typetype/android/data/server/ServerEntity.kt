@@ -1,6 +1,7 @@
 package dev.typetype.android.data.server
 
 import androidx.room.Entity
+import androidx.room.ColumnInfo
 import androidx.room.PrimaryKey
 import dev.typetype.android.domain.server.Server
 
@@ -10,12 +11,46 @@ data class ServerEntity(
     val baseUrl: String,
     val displayName: String,
     val addedAt: Long,
+    val tagline: String? = null,
+    @ColumnInfo(defaultValue = "") val version: String = "",
+    @ColumnInfo(defaultValue = "") val revision: String = "",
+    @ColumnInfo(defaultValue = "0") val apiVersion: Int = 0,
+    val logoUrl: String? = null,
+    val bannerUrl: String? = null,
+    @ColumnInfo(defaultValue = "") val supportedServicesCsv: String = "",
+    val minAndroidClientVersion: String? = null,
+    @ColumnInfo(defaultValue = "0") val registrationAllowed: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val guestAllowed: Boolean = false,
+    @ColumnInfo(defaultValue = "1") val localLoginEnabled: Boolean = true,
+    @ColumnInfo(defaultValue = "0") val oidcEnabled: Boolean = false,
+    val oidcProviderName: String? = null,
+    @ColumnInfo(defaultValue = "0") val oidcAutoRedirect: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val youtubeRemoteLoginEnabled: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val youtubeRemoteLoginReady: Boolean = false,
+    val youtubeRemoteLoginUnavailableReason: String? = null,
 ) {
     fun toDomain(): Server = Server(
         id = id,
         baseUrl = baseUrl,
         displayName = displayName,
         addedAt = addedAt,
+        tagline = tagline,
+        version = version,
+        revision = revision,
+        apiVersion = apiVersion,
+        logoUrl = logoUrl,
+        bannerUrl = bannerUrl,
+        supportedServices = supportedServicesCsv.split(',').mapNotNull(String::toIntOrNull),
+        minAndroidClientVersion = minAndroidClientVersion,
+        registrationAllowed = registrationAllowed,
+        guestAllowed = guestAllowed,
+        localLoginEnabled = localLoginEnabled,
+        oidcEnabled = oidcEnabled,
+        oidcProviderName = oidcProviderName,
+        oidcAutoRedirect = oidcAutoRedirect,
+        youtubeRemoteLoginEnabled = youtubeRemoteLoginEnabled,
+        youtubeRemoteLoginReady = youtubeRemoteLoginReady,
+        youtubeRemoteLoginUnavailableReason = youtubeRemoteLoginUnavailableReason,
     )
 
     companion object {
@@ -24,6 +59,23 @@ data class ServerEntity(
             baseUrl = server.baseUrl,
             displayName = server.displayName,
             addedAt = server.addedAt,
+            tagline = server.tagline,
+            version = server.version,
+            revision = server.revision,
+            apiVersion = server.apiVersion,
+            logoUrl = server.logoUrl,
+            bannerUrl = server.bannerUrl,
+            supportedServicesCsv = server.supportedServices.joinToString(","),
+            minAndroidClientVersion = server.minAndroidClientVersion,
+            registrationAllowed = server.registrationAllowed,
+            guestAllowed = server.guestAllowed,
+            localLoginEnabled = server.localLoginEnabled,
+            oidcEnabled = server.oidcEnabled,
+            oidcProviderName = server.oidcProviderName,
+            oidcAutoRedirect = server.oidcAutoRedirect,
+            youtubeRemoteLoginEnabled = server.youtubeRemoteLoginEnabled,
+            youtubeRemoteLoginReady = server.youtubeRemoteLoginReady,
+            youtubeRemoteLoginUnavailableReason = server.youtubeRemoteLoginUnavailableReason,
         )
     }
 }
