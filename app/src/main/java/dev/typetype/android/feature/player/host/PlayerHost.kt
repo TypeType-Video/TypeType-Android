@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -31,6 +32,7 @@ import dev.typetype.android.feature.player.PlayerRoute as PlayerRouteScreen
 import dev.typetype.android.feature.player.components.rememberIsInPipMode
 
 private val MINI_PLAYER_HEIGHT = 64.dp
+internal const val PLAYER_HOST_OVERLAY_TAG = "player_host_overlay"
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -95,9 +97,7 @@ fun PlayerHost(
 
         content()
 
-        val hasVideo = state.videoUrl != null ||
-            anchoredState.currentValue != PlayerHostTarget.Hidden ||
-            anchoredState.targetValue != PlayerHostTarget.Hidden
+        val hasVideo = state.videoUrl != null
 
         if (hasVideo) {
             val isMini = !isInPip && (
@@ -113,6 +113,7 @@ fun PlayerHost(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(hostHeightDp)
+                    .testTag(PLAYER_HOST_OVERLAY_TAG)
                     .offset {
                         val offset = if (anchoredState.anchors.size > 0) {
                             anchoredState.requireOffset()

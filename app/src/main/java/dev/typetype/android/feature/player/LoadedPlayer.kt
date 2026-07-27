@@ -26,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -97,6 +98,9 @@ fun LoadedPlayer(
     val scrollState = rememberScrollState()
     var commentsVisible by remember { mutableStateOf(false) }
     var downloadPickerVisible by remember { mutableStateOf(false) }
+    var playbackBrightnessPercent by rememberSaveable(stream.id) {
+        mutableStateOf<Int?>(null)
+    }
     val selections = rememberPlayerPlaybackSelectionState(
         stream = stream,
         defaultQuality = defaultQuality,
@@ -245,6 +249,8 @@ fun LoadedPlayer(
                         sponsorBlockSegments = stream.sponsorBlockSegments,
                         chapters = stream.chapters,
                         gestureConfig = gestureConfig,
+                        playbackBrightnessPercent = playbackBrightnessPercent,
+                        onPlaybackBrightnessChange = { playbackBrightnessPercent = it },
                         loadSubtitleCues = loadSubtitleCues,
                         modifier = Modifier.fillMaxSize(),
                     )
