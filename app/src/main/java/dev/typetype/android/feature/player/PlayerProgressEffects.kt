@@ -47,11 +47,15 @@ internal fun PlayerProgressEffects(
         } else {
             val listener = object : Player.Listener {
                 override fun onPlaybackStateChanged(playbackState: Int) {
-                    if (
-                        playbackState == Player.STATE_ENDED && !explicitQueueActive &&
-                        autoplayEnabled && !nextVideoUrl.isNullOrBlank()
+                    if (shouldAutoplayNext(
+                            playbackState = playbackState,
+                            playWhenReady = current.playWhenReady,
+                            explicitQueueActive = explicitQueueActive,
+                            autoplayEnabled = autoplayEnabled,
+                            nextVideoUrl = nextVideoUrl,
+                        )
                     ) {
-                        onPlayVideo(nextVideoUrl)
+                        nextVideoUrl?.let(onPlayVideo)
                     }
                 }
 
@@ -105,3 +109,15 @@ internal fun PlayerProgressEffects(
 private const val MIN_PROGRESS_MILLIS = 5_000L
 private const val MAX_PROGRESS_FRACTION = 0.95
 private const val PROGRESS_INTERVAL_MILLIS = 10_000L
+
+internal fun shouldAutoplayNext(
+    playbackState: Int,
+    playWhenReady: Boolean,
+    explicitQueueActive: Boolean,
+    autoplayEnabled: Boolean,
+    nextVideoUrl: String?,
+): Boolean = playbackState == Player.STATE_ENDED &&
+    playWhenReady &&
+    !explicitQueueActive &&
+    autoplayEnabled &&
+    !nextVideoUrl.isNullOrBlank()
