@@ -20,6 +20,10 @@ data class VideoItem(
     val uploaderVerified: Boolean,
     val shortDescription: String? = null,
     val publishedAt: Long? = null,
+    val isLive: Boolean = false,
+    val isPostLive: Boolean = false,
+    val isLiveContent: Boolean = false,
+    val requiresMembership: Boolean = false,
 )
 
 @Serializable
@@ -33,4 +37,9 @@ data class HomeRecommendationsResponse(
 data class SubscriptionFeedResponse(
     val videos: List<VideoItem> = emptyList(),
     val nextpage: String? = null,
+    val generation: Long? = null,
+    val generatedAt: Long? = null,
+    val refreshing: Boolean? = null,
+    val code: String? = null,
+    val retryAfterMs: Long? = null,
 )

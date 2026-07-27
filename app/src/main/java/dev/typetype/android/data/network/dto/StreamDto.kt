@@ -40,6 +40,10 @@ data class StreamResponse(
     val sponsorBlockSegments: List<SponsorBlockSegmentItem> = emptyList(),
     val relatedStreams: List<VideoItem> = emptyList(),
     val publishedAt: Long? = null,
+    val isLive: Boolean = false,
+    val isPostLive: Boolean = false,
+    val isLiveContent: Boolean = false,
+    val hasLiveManifest: Boolean = false,
 )
 
 @Serializable
@@ -60,6 +64,9 @@ data class VideoStreamItem(
     val initEnd: Long = 0,
     val indexStart: Long = 0,
     val indexEnd: Long = 0,
+    val deliveryMethod: String = "progressive",
+    val manifestUrl: String? = null,
+    val sabrSessionUrl: String? = null,
 )
 
 @Serializable
@@ -80,6 +87,9 @@ data class AudioStreamItem(
     val audioTrackName: String? = null,
     val audioLocale: String? = null,
     val isOriginal: Boolean = false,
+    val deliveryMethod: String = "progressive",
+    val manifestUrl: String? = null,
+    val sabrSessionUrl: String? = null,
 )
 
 @Serializable
