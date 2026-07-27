@@ -25,6 +25,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.ManageAccounts
@@ -52,6 +53,8 @@ import dev.typetype.android.R
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onOpenProfile: () -> Unit = {},
+    onOpenImport: () -> Unit = {},
+    importsAvailable: Boolean = false,
     onOpenAccounts: () -> Unit = {},
     onOpenAppearance: () -> Unit,
     onOpenPlayer: () -> Unit = {},
@@ -62,17 +65,20 @@ fun SettingsScreen(
     onOpenAbout: () -> Unit = {},
     onSignOut: () -> Unit,
 ) {
-    val entries = listOf(
-        SettingsEntry(R.string.accounts_title, R.string.accounts_subtitle, Icons.Filled.ManageAccounts, onOpenAccounts),
-        SettingsEntry(R.string.settings_profile_title, R.string.settings_profile_subtitle, Icons.Filled.Person, onOpenProfile),
-        SettingsEntry(R.string.settings_appearance_title, R.string.settings_appearance_subtitle, Icons.Filled.Palette, onOpenAppearance),
-        SettingsEntry(R.string.settings_player_title, R.string.settings_player_subtitle, Icons.Filled.PlayCircle, onOpenPlayer),
-        SettingsEntry(R.string.settings_storage_title, R.string.settings_storage_subtitle, Icons.Filled.Storage, onOpenStorage),
-        SettingsEntry(R.string.settings_privacy_title, R.string.settings_privacy_subtitle, Icons.Filled.Lock, onOpenPrivacy),
-        SettingsEntry(R.string.diagnostics_title, R.string.diagnostics_subtitle, Icons.Filled.BugReport, onOpenDiagnostics),
-        SettingsEntry(R.string.settings_blocked_title, R.string.settings_blocked_subtitle, Icons.Filled.Block, onOpenBlocked),
-        SettingsEntry(R.string.settings_about_title, R.string.settings_about_subtitle, Icons.Filled.Info, onOpenAbout),
-    )
+    val entries = buildList {
+        add(SettingsEntry(R.string.accounts_title, R.string.accounts_subtitle, Icons.Filled.ManageAccounts, onOpenAccounts))
+        add(SettingsEntry(R.string.settings_profile_title, R.string.settings_profile_subtitle, Icons.Filled.Person, onOpenProfile))
+        if (importsAvailable) {
+            add(SettingsEntry(R.string.settings_import_title, R.string.settings_import_subtitle, Icons.Filled.UploadFile, onOpenImport))
+        }
+        add(SettingsEntry(R.string.settings_appearance_title, R.string.settings_appearance_subtitle, Icons.Filled.Palette, onOpenAppearance))
+        add(SettingsEntry(R.string.settings_player_title, R.string.settings_player_subtitle, Icons.Filled.PlayCircle, onOpenPlayer))
+        add(SettingsEntry(R.string.settings_storage_title, R.string.settings_storage_subtitle, Icons.Filled.Storage, onOpenStorage))
+        add(SettingsEntry(R.string.settings_privacy_title, R.string.settings_privacy_subtitle, Icons.Filled.Lock, onOpenPrivacy))
+        add(SettingsEntry(R.string.diagnostics_title, R.string.diagnostics_subtitle, Icons.Filled.BugReport, onOpenDiagnostics))
+        add(SettingsEntry(R.string.settings_blocked_title, R.string.settings_blocked_subtitle, Icons.Filled.Block, onOpenBlocked))
+        add(SettingsEntry(R.string.settings_about_title, R.string.settings_about_subtitle, Icons.Filled.Info, onOpenAbout))
+    }
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,

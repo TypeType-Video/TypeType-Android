@@ -13,7 +13,9 @@ import dev.typetype.android.data.download.AndroidDownloadRepository
 import dev.typetype.android.data.diagnostics.LocalDiagnosticsRepository
 import dev.typetype.android.data.feed.HomeFeedRepositoryImpl
 import dev.typetype.android.data.library.OfflineLibraryRepository
+import dev.typetype.android.data.imports.RemoteImportRepository
 import dev.typetype.android.data.library.RoomVideoMetaRepository
+import dev.typetype.android.data.notifications.RemoteNotificationsRepository
 import dev.typetype.android.data.preferences.DataStorePreferencesRepository
 import dev.typetype.android.data.podcast.RemotePodcastRepository
 import dev.typetype.android.data.playback.RoomPlaybackResumeRepository
@@ -41,7 +43,9 @@ import dev.typetype.android.domain.download.DownloadRepository
 import dev.typetype.android.domain.diagnostics.DiagnosticsRepository
 import dev.typetype.android.domain.feed.HomeFeedRepository
 import dev.typetype.android.domain.library.LibraryRepository
+import dev.typetype.android.domain.imports.ImportRepository
 import dev.typetype.android.domain.library.VideoMetaRepository
+import dev.typetype.android.domain.notifications.NotificationsRepository
 import dev.typetype.android.domain.preferences.PreferencesRepository
 import dev.typetype.android.domain.podcast.PodcastRepository
 import dev.typetype.android.domain.playback.PlaybackResumeRepository
@@ -102,6 +106,12 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
+    abstract fun bindNotificationsRepository(
+        impl: RemoteNotificationsRepository,
+    ): NotificationsRepository
+
+    @Binds
+    @Singleton
     abstract fun bindStreamRepository(impl: StreamRepositoryImpl): StreamRepository
 
     @Binds
@@ -123,6 +133,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindLibraryRepository(impl: OfflineLibraryRepository): LibraryRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindImportRepository(impl: RemoteImportRepository): ImportRepository
 
     @Binds
     @Singleton
