@@ -59,7 +59,7 @@ fun ProfileAvatar(
                     .repeatCount(Int.MAX_VALUE)
                     .build(),
                 contentDescription = null,
-                contentScale = ContentScale.Fit,
+                contentScale = ContentScale.Crop,
                 onSuccess = { loaded = true },
                 onError = { loaded = false },
                 modifier = Modifier.fillMaxSize(),
