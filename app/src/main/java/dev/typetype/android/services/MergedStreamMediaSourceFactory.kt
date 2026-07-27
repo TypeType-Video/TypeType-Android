@@ -27,6 +27,7 @@ internal class MergedStreamMediaSourceFactory(
     private val sabrPlaybackRepository: SabrPlaybackRepository,
     private val sabrPlaybackWindowCache: SabrPlaybackWindowCache,
     private val playbackPositionUs: () -> Long,
+    private val playbackRate: () -> Float,
     private val recoveryDispatcher: SabrPlaybackRecoveryDispatcher,
 ) : MediaSource.Factory {
 
@@ -108,6 +109,7 @@ internal class MergedStreamMediaSourceFactory(
                 target = target,
                 transportState = transportState,
                 recoveryDispatcher = recoveryDispatcher,
+                playbackRate = playbackRate,
             ),
             dataSourceFactory = mediaDataSource,
             loadErrorHandlingPolicy = policy,
