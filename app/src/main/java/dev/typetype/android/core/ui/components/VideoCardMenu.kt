@@ -1,6 +1,8 @@
 package dev.typetype.android.core.ui.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CheckCircleOutline
@@ -19,6 +22,7 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonOff
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.WatchLater
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -37,6 +41,8 @@ import androidx.compose.ui.unit.dp
 import dev.typetype.android.R
 
 sealed interface VideoMenuAction {
+    data object PlayNext : VideoMenuAction
+    data object AddToQueue : VideoMenuAction
     data object ToggleFavorite : VideoMenuAction
     data object ToggleWatchLater : VideoMenuAction
     data object AddToPlaylist : VideoMenuAction
@@ -69,7 +75,18 @@ fun VideoCardMenu(
         sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
-        Column(modifier = Modifier.padding(bottom = 24.dp)) {
+        Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) {
+            VideoMenuItem(
+                icon = Icons.Filled.SkipNext,
+                label = stringResource(R.string.video_menu_play_next),
+                onClick = { onAction(VideoMenuAction.PlayNext); onDismiss() },
+            )
+            VideoMenuItem(
+                icon = Icons.AutoMirrored.Filled.QueueMusic,
+                label = stringResource(R.string.video_menu_add_to_queue),
+                onClick = { onAction(VideoMenuAction.AddToQueue); onDismiss() },
+            )
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
             VideoMenuItem(
                 icon = if (state.isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
                 label = stringResource(
