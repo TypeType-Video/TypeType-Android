@@ -168,6 +168,7 @@ internal fun shouldRefreshPlaybackWindow(
     bufferedEndUs: Long,
 ): Boolean = bufferedEndUs - playbackPositionUs < WINDOW_REFRESH_THRESHOLD_US
 
+@UnstableApi
 internal fun PlaybackTrack.createExtractor(): Extractor {
     val subtitleParsers = DefaultSubtitleParserFactory()
     return when (mimeType.substringBefore(';').trim().lowercase()) {
