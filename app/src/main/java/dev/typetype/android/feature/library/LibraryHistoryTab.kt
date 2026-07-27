@@ -14,56 +14,129 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
+import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.paging.PagingData
+import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.components.AnimatedLoader
+import dev.typetype.android.core.ui.components.FullScreenLoader
+import dev.typetype.android.core.ui.components.VideoMoreActionsButton
 import dev.typetype.android.domain.library.HistoryItem
 import dev.typetype.android.domain.library.VideoMeta
 import dev.typetype.android.feature.library.components.rememberVideoMetas
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+
+private const val LOAD_MORE_THRESHOLD = 8
 
 @Composable
 fun HistoryTab(
-    items: List<HistoryItem>,
+    pagingData: Flow<PagingData<HistoryItem>>,
     filter: String,
+    isRefreshing: Boolean,
+    isLoadingMore: Boolean,
+    hasMore: Boolean,
     onPlayVideo: (String) -> Unit,
     onOpenChannel: (String) -> Unit,
+    onPlayNext: (HistoryItem) -> Unit,
+    onAddToQueue: (HistoryItem) -> Unit,
+    onLoadMore: () -> Unit,
 ) {
-    if (items.isEmpty()) {
+    val items = pagingData.collectAsLazyPagingItems()
+    if (items.itemCount == 0 && isRefreshing) {
+        FullScreenLoader()
+        return
+    }
+    if (items.itemCount == 0 && !hasMore) {
         EmptyTab(emptyMessageFor(filter, stringResource(R.string.library_empty_history)))
         return
     }
-    val urlsMissingInfo = items
+    val urlsMissingInfo = (0 until items.itemCount).mapNotNull(items::peek)
         .filter { it.channelAvatarUrl.isBlank() }
         .map { it.url }
     val metas = rememberVideoMetas(urlsMissingInfo)
-    LazyColumn(
+    val gridState = rememberLazyGridState()
+    val shouldLoadMore by remember(items.itemCount, hasMore, isLoadingMore) {
+        derivedStateOf {
+            if (!hasMore || isLoadingMore) {
+                false
+            } else if (items.itemCount <= LOAD_MORE_THRESHOLD) {
+                true
+            } else {
+                val lastVisible = gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
+                lastVisible >= items.itemCount - LOAD_MORE_THRESHOLD
+            }
+        }
+    }
+    LaunchedEffect(gridState, items.itemCount, hasMore, isLoadingMore) {
+        snapshotFlow { shouldLoadMore }
+            .distinctUntilChanged()
+            .filter { it }
+            .collect { onLoadMore() }
+    }
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(minSize = 400.dp),
+        state = gridState,
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = 4.dp),
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
     ) {
-        items(items, key = { it.id }, contentType = { "history-video" }) { item ->
-            HistoryRow(
-                item = item,
-                meta = metas[item.url],
-                onClick = { onPlayVideo(item.url) },
-                onOpenChannel = onOpenChannel,
-            )
+        items(
+            count = items.itemCount,
+            key = { index -> items.peek(index)?.id ?: "history-$index" },
+            contentType = { "history-video" },
+        ) { index ->
+            items[index]?.let { item ->
+                HistoryRow(
+                    item = item,
+                    meta = metas[item.url],
+                    onClick = { onPlayVideo(item.url) },
+                    onOpenChannel = onOpenChannel,
+                    onPlayNext = { onPlayNext(item) },
+                    onAddToQueue = { onAddToQueue(item) },
+                )
+            }
+        }
+        if (isLoadingMore) {
+            item(key = "history-load-more", span = { GridItemSpan(maxLineSpan) }) {
+                Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                    AnimatedLoader(size = 56.dp)
+                }
+            }
         }
     }
 }
@@ -74,17 +147,26 @@ private fun HistoryRow(
     meta: VideoMeta?,
     onClick: () -> Unit,
     onOpenChannel: (String) -> Unit,
+    onPlayNext: () -> Unit,
+    onAddToQueue: () -> Unit,
 ) {
     val channelUrl = item.channelUrl.takeIf { it.isNotBlank() }
         ?: meta?.channelUrl?.takeIf { it.isNotBlank() }
     val avatarUrl = item.channelAvatarUrl.takeIf { it.isNotBlank() }
         ?: meta?.channelAvatarUrl?.takeIf { it.isNotBlank() }
+    val channelActionDescription = if (channelUrl == null) {
+        null
+    } else if (item.channelName.isBlank()) {
+        stringResource(R.string.video_menu_open_channel)
+    } else {
+        stringResource(R.string.video_open_channel_accessibility, item.channelName)
+    }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .clickable(onClick = onClick, role = Role.Button)
+            .padding(horizontal = 8.dp, vertical = 10.dp),
         verticalAlignment = Alignment.Top,
     ) {
         Box(
@@ -134,11 +216,15 @@ private fun HistoryRow(
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.surfaceVariant)
                         .let {
-                            if (channelUrl != null) it.clickable { onOpenChannel(channelUrl) } else it
+                            if (channelUrl != null) {
+                                it.clickable(role = Role.Button) { onOpenChannel(channelUrl) }
+                            } else {
+                                it
+                            }
                         }
                     AsyncImage(
                         model = avatarUrl,
-                        contentDescription = null,
+                        contentDescription = channelActionDescription,
                         contentScale = ContentScale.Crop,
                         modifier = avatarModifier,
                     )
@@ -150,7 +236,11 @@ private fun HistoryRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = if (channelUrl != null) Modifier.clickable { onOpenChannel(channelUrl) } else Modifier,
+                    modifier = if (channelUrl != null) {
+                        Modifier.clickable(role = Role.Button) { onOpenChannel(channelUrl) }
+                    } else {
+                        Modifier
+                    },
                 )
             }
             Spacer(Modifier.height(2.dp))
@@ -158,6 +248,38 @@ private fun HistoryRow(
                 text = formatDate(item.watchedAtMillis),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.outlineVariant,
+            )
+        }
+        HistoryQueueMenu(onPlayNext = onPlayNext, onAddToQueue = onAddToQueue)
+    }
+}
+
+@Composable
+private fun HistoryQueueMenu(
+    onPlayNext: () -> Unit,
+    onAddToQueue: () -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        VideoMoreActionsButton(onClick = { expanded = true })
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.video_menu_play_next)) },
+                leadingIcon = { Icon(Icons.Filled.SkipNext, contentDescription = null) },
+                onClick = {
+                    expanded = false
+                    onPlayNext()
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.video_menu_add_to_queue)) },
+                leadingIcon = {
+                    Icon(Icons.AutoMirrored.Filled.QueueMusic, contentDescription = null)
+                },
+                onClick = {
+                    expanded = false
+                    onAddToQueue()
+                },
             )
         }
     }
