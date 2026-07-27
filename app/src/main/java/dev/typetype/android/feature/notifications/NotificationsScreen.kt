@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -11,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.DoneAll
 import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -18,12 +20,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -60,7 +63,22 @@ fun NotificationsScreen(
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
-            title = { Text(stringResource(R.string.notifications_title)) },
+            title = {
+                Column {
+                    Text(stringResource(R.string.notifications_title))
+                    if (state.unreadCount > 0) {
+                        Text(
+                            text = pluralStringResource(
+                                R.plurals.notifications_unread_count,
+                                state.unreadCount,
+                                state.unreadCount,
+                            ),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
+            },
             navigationIcon = {
                 IconButton(onClick = onNavigateBack) {
                     Icon(
@@ -70,27 +88,39 @@ fun NotificationsScreen(
                 }
             },
             actions = {
-                TextButton(
-                    onClick = { onAction(NotificationsAction.MarkAllRead) },
-                    enabled = state.unreadCount > 0 && !state.isMarkingRead,
-                ) {
-                    Text(stringResource(R.string.notifications_mark_all_read))
+                if (state.unreadCount > 0) {
+                    IconButton(
+                        onClick = { onAction(NotificationsAction.MarkAllRead) },
+                        enabled = !state.isMarkingRead,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.DoneAll,
+                            contentDescription = stringResource(R.string.notifications_mark_all_read),
+                        )
+                    }
                 }
             },
+            windowInsets = WindowInsets(0, 0, 0, 0),
         )
         if (state.isMarkingRead) {
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
-        Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
-            when {
-                state.isLoading && state.items.isEmpty() -> FullScreenLoader()
-                state.errorMessage != null && state.items.isEmpty() -> AnimatedError(
-                    message = state.errorMessage,
-                    requestId = state.errorRequestId,
-                    onRetry = { onAction(NotificationsAction.Retry) },
-                )
-                state.items.isEmpty() -> EmptyNotifications()
-                else -> NotificationList(state, onPlayVideo, onAction)
+        PullToRefreshBox(
+            isRefreshing = state.isLoading && state.items.isNotEmpty(),
+            onRefresh = { onAction(NotificationsAction.Retry) },
+            modifier = Modifier.fillMaxWidth().weight(1f),
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                when {
+                    state.isLoading && state.items.isEmpty() -> FullScreenLoader()
+                    state.errorMessage != null && state.items.isEmpty() -> AnimatedError(
+                        message = state.errorMessage,
+                        requestId = state.errorRequestId,
+                        onRetry = { onAction(NotificationsAction.Retry) },
+                    )
+                    state.items.isEmpty() -> EmptyNotifications()
+                    else -> NotificationList(state, onPlayVideo, onAction)
+                }
             }
         }
     }
@@ -104,8 +134,8 @@ private fun NotificationList(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         state.actionErrorMessage?.let { message ->
             item(key = "action-error") {
@@ -123,7 +153,7 @@ private fun NotificationList(
             NotificationRow(
                 item = item,
                 onOpenVideo = { onPlayVideo(item.video.url) },
-                modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
+                modifier = Modifier.fillMaxWidth(),
             )
         }
         item(key = "notifications-pagination") {

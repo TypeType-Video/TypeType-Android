@@ -2,6 +2,7 @@ package dev.typetype.android.feature.notifications
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
@@ -33,7 +34,7 @@ class NotificationsScreenTest {
             onAction = { if (it == NotificationsAction.MarkAllRead) marked.set(true) },
         )
 
-        composeRule.onNodeWithText("Mark all read").performClick()
+        composeRule.onNodeWithContentDescription("Mark all read").performClick()
 
         assertTrue(marked.get())
     }
@@ -49,6 +50,7 @@ class NotificationsScreenTest {
             onPlayVideo = opened::set,
         )
 
+        composeRule.onNodeWithText("New video").assertIsDisplayed()
         composeRule.onNodeWithText("Video title").performClick()
 
         assertEquals("video-url", opened.get())
