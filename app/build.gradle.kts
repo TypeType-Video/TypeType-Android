@@ -17,15 +17,15 @@ if (keystoreFileExists) {
 }
 
 android {
-    compileSdk = 36
+    compileSdk = 37
     namespace = "dev.typetype.android"
 
     defaultConfig {
         applicationId = "dev.typetype.android"
-        minSdk = 33
-        targetSdk = 36
-        versionCode = 10101
-        versionName = "1.1.1"
+        minSdk = 23
+        targetSdk = 37
+        versionCode = 10102
+        versionName = "1.1.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         resValue("string", "app_name", "TypeType")
     }
@@ -95,15 +95,19 @@ android {
     androidResources {
         generateLocaleConfig = true
     }
+
+    sourceSets["androidTest"].assets.directories.add("$projectDir/schemas")
 }
 
 dependencies {
+    implementation(project(":player"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.lifecycle.runtime)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.test.espressoCore)
     androidTestImplementation(libs.androidx.test.junit)
+    androidTestImplementation(libs.room.testing)
     coreLibraryDesugaring(libs.desugaring)
 
     implementation(libs.androidx.appcompat)
@@ -120,6 +124,7 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.core)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.browser)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.navigation.compose)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
@@ -129,6 +134,9 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
+    implementation(libs.androidx.work.runtime)
 
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.google.tink.android)
@@ -140,12 +148,12 @@ dependencies {
     implementation(libs.coil.network.okhttp)
 
     implementation(libs.room)
+    implementation(libs.room.paging)
     ksp(libs.room.compiler)
 
     implementation(libs.square.retrofit)
     implementation(libs.converter.kotlinx.serialization)
     implementation(libs.okhttp)
-    implementation(libs.logging.interceptor)
     implementation(libs.kotlinx.serialization)
 
     implementation(libs.androidx.paging)
@@ -154,9 +162,11 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.exoplayer.hls)
     implementation(libs.androidx.media3.exoplayer.dash)
+    implementation(libs.androidx.media3.datasource.okhttp)
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.ui.compose)
     implementation(libs.androidx.media3.session)
 
     testImplementation(libs.junit)
+    testImplementation(libs.okhttp.mockwebserver)
 }
