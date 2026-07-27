@@ -37,7 +37,26 @@ env:
   JAVA_HOME: /usr/lib/jvm/java-26-openjdk
 
 jobs:
+  prepare-sdk:
+    runs-on: [self-hosted, Linux, X64, arko, android]
+    timeout-minutes: 10
+    steps:
+      - name: Install Android SDK platform
+        run: |
+          platform="$ANDROID_HOME/platforms/android-37.0"
+          (
+            flock 9
+            if [ ! -f "$platform/android.jar" ]; then
+              rm -rf "$platform"
+              "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+                --sdk_root="$ANDROID_HOME" \
+                "platforms;android-37.0"
+            fi
+            test -f "$platform/android.jar"
+          ) 9>"$ANDROID_HOME/.platform-install.lock"
+
   debug-apk:
+    needs: prepare-sdk
     runs-on: [self-hosted, Linux, X64, arko, android]
     timeout-minutes: 20
     steps:
@@ -58,6 +77,7 @@ jobs:
           retention-days: 14
 
   lint:
+    needs: prepare-sdk
     runs-on: [self-hosted, Linux, X64, arko, android]
     timeout-minutes: 20
     steps:
@@ -78,6 +98,7 @@ jobs:
           retention-days: 14
 
   unit-tests:
+    needs: prepare-sdk
     runs-on: [self-hosted, Linux, X64, arko, android]
     timeout-minutes: 15
     steps:
