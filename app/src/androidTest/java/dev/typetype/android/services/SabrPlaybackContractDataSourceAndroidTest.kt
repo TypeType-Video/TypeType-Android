@@ -59,7 +59,43 @@ class SabrPlaybackContractDataSourceAndroidTest {
         assertTrue(IOException("source", failure).isRecoverableSabrSessionFailure())
         val policy = SabrLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(5))
         assertEquals(500L, policy.getRetryDelayMsFor(failure.toLoadErrorInfo(request)))
-        assertEquals(120, policy.getMinimumLoadableRetryCount(C.DATA_TYPE_MEDIA))
+        assertEquals(500L, policy.getRetryDelayMsFor(failure.toLoadErrorInfo(request, 59)))
+        assertEquals(C.TIME_UNSET, policy.getRetryDelayMsFor(failure.toLoadErrorInfo(request, 60)))
+        assertEquals(5, policy.getMinimumLoadableRetryCount(C.DATA_TYPE_MEDIA))
+    }
+
+    @Test
+    fun transientGatewayFailureUsesTheSharedNetworkBudget() {
+        val request = DataSpec(Uri.parse(mediaUrl("137/segment/2")))
+        val failure = HttpDataSource.InvalidResponseCodeException(
+            503,
+            "Gateway unavailable",
+            null,
+            mapOf("Retry-After" to listOf("2")),
+            request,
+            byteArrayOf(),
+        )
+        val policy = SabrLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(5))
+
+        assertEquals(2_000L, policy.getRetryDelayMsFor(failure.toLoadErrorInfo(request)))
+        assertEquals(C.TIME_UNSET, policy.getRetryDelayMsFor(failure.toLoadErrorInfo(request, 25)))
+    }
+
+    @Test
+    fun authenticationFailureIsNotHiddenByPlaybackRecovery() {
+        val request = DataSpec(Uri.parse(mediaUrl("137/segment/2")))
+        val failure = HttpDataSource.InvalidResponseCodeException(
+            403,
+            "Forbidden",
+            null,
+            emptyMap(),
+            request,
+            byteArrayOf(),
+        )
+        val policy = SabrLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(5))
+
+        assertEquals(C.TIME_UNSET, policy.getRetryDelayMsFor(failure.toLoadErrorInfo(request)))
+        assertFalse(failure.isRecoverableSabrSessionFailure())
     }
 
     @Test
@@ -147,11 +183,12 @@ private val BINDING = SabrPlaybackBinding("session", 0L, 137, 140)
 
 private fun IOException.toLoadErrorInfo(
     request: DataSpec,
+    errorCount: Int = 1,
 ) = LoadErrorHandlingPolicy.LoadErrorInfo(
     LoadEventInfo(1L, request, 0L),
     MediaLoadData(1),
     this,
-    1,
+    errorCount,
 )
 
 @UnstableApi

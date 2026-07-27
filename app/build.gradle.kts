@@ -108,6 +108,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.espressoCore)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.room.testing)
+    androidTestImplementation(libs.okhttp.mockwebserver)
     coreLibraryDesugaring(libs.desugaring)
 
     implementation(libs.androidx.appcompat)
