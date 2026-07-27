@@ -15,19 +15,85 @@ internal class SabrPlaybackSessionReplacementRequiredException(
 internal class SabrPlaybackRecoveryGate {
     private var activeMediaId: String? = null
     private var recoveryCount = 0
+    private var recoveringSessionId: String? = null
+    private var stableStartedAtMs: Long? = null
+    private var lastProgressAtMs: Long? = null
+    private var lastPositionMs: Long? = null
+    private val handledSessionIds = mutableSetOf<String>()
 
     fun transition(mediaId: String?, startsNewSession: Boolean = false) {
         if (mediaId == null || mediaId == activeMediaId && !startsNewSession) return
         activeMediaId = mediaId
-        recoveryCount = 0
+        reset()
     }
 
-    fun acquire(mediaId: String): Boolean {
+    fun begin(mediaId: String, sessionId: String): SabrPlaybackRecoveryDecision {
         transition(mediaId)
+        if (sessionId == recoveringSessionId || sessionId in handledSessionIds) {
+            return SabrPlaybackRecoveryDecision.Ignore
+        }
+        handledSessionIds += sessionId
+        if (recoveryCount >= MAX_SESSION_RECOVERIES) {
+            return SabrPlaybackRecoveryDecision.Exhausted
+        }
+        recoveringSessionId = sessionId
+        stableStartedAtMs = null
+        lastProgressAtMs = null
+        lastPositionMs = null
+        return SabrPlaybackRecoveryDecision.Recover
+    }
+
+    fun takeAttempt(): Boolean {
         if (recoveryCount >= MAX_SESSION_RECOVERIES) return false
         recoveryCount++
         return true
     }
+
+    fun finish(sessionId: String) {
+        if (recoveringSessionId == sessionId) recoveringSessionId = null
+    }
+
+    fun observeProgress(mediaId: String?, positionMs: Long, nowMs: Long) {
+        if (mediaId.isNullOrBlank() || positionMs < 0L) return
+        transition(mediaId)
+        val previousTime = lastProgressAtMs
+        val previousPosition = lastPositionMs
+        if (previousTime == null || previousPosition == null) {
+            stableStartedAtMs = nowMs
+            lastProgressAtMs = nowMs
+            lastPositionMs = positionMs
+            return
+        }
+        val elapsedMs = nowMs - previousTime
+        val advancedMs = positionMs - previousPosition
+        val continuous = elapsedMs in 1..MAX_PROGRESS_GAP_MS &&
+            advancedMs > 0L &&
+            advancedMs <= elapsedMs * MAX_PROGRESS_RATE + PROGRESS_TOLERANCE_MS
+        stableStartedAtMs = if (continuous) stableStartedAtMs ?: nowMs else nowMs
+        lastProgressAtMs = nowMs
+        lastPositionMs = positionMs
+        if (
+            recoveryCount > 0 &&
+            stableStartedAtMs?.let { nowMs - it >= STABLE_PLAYBACK_RESET_MS } == true
+        ) {
+            reset()
+        }
+    }
+
+    private fun reset() {
+        recoveryCount = 0
+        recoveringSessionId = null
+        stableStartedAtMs = null
+        lastProgressAtMs = null
+        lastPositionMs = null
+        handledSessionIds.clear()
+    }
+}
+
+internal enum class SabrPlaybackRecoveryDecision {
+    Recover,
+    Ignore,
+    Exhausted,
 }
 
 internal fun startsNewSabrPlaybackSession(
@@ -105,10 +171,14 @@ internal fun Throwable.sabrSessionReplacementFailure():
 internal fun Int.isRecoverableSabrSessionStatus(): Boolean =
     this in RECOVERABLE_SESSION_STATUS_CODES
 
-private val RECOVERABLE_SESSION_STATUS_CODES = setOf(202, 403, 404, 409, 410)
+private val RECOVERABLE_SESSION_STATUS_CODES = setOf(202, 404, 409, 410)
 private val RECOVERABLE_WINDOW_ACTIONS = setOf(
     "retry_fresh_session",
     "retry_fresh_session_lower_video_itag",
 )
 private const val MAX_SESSION_RECOVERIES = 2
 private const val MAX_CAUSE_DEPTH = 8
+private const val STABLE_PLAYBACK_RESET_MS = 30_000L
+private const val MAX_PROGRESS_GAP_MS = 2_000L
+private const val MAX_PROGRESS_RATE = 4L
+private const val PROGRESS_TOLERANCE_MS = 500L

@@ -24,16 +24,25 @@ internal class SabrPlaybackSessionPreparer(
         startTimeMs: Long = 0L,
     ): SabrPlaybackSession = createSessionWithRecovery(api, baseUrl, target, startTimeMs)
 
+    suspend fun prepareOnce(
+        api: TypeTypeMediaApi,
+        baseUrl: String,
+        target: SabrPlaybackTarget,
+        startTimeMs: Long,
+    ): SabrPlaybackSession = createSession(api, baseUrl, target, startTimeMs)
+
     private suspend fun createSession(
         api: TypeTypeMediaApi,
         baseUrl: String,
         target: SabrPlaybackTarget,
         startTimeMs: Long,
     ): SabrPlaybackSession {
-        val response = api.createSabrPlayback(
-            target.videoId,
-            target.controlRequest(startTimeMs),
-        )
+        val response = transientPlaybackRequest(pause) {
+            api.createSabrPlayback(
+                target.videoId,
+                target.controlRequest(startTimeMs),
+            )
+        }
         response.requireControlEndpoint(
             baseUrl,
             listOf("sabr", "playback", target.videoId),
@@ -55,10 +64,12 @@ internal class SabrPlaybackSessionPreparer(
     ): SabrPlaybackSession {
         binding.requireTarget(target)
         return try {
-            val response = api.seekSabrPlayback(
-                binding.sessionId,
-                target.controlRequest(startTimeMs),
-            )
+            val response = transientPlaybackRequest(pause) {
+                api.seekSabrPlayback(
+                    binding.sessionId,
+                    target.controlRequest(startTimeMs),
+                )
+            }
             response.requireControlEndpoint(
                 baseUrl,
                 listOf("sabr", "playback", binding.sessionId, "seek"),
@@ -84,8 +95,9 @@ internal class SabrPlaybackSessionPreparer(
         binding: SabrPlaybackBinding,
         playerTimeMs: Long,
         bufferedRanges: List<SabrPlaybackBufferedRange>,
+        playbackRate: Float = 1.0f,
     ): SabrPlaybackSession = refresh(api, baseUrl, target, binding) {
-        SabrPlaybackSnapshot(playerTimeMs, bufferedRanges)
+        SabrPlaybackSnapshot(playerTimeMs, bufferedRanges, playbackRate)
     }
 
     suspend fun refresh(
@@ -111,7 +123,11 @@ internal class SabrPlaybackSessionPreparer(
         )
         return waitForWindow(api, baseUrl, target, control) {
             val current = snapshot()
-            control.windowRequest(current.bufferedRanges, current.playerTimeMs)
+            control.windowRequest(
+                current.bufferedRanges,
+                current.playerTimeMs,
+                current.playbackRate,
+            )
         }
     }
 
@@ -133,10 +149,16 @@ internal class SabrPlaybackSessionPreparer(
         binding: SabrPlaybackBinding,
         playerTimeMs: Long,
         bufferedRanges: List<SabrPlaybackBufferedRange>,
+        playbackRate: Float = 1.0f,
     ) {
         binding.requireTarget(target)
         val control = binding.controlResponse(target, playerTimeMs)
-        updatePosition(api, baseUrl, control, control.windowRequest(bufferedRanges))
+        updatePosition(
+            api,
+            baseUrl,
+            control,
+            control.windowRequest(bufferedRanges, playbackRate = playbackRate),
+        )
     }
 
     private suspend fun waitForWindow(
@@ -160,7 +182,9 @@ internal class SabrPlaybackSessionPreparer(
         var previousEdgeMs: Long? = null
         var stagnantAttempts = 0
         repeat(maxWindowPolls) {
-            val prefetch = api.prefetchSabrPlayback(control.sessionId, request())
+            val prefetch = transientPlaybackRequest(pause) {
+                api.prefetchSabrPlayback(control.sessionId, request())
+            }
             prefetch.requireWindowEndpoint(baseUrl, control.sessionId, "prefetch")
             if (!prefetch.isSuccessful) throw serverResponseException(prefetch)
             val pending = prefetch.body()
@@ -168,7 +192,9 @@ internal class SabrPlaybackSessionPreparer(
                 ?: sabrContractMismatch("SABR returned an empty prefetch response")
             pending.throwTerminalFailure()
             if (pending.ready) {
-                val segments = api.sabrPlaybackSegments(control.sessionId, request())
+                val segments = transientPlaybackRequest(pause) {
+                    api.sabrPlaybackSegments(control.sessionId, request())
+                }
                 segments.requireWindowEndpoint(baseUrl, control.sessionId, "segments")
                 if (!segments.isSuccessful) throw serverResponseException(segments)
                 val window = segments.body()
@@ -219,18 +245,21 @@ internal class SabrPlaybackSessionPreparer(
         control: SabrPlaybackResponse,
         request: SabrPlaybackWindowRequestDto,
     ) {
-        val response = api.updateSabrPlaybackPosition(
-            control.sessionId,
-            SabrPlaybackPositionRequestDto(
-                generation = request.generation,
-                playerTimeMs = request.playerTimeMs,
-                videoItag = request.videoItag,
-                audioItag = request.audioItag,
-                audioTrackId = request.audioTrackId,
-                bufferedRanges = request.bufferedRanges,
-                audioOnly = request.audioOnly,
-            ),
-        )
+        val response = transientPlaybackRequest(pause) {
+            api.updateSabrPlaybackPosition(
+                control.sessionId,
+                SabrPlaybackPositionRequestDto(
+                    generation = request.generation,
+                    playerTimeMs = request.playerTimeMs,
+                    videoItag = request.videoItag,
+                    audioItag = request.audioItag,
+                    audioTrackId = request.audioTrackId,
+                    playbackRate = request.playbackRate,
+                    bufferedRanges = request.bufferedRanges,
+                    audioOnly = request.audioOnly,
+                ),
+            )
+        }
         response.requireControlEndpoint(
             baseUrl,
             listOf("sabr", "playback", control.sessionId, "position"),

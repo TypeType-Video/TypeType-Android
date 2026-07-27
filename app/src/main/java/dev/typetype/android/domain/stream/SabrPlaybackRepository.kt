@@ -30,6 +30,7 @@ data class SabrPlaybackBufferedRange(
 data class SabrPlaybackSnapshot(
     val playerTimeMs: Long,
     val bufferedRanges: List<SabrPlaybackBufferedRange>,
+    val playbackRate: Float = 1.0f,
 )
 
 interface SabrPlaybackRepository {
@@ -47,6 +48,11 @@ interface SabrPlaybackRepository {
             onFailure = Result.Companion::failure,
         )
 
+    suspend fun recoverOnce(
+        target: SabrPlaybackTarget,
+        startTimeMs: Long,
+    ): Result<SabrPlaybackSession> = prepare(target, startTimeMs)
+
     suspend fun seek(
         target: SabrPlaybackTarget,
         binding: SabrPlaybackBinding,
@@ -58,6 +64,7 @@ interface SabrPlaybackRepository {
         binding: SabrPlaybackBinding,
         playerTimeMs: Long,
         bufferedRanges: List<SabrPlaybackBufferedRange>,
+        playbackRate: Float = 1.0f,
     ): Result<SabrPlaybackSession> =
         Result.failure(UnsupportedOperationException("SABR window refresh is not implemented"))
 
@@ -72,6 +79,7 @@ interface SabrPlaybackRepository {
             binding = binding,
             playerTimeMs = current.playerTimeMs,
             bufferedRanges = current.bufferedRanges,
+            playbackRate = current.playbackRate,
         )
     }
 
@@ -80,5 +88,6 @@ interface SabrPlaybackRepository {
         binding: SabrPlaybackBinding,
         playerTimeMs: Long,
         bufferedRanges: List<SabrPlaybackBufferedRange>,
+        playbackRate: Float = 1.0f,
     ): Result<Unit> = Result.success(Unit)
 }
