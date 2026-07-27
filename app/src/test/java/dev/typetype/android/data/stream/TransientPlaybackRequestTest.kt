@@ -2,6 +2,8 @@ package dev.typetype.android.data.stream
 
 import java.io.IOException
 import java.util.concurrent.CancellationException
+import dev.typetype.android.data.network.PlaybackNetworkObserver
+import dev.typetype.android.data.network.PlaybackNetworkState
 import kotlinx.coroutines.runBlocking
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
@@ -60,6 +62,67 @@ class TransientPlaybackRequestTest {
     }
 
     @Test
+    fun `offline transport waits for connectivity without backoff requests`() = runBlocking {
+        val network = RestoringNetworkObserver()
+        var attempt = 0
+        val pauses = mutableListOf<Long>()
+
+        val response = transientPlaybackRequest(pauses::add, network) {
+            attempt++
+            if (attempt == 1) throw IOException("offline")
+            Response.success("ready")
+        }
+
+        assertEquals("ready", response.body())
+        assertEquals(2, attempt)
+        assertEquals(emptyList<Long>(), pauses)
+        assertEquals(1, network.waitCount)
+    }
+
+    @Test
+    fun `new route resets the connected transport retry budget`() = runBlocking {
+        val network = MutableNetworkObserver(PlaybackNetworkState(true, 3L))
+        var attempt = 0
+        val pauses = mutableListOf<Long>()
+
+        val response = transientPlaybackRequest(
+            pause = { delayMs ->
+                pauses += delayMs
+                if (pauses.size == 8) {
+                    network.state = PlaybackNetworkState(true, 4L)
+                }
+            },
+            network = network,
+        ) {
+            attempt++
+            if (attempt <= 9) throw IOException("handover")
+            Response.success("ready")
+        }
+
+        assertEquals("ready", response.body())
+        assertEquals(10, attempt)
+        assertEquals(500L, pauses.last())
+    }
+
+    @Test
+    fun `connected transport failure becomes terminal after extended budget`() {
+        var attempt = 0
+        val pauses = mutableListOf<Long>()
+
+        assertThrows(IOException::class.java) {
+            runBlocking {
+                transientPlaybackRequest<String>(pauses::add) {
+                    attempt++
+                    throw IOException("unreachable")
+                }
+            }
+        }
+
+        assertEquals(9, attempt)
+        assertEquals(8, pauses.size)
+    }
+
+    @Test
     fun `permanent response is returned without retry`() = runBlocking {
         var attempt = 0
 
@@ -115,5 +178,24 @@ class TransientPlaybackRequestTest {
             .body("{}".toResponseBody())
             .build()
         return Response.error("{}".toResponseBody(), raw)
+    }
+}
+
+private open class MutableNetworkObserver(
+    var state: PlaybackNetworkState,
+) : PlaybackNetworkObserver {
+    override fun snapshot(): PlaybackNetworkState = state
+
+    override suspend fun awaitAvailableAfter(generation: Long, timeoutMs: Long): Boolean = false
+}
+
+private class RestoringNetworkObserver :
+    MutableNetworkObserver(PlaybackNetworkState(false, 0L)) {
+    var waitCount = 0
+
+    override suspend fun awaitAvailableAfter(generation: Long, timeoutMs: Long): Boolean {
+        waitCount++
+        state = PlaybackNetworkState(true, generation + 1L)
+        return true
     }
 }

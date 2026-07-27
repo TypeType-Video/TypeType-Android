@@ -1,6 +1,8 @@
 package dev.typetype.android.data.stream
 
 import dev.typetype.android.data.network.ServerResponseException
+import dev.typetype.android.data.network.AlwaysAvailablePlaybackNetworkObserver
+import dev.typetype.android.data.network.PlaybackNetworkObserver
 import dev.typetype.android.data.network.TypeTypeMediaApi
 import dev.typetype.android.data.network.dto.SabrPlaybackPositionRequestDto
 import dev.typetype.android.data.network.dto.SabrPlaybackResponse
@@ -15,6 +17,7 @@ import kotlinx.coroutines.delay
 
 internal class SabrPlaybackSessionPreparer(
     private val pause: suspend (Long) -> Unit = { delay(it) },
+    private val network: PlaybackNetworkObserver = AlwaysAvailablePlaybackNetworkObserver,
     private val maxWindowPolls: Int = 60,
 ) {
     suspend fun prepare(
@@ -37,7 +40,7 @@ internal class SabrPlaybackSessionPreparer(
         target: SabrPlaybackTarget,
         startTimeMs: Long,
     ): SabrPlaybackSession {
-        val response = transientPlaybackRequest(pause) {
+        val response = transientPlaybackRequest(pause, network) {
             api.createSabrPlayback(
                 target.videoId,
                 target.controlRequest(startTimeMs),
@@ -64,7 +67,7 @@ internal class SabrPlaybackSessionPreparer(
     ): SabrPlaybackSession {
         binding.requireTarget(target)
         return try {
-            val response = transientPlaybackRequest(pause) {
+            val response = transientPlaybackRequest(pause, network) {
                 api.seekSabrPlayback(
                     binding.sessionId,
                     target.controlRequest(startTimeMs),
@@ -182,7 +185,7 @@ internal class SabrPlaybackSessionPreparer(
         var previousEdgeMs: Long? = null
         var stagnantAttempts = 0
         repeat(maxWindowPolls) {
-            val prefetch = transientPlaybackRequest(pause) {
+            val prefetch = transientPlaybackRequest(pause, network) {
                 api.prefetchSabrPlayback(control.sessionId, request())
             }
             prefetch.requireWindowEndpoint(baseUrl, control.sessionId, "prefetch")
@@ -192,7 +195,7 @@ internal class SabrPlaybackSessionPreparer(
                 ?: sabrContractMismatch("SABR returned an empty prefetch response")
             pending.throwTerminalFailure()
             if (pending.ready) {
-                val segments = transientPlaybackRequest(pause) {
+                val segments = transientPlaybackRequest(pause, network) {
                     api.sabrPlaybackSegments(control.sessionId, request())
                 }
                 segments.requireWindowEndpoint(baseUrl, control.sessionId, "segments")
@@ -245,7 +248,7 @@ internal class SabrPlaybackSessionPreparer(
         control: SabrPlaybackResponse,
         request: SabrPlaybackWindowRequestDto,
     ) {
-        val response = transientPlaybackRequest(pause) {
+        val response = transientPlaybackRequest(pause, network) {
             api.updateSabrPlaybackPosition(
                 control.sessionId,
                 SabrPlaybackPositionRequestDto(
