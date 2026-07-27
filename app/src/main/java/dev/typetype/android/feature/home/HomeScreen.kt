@@ -1,39 +1,32 @@
 package dev.typetype.android.feature.home
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.res.stringResource
+import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.AnimatedError
 import dev.typetype.android.core.ui.components.FullScreenLoader
-import dev.typetype.android.core.ui.components.HorizontalVideoCard
+import dev.typetype.android.core.ui.components.LazyPaginationFooter
 import dev.typetype.android.core.ui.components.SectionHeader
 import dev.typetype.android.core.ui.components.VideoCard
 import dev.typetype.android.feature.menu.rememberVideoMenuScope
-import dev.typetype.android.R
 
 @Composable
 fun HomeRoute(
@@ -47,6 +40,7 @@ fun HomeRoute(
         onPlayVideo = onPlayVideo,
         onOpenChannel = onOpenChannel,
         onRetry = { viewModel.onAction(HomeAction.OnRefresh) },
+        onLoadMore = { viewModel.onAction(HomeAction.OnLoadMore) },
     )
 }
 
@@ -56,141 +50,89 @@ fun HomeScreen(
     onPlayVideo: (videoUrl: String) -> Unit,
     onOpenChannel: (channelUrl: String) -> Unit,
     onRetry: () -> Unit,
+    onLoadMore: () -> Unit,
 ) {
     val menuScope = rememberVideoMenuScope(onOpenChannel = onOpenChannel)
-    val visibleTop = state.topSectionVideos.filterNot(menuScope::isHidden)
-    val visibleRecommendations = state.recommendations.filterNot(menuScope::isHidden)
-    val nothingToShow = visibleTop.isEmpty() && visibleRecommendations.isEmpty()
-
+    val visibleVideos = state.videos.filterNot(menuScope::isHidden)
+    val continueWatching = if (state.hideContinueWatching) emptyList() else state.continueWatching
+    val showRecommendations = !state.hideHomeRecommendations
     when {
-        state.isLoading && nothingToShow -> FullScreenLoader()
-        nothingToShow && state.recommendationsError != null && state.topSectionError != null -> {
-            AnimatedError(message = state.recommendationsError, onRetry = onRetry)
-        }
-        nothingToShow -> {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(24.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = stringResource(R.string.home_empty),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-        else -> {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(vertical = 12.dp),
-            ) {
-                if (visibleTop.isNotEmpty()) {
-                    item {
-                        val title = when (state.topSectionKind) {
-                            TopSectionKind.Subscriptions -> stringResource(R.string.home_section_subscriptions)
-                            TopSectionKind.Trending -> stringResource(R.string.home_section_trending)
-                        }
-                        SectionHeader(text = title, modifier = Modifier.padding(horizontal = 16.dp))
-                        Spacer(Modifier.height(10.dp))
-                        LazyRow(
-                            contentPadding = PaddingValues(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            items(visibleTop, key = { "top-${it.id}" }, contentType = { "top-video" }) { video ->
-                                HorizontalVideoCard(
-                                    video = video,
-                                    onClick = { onPlayVideo(video.url) },
-                                    onChannelClick = { onOpenChannel(video.uploaderUrl) },
-                                    onMenuAction = { action -> menuScope.onAction(action, video) },
-                                    menuItemState = menuScope.stateFor(video),
-                                )
-                            }
-                        }
-                        Spacer(Modifier.height(28.dp))
-                    }
-                }
-                if (visibleRecommendations.isNotEmpty()) {
-                    item {
-                        SectionHeader(
-                            text = stringResource(R.string.home_section_recommended),
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                        )
-                        Spacer(Modifier.height(10.dp))
-                    }
-                    items(
-                        visibleRecommendations,
-                        key = { "rec-${it.id}" },
-                        contentType = { "recommended-video" },
-                    ) { video ->
-                        VideoCard(
-                            video = video,
-                            onClick = { onPlayVideo(video.url) },
-                            onChannelClick = { onOpenChannel(video.uploaderUrl) },
-                            onMenuAction = { action -> menuScope.onAction(action, video) },
-                            menuItemState = menuScope.stateFor(video),
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                        )
-                    }
-                } else if (state.recommendationsError != null) {
-                    item {
-                        SectionErrorBanner(
-                            sectionLabel = stringResource(R.string.home_section_recommended),
-                            message = state.recommendationsError,
-                            onRetry = onRetry,
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun SectionErrorBanner(
-    sectionLabel: String,
-    message: String,
-    onRetry: () -> Unit,
-) {
-    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-        SectionHeader(text = sectionLabel)
-        Spacer(Modifier.height(8.dp))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.surface)
-                .padding(16.dp),
+        state.isLoading && state.videos.isEmpty() && continueWatching.isEmpty() -> FullScreenLoader()
+        state.errorMessage != null && state.videos.isEmpty() && continueWatching.isEmpty() -> AnimatedError(
+            message = state.errorMessage,
+            requestId = state.errorRequestId,
+            onRetry = onRetry,
+        )
+        continueWatching.isEmpty() && (!showRecommendations || visibleVideos.isEmpty()) -> HomeEmptyState()
+        else -> LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 280.dp),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(
-                    text = message,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f),
-                )
-                Spacer(Modifier.height(8.dp))
-                RetryPill(onRetry = onRetry)
+            if (continueWatching.isNotEmpty()) {
+                item(key = "continue-watching", span = { GridItemSpan(maxLineSpan) }) {
+                    ContinueWatchingSection(
+                        items = continueWatching,
+                        onPlayVideo = onPlayVideo,
+                        onOpenChannel = onOpenChannel,
+                    )
+                }
+            }
+            if (state.isLoading && showRecommendations) {
+                item(key = "home-refresh", span = { GridItemSpan(maxLineSpan) }) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
+            }
+            if (showRecommendations) {
+                item(key = "home-header", span = { GridItemSpan(maxLineSpan) }) {
+                    SectionHeader(
+                        text = stringResource(
+                            when (state.feedKind) {
+                                HomeFeedKind.Recommended -> R.string.home_section_recommended
+                                HomeFeedKind.Trending -> R.string.home_section_trending
+                            },
+                        ),
+                        modifier = Modifier.padding(horizontal = 4.dp),
+                    )
+                }
+                items(
+                    visibleVideos,
+                    key = { "home-${it.id}" },
+                    contentType = { "home-video" },
+                ) { video ->
+                    VideoCard(
+                        video = video,
+                        onClick = { onPlayVideo(video.url) },
+                        onChannelClick = { onOpenChannel(video.uploaderUrl) },
+                        onMenuAction = { action -> menuScope.onAction(action, video) },
+                        menuItemState = menuScope.stateFor(video),
+                    )
+                }
+                item(key = "home-pagination", span = { GridItemSpan(maxLineSpan) }) {
+                    LazyPaginationFooter(
+                        continuationKey = state.nextCursor,
+                        isLoading = state.isLoadingMore,
+                        hasError = state.loadMoreError,
+                        onLoadMore = onLoadMore,
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun RetryPill(onRetry: () -> Unit) {
+private fun HomeEmptyState() {
     Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(999.dp))
-            .background(MaterialTheme.colorScheme.primary)
-            .clickable(onClick = onRetry)
-            .padding(horizontal = 14.dp, vertical = 6.dp),
+        modifier = Modifier.fillMaxSize().padding(24.dp),
+        contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = stringResource(R.string.home_retry),
-            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
-            color = MaterialTheme.colorScheme.onPrimary,
+            text = stringResource(R.string.home_empty),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
