@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -47,57 +46,33 @@ import dev.typetype.android.R
 import dev.typetype.android.core.openmoji.OPENMOJI_CATALOG
 import dev.typetype.android.core.openmoji.OpenMojiEntry
 import dev.typetype.android.core.openmoji.openMojiUrl
-import dev.typetype.android.core.openmoji.pickOpenMojiCode
+import dev.typetype.android.core.ui.components.ProfileAvatar
+import dev.typetype.android.core.ui.components.resolveProfileAvatarUrl
 import dev.typetype.android.domain.profile.Profile
 
 @Composable
 fun AvatarHeader(profile: Profile?, baseUrl: String?) {
-    val resolvedUrl = resolveAvatarUrl(profile, baseUrl)
+    val resolvedUrl = profile?.let {
+        resolveProfileAvatarUrl(
+            serverBaseUrl = baseUrl,
+            avatarUrl = it.avatarUrl,
+            avatarType = it.avatarType,
+            avatarCode = it.avatarCode,
+            fallbackSeed = "${it.id}:${it.publicUsername}",
+        )
+    }
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .size(96.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (resolvedUrl != null) {
-                val context = LocalContext.current
-                AsyncImage(
-                    model = ImageRequest.Builder(context).data(resolvedUrl).build(),
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxSize().padding(8.dp),
-                )
-            } else {
-                Text(
-                    text = profile?.publicUsername?.firstOrNull()?.uppercase() ?: "?",
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
+        ProfileAvatar(
+            imageUrl = resolvedUrl,
+            fallbackLetter = profile?.publicUsername,
+            contentDescription = null,
+            modifier = Modifier.size(96.dp),
+        )
         Spacer(Modifier.height(4.dp))
-    }
-}
-
-@Composable
-private fun resolveAvatarUrl(profile: Profile?, baseUrl: String?): String? {
-    if (profile == null) return null
-    val type = profile.avatarType
-    val code = profile.avatarCode
-    val direct = profile.avatarUrl
-    return when {
-        type == "emoji" && code.isNotBlank() -> openMojiUrl(baseUrl, code)
-        direct.isNotBlank() && direct.startsWith("http") -> direct
-        direct.isNotBlank() -> openMojiUrl(baseUrl, "")?.let { "${baseUrl?.trimEnd('/')}$direct" }
-        else -> openMojiUrl(baseUrl, pickOpenMojiCode("${profile.id}:${profile.publicUsername}"))
     }
 }
 
