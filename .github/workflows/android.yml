@@ -63,7 +63,7 @@ jobs:
       GRADLE_USER_HOME: ${{ github.workspace }}/../.gradle-user-home
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7.0.1
 
       - name: Verify Android project
         timeout-minutes: 25
@@ -77,7 +77,7 @@ jobs:
 
       - name: Upload debug APK
         if: ${{ github.ref != 'refs/heads/main' }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: typetype-debug-apk
           path: app/build/outputs/apk/debug/*.apk
@@ -86,7 +86,7 @@ jobs:
 
       - name: Upload lint report
         if: ${{ always() }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: lint-report
           path: |
@@ -104,7 +104,7 @@ jobs:
       GRADLE_USER_HOME: ${{ github.workspace }}/../.gradle-user-home
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7.0.1
 
       - name: Prepare release tag
         env:
@@ -147,7 +147,7 @@ jobs:
           cp "$apk" "artifacts/TypeType-$RELEASE_TAG.apk"
 
       - name: Upload release APK
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: typetype-release-apk
           path: artifacts/*.apk
