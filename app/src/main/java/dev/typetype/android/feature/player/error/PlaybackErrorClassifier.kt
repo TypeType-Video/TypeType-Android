@@ -26,7 +26,8 @@ fun classifyPlaybackError(error: PlaybackException): PlaybackFailureKind =
 
 @OptIn(UnstableApi::class)
 fun playbackRequestId(error: PlaybackException): String? =
-    requestIdFromHeaders(error.findHttpFailure()?.headerFields.orEmpty())
+    error.findCodedFailure()?.requestId?.takeIf(REQUEST_ID_PATTERN::matches)
+        ?: requestIdFromHeaders(error.findHttpFailure()?.headerFields.orEmpty())
 
 internal fun classifyPlaybackCause(error: Throwable, errorCode: Int): PlaybackFailureKind {
     if (error.hasFailureCode(SABR_CONTRACT_FAILURE_CODE)) {
@@ -34,6 +35,9 @@ internal fun classifyPlaybackCause(error: Throwable, errorCode: Int): PlaybackFa
     }
     if (error.hasFailureCode(SABR_RECOVERY_EXHAUSTED_FAILURE_CODE)) {
         return PlaybackFailureKind.SabrRecoveryExhausted
+    }
+    error.findCodedFailure()?.statusCode?.let { statusCode ->
+        return classifyHttpPlaybackFailure(responseBody = null, statusCode)
     }
     error.findHttpFailure()?.let { failure ->
         val body = failure.responseBody
@@ -46,12 +50,17 @@ internal fun classifyPlaybackCause(error: Throwable, errorCode: Int): PlaybackFa
 }
 
 private fun Throwable.hasFailureCode(code: String): Boolean {
+    return findCodedFailure(code) != null
+}
+
+private fun Throwable.findCodedFailure(code: String? = null): CodedFailure? {
     var current: Throwable? = this
     repeat(MAX_CAUSE_DEPTH) {
-        if ((current as? CodedFailure)?.failureCode == code) return true
+        val coded = current as? CodedFailure
+        if (coded != null && (code == null || coded.failureCode == code)) return coded
         current = current?.cause?.takeUnless { it === current }
     }
-    return false
+    return null
 }
 
 internal fun classifyHttpPlaybackFailure(
