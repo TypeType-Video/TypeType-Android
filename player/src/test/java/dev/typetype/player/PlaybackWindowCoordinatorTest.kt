@@ -27,7 +27,7 @@ class PlaybackWindowCoordinatorTest {
         coordinator.seek(30_000L)
 
         assertEquals(listOf(10_000L), loader.seekPositions)
-        assertEquals(1, dispatcher.delayedCount)
+        assertEquals(listOf(250L, 250L), dispatcher.delays)
 
         dispatcher.runDelayed()
 
@@ -174,9 +174,10 @@ private class RecordingCancellation : PlaybackLoadCancellation {
 private class RecordingDispatcher : PlaybackTaskDispatcher {
     private val posted = mutableListOf<Runnable>()
     private val delayed = mutableListOf<Runnable>()
+    private val recordedDelays = mutableListOf<Long>()
 
-    val delayedCount: Int
-        get() = delayed.size
+    val delays: List<Long>
+        get() = recordedDelays.toList()
 
     override fun post(task: Runnable) {
         posted += task
@@ -184,6 +185,7 @@ private class RecordingDispatcher : PlaybackTaskDispatcher {
 
     override fun postDelayed(task: Runnable, delayMs: Long) {
         delayed += task
+        recordedDelays += delayMs
     }
 
     override fun remove(task: Runnable) {
