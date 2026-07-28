@@ -20,11 +20,7 @@ class SabrPlayerTimelineTest {
     }
 
     @Test
-    fun `static and non live targets keep their player position`() {
-        assertEquals(
-            10_000L,
-            sabrMediaTimeMs(10_000L, true, false, false, 45_000L),
-        )
+    fun `non live targets keep their player position`() {
         assertEquals(
             10_000L,
             sabrMediaTimeMs(10_000L, false, false, true, 45_000L),
@@ -34,6 +30,7 @@ class SabrPlayerTimelineTest {
     @Test
     fun `a placeholder live timeline is not reported to the server`() {
         assertNull(sabrMediaTimeMs(10_000L, true, true, true, 45_000L))
+        assertNull(sabrMediaTimeMs(10_000L, true, false, false, 45_000L))
     }
 
     @Test
@@ -42,5 +39,13 @@ class SabrPlayerTimelineTest {
             Long.MAX_VALUE,
             sabrMediaTimeMs(Long.MAX_VALUE, true, false, true, 1L),
         )
+    }
+
+    @Test
+    fun `server live time is translated back into the sliding player window`() {
+        assertEquals(10_000L, sabrWindowPositionMs(55_000L, true, 45_000L, 75_000L))
+        assertEquals(0L, sabrWindowPositionMs(40_000L, true, 45_000L, 75_000L))
+        assertEquals(30_000L, sabrWindowPositionMs(80_000L, true, 45_000L, 75_000L))
+        assertEquals(55_000L, sabrWindowPositionMs(55_000L, false, 45_000L, 75_000L))
     }
 }
