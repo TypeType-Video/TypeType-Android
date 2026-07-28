@@ -11,6 +11,7 @@ import dev.typetype.android.domain.stream.accept
 import dev.typetype.android.domain.stream.binding
 import dev.typetype.player.PlaybackBufferedRange
 import dev.typetype.player.PlaybackLoadCancellation
+import dev.typetype.player.PlaybackLiveWindow
 import dev.typetype.player.PlaybackSegment
 import dev.typetype.player.PlaybackTrack
 import dev.typetype.player.PlaybackTrackKind
@@ -118,14 +119,24 @@ internal class SabrPlaybackWindowLoader(
 
 internal fun SabrPlaybackSession.toPlayerWindow(): PlaybackWindow {
     val audio = requireNotNull(audioWindow) { "SABR omitted its validated audio window" }
-    val video = requireNotNull(videoWindow) { "SABR omitted its validated video window" }
     return PlaybackWindow(
         generation = generation,
         durationUs = durationMs.toMicroseconds(),
         startPositionUs = startTimeMs.toMicroseconds(),
         endOfStream = endOfStream,
         audio = audio.toPlayerTrack(PlaybackTrackKind.Audio),
-        video = video.toPlayerTrack(PlaybackTrackKind.Video),
+        video = videoWindow?.toPlayerTrack(PlaybackTrackKind.Video),
+        live = live?.let {
+            PlaybackLiveWindow(
+                active = it.active,
+                postLiveDvr = it.postLiveDvr,
+                headPositionUs = it.headTimeMs.toMicroseconds(),
+                seekableStartPositionUs = it.seekableStartMs.toMicroseconds(),
+                seekableEndPositionUs = it.seekableEndMs.toMicroseconds(),
+                atLiveEdge = it.atLiveEdge,
+                targetLatencyUs = it.targetLatencyMs.toMicroseconds(),
+            )
+        },
     )
 }
 
