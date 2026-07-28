@@ -10,6 +10,7 @@ import kotlinx.coroutines.delay
 
 private const val POLL_INTERVAL_MS = 250L
 private const val SKIP_GUARD_MS = 200L
+private const val END_OF_MEDIA_TOLERANCE_MS = 1_000L
 
 @Composable
 fun SponsorBlockSkipper(
@@ -29,10 +30,21 @@ fun SponsorBlockSkipper(
                 pos in segment.startMs..(segment.endMs - SKIP_GUARD_MS)
             }
             if (match != null) {
-                player.seekTo(match.endMs)
+                player.seekTo(sponsorBlockSkipTargetMs(match, player.duration))
                 onSegmentSkipped(match)
             }
             delay(POLL_INTERVAL_MS)
         }
     }
+}
+
+internal fun sponsorBlockSkipTargetMs(
+    segment: SponsorBlockSegment,
+    durationMs: Long,
+): Long {
+    if (durationMs <= 0L || durationMs - segment.endMs > END_OF_MEDIA_TOLERANCE_MS) {
+        return segment.endMs
+    }
+    val playableEndMs = minOf(segment.endMs, durationMs - 1L)
+    return (playableEndMs - SKIP_GUARD_MS + 1L).coerceAtLeast(segment.startMs)
 }
