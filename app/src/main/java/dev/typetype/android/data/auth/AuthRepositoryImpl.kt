@@ -198,6 +198,8 @@ class AuthRepositoryImpl @Inject constructor(
         accountDao.upsert(AccountEntity.fromProfile(serverId, profile, generation))
         tokenStore.setAuthenticatedAccessToken(serverId, profile.id, token)
         cookieJar.completeAuthentication(serverId, profile.id)
+        accountScopeStore.setCurrentAccountId(serverId, profile.id)
+        serverRepository.setCurrentServer(serverId)
     }
 
     private companion object {
