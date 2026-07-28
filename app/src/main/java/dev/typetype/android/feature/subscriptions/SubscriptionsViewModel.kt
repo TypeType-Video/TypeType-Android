@@ -128,6 +128,7 @@ class SubscriptionsViewModel @Inject constructor(
                 isLoading = true,
                 isLoadingMore = false,
                 isServerRefreshing = false,
+                hasPendingRefresh = false,
                 errorMessage = null,
                 errorRequestId = null,
                 loadMoreError = false,
@@ -151,6 +152,7 @@ class SubscriptionsViewModel @Inject constructor(
                 videos = page.videos.distinctBy { video -> video.url },
                 hasMore = page.hasMore,
                 isServerRefreshing = page.refreshing,
+                hasPendingRefresh = false,
                 generatedAtMillis = page.generatedAtMillis,
                 errorMessage = null,
                 errorRequestId = null,
@@ -185,7 +187,7 @@ class SubscriptionsViewModel @Inject constructor(
                 onFailure = { failure ->
                     if (failure.requiresPaginationRestart()) {
                         refreshMonitorJob?.cancel()
-                        loadFirstPage()
+                        offerRefresh()
                     } else {
                         val details = errorMapper.details(failure, R.string.subscriptions_failed)
                         _state.update {
@@ -236,40 +238,8 @@ class SubscriptionsViewModel @Inject constructor(
                 }
                 if (generation != expectedGeneration) return@launch
                 if (page.generation != expectedGeneration) {
-                    requestJob?.cancel()
-                    val targetVideoCount = _state.value.videos.size.coerceAtLeast(PAGE_SIZE)
-                    _state.update { it.copy(isLoadingMore = true) }
-                    val rebuiltPage = rebuildSubscriptionGeneration(
-                        firstPage = page,
-                        targetVideoCount = targetVideoCount,
-                    ) { cursor, pageGeneration ->
-                        feedRepository.loadSubscriptionsFeed(
-                            cursor = cursor,
-                            limit = PAGE_SIZE,
-                            expectedGeneration = pageGeneration,
-                        )
-                    }.getOrElse { failure ->
-                        showRefreshFailure(failure)
-                        return@launch
-                    }
-                    expectedGeneration = rebuiltPage.generation
-                    generation = rebuiltPage.generation
-                    nextCursor = rebuiltPage.nextCursor
-                    persistCurrentGeneration = true
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            videos = rebuiltPage.videos,
-                            hasMore = rebuiltPage.hasMore,
-                            isServerRefreshing = rebuiltPage.refreshing,
-                            generatedAtMillis = rebuiltPage.generatedAtMillis,
-                            errorMessage = null,
-                            errorRequestId = null,
-                            loadMoreError = false,
-                        )
-                    }
-                    persistPage(rebuiltPage, append = false)
-                    _state.update { it.copy(isLoadingMore = false) }
+                    offerRefresh()
+                    return@launch
                 } else {
                     _state.update {
                         it.copy(
@@ -280,6 +250,19 @@ class SubscriptionsViewModel @Inject constructor(
                 }
                 if (!page.refreshing) return@launch
             }
+        }
+    }
+
+    private fun offerRefresh() {
+        nextCursor = null
+        _state.update {
+            it.copy(
+                isLoadingMore = false,
+                isServerRefreshing = false,
+                hasPendingRefresh = true,
+                hasMore = false,
+                loadMoreError = false,
+            )
         }
     }
 

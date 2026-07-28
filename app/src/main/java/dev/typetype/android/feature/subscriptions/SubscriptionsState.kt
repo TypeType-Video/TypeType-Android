@@ -6,6 +6,7 @@ data class SubscriptionsState(
     val isLoading: Boolean = false,
     val isLoadingMore: Boolean = false,
     val isServerRefreshing: Boolean = false,
+    val hasPendingRefresh: Boolean = false,
     val videos: List<Video> = emptyList(),
     val hasMore: Boolean = true,
     val generatedAtMillis: Long? = null,
