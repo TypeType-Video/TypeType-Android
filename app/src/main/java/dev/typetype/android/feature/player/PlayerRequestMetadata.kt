@@ -29,6 +29,7 @@ internal fun PlayableSource.toRequestMetadata(
         sabrTarget?.let {
             putString(MergedStreamMediaKeys.EXTRA_SABR_VIDEO_ID, it.videoId)
             putBoolean(MergedStreamMediaKeys.EXTRA_SABR_IS_LIVE, it.isLive)
+            putBoolean(MergedStreamMediaKeys.EXTRA_SABR_AUDIO_ONLY, it.audioOnly)
             putIntArray(
                 MergedStreamMediaKeys.EXTRA_SABR_RECOVERY_VIDEO_ITAGS,
                 it.recoveryVideoItags.toIntArray(),
@@ -38,6 +39,15 @@ internal fun PlayableSource.toRequestMetadata(
             putLong(MergedStreamMediaKeys.EXTRA_SABR_WINDOW_END_MS, it.windowEndMs)
             putLong(MergedStreamMediaKeys.EXTRA_SABR_DURATION_MS, it.durationMs)
             putBoolean(MergedStreamMediaKeys.EXTRA_SABR_END_OF_STREAM, it.endOfStream)
+            putBoolean(MergedStreamMediaKeys.EXTRA_SABR_LIVE_ACTIVE, it.live?.active == true)
+            putLong(
+                MergedStreamMediaKeys.EXTRA_SABR_LIVE_SEEKABLE_START_MS,
+                it.live?.seekableStartMs ?: 0L,
+            )
+            putLong(
+                MergedStreamMediaKeys.EXTRA_SABR_LIVE_SEEKABLE_END_MS,
+                it.live?.seekableEndMs ?: 0L,
+            )
         }
         audio?.let { putString(MergedStreamMediaKeys.EXTRA_AUDIO_URL, it) }
         audioMimeType?.let { putString(MergedStreamMediaKeys.EXTRA_AUDIO_MIME_TYPE, it) }
@@ -49,7 +59,7 @@ internal fun PlayableSource.toRequestMetadata(
         }
         putLong(
             MergedStreamMediaKeys.EXTRA_RESUME_POSITION_MILLIS,
-            resumePositionMillis.coerceAtLeast(0L),
+            (sabrSession?.startTimeMs ?: resumePositionMillis).coerceAtLeast(0L),
         )
         putBoolean(MergedStreamMediaKeys.EXTRA_IS_LIVE_CONTENT, isLiveContent)
         stream?.let {

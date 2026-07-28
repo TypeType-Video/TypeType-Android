@@ -8,6 +8,7 @@ data class SabrPlaybackTarget(
     val audioTrackId: String?,
     val recoveryVideoItags: Set<Int> = emptySet(),
     val isLive: Boolean = false,
+    val audioOnly: Boolean = false,
 )
 
 fun Stream.sabrPlaybackTarget(selection: SabrPlaybackSelection): SabrPlaybackTarget =
@@ -19,6 +20,7 @@ fun Stream.sabrPlaybackTarget(selection: SabrPlaybackSelection): SabrPlaybackTar
         audioTrackId = selection.audio.audioTrackId,
         recoveryVideoItags = selection.recoveryVideoItags,
         isLive = isLive,
+        audioOnly = false,
     )
 
 fun SabrPlaybackTarget.accept(session: SabrPlaybackSession): SabrPlaybackTarget {
@@ -39,4 +41,5 @@ val SabrPlaybackTarget.sourceKey: String
         videoItag,
         audioItag,
         audioTrackId.orEmpty(),
+        if (audioOnly) "audio" else "video",
     ).joinToString(":")
