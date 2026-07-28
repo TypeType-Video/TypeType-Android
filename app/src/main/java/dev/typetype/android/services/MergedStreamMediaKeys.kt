@@ -17,9 +17,13 @@ object MergedStreamMediaKeys {
     const val EXTRA_SABR_RECOVERY_VIDEO_ITAGS = "typetype.sabr_recovery_video_itags"
     const val EXTRA_SABR_SESSION_CONTINUATION = "typetype.sabr_session_continuation"
     const val EXTRA_SABR_IS_LIVE = "typetype.sabr_is_live"
+    const val EXTRA_SABR_AUDIO_ONLY = "typetype.sabr_audio_only"
     const val EXTRA_SABR_WINDOW_END_MS = "typetype.sabr_window_end_ms"
     const val EXTRA_SABR_DURATION_MS = "typetype.sabr_duration_ms"
     const val EXTRA_SABR_END_OF_STREAM = "typetype.sabr_end_of_stream"
+    const val EXTRA_SABR_LIVE_ACTIVE = "typetype.sabr_live_active"
+    const val EXTRA_SABR_LIVE_SEEKABLE_START_MS = "typetype.sabr_live_seekable_start_ms"
+    const val EXTRA_SABR_LIVE_SEEKABLE_END_MS = "typetype.sabr_live_seekable_end_ms"
     const val EXTRA_AUDIO_URL = "typetype.audio_url"
     const val EXTRA_AUDIO_MIME_TYPE = "typetype.audio_mime_type"
     const val EXTRA_VIDEO_MIME_TYPE = "typetype.video_mime_type"
@@ -88,5 +92,6 @@ internal fun Bundle.sabrPlaybackTarget(): SabrPlaybackTarget? {
         audioTrackId = binding.audioTrackId,
         recoveryVideoItags = recoveryVideoItags,
         isLive = getBoolean(MergedStreamMediaKeys.EXTRA_SABR_IS_LIVE),
+        audioOnly = getBoolean(MergedStreamMediaKeys.EXTRA_SABR_AUDIO_ONLY),
     )
 }

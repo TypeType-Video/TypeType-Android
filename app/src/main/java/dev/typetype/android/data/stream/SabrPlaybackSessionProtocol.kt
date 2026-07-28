@@ -32,11 +32,14 @@ internal fun SabrPlaybackTarget.controlRequest(positionMs: Long) = SabrPlaybackR
     audioTrackId = audioTrackId,
     startTimeMs = positionMs.coerceAtLeast(0L),
     playerTimeMs = positionMs.coerceAtLeast(0L),
+    audioOnly = audioOnly,
     isLive = isLive,
 )
 
 internal fun SabrPlaybackResponse.windowRequest(
     ranges: List<SabrPlaybackBufferedRange>,
+    audioOnly: Boolean = false,
+    isLive: Boolean = false,
     playerTimeMs: Long = startTimeMs,
     playbackRate: Float = 1.0f,
 ) = SabrPlaybackWindowRequestDto(
@@ -46,10 +49,11 @@ internal fun SabrPlaybackResponse.windowRequest(
     audioItag = audioItag,
     audioTrackId = audioTrackId,
     playbackRate = playbackRate.sanitizedPlaybackRate(),
-    bufferGoalMs = playbackRate.rateAwareBufferGoalMs(),
+    bufferGoalMs = playbackRate.rateAwareBufferGoalMs(isLive),
     bufferedRanges = ranges.map {
         SabrPlaybackBufferedRangeDto(it.itag, it.startMs, it.endMs)
     },
+    audioOnly = audioOnly,
 )
 
 internal fun SabrPlaybackWindowResponseDto.requireWindowIdentity(
@@ -118,7 +122,8 @@ internal val RECOVERABLE_CONTROL_STATUS_CODES = setOf(404, 409, 410)
 private const val DEFAULT_RETRY_MS = 500L
 private const val MIN_RETRY_MS = 250L
 private const val MAX_RETRY_MS = 2_000L
-private const val DEFAULT_BUFFER_GOAL_MS = 30_000L
+private const val VOD_BUFFER_GOAL_MS = 30_000L
+private const val LIVE_BUFFER_GOAL_MS = 8_000L
 private const val MAX_BUFFER_GOAL_MS = 60_000L
 private const val MIN_PLAYBACK_RATE = 0.25f
 private const val MAX_PLAYBACK_RATE = 4.0f
@@ -126,7 +131,8 @@ private const val MAX_PLAYBACK_RATE = 4.0f
 private fun Float.sanitizedPlaybackRate(): Float =
     takeIf { isFinite() && this in MIN_PLAYBACK_RATE..MAX_PLAYBACK_RATE } ?: 1.0f
 
-private fun Float.rateAwareBufferGoalMs(): Long =
-    (DEFAULT_BUFFER_GOAL_MS * maxOf(1.0f, sanitizedPlaybackRate()))
+private fun Float.rateAwareBufferGoalMs(isLive: Boolean): Long =
+    ((if (isLive) LIVE_BUFFER_GOAL_MS else VOD_BUFFER_GOAL_MS) *
+        maxOf(1.0f, sanitizedPlaybackRate()))
         .toLong()
         .coerceAtMost(MAX_BUFFER_GOAL_MS)

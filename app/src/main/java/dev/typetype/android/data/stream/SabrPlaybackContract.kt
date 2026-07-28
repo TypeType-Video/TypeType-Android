@@ -2,8 +2,10 @@ package dev.typetype.android.data.stream
 
 import dev.typetype.android.core.error.CodedFailure
 import dev.typetype.android.data.network.dto.SabrPlaybackResponse
+import dev.typetype.android.data.network.dto.SabrLivePlaybackDto
 import dev.typetype.android.data.network.dto.SabrPlaybackWindowResponseDto
 import dev.typetype.android.data.network.dto.SabrPlaybackWindowTrackDto
+import dev.typetype.android.domain.stream.SabrLivePlaybackWindow
 import dev.typetype.android.domain.stream.SabrPlaybackSession
 import dev.typetype.android.domain.stream.SabrPlaybackTarget
 import dev.typetype.android.domain.stream.SabrPlaybackWindowSegment
@@ -24,10 +26,12 @@ internal fun SabrPlaybackResponse.requireControlResponse(
         audioTrackId != target.audioTrackId || startTimeMs < 0L || generation < 0L ||
         expectedSessionId?.let { sessionId != it } == true ||
         previousGeneration?.let { generation <= it } == true ||
-        (!validPending && !validReady)
+        (!validPending && !validReady) ||
+        (target.isLive != (live != null))
     ) {
         sabrContractMismatch("SABR returned a different session or format tuple")
     }
+    live?.requireControlLive()
     return this
 }
 
@@ -50,15 +54,28 @@ internal fun SabrPlaybackWindowResponseDto.requireWindowResponse(
         )
     }
     val audioTrack = audio ?: sabrContractMismatch("SABR omitted its audio window")
-    val videoTrack = video ?: sabrContractMismatch("SABR omitted its video window")
     val audioWindow = audioTrack.requireTrack(baseUrl, control, target.audioItag, "audio")
-    val videoWindow = videoTrack.requireTrack(baseUrl, control, target.videoItag, "video")
+    val videoWindow = when {
+        target.audioOnly && video != null ->
+            sabrContractMismatch("SABR returned video in audio-only mode")
+        target.audioOnly -> null
+        else -> (video ?: sabrContractMismatch("SABR omitted its video window"))
+            .requireTrack(baseUrl, control, target.videoItag, "video")
+    }
     val startMs = startTimeMs ?: control.startTimeMs
-    val presentationDurationMs = durationMs
-        ?.takeIf { it > 0L }
-        ?: sabrContractMismatch("SABR omitted its presentation duration")
-    val windowEndMs = minOf(audioWindow.endMs, videoWindow.endMs)
-    if (startMs < 0L || windowEndMs <= startMs || windowEndMs > presentationDurationMs + END_TOLERANCE_MS) {
+    val windowEndMs = videoWindow?.let { minOf(audioWindow.endMs, it.endMs) }
+        ?: audioWindow.endMs
+    val liveWindow = live.requireReadyLive(target)
+    val presentationDurationMs = if (liveWindow?.active == true) {
+        maxOf(durationMs ?: 0L, liveWindow.headTimeMs, windowEndMs)
+    } else {
+        durationMs
+            ?.takeIf { it > 0L }
+            ?: sabrContractMismatch("SABR omitted its presentation duration")
+    }
+    val exceedsPresentation = liveWindow?.active != true &&
+        windowEndMs > presentationDurationMs + END_TOLERANCE_MS
+    if (startMs < 0L || windowEndMs <= startMs || exceedsPresentation) {
         sabrContractMismatch("SABR returned an invalid bounded playback window")
     }
     val manifestUrl = resolveSabrPlaybackManifestUrl(
@@ -79,7 +96,45 @@ internal fun SabrPlaybackWindowResponseDto.requireWindowResponse(
         endOfStream = endOfStream == true,
         audioWindow = audioWindow,
         videoWindow = videoWindow,
+        live = liveWindow,
     )
+}
+
+private fun SabrLivePlaybackDto?.requireReadyLive(
+    target: SabrPlaybackTarget,
+): SabrLivePlaybackWindow? {
+    if (!target.isLive) {
+        if (this != null) sabrContractMismatch("SABR changed a VOD into a live presentation")
+        return null
+    }
+    val value = this ?: sabrContractMismatch("SABR omitted its live playback window")
+    value.requireControlLive()
+    if (
+        value.seekableEndMs <= value.seekableStartMs ||
+        value.headTimeMs < value.seekableEndMs
+    ) {
+        sabrContractMismatch("SABR returned an invalid live playback window")
+    }
+    return SabrLivePlaybackWindow(
+        active = value.active,
+        postLiveDvr = value.postLiveDvr,
+        headSequence = value.headSequence,
+        headTimeMs = value.headTimeMs,
+        seekableStartMs = value.seekableStartMs,
+        seekableEndMs = value.seekableEndMs,
+        atLiveEdge = value.atLiveEdge,
+        targetLatencyMs = value.targetLatencyMs,
+    )
+}
+
+private fun SabrLivePlaybackDto.requireControlLive() {
+    if (
+        active == postLiveDvr || headSequence < 0L || headTimeMs < 0L ||
+        seekableStartMs < 0L || seekableEndMs < seekableStartMs ||
+        targetLatencyMs <= 0L
+    ) {
+        sabrContractMismatch("SABR returned invalid live playback metadata")
+    }
 }
 
 private fun SabrPlaybackWindowTrackDto.requireTrack(

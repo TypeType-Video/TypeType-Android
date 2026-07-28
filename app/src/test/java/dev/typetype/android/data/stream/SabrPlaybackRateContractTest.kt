@@ -29,6 +29,18 @@ class SabrPlaybackRateContractTest {
         assertEquals(30_000L, request.bufferGoalMs)
     }
 
+    @Test
+    fun livePlaybackUsesThePlayerLiveBufferGoal() {
+        val request = response().windowRequest(
+            ranges = emptyList(),
+            isLive = true,
+            playbackRate = 2.0f,
+        )
+
+        assertEquals(2.0f, request.playbackRate)
+        assertEquals(16_000L, request.bufferGoalMs)
+    }
+
     private fun response() = SabrPlaybackResponse(
         sessionId = "session",
         videoId = "video",

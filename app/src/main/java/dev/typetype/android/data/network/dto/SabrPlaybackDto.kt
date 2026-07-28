@@ -26,6 +26,19 @@ data class SabrPlaybackResponse(
     val ready: Boolean,
     val status: String,
     val retryAfterMs: Long? = null,
+    val live: SabrLivePlaybackDto? = null,
+)
+
+@Serializable
+data class SabrLivePlaybackDto(
+    val active: Boolean,
+    val postLiveDvr: Boolean,
+    val headSequence: Long,
+    val headTimeMs: Long,
+    val seekableStartMs: Long,
+    val seekableEndMs: Long,
+    val atLiveEdge: Boolean,
+    val targetLatencyMs: Long,
 )
 
 @Serializable
@@ -71,6 +84,7 @@ data class SabrPlaybackPositionResponseDto(
     val readerHeadMs: Long,
     val readerTailMs: Long,
     val bufferedEdgeMs: Long,
+    val live: SabrLivePlaybackDto? = null,
 )
 
 @Serializable
@@ -92,6 +106,7 @@ data class SabrPlaybackWindowResponseDto(
     val terminalError: String? = null,
     val recoveryAction: String? = null,
     val retryVideoItags: List<Int> = emptyList(),
+    val live: SabrLivePlaybackDto? = null,
 )
 
 @Serializable

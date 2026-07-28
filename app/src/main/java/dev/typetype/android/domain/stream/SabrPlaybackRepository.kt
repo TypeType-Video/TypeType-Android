@@ -19,6 +19,7 @@ data class SabrPlaybackSession(
     val endOfStream: Boolean = false,
     val audioWindow: SabrPlaybackWindowTrack? = null,
     val videoWindow: SabrPlaybackWindowTrack? = null,
+    val live: SabrLivePlaybackWindow? = null,
 )
 
 data class SabrPlaybackBufferedRange(

@@ -128,6 +128,8 @@ internal class SabrPlaybackSessionPreparer(
             val current = snapshot()
             control.windowRequest(
                 current.bufferedRanges,
+                target.audioOnly,
+                target.isLive,
                 current.playerTimeMs,
                 current.playbackRate,
             )
@@ -160,7 +162,12 @@ internal class SabrPlaybackSessionPreparer(
             api,
             baseUrl,
             control,
-            control.windowRequest(bufferedRanges, playbackRate = playbackRate),
+            control.windowRequest(
+                ranges = bufferedRanges,
+                audioOnly = target.audioOnly,
+                isLive = target.isLive,
+                playbackRate = playbackRate,
+            ),
         )
     }
 
@@ -171,7 +178,11 @@ internal class SabrPlaybackSessionPreparer(
         control: SabrPlaybackResponse,
         bufferedRanges: List<SabrPlaybackBufferedRange>,
     ): SabrPlaybackSession = waitForWindow(api, baseUrl, target, control) {
-        control.windowRequest(bufferedRanges)
+        control.windowRequest(
+            ranges = bufferedRanges,
+            audioOnly = target.audioOnly,
+            isLive = target.isLive,
+        )
     }
 
     private suspend fun waitForWindow(
