@@ -152,4 +152,4 @@ private class HandlerPlaybackTaskDispatcher(
     }
 }
 
-private const val SEEK_SETTLE_DELAY_MS = 500L
+private const val SEEK_SETTLE_DELAY_MS = 250L
