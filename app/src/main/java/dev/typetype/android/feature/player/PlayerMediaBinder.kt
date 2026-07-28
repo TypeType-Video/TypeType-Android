@@ -36,11 +36,6 @@ internal suspend fun bindStreamToController(
 ) {
     val currentItem = controller.currentMediaItem
     val sameMedia = currentItem?.mediaId == videoUrl
-    val sourceStartMillis = if (sameMedia) {
-        controller.sabrMediaTimeMs(controller.currentPosition, stream.isLive) ?: startMillis
-    } else {
-        startMillis
-    }
     val sabrRequestKey = stream.sabrRequestKey(
         selectedQuality = selectedQuality.effectiveQuality(automaticQualityCap),
         selectedAudioKey = selectedAudioKey,
@@ -52,6 +47,16 @@ internal suspend fun bindStreamToController(
     val reusableSabrSource = currentItem
         ?.takeIf { sameMedia && controller.playerError == null }
         ?.reusableSabrSource(sabrRequestKey)
+    val sourceStartMillis = replacementSourceStartTimeMs(
+        sameMedia = sameMedia,
+        live = stream.isLive,
+        reusingCurrentSource = reusableSabrSource != null,
+        currentMediaTimeMs = controller.sabrMediaTimeMs(
+            controller.currentPosition,
+            stream.isLive,
+        ),
+        requestedStartTimeMs = startMillis,
+    )
     val source = reusableSabrSource ?: pickPlayableSource(
         stream = stream,
         selectedQuality = selectedQuality,
@@ -72,11 +77,13 @@ internal suspend fun bindStreamToController(
         preferOriginalLanguage = preferOriginalLanguage,
         subtitlesEnabled = selectedSubtitleKey != null,
     )
-    val itemStartPosition = if (sameMedia) {
-        controller.currentPosition.coerceAtLeast(0L)
-    } else {
-        startMillis.coerceAtLeast(0L)
-    }
+    val itemStartPosition = replacementPlayerPositionMs(
+        sameMedia = sameMedia,
+        live = stream.isLive,
+        reusingCurrentSource = reusableSabrSource != null,
+        currentPositionMs = controller.currentPosition,
+        requestedPositionMs = startMillis,
+    )
     val mediaItem = buildResolvedMediaItem(
         stream = stream,
         videoUrl = videoUrl,

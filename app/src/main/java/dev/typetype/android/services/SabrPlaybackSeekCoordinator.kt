@@ -16,6 +16,9 @@ internal data class SabrPlaybackSeekState(
     val windowEndMs: Long = 0L,
     val durationMs: Long = 0L,
     val endOfStream: Boolean = false,
+    val liveActive: Boolean = false,
+    val liveSeekableStartMs: Long = 0L,
+    val liveSeekableEndMs: Long = 0L,
 )
 
 internal class SabrPlaybackSeekCoordinator(
@@ -31,6 +34,20 @@ internal class SabrPlaybackSeekCoordinator(
         return request(state, positionMs) {
             repository.seek(state.target, state.binding, it).map { session ->
                 PreparedSabrSession(session, state.target)
+            }
+        }
+    }
+
+    fun switchAudioOnly(
+        state: SabrPlaybackSeekState,
+        enabled: Boolean,
+        positionMs: Long,
+        complete: (Result<Unit>) -> Unit,
+    ): Job {
+        val target = state.target.copy(audioOnly = enabled)
+        return request(state, positionMs, complete) {
+            repository.seek(target, state.binding, it).map { session ->
+                PreparedSabrSession(session, target)
             }
         }
     }
@@ -66,9 +83,10 @@ internal class SabrPlaybackSeekCoordinator(
             }
             lastFailure = result.exceptionOrNull() ?: lastFailure
             val recovery = lastFailure.sabrPlaybackRecoveryFailure()
-                ?: return@request Result.failure(lastFailure)
-            currentTarget = currentTarget.recoveryTarget(recovery)
-                ?: return@request Result.failure(lastFailure)
+            if (recovery != null) {
+                currentTarget = currentTarget.recoveryTarget(recovery)
+                    ?: return@request Result.failure(lastFailure)
+            }
         }
         Result.failure(lastFailure)
     }

@@ -7,6 +7,7 @@ import dev.typetype.android.domain.stream.SabrPlaybackSession
 import dev.typetype.android.domain.stream.SabrPlaybackTarget
 import dev.typetype.android.domain.stream.StreamRequestScope
 import dev.typetype.android.domain.stream.StreamSubtitleSource
+import dev.typetype.android.domain.stream.sourceKey
 import dev.typetype.android.services.MergedStreamMediaKeys
 import dev.typetype.android.services.requireSabrTransportScope
 import dev.typetype.android.services.sabrPlaybackSeekState
@@ -38,20 +39,24 @@ class SabrPlaybackSourceAndroidTest {
     @Test
     fun preparedSessionMetadataSurvivesMediaItemRoundTrip() {
         val requestedKey = "sabr:video:137:140:en.0"
-        val acceptedKey = "sabr:video:136:140:en.0"
-        val playbackUri = "typetype-sabr://playback/session"
-        val scope = StreamRequestScope(
-            serverId = "server",
-            accountId = "account",
-            baseUrl = "https://instance.example/api/",
+        val acceptedTarget = target(
+            StreamRequestScope(
+                serverId = "server",
+                accountId = "account",
+                baseUrl = "https://instance.example/api/",
+            ),
+            videoItag = 136,
         )
+        val acceptedKey = acceptedTarget.sourceKey
+        val playbackUri = "typetype-sabr://playback/session"
+        val scope = acceptedTarget.requestScope
         val prepared = PlayableSource(
             url = playbackUri,
             mimeType = "application/x-typetype-sabr",
             sourceKey = acceptedKey,
             sabrRequestKey = requestedKey,
             sabrBinding = SabrPlaybackBinding("session", 3L, 136, 140, "en.0"),
-            sabrTarget = target(scope, videoItag = 136),
+            sabrTarget = acceptedTarget,
         )
         val mediaItem = MediaItem.Builder()
             .setUri(playbackUri)
