@@ -21,20 +21,54 @@ fun SponsorBlockSkipper(
     val skippable = remember(segments) {
         segments.filter { it.action == SponsorAction.Skip && it.endMs > it.startMs }
     }
+    val tracker = remember(player, skippable) { SponsorBlockSkipTracker() }
     if (skippable.isEmpty()) return
 
     LaunchedEffect(player, skippable) {
         while (true) {
             val pos = player.currentPosition
-            val match = skippable.firstOrNull { segment ->
-                pos in segment.startMs..(segment.endMs - SKIP_GUARD_MS)
-            }
+            val match = tracker.next(
+                positionMs = pos,
+                ready = player.playbackState == Player.STATE_READY,
+                segments = skippable,
+            )
             if (match != null) {
                 player.seekTo(sponsorBlockSkipTargetMs(match, player.duration))
                 onSegmentSkipped(match)
             }
             delay(POLL_INTERVAL_MS)
         }
+    }
+}
+
+internal class SponsorBlockSkipTracker {
+    private var previousPositionMs: Long? = null
+    private var pending: SponsorBlockSegment? = null
+
+    fun next(
+        positionMs: Long,
+        ready: Boolean,
+        segments: List<SponsorBlockSegment>,
+    ): SponsorBlockSegment? {
+        val previous = previousPositionMs
+        previousPositionMs = positionMs
+        pending?.let { segment ->
+            if (positionMs >= segment.endMs - PENDING_CLEAR_TOLERANCE_MS) {
+                pending = null
+                return null
+            }
+            if (positionMs < segment.startMs && ready) {
+                pending = null
+            } else {
+                return null
+            }
+        }
+        val match = segments.firstOrNull { segment ->
+            crossedSegmentStart(previous, positionMs, segment) &&
+                positionMs <= segment.endMs - SKIP_GUARD_MS
+        }
+        pending = match
+        return match
     }
 }
 
@@ -48,3 +82,15 @@ internal fun sponsorBlockSkipTargetMs(
     val playableEndMs = minOf(segment.endMs, durationMs - 1L)
     return (playableEndMs - SKIP_GUARD_MS + 1L).coerceAtLeast(segment.startMs)
 }
+
+private fun crossedSegmentStart(
+    previousPositionMs: Long?,
+    positionMs: Long,
+    segment: SponsorBlockSegment,
+): Boolean = previousPositionMs != null &&
+    positionMs > previousPositionMs &&
+    previousPositionMs <= segment.startMs + START_CROSSING_TOLERANCE_MS &&
+    positionMs >= segment.startMs
+
+private const val START_CROSSING_TOLERANCE_MS = 500L
+private const val PENDING_CLEAR_TOLERANCE_MS = 100L

@@ -33,6 +33,39 @@ class SponsorBlockSkipperTest {
         assertEquals(20_000L, sponsorBlockSkipTargetMs(segment(10_000L, 20_000L), -1L))
     }
 
+    @Test
+    fun `tracker skips when playback crosses a segment start`() {
+        val tracker = SponsorBlockSkipTracker()
+        val sponsor = segment(10_000L, 20_000L)
+
+        assertEquals(null, tracker.next(9_900L, true, listOf(sponsor)))
+        assertEquals(sponsor, tracker.next(10_100L, true, listOf(sponsor)))
+    }
+
+    @Test
+    fun `tracker does not repeat a pending skip`() {
+        val tracker = SponsorBlockSkipTracker()
+        val sponsor = segment(10_000L, 20_000L)
+
+        tracker.next(9_900L, true, listOf(sponsor))
+        assertEquals(sponsor, tracker.next(10_100L, true, listOf(sponsor)))
+        assertEquals(null, tracker.next(10_300L, false, listOf(sponsor)))
+        assertEquals(null, tracker.next(10_600L, false, listOf(sponsor)))
+    }
+
+    @Test
+    fun `tracker can skip the segment again after playback returns before it`() {
+        val tracker = SponsorBlockSkipTracker()
+        val sponsor = segment(10_000L, 20_000L)
+
+        tracker.next(9_900L, true, listOf(sponsor))
+        tracker.next(10_100L, true, listOf(sponsor))
+        tracker.next(20_000L, true, listOf(sponsor))
+        tracker.next(9_000L, true, listOf(sponsor))
+
+        assertEquals(sponsor, tracker.next(10_100L, true, listOf(sponsor)))
+    }
+
     private fun segment(startMs: Long, endMs: Long) = SponsorBlockSegment(
         startMs = startMs,
         endMs = endMs,
