@@ -1,6 +1,8 @@
 package dev.typetype.player
 
 import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Timeline
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
@@ -44,10 +46,33 @@ class PlaybackWindowTest {
     }
 
     @Test
-    fun playbackWindowRefreshMatchesTheMseBufferThreshold() {
-        assertFalse(shouldRefreshPlaybackWindow(10_000_000, 30_000_000))
-        assertTrue(shouldRefreshPlaybackWindow(10_000_000, 29_999_999))
-        assertTrue(shouldRefreshPlaybackWindow(30_000_000, 30_000_000))
+    fun playbackWindowRefreshWaitsUntilBufferAndAvailableMediaAreLow() {
+        assertFalse(shouldRefreshPlaybackWindow(10_000_000, 30_000_000, 30_000_000, false))
+        assertFalse(shouldRefreshPlaybackWindow(10_000_000, 29_999_999, 40_000_000, false))
+        assertTrue(shouldRefreshPlaybackWindow(10_000_000, 29_999_999, 29_999_999, false))
+        assertFalse(shouldRefreshPlaybackWindow(30_000_000, 30_000_000, 30_000_000, true))
+    }
+
+    @Test
+    fun activeLiveRefreshUsesTheSmallerLiveBufferGoal() {
+        assertFalse(
+            shouldRefreshPlaybackWindow(
+                10_000_000,
+                16_000_000,
+                16_000_000,
+                false,
+                activeLive = true,
+            ),
+        )
+        assertTrue(
+            shouldRefreshPlaybackWindow(
+                10_000_000,
+                14_999_999,
+                14_999_999,
+                false,
+                activeLive = true,
+            ),
+        )
     }
 
     @Test
@@ -64,6 +89,45 @@ class PlaybackWindowTest {
         assertEquals(20_120_000, playbackBufferStartUs(49_600_000, 20_120_000))
         assertEquals(19_600_000, playbackBufferStartUs(49_600_000, 10_000_000))
         assertEquals(19_600_000, playbackBufferStartUs(49_600_000, C.TIME_UNSET))
+    }
+
+    @Test
+    fun activeLiveWindowPublishesASlidingTimelineAtTheTargetLatency() {
+        val live = PlaybackLiveWindow(
+            active = true,
+            postLiveDvr = false,
+            headPositionUs = 5_338_444_800_000L,
+            seekableStartPositionUs = 5_295_244_800_000L,
+            seekableEndPositionUs = 5_338_444_800_000L,
+            atLiveEdge = true,
+            targetLatencyUs = 20_000_000L,
+        )
+        val audio = liveTrack(PlaybackTrackKind.Audio, "140", live.headPositionUs)
+        val video = liveTrack(PlaybackTrackKind.Video, "137", live.headPositionUs)
+        val playbackWindow = PlaybackWindow(
+            generation = 0L,
+            durationUs = live.headPositionUs + 5_000_000L,
+            startPositionUs = live.headPositionUs - 10_000_000L,
+            endOfStream = false,
+            audio = audio,
+            video = video,
+            live = live,
+        )
+
+        val timeline = playbackWindow.toTimeline(
+            MediaItem.Builder().setMediaId("live").build(),
+        )
+        val window = timeline.getWindow(0, Timeline.Window())
+        val period = timeline.getPeriod(0, Timeline.Period())
+
+        assertTrue(window.isLive)
+        assertTrue(window.isDynamic)
+        assertTrue(window.isSeekable)
+        assertEquals(43_200_000L, window.durationMs)
+        assertEquals(43_180_000L, window.defaultPositionMs)
+        assertEquals(live.seekableStartPositionUs / 1_000L, window.positionInFirstPeriodMs)
+        assertEquals(20_000L, requireNotNull(window.liveConfiguration).targetOffsetMs)
+        assertEquals(live.headPositionUs + 5_000_000L, period.durationUs)
     }
 
     private fun track(
@@ -84,6 +148,24 @@ class PlaybackWindowTest {
                 url = "https://example.test/$id/segment/1",
                 startPositionUs = 10_000_000,
                 durationUs = durationUs,
+            ),
+        ),
+    )
+
+    private fun liveTrack(
+        kind: PlaybackTrackKind,
+        id: String,
+        headPositionUs: Long,
+    ) = PlaybackTrack(
+        kind = kind,
+        id = id,
+        mimeType = if (kind == PlaybackTrackKind.Audio) "audio/mp4" else "video/mp4",
+        initializationUrl = "https://example.test/$id/init",
+        segments = listOf(
+            PlaybackSegment(
+                url = "https://example.test/$id/segment/1",
+                startPositionUs = headPositionUs,
+                durationUs = 5_000_000L,
             ),
         ),
     )

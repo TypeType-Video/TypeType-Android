@@ -51,13 +51,13 @@ internal class TypeTypeMediaPeriod(
     private val refreshPlaybackWindow = object : Runnable {
         override fun run() {
             pollPlaybackWindow()
-            if (!released) playbackHandler.postDelayed(this, WINDOW_POLL_INTERVAL_MS)
+            if (!released) playbackHandler.postDelayed(this, windowPollIntervalMs())
         }
     }
 
     override fun prepare(callback: MediaPeriod.Callback, positionUs: Long) {
         this.callback = callback
-        coordinator.setListener(this)
+        coordinator.addListener(this)
         playbackHandler.post(refreshPlaybackWindow)
         callback.onPrepared(this)
     }
@@ -157,7 +157,7 @@ internal class TypeTypeMediaPeriod(
     fun release() {
         released = true
         playbackHandler.removeCallbacks(refreshPlaybackWindow)
-        coordinator.setListener(null)
+        coordinator.removeListener(this)
         streams.forEach(ChunkSampleStream<TypeTypeChunkSource>::release)
         ownedStreams.clear()
         streams = emptyArray()
@@ -174,7 +174,6 @@ internal class TypeTypeMediaPeriod(
             dataSourceFactory = dataSourceFactory,
             transferListener = transferListener,
             coordinator = coordinator,
-            requestWindow = ::requestWindow,
         )
         return ChunkSampleStream(
             tracks[trackIndex].trackType(),
@@ -201,10 +200,29 @@ internal class TypeTypeMediaPeriod(
         val bufferedEndUs = loader.bufferedPositionUs
             .takeUnless { it == C.TIME_END_OF_SOURCE || it == C.TIME_UNSET }
             ?: return
-        if (shouldRefreshPlaybackWindow(positionUs, bufferedEndUs)) {
+        val availableEndUs = listOfNotNull(
+            window.audio.endPositionUs,
+            window.video?.endPositionUs,
+        ).min()
+        if (
+            shouldRefreshPlaybackWindow(
+                playbackPositionUs = positionUs,
+                bufferedEndUs = bufferedEndUs,
+                availableEndUs = availableEndUs,
+                endOfStream = window.endOfStream,
+                activeLive = window.live?.active == true,
+            )
+        ) {
             requestWindow(positionUs, bufferedEndUs)
         }
     }
+
+    private fun windowPollIntervalMs(): Long =
+        if (coordinator.window?.live?.active == true) {
+            LIVE_WINDOW_POLL_INTERVAL_MS
+        } else {
+            WINDOW_POLL_INTERVAL_MS
+        }
 
     private fun requestWindow(playbackPositionUs: Long, bufferedEndUs: Long) {
         val ranges = streams.mapNotNull {
@@ -233,6 +251,25 @@ internal class TypeTypeMediaPeriod(
     }
 }
 
+internal fun shouldRefreshPlaybackWindow(
+    playbackPositionUs: Long,
+    bufferedEndUs: Long,
+    availableEndUs: Long,
+    endOfStream: Boolean,
+    activeLive: Boolean = false,
+): Boolean {
+    if (endOfStream) return false
+    val refreshThresholdUs = if (activeLive) {
+        LIVE_WINDOW_REFRESH_THRESHOLD_US
+    } else {
+        WINDOW_REFRESH_THRESHOLD_US
+    }
+    val bufferedAheadUs = bufferedEndUs - playbackPositionUs
+    val availableAheadUs = availableEndUs - playbackPositionUs
+    return bufferedAheadUs < refreshThresholdUs &&
+        availableAheadUs < refreshThresholdUs
+}
+
 internal fun playbackBufferStartUs(
     playbackPositionUs: Long,
     retainedStartPositionUs: Long,
@@ -258,3 +295,6 @@ internal fun canSeekWithinPlaybackBuffer(
 private const val LOCAL_SEEK_BACK_BUFFER_US = 30_000_000L
 private const val LOCAL_SEEK_END_MARGIN_US = 250_000L
 private const val BACK_BUFFER_US = 30_000_000L
+private const val WINDOW_REFRESH_THRESHOLD_US = 20_000_000L
+private const val LIVE_WINDOW_REFRESH_THRESHOLD_US = 5_000_000L
+private const val LIVE_WINDOW_POLL_INTERVAL_MS = 250L
