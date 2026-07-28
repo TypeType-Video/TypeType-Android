@@ -25,6 +25,8 @@
     <string name="subscriptions_failed">Couldn\'t load subscriptions</string>
     <string name="subscriptions_checking_updates">Checking for new videos</string>
     <string name="subscriptions_rebuilding">Updating subscriptions in the background</string>
+    <string name="subscriptions_update_available">New subscription videos are available</string>
+    <string name="subscriptions_refresh">Refresh</string>
     <string name="subscriptions_preparing">Preparing subscriptions</string>
     <string name="subscriptions_empty_title">Your subscriptions will appear here</string>
     <string name="subscriptions_empty_description">Subscribe to channels to build a personal feed of their latest videos.</string>
@@ -79,6 +81,7 @@
     <string name="mini_player_restore_failed">Playback could not be restored</string>
     <string name="player_pip">Picture in picture</string>
     <string name="player_audio_only">Audio only</string>
+    <string name="player_audio_only_unavailable">Audio-only playback is unavailable for this video</string>
     <string name="player_add_to_favorites">Add to favorites</string>
     <string name="player_remove_from_favorites">Remove from favorites</string>
     <string name="player_add_to_watch_later">Add to Watch Later</string>
