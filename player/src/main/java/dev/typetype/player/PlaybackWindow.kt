@@ -7,6 +7,7 @@ data class PlaybackWindow(
     val endOfStream: Boolean,
     val audio: PlaybackTrack,
     val video: PlaybackTrack?,
+    val live: PlaybackLiveWindow? = null,
 ) {
     init {
         require(generation >= 0L)
@@ -14,6 +15,7 @@ data class PlaybackWindow(
         require(startPositionUs >= 0L)
         require(audio.kind == PlaybackTrackKind.Audio)
         require(video == null || video.kind == PlaybackTrackKind.Video)
+        require(live == null || durationUs >= live.seekableEndPositionUs)
     }
 }
 
