@@ -10,7 +10,6 @@ import androidx.media3.exoplayer.drm.DrmSessionEventListener
 import androidx.media3.exoplayer.source.BaseMediaSource
 import androidx.media3.exoplayer.source.MediaPeriod
 import androidx.media3.exoplayer.source.MediaSource
-import androidx.media3.exoplayer.source.SinglePeriodTimeline
 import androidx.media3.exoplayer.upstream.Allocator
 import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy
 import java.io.IOException
@@ -36,7 +35,7 @@ class TypeTypeMediaSource(
         val handler = Handler(requireNotNull(Looper.myLooper()))
         val playbackCoordinator = PlaybackWindowCoordinator(windowLoader, handler)
         coordinator = playbackCoordinator
-        playbackCoordinator.setListener(this)
+        playbackCoordinator.addListener(this)
         val seededWindow = initialWindow
         if (seededWindow == null) {
             playbackCoordinator.load(initialPositionUs)
@@ -76,6 +75,7 @@ class TypeTypeMediaSource(
     }
 
     override fun releaseSourceInternal() {
+        coordinator?.removeListener(this)
         coordinator?.release()
         coordinator = null
         transferListener = null
@@ -84,16 +84,7 @@ class TypeTypeMediaSource(
 
     override fun onWindowAvailable(window: PlaybackWindow) {
         this.window = window
-        refreshSourceInfo(
-            SinglePeriodTimeline(
-                window.durationUs,
-                true,
-                false,
-                false,
-                window,
-                mediaItem,
-            ),
-        )
+        refreshSourceInfo(window.toTimeline(mediaItem))
     }
 
     override fun onWindowFailure() = Unit

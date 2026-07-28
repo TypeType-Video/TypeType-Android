@@ -29,7 +29,6 @@ internal class TypeTypeChunkSource(
     dataSourceFactory: DataSource.Factory,
     transferListener: TransferListener?,
     private val coordinator: PlaybackWindowCoordinator,
-    private val requestWindow: (Long, Long) -> Unit,
 ) : ChunkSource {
     private val format: Format = initialTrack.toMedia3Format()
     private val dataSource = dataSourceFactory.createDataSource().apply {
@@ -107,9 +106,11 @@ internal class TypeTypeChunkSource(
             return
         }
         val targetUs = queue.lastOrNull()?.endTimeUs ?: loadPositionUs
-        val segment = track.segments.firstOrNull {
-            it.endPositionUs > targetUs + TIMELINE_TOLERANCE_US
-        }
+        val segment = selectPlaybackSegment(
+            segments = track.segments,
+            targetUs = targetUs,
+            queuedUrls = queue.mapTo(hashSetOf()) { it.dataSpec.uri.toString() },
+        )
         if (segment != null) {
             out.chunk = segment.toChunk(queue.isEmpty(), targetUs)
             return
@@ -118,9 +119,6 @@ internal class TypeTypeChunkSource(
         if (window.endOfStream && targetUs >= track.endPositionUs - TIMELINE_TOLERANCE_US) {
             out.endOfStream = true
             return
-        }
-        if (shouldRefreshPlaybackWindow(loadingInfo.playbackPositionUs, targetUs)) {
-            requestWindow(loadingInfo.playbackPositionUs, targetUs)
         }
     }
 
@@ -159,14 +157,18 @@ internal class TypeTypeChunkSource(
         )
 
     private companion object {
-        const val TIMELINE_TOLERANCE_US = 1_000L
+        const val TIMELINE_TOLERANCE_US = PLAYBACK_TIMELINE_TOLERANCE_US
     }
 }
 
-internal fun shouldRefreshPlaybackWindow(
-    playbackPositionUs: Long,
-    bufferedEndUs: Long,
-): Boolean = bufferedEndUs - playbackPositionUs < WINDOW_REFRESH_THRESHOLD_US
+internal fun selectPlaybackSegment(
+    segments: List<PlaybackSegment>,
+    targetUs: Long,
+    queuedUrls: Set<String>,
+): PlaybackSegment? = segments.firstOrNull {
+    it.url !in queuedUrls &&
+        it.endPositionUs > targetUs + PLAYBACK_TIMELINE_TOLERANCE_US
+}
 
 @UnstableApi
 internal fun PlaybackTrack.createExtractor(): Extractor {
@@ -178,4 +180,4 @@ internal fun PlaybackTrack.createExtractor(): Extractor {
     }
 }
 
-private const val WINDOW_REFRESH_THRESHOLD_US = 20_000_000L
+private const val PLAYBACK_TIMELINE_TOLERANCE_US = 1_000L
