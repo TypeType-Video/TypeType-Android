@@ -119,4 +119,20 @@ class PlaybackErrorClassifierTest {
 
         assertEquals(PlaybackFailureKind.SabrRecoveryExhausted, result)
     }
+
+    @Test
+    fun `classifies coded server rejection as media delivery`() {
+        val failure = object : IOException(), CodedFailure {
+            override val failureCode: String = "error"
+            override val requestId: String? = "request-422"
+            override val statusCode: Int = 422
+        }
+
+        val result = classifyPlaybackCause(
+            IllegalStateException(failure),
+            PlaybackException.ERROR_CODE_IO_UNSPECIFIED,
+        )
+
+        assertEquals(PlaybackFailureKind.MediaDelivery, result)
+    }
 }

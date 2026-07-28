@@ -56,6 +56,6 @@ internal suspend fun <T> transientPlaybackRequest(
     }
 }
 
-private const val MAX_SERVER_RESPONSE_RETRIES = 2
+private const val MAX_SERVER_RESPONSE_RETRIES = 24
 private const val MAX_CONNECTED_TRANSPORT_RETRIES = 8
 private const val MAX_OFFLINE_WAIT_MS = 30 * 60 * 1_000L
