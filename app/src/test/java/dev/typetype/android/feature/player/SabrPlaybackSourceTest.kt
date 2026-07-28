@@ -39,7 +39,7 @@ class SabrPlaybackSourceTest {
         requireNotNull(source)
         assertEquals("typetype-sabr://playback/session", source.url)
         assertEquals("application/x-typetype-sabr", source.mimeType)
-        assertEquals("sabr:video:137:140:en.0", source.sourceKey)
+        assertEquals("sabr:video:137:140:en.0:video", source.sourceKey)
         assertEquals(requestKey(sabrStream()), source.sabrRequestKey)
         assertEquals(binding(), source.sabrBinding)
         assertEquals(target(), source.sabrTarget)
@@ -60,7 +60,7 @@ class SabrPlaybackSourceTest {
         )
 
         requireNotNull(source)
-        assertEquals("sabr:video:136:140:en.0", source.sourceKey)
+        assertEquals("sabr:video:136:140:en.0:video", source.sourceKey)
         assertEquals(requestKey(sabrStream()), source.sabrRequestKey)
         assertEquals(target(videoItag = 136), source.sabrTarget)
     }
@@ -70,14 +70,14 @@ class SabrPlaybackSourceTest {
         val source = reusableSabrSource(
             requestKey = "sabr:video:137:140:en.0",
             storedRequestKey = "sabr:video:137:140:en.0",
-            acceptedKey = "sabr:video:136:140:en.0",
+            acceptedKey = "sabr:video:136:140:en.0:video",
             url = "typetype-sabr://playback/session",
             sabrBinding = binding(videoItag = 136),
             sabrTarget = target(videoItag = 136),
         )
 
         requireNotNull(source)
-        assertEquals("sabr:video:136:140:en.0", source.sourceKey)
+        assertEquals("sabr:video:136:140:en.0:video", source.sourceKey)
         assertEquals("sabr:video:137:140:en.0", source.sabrRequestKey)
     }
 
@@ -86,7 +86,7 @@ class SabrPlaybackSourceTest {
         val source = reusableSabrSource(
             requestKey = "sabr:video:135:140:en.0",
             storedRequestKey = "sabr:video:137:140:en.0",
-            acceptedKey = "sabr:video:136:140:en.0",
+            acceptedKey = "sabr:video:136:140:en.0:video",
             url = "typetype-sabr://playback/session",
             sabrBinding = binding(videoItag = 136),
             sabrTarget = target(videoItag = 136),
@@ -100,7 +100,7 @@ class SabrPlaybackSourceTest {
         val source = reusableSabrSource(
             requestKey = "sabr:video:137:140:en.0",
             storedRequestKey = "sabr:video:137:140:en.0",
-            acceptedKey = "sabr:video:137:140:en.0",
+            acceptedKey = "sabr:video:137:140:en.0:video",
             url = "typetype-sabr://playback/session",
             sabrBinding = null,
             sabrTarget = target(),
@@ -123,7 +123,7 @@ class SabrPlaybackSourceTest {
             reusableSabrSource(
                 requestKey = secondKey,
                 storedRequestKey = firstKey,
-                acceptedKey = "sabr:video:137:140:en.0",
+                acceptedKey = "sabr:video:137:140:en.0:video",
                 url = "typetype-sabr://playback/session",
                 sabrBinding = binding(),
                 sabrTarget = target(),
@@ -136,7 +136,7 @@ class SabrPlaybackSourceTest {
         val replacement = PlayableSource(
             url = "typetype-sabr://playback/fresh",
             mimeType = "application/x-typetype-sabr",
-            sourceKey = "sabr:video:137:140:en.0",
+            sourceKey = "sabr:video:137:140:en.0:video",
             sabrRequestKey = "sabr:video:137:140:en.0",
         )
 

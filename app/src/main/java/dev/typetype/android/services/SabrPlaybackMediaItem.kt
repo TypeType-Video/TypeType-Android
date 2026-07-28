@@ -20,6 +20,13 @@ internal fun MediaItem.sabrPlaybackSeekState(): SabrPlaybackSeekState? {
         windowEndMs = extras.getLong(MergedStreamMediaKeys.EXTRA_SABR_WINDOW_END_MS),
         durationMs = extras.getLong(MergedStreamMediaKeys.EXTRA_SABR_DURATION_MS),
         endOfStream = extras.getBoolean(MergedStreamMediaKeys.EXTRA_SABR_END_OF_STREAM),
+        liveActive = extras.getBoolean(MergedStreamMediaKeys.EXTRA_SABR_LIVE_ACTIVE),
+        liveSeekableStartMs = extras.getLong(
+            MergedStreamMediaKeys.EXTRA_SABR_LIVE_SEEKABLE_START_MS,
+        ),
+        liveSeekableEndMs = extras.getLong(
+            MergedStreamMediaKeys.EXTRA_SABR_LIVE_SEEKABLE_END_MS,
+        ),
     )
 }
 
@@ -48,9 +55,19 @@ internal fun MediaItem.withSabrPlayback(
         )
         putBoolean(MergedStreamMediaKeys.EXTRA_SABR_SESSION_CONTINUATION, true)
         putBoolean(MergedStreamMediaKeys.EXTRA_SABR_IS_LIVE, target.isLive)
+        putBoolean(MergedStreamMediaKeys.EXTRA_SABR_AUDIO_ONLY, target.audioOnly)
         putLong(MergedStreamMediaKeys.EXTRA_SABR_WINDOW_END_MS, session.windowEndMs)
         putLong(MergedStreamMediaKeys.EXTRA_SABR_DURATION_MS, session.durationMs)
         putBoolean(MergedStreamMediaKeys.EXTRA_SABR_END_OF_STREAM, session.endOfStream)
+        putBoolean(MergedStreamMediaKeys.EXTRA_SABR_LIVE_ACTIVE, session.live?.active == true)
+        putLong(
+            MergedStreamMediaKeys.EXTRA_SABR_LIVE_SEEKABLE_START_MS,
+            session.live?.seekableStartMs ?: 0L,
+        )
+        putLong(
+            MergedStreamMediaKeys.EXTRA_SABR_LIVE_SEEKABLE_END_MS,
+            session.live?.seekableEndMs ?: 0L,
+        )
         putLong(MergedStreamMediaKeys.EXTRA_RESUME_POSITION_MILLIS, session.startTimeMs)
     }
     val updatedRequestMetadata = requestMetadata.buildUpon()
