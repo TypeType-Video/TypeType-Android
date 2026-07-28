@@ -39,12 +39,16 @@ internal fun PlaybackOptionsSheet(
     selectedSpeed: Float,
     codecSupport: PlaybackCodecSupport,
     resizeMode: ResizeMode,
+    audioOnlyEnabled: Boolean,
+    audioOnlyChanging: Boolean,
+    showAudioOnly: Boolean,
     onSelectCodec: (String) -> Unit,
     onSelectQuality: (String) -> Unit,
     onSelectAudio: (String?) -> Unit,
     onSelectSubtitle: (String?) -> Unit,
     onSelectSpeed: (Float) -> Unit,
     onSelectResizeMode: (ResizeMode) -> Unit,
+    onAudioOnlyChange: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -119,12 +123,16 @@ internal fun PlaybackOptionsSheet(
                     ?: stringResource(R.string.playback_options_default),
                 speedLabel = "${formatSpeed(selectedSpeed)}x",
                 resizeLabel = resizeMode.label(),
+                audioOnlyEnabled = audioOnlyEnabled,
+                audioOnlyChanging = audioOnlyChanging,
+                showAudioOnly = showAudioOnly,
                 onOpenCodec = { page = PlaybackOptionsPage.Codec },
                 onOpenQuality = { page = PlaybackOptionsPage.Quality },
                 onOpenCaptions = { page = PlaybackOptionsPage.Captions },
                 onOpenAudio = { page = PlaybackOptionsPage.Audio },
                 onOpenSpeed = { page = PlaybackOptionsPage.Speed },
                 onOpenResize = { page = PlaybackOptionsPage.Resize },
+                onAudioOnlyChange = onAudioOnlyChange,
             )
             PlaybackOptionsPage.Codec -> PickerPage(
                 title = stringResource(R.string.playback_options_codec),

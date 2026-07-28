@@ -20,6 +20,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.session.MediaController
+import androidx.media3.session.SessionResult
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.AndroidEntryPoint
@@ -30,6 +31,7 @@ import dev.typetype.android.feature.player.components.PIP_ACTION_FORWARD
 import dev.typetype.android.feature.player.components.PIP_ACTION_PLAY_PAUSE
 import dev.typetype.android.feature.player.components.PIP_ACTION_REWIND
 import dev.typetype.android.domain.session.ActiveSessionRepository
+import dev.typetype.android.services.PlaybackAudioOnlyCommand
 import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -124,10 +126,42 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun enterAudioOnlyMode() {
-        viewModel.playerHostController.minimize()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && isInPictureInPictureMode) {
-            runCatching { moveTaskToBack(false) }
-        }
+        val token = SessionToken(
+            applicationContext,
+            ComponentName(applicationContext, "dev.typetype.android.services.PlaybackService"),
+        )
+        val controllerFuture = MediaController.Builder(applicationContext, token).buildAsync()
+        controllerFuture.addListener(
+            {
+                val controller = runCatching { controllerFuture.get() }.getOrNull()
+                    ?: return@addListener
+                val commandFuture = controller.sendCustomCommand(
+                    PlaybackAudioOnlyCommand.command,
+                    PlaybackAudioOnlyCommand.arguments(true),
+                )
+                commandFuture.addListener(
+                    {
+                        val succeeded = runCatching { commandFuture.get() }
+                            .getOrNull()
+                            ?.resultCode == SessionResult.RESULT_SUCCESS
+                        if (succeeded) {
+                            runOnUiThread {
+                                viewModel.playerHostController.minimize()
+                                if (
+                                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                                    isInPictureInPictureMode
+                                ) {
+                                    runCatching { moveTaskToBack(false) }
+                                }
+                            }
+                        }
+                        controller.release()
+                    },
+                    MoreExecutors.directExecutor(),
+                )
+            },
+            MoreExecutors.directExecutor(),
+        )
     }
 
     private fun dispatchPipPlayerAction(action: String?) {

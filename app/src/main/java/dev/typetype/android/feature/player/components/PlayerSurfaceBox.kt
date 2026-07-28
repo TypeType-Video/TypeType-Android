@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -25,10 +27,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.session.MediaController
 import androidx.media3.ui.compose.state.rememberPresentationState
+import dev.typetype.android.R
 import dev.typetype.android.domain.stream.Chapter
 import dev.typetype.android.domain.stream.SponsorBlockSegment
 import dev.typetype.android.domain.stream.Stream
@@ -46,7 +50,7 @@ private const val AUTO_HIDE_DELAY_MS = 3_500L
 @OptIn(markerClass = [UnstableApi::class])
 @Composable
 internal fun PlayerSurfaceBox(
-    player: Player,
+    player: MediaController,
     stream: Stream,
     selectedCodec: String,
     selectedQuality: String,
@@ -84,6 +88,10 @@ internal fun PlayerSurfaceBox(
     var controlsVisible by remember { mutableStateOf(true) }
     var optionsVisible by remember { mutableStateOf(false) }
     var chaptersVisible by remember { mutableStateOf(false) }
+    val audioOnlyState = rememberAudioOnlyPlaybackState(player, stream)
+    val audioOnlySnackbar = remember { SnackbarHostState() }
+    val audioOnlyUnavailable = stringResource(R.string.player_audio_only_unavailable)
+    val audioOnlyNetworkFailure = stringResource(R.string.error_network_unavailable)
     val playbackStatus = rememberPlayerPlaybackStatus(player)
     val isInPip by rememberIsInPipMode()
     val isPipAvailable = remember(activity) { supportsPictureInPicture(activity) }
@@ -118,18 +126,37 @@ internal fun PlayerSurfaceBox(
         }
     }
 
+    LaunchedEffect(audioOnlyState.failure) {
+        val failure = audioOnlyState.failure ?: return@LaunchedEffect
+        audioOnlySnackbar.showSnackbar(
+            when (failure) {
+                AudioOnlyPlaybackFailure.Network -> audioOnlyNetworkFailure
+                AudioOnlyPlaybackFailure.Unavailable -> audioOnlyUnavailable
+            },
+        )
+        audioOnlyState.consumeFailure()
+    }
+
     val presentationState = rememberPresentationState(player)
     val surfaceKey = rememberPlayerSurfaceKey(stream.id)
     Box(modifier = modifier.background(Color.Black).clipToBounds()) {
-        ResilientPlayerSurface(
-            player = player,
-            surfaceKey = surfaceKey,
-            resizeMode = gestureState.resizeMode.value,
-            showNativeSubtitles = isInPip && selectedSubtitleKey != null,
-            modifier = Modifier.fillMaxSize(),
-        )
+        if (audioOnlyState.active) {
+            AudioOnlyPoster(
+                thumbnailUrl = stream.thumbnailUrl,
+                title = stream.title,
+                modifier = Modifier.fillMaxSize(),
+            )
+        } else {
+            ResilientPlayerSurface(
+                player = player,
+                surfaceKey = surfaceKey,
+                resizeMode = gestureState.resizeMode.value,
+                showNativeSubtitles = isInPip && selectedSubtitleKey != null,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
 
-        if (!isInPip || externalSubtitle != null) {
+        if (!audioOnlyState.active && (!isInPip || externalSubtitle != null)) {
             PlayerSubtitleOverlay(
                 player = player,
                 controlsVisible = controlsVisible && !isInPip,
@@ -140,7 +167,7 @@ internal fun PlayerSurfaceBox(
             )
         }
 
-        if (presentationState.coverSurface) {
+        if (presentationState.coverSurface && !audioOnlyState.active) {
             Box(
                 modifier = Modifier.fillMaxSize().background(Color.Black),
                 contentAlignment = Alignment.Center,
@@ -246,12 +273,16 @@ internal fun PlayerSurfaceBox(
                 selectedSpeed = selectedSpeed,
                 codecSupport = codecSupport,
                 resizeMode = gestureState.resizeMode.value,
+                audioOnlyEnabled = audioOnlyState.active,
+                audioOnlyChanging = audioOnlyState.changing,
+                showAudioOnly = audioOnlyState.available,
                 onSelectCodec = onSelectCodec,
                 onSelectQuality = onSelectQuality,
                 onSelectAudio = onSelectAudio,
                 onSelectSubtitle = onSelectSubtitle,
                 onSelectSpeed = onSelectSpeed,
                 onSelectResizeMode = { gestureState.resizeMode.value = it },
+                onAudioOnlyChange = audioOnlyState::setEnabled,
                 onDismiss = { optionsVisible = false },
             )
         }
@@ -276,5 +307,10 @@ internal fun PlayerSurfaceBox(
                 onBack = onNavigateBack,
             )
         }
+
+        SnackbarHost(
+            hostState = audioOnlySnackbar,
+            modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
+        )
     }
 }

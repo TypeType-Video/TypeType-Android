@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.Audiotrack
 import androidx.compose.material.icons.filled.ClosedCaption
+import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.runtime.Composable
@@ -22,12 +23,16 @@ fun PlaybackOptionsMainPage(
     audioLabel: String,
     speedLabel: String,
     resizeLabel: String,
+    audioOnlyEnabled: Boolean,
+    audioOnlyChanging: Boolean,
+    showAudioOnly: Boolean,
     onOpenCodec: () -> Unit,
     onOpenQuality: () -> Unit,
     onOpenCaptions: () -> Unit,
     onOpenAudio: () -> Unit,
     onOpenSpeed: () -> Unit,
     onOpenResize: () -> Unit,
+    onAudioOnlyChange: (Boolean) -> Unit,
 ) {
     LazyColumn(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
@@ -40,6 +45,17 @@ fun PlaybackOptionsMainPage(
                 value = codecLabel,
                 onClick = onOpenCodec,
             )
+        }
+        if (showAudioOnly) {
+            item {
+                PlaybackOptionsToggleRow(
+                    icon = Icons.Filled.Headphones,
+                    title = stringResource(R.string.player_audio_only),
+                    checked = audioOnlyEnabled,
+                    enabled = !audioOnlyChanging,
+                    onCheckedChange = onAudioOnlyChange,
+                )
+            }
         }
         item {
             PlaybackOptionsMenuRow(
