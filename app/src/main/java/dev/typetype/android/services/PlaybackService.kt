@@ -72,7 +72,7 @@ class PlaybackService : MediaSessionService() {
         val recoveryDispatcher = SabrPlaybackRecoveryDispatcher()
         val player = buildPlayer(playbackClock, recoveryDispatcher)
         playbackPlayer = player
-        sabrPlaybackBridge = SabrPlaybackServiceBridge(
+        val playbackBridge = SabrPlaybackServiceBridge(
             player,
             sabrPlaybackRepository,
             sabrPlaybackWindowCache,
@@ -80,6 +80,7 @@ class PlaybackService : MediaSessionService() {
             recoveryDispatcher,
             playbackNetworkMonitor,
         )
+        sabrPlaybackBridge = playbackBridge
         playbackResumeRecorder = PlaybackResumeRecorder(
             player,
             playbackResumeRepository,
@@ -92,7 +93,13 @@ class PlaybackService : MediaSessionService() {
         mediaSession = MediaSession.Builder(this, player)
             .setSessionActivity(buildSessionActivityPendingIntent())
             .setMediaButtonPreferences(buildMediaButtonPreferences())
-            .setCallback(PlaybackSessionCallback(packageName, applicationInfo.uid))
+            .setCallback(
+                PlaybackSessionCallback(
+                    packageName,
+                    applicationInfo.uid,
+                    playbackBridge,
+                ),
+            )
             .build()
     }
 

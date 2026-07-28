@@ -4,6 +4,7 @@ import android.os.SystemClock
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.Player.PositionInfo
 import dev.typetype.android.domain.stream.SabrPlaybackBinding
 import dev.typetype.android.domain.stream.SabrPlaybackRepository
 import dev.typetype.android.domain.stream.SabrPlaybackSession
@@ -37,8 +38,31 @@ internal class SabrPlaybackServiceBridge(
     )
     private val recoveryGate = SabrPlaybackRecoveryGate()
     private val networkRecoveryGate = PlaybackNetworkRecoveryGate()
+    private val liveFollower = LivePlaybackFollower()
     private var activeBinding: SabrPlaybackBinding? = null
     private var networkRetryJob: Job? = null
+
+    fun setAudioOnly(enabled: Boolean, complete: (Result<Unit>) -> Unit) {
+        val state = player.currentMediaItem?.sabrPlaybackSeekState()
+        if (state == null) {
+            complete(Result.failure(AudioOnlyInactivePlaybackFailure()))
+            return
+        }
+        if (state.target.isLive) {
+            complete(Result.failure(AudioOnlyUnavailableFailure()))
+            return
+        }
+        if (state.target.audioOnly == enabled) {
+            complete(Result.success(Unit))
+            return
+        }
+        coordinator.switchAudioOnly(
+            state = state,
+            enabled = enabled,
+            positionMs = currentSabrMediaTimeMs(state) ?: player.currentPosition,
+            complete = complete,
+        )
+    }
 
     init {
         player.addListener(this)
@@ -50,26 +74,43 @@ internal class SabrPlaybackServiceBridge(
         }
         scope.launch {
             while (true) {
-                val positionMs = player.currentPosition
-                playbackClock.update(positionMs, player.playbackParameters.speed)
-                if (player.isPlaying) {
+                val state = player.currentMediaItem?.sabrPlaybackSeekState()
+                val positionMs = if (state == null) {
+                    player.currentPosition
+                } else {
+                    currentSabrMediaTimeMs(state)
+                }
+                positionMs?.let {
+                    playbackClock.update(it, player.playbackParameters.speed)
+                }
+                if (player.isPlaying && positionMs != null) {
                     recoveryGate.observeProgress(
                         mediaId = player.currentMediaItem?.mediaId,
                         positionMs = positionMs,
                         nowMs = SystemClock.elapsedRealtime(),
                     )
                 }
+                followLiveEdge()
                 delay(PLAYBACK_CLOCK_INTERVAL_MS)
             }
         }
     }
 
     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-        playbackClock.update(player.currentPosition, player.playbackParameters.speed)
+        val nextState = mediaItem?.sabrPlaybackSeekState()
+        val transitionPositionMs = if (nextState?.liveActive == true) {
+            mediaItem.requestMetadata.extras?.resumePositionMillis()
+        } else {
+            player.currentPosition
+        }
+        transitionPositionMs?.let {
+            playbackClock.update(it, player.playbackParameters.speed)
+        }
         coordinator.cancel()
         val extras = mediaItem?.requestMetadata?.extras
         val nextBinding = extras?.sabrPlaybackBinding()
         networkRecoveryGate.transition(mediaItem?.mediaId)
+        liveFollower.transition(mediaItem?.mediaId)
         networkRetryJob?.cancel()
         networkRetryJob = null
         recoveryGate.transition(
@@ -115,7 +156,11 @@ internal class SabrPlaybackServiceBridge(
         }
         if (replacement != null && replacementTarget != null) {
             try {
-                applySession(replacement.session, replacementTarget, player.currentPosition)
+                applySession(
+                    replacement.session,
+                    replacementTarget,
+                    currentSabrMediaTimeMs(state) ?: 0L,
+                )
             } finally {
                 recoveryGate.finish(sessionId)
             }
@@ -124,7 +169,7 @@ internal class SabrPlaybackServiceBridge(
         coordinator.recoverBounded(
             state = state,
             target = recoveryTarget,
-            positionMs = player.currentPosition,
+            positionMs = currentSabrMediaTimeMs(state) ?: 0L,
             initialFailure = error,
             takeAttempt = recoveryGate::takeAttempt,
         ) {
@@ -137,6 +182,19 @@ internal class SabrPlaybackServiceBridge(
         networkRetryJob?.cancel()
         networkRetryJob = null
         networkRecoveryGate.recovered()
+    }
+
+    override fun onPositionDiscontinuity(
+        oldPosition: PositionInfo,
+        newPosition: PositionInfo,
+        reason: Int,
+    ) {
+        if (reason != Player.DISCONTINUITY_REASON_SEEK) return
+        liveFollower.observeSeek(
+            currentMediaId = player.currentMediaItem?.mediaId,
+            positionMs = newPosition.positionMs,
+            targetMs = player.currentLiveTargetPositionMs(),
+        )
     }
 
     override fun onRecoveryRequired(
@@ -160,7 +218,7 @@ internal class SabrPlaybackServiceBridge(
             SabrPlaybackRecoveryDecision.Recover -> coordinator.recoverBounded(
                 state = state,
                 target = target,
-                positionMs = player.currentPosition,
+                positionMs = currentSabrMediaTimeMs(state) ?: 0L,
                 initialFailure = failure,
                 takeAttempt = recoveryGate::takeAttempt,
             ) { result ->
@@ -179,7 +237,15 @@ internal class SabrPlaybackServiceBridge(
         val playWhenReady = player.playWhenReady
         windowCache.put(session)
         val replacement = currentItem.withSabrPlayback(session, target)
-        player.setMediaItem(replacement, positionMs)
+        player.setMediaItem(
+            replacement,
+            sabrWindowPositionMs(
+                mediaTimeMs = positionMs,
+                liveActive = session.live?.active == true,
+                seekableStartMs = session.live?.seekableStartMs ?: 0L,
+                seekableEndMs = session.live?.seekableEndMs ?: 0L,
+            ),
+        )
         player.prepare()
         player.playWhenReady = playWhenReady
     }
@@ -197,6 +263,23 @@ internal class SabrPlaybackServiceBridge(
                 player.prepare()
             }
         }
+    }
+
+    private fun currentSabrMediaTimeMs(state: SabrPlaybackSeekState): Long? =
+        player.sabrMediaTimeMs(player.currentPosition, state.liveActive)
+
+    private fun followLiveEdge() {
+        val mediaId = player.currentMediaItem?.mediaId
+        val targetMs = player.currentLiveTargetPositionMs()
+        liveFollower.initialize(mediaId, player.currentPosition, targetMs)
+        liveFollower.nextTarget(
+            currentMediaId = mediaId,
+            positionMs = player.currentPosition,
+            targetMs = targetMs,
+            playing = player.isPlaying,
+            busy = player.playbackState != Player.STATE_READY || player.isLoading,
+            nowMs = SystemClock.elapsedRealtime(),
+        )?.let(player::seekTo)
     }
 
     override fun close() {
