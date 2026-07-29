@@ -24,8 +24,14 @@ permissions:
   contents: read
 
 concurrency:
-  group: android-${{ github.workflow }}-${{ github.sha }}
-  cancel-in-progress: true
+  group: >-
+    android-${{ github.workflow }}-${{
+      github.event_name == 'push' && 'push' ||
+      github.event_name == 'workflow_dispatch' && inputs.publish_release &&
+      github.ref == 'refs/heads/main' && 'release' ||
+      github.ref
+    }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' || !inputs.publish_release || github.ref != 'refs/heads/main' }}
 
 env:
   CI: true
