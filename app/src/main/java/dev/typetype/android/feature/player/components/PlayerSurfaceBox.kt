@@ -185,7 +185,7 @@ internal fun PlayerSurfaceBox(
             CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
         }
 
-        if (!isInPip && playbackStatus.error == null) {
+        if (!isInPip && playbackStatus.acceptsInput) {
             PlayerGestureLayer(
                 player = player,
                 state = gestureState,
@@ -224,7 +224,7 @@ internal fun PlayerSurfaceBox(
         }
 
         AnimatedVisibility(
-            visible = controlsVisible && !isInPip && playbackStatus.error == null,
+            visible = controlsVisible && !isInPip && playbackStatus.acceptsInput,
             enter = fadeIn(),
             exit = fadeOut(),
         ) {
