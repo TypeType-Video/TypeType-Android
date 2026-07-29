@@ -3,7 +3,7 @@
 <div align="center">
   <img src="assets/banner.png" alt="TypeType" width="100%">
   <h1>TypeType Android</h1>
-  <p>Your TypeType library, in a fast native app for Android.</p>
+  <p>Native Android client for TypeType.</p>
 </div>
 
 <div align="center">
@@ -21,16 +21,16 @@
   <a href="https://github.com/TypeType-Video/TypeType/issues">Report a problem</a>
 </p>
 
-TypeType Android brings your self-hosted TypeType experience to phones and
-tablets. Browse your recommendations and subscriptions, search across supported
-platforms, continue where you stopped, and watch through a native player built
-for Android.
+TypeType Android is a native client for
+[TypeType](https://github.com/TypeType-Video/TypeType), a self-hosted video
+platform. It provides browsing, account synchronization, downloads, and native
+playback on Android phones and tablets.
 
-The app communicates exclusively with the TypeType instance you choose. Your
-account, history, subscriptions, playlists, playback sessions, and downloads
-remain under the control of that instance.
+The app communicates exclusively with the TypeType instance selected during
+setup. Extraction, playback sessions, recommendations, synchronization, and
+server-side downloads remain server responsibilities.
 
-## See it in action
+## Screenshots
 
 | Home and Continue Watching | Search | Subscriptions |
 | --- | --- | --- |
@@ -48,20 +48,19 @@ These are real captures from the signed Android application connected to the
 TypeType beta with a demonstration account. The displayed content changes over
 time.
 
-## Everything that matters, close at hand
+## Features
 
-- Continue Watching keeps unfinished videos at the top of your home feed.
+- Resume unfinished videos from Continue Watching.
 - Search videos, channels, playlists, music, and other supported content.
-- Follow subscriptions and clearly identify live, premiere, and special videos.
-- Keep history, favorites, Watch Later, playlists, notifications, and profile
-  settings together.
-- Watch with background audio, Picture in Picture, a mini-player, and an
-  audio-only mode.
+- Browse subscriptions with labels for live, premiere, and special videos.
+- Access history, favorites, Watch Later, playlists, and notifications.
+- Use background audio, Picture in Picture, the mini-player, and audio-only
+  playback.
 - Choose quality, codec, audio track, captions, playback speed, and image mode.
-- Use chapters, SponsorBlock controls, a queue, comments, related videos, and a
-  sleep timer.
-- Download supported videos and keep useful cached content visible through
-  temporary network interruptions.
+- Use chapters, SponsorBlock, the playback queue, comments, related videos, and
+  the sleep timer.
+- Download supported videos and retain cached pages during temporary network
+  interruptions.
 - Import existing data and manage multiple TypeType instances and accounts.
 
 TypeType Android supports Android 6.0 and newer, and does not require Google
@@ -89,12 +88,12 @@ Debug build before installing the signed APK.
 > access to a compatible TypeType instance. If you want to host one, start with
 > the [self-hosting guide](https://typetype-video.github.io/Docs-TypeType/self-hosting/introduction).
 
-## Built for unreliable mobile networks
+## Offline behavior and diagnostics
 
-The app keeps locally cached pages visible while refreshing, resumes
-progressive feeds, and reacts to network loss and recovery without treating
-every interruption as a permanent failure. Playback, downloads, and account
-operations still depend on the selected instance and its upstream providers.
+The app keeps available local cache entries visible while refreshing and
+resumes progressive feeds after a temporary interruption. Playback, downloads,
+and account operations still depend on the selected instance and its upstream
+providers.
 
 When something fails, open **Settings > Diagnostics** to review a redacted,
 local request history before sharing it. Diagnostics do not include raw
@@ -161,6 +160,20 @@ stored in this repository.
   and iPad client
 - [Docs-TypeType](https://github.com/TypeType-Video/Docs-TypeType), user and
   self-hosting documentation
+
+## Acknowledgements
+
+TypeType Android is an independent client. The following GPL v3 projects have
+provided useful technical and product references:
+
+- [PipePipe](https://github.com/InfinityLoop1308/PipePipe) and
+  [PipePipeClient](https://github.com/InfinityLoop1308/PipePipeClient), for
+  Android playback, format selection, SABR diagnostics, and compatibility
+  lessons
+- [LibreTube](https://github.com/libre-tube/LibreTube), for Android video-client
+  UX and Media3 playback lifecycle patterns
+- [Findroid](https://github.com/jarnedemeulemeester/findroid), for native
+  server-first client architecture and multi-server setup patterns
 
 ## License
 
