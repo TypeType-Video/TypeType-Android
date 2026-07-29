@@ -11,6 +11,19 @@ import org.junit.Test
 
 class PlaybackNetworkRecoveryGateTest {
     @Test
+    fun `network loss arms recovery before the player reports an error`() {
+        val gate = PlaybackNetworkRecoveryGate()
+        gate.transition("video")
+
+        val lost = gate.networkChanged(PlaybackNetworkState(false, 1L))
+        val restored = gate.networkChanged(PlaybackNetworkState(true, 2L))
+
+        assertEquals(PlaybackNetworkRecoveryAction.Wait, lost)
+        assertEquals(PlaybackNetworkRecoveryAction.RetryAfter(0L), restored)
+        assertTrue(gate.isPending("video"))
+    }
+
+    @Test
     fun `offline failure waits and retries immediately on restored network`() {
         val gate = PlaybackNetworkRecoveryGate()
 

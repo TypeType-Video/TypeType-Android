@@ -45,7 +45,12 @@ internal class PlaybackNetworkRecoveryGate {
     }
 
     fun networkChanged(network: PlaybackNetworkState): PlaybackNetworkRecoveryAction {
-        if (!pending || !network.isAvailable || network.generation == networkGeneration) {
+        if (!network.isAvailable) {
+            pending = mediaId != null
+            networkGeneration = network.generation
+            return PlaybackNetworkRecoveryAction.Wait
+        }
+        if (!pending || network.generation == networkGeneration) {
             return PlaybackNetworkRecoveryAction.Wait
         }
         networkGeneration = network.generation
