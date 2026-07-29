@@ -2,6 +2,7 @@ package dev.typetype.android.services
 
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.HttpDataSource
+import dev.typetype.android.core.error.CodedFailure
 import dev.typetype.android.data.stream.SabrPlaybackRecoveryException
 import dev.typetype.android.domain.stream.SabrPlaybackBinding
 import dev.typetype.android.domain.stream.SabrPlaybackSession
@@ -110,6 +111,8 @@ internal fun Throwable.isRecoverableSabrSessionFailure(): Boolean {
     repeat(MAX_CAUSE_DEPTH) {
         val recovery = current as? SabrPlaybackRecoveryException
         if (recovery?.action in RECOVERABLE_WINDOW_ACTIONS) return true
+        val coded = current as? CodedFailure
+        if (coded?.statusCode?.isRecoverableSabrSessionStatus() == true) return true
         val response = current as? HttpDataSource.InvalidResponseCodeException
         if (
             response?.responseCode?.isRecoverableSabrSessionStatus() == true &&

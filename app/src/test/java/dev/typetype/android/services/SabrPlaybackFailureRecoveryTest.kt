@@ -1,5 +1,7 @@
 package dev.typetype.android.services
 
+import dev.typetype.android.data.network.ServerError
+import dev.typetype.android.data.network.ServerResponseException
 import dev.typetype.android.data.stream.SabrPlaybackRecoveryException
 import dev.typetype.android.domain.stream.SabrPlaybackBinding
 import dev.typetype.android.domain.stream.SabrPlaybackSession
@@ -126,6 +128,27 @@ class SabrPlaybackFailureRecoveryTest {
                 SabrPlaybackRecoveryException("failed", null, emptyList()),
             ).isRecoverableSabrSessionFailure(),
         )
+    }
+
+    @Test
+    fun `typed missing server session remains recoverable through media wrappers`() {
+        val missingSession = ServerResponseException(
+            ServerError(
+                message = "No active SABR playback session",
+                code = "sabr_playback_not_found",
+                statusCode = 404,
+            ),
+        )
+        val authenticationFailure = ServerResponseException(
+            ServerError(
+                message = "Authentication required",
+                code = "authentication_required",
+                statusCode = 401,
+            ),
+        )
+
+        assertTrue(IOException("source", missingSession).isRecoverableSabrSessionFailure())
+        assertFalse(IOException("source", authenticationFailure).isRecoverableSabrSessionFailure())
     }
 
     @Test
