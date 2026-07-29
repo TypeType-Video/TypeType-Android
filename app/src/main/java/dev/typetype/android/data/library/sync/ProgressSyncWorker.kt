@@ -9,7 +9,6 @@ import dagger.assisted.AssistedInject
 import dev.typetype.android.data.account.AccountDao
 import dev.typetype.android.data.account.AccountScope
 import dev.typetype.android.data.library.LibraryNetworkSource
-import dev.typetype.android.data.usersettings.UserSettingsNetworkSource
 import dev.typetype.android.domain.server.ServerRepository
 import kotlinx.coroutines.CancellationException
 
@@ -21,7 +20,6 @@ class ProgressSyncWorker @AssistedInject constructor(
     private val outboxDao: ProgressOutboxDao,
     private val network: LibraryNetworkSource,
     private val serverRepository: ServerRepository,
-    private val userSettingsNetwork: UserSettingsNetworkSource,
 ) : CoroutineWorker(context, parameters) {
     override suspend fun doWork(): Result {
         val scope = inputScope() ?: return Result.failure()
@@ -44,10 +42,6 @@ class ProgressSyncWorker @AssistedInject constructor(
             if (!isCurrent(scope, baseUrl, generation)) return Result.failure()
             val pending = outboxDao.pending(scope.serverId, scope.accountId, generation, BATCH_SIZE)
             if (pending.isEmpty()) return Result.success()
-            if (userSettingsNetwork.fetch(scope).disableWatchHistory) {
-                outboxDao.deleteGeneration(scope.serverId, scope.accountId, generation)
-                return Result.success()
-            }
             pending.forEach { entry ->
                 network.putProgress(scope, entry.videoUrl, entry.positionMillis)
                 outboxDao.deleteIfUnchanged(
