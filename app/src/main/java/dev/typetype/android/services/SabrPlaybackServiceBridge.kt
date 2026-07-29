@@ -178,7 +178,12 @@ internal class SabrPlaybackServiceBridge(
     }
 
     override fun onPlaybackStateChanged(playbackState: Int) {
-        if (playbackState != Player.STATE_READY) return
+        if (
+            playbackState != Player.STATE_READY ||
+            !networkMonitor.snapshot().isAvailable
+        ) {
+            return
+        }
         networkRetryJob?.cancel()
         networkRetryJob = null
         networkRecoveryGate.recovered()
@@ -260,9 +265,21 @@ internal class SabrPlaybackServiceBridge(
                 networkRecoveryGate.isPending(mediaId) &&
                 player.currentMediaItem?.mediaId == mediaId
             ) {
-                player.prepare()
+                restartInterruptedPlayback()
             }
         }
+    }
+
+    private fun restartInterruptedPlayback() {
+        if (player.playbackState == Player.STATE_READY) {
+            networkRecoveryGate.recovered()
+            return
+        }
+        if (player.playbackState !in NETWORK_RECOVERY_STATES) return
+        val playWhenReady = player.playWhenReady
+        player.stop()
+        player.prepare()
+        player.playWhenReady = playWhenReady
     }
 
     private fun currentSabrMediaTimeMs(state: SabrPlaybackSeekState): Long? =
@@ -293,5 +310,6 @@ internal class SabrPlaybackServiceBridge(
 
     private companion object {
         const val PLAYBACK_CLOCK_INTERVAL_MS = 250L
+        val NETWORK_RECOVERY_STATES = setOf(Player.STATE_IDLE, Player.STATE_BUFFERING)
     }
 }
