@@ -24,23 +24,28 @@ permissions:
   contents: read
 
 concurrency:
-  group: android-${{ github.workflow }}-${{ github.ref }}
+  group: android-${{ github.workflow }}-${{ github.sha }}
   cancel-in-progress: true
 
 env:
   CI: true
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
-  GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4 -Djava.awt.headless=true
+  GRADLE_OPTS: -Dorg.gradle.workers.max=8 -Dorg.gradle.daemon.idletimeout=900000
   ANDROID_HOME: /opt/android-sdk
   ANDROID_SDK_ROOT: /opt/android-sdk
   JAVA_HOME: /usr/lib/jvm/java-26-openjdk
+  GRADLE_USER_HOME: /var/tmp/typetype-android-gradle-user-home
 
 jobs:
-  prepare-sdk:
+  verify:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.publish_release || github.ref != 'refs/heads/main' }}
     runs-on: [self-hosted, Linux, X64, arko, android]
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
       - name: Install Android SDK platform
         run: |
           platform="$ANDROID_HOME/platforms/android-37.0"
@@ -55,20 +60,10 @@ jobs:
             test -f "$platform/android.jar"
           ) 9>"$ANDROID_HOME/.platform-install.lock"
 
-  verify:
-    needs: prepare-sdk
-    runs-on: [self-hosted, Linux, X64, arko, android]
-    timeout-minutes: 30
-    env:
-      GRADLE_USER_HOME: ${{ github.workspace }}/../.gradle-user-home
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7.0.1
-
       - name: Verify Android project
         timeout-minutes: 25
         run: |
-          ./gradlew --no-daemon --build-cache --stacktrace \
+          ./gradlew --build-cache --stacktrace \
             :player:testDebugUnitTest \
             :app:testDebugUnitTest \
             :player:lintDebug \
@@ -77,12 +72,12 @@ jobs:
             :app:assembleRelease
 
       - name: Upload debug APK
-        if: ${{ github.ref != 'refs/heads/main' }}
         uses: actions/upload-artifact@v7.0.1
         with:
           name: typetype-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+          compression-level: 0
           retention-days: 14
 
       - name: Upload lint report
@@ -97,17 +92,28 @@ jobs:
           retention-days: 14
 
   release:
-    needs: verify
     if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && inputs.publish_release }}
     runs-on: [self-hosted, Linux, X64, arko, android]
     timeout-minutes: 35
     permissions:
       contents: write
-    env:
-      GRADLE_USER_HOME: ${{ github.workspace }}/../.gradle-user-home
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
+
+      - name: Install Android SDK platform
+        run: |
+          platform="$ANDROID_HOME/platforms/android-37.0"
+          (
+            flock 9
+            if [ ! -f "$platform/android.jar" ]; then
+              rm -rf "$platform"
+              "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+                --sdk_root="$ANDROID_HOME" \
+                "platforms;android-37.0"
+            fi
+            test -f "$platform/android.jar"
+          ) 9>"$ANDROID_HOME/.platform-install.lock"
 
       - name: Prepare release metadata
         env:
@@ -140,9 +146,27 @@ jobs:
             printf 'keyPassword=%s\n' "$ANDROID_KEY_PASSWORD"
           } > keystore.properties
 
-      - name: Build release APK
+      - name: Verify Android project and build release
         timeout-minutes: 25
-        run: ./gradlew --no-daemon --build-cache --stacktrace :app:assembleRelease
+        run: |
+          ./gradlew --build-cache --stacktrace \
+            :player:testDebugUnitTest \
+            :app:testDebugUnitTest \
+            :player:lintDebug \
+            :app:lintDebug \
+            :app:assembleDebug \
+            :app:assembleRelease
+
+      - name: Upload lint report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: lint-report
+          path: |
+            app/build/reports/lint-results-debug.html
+            player/build/reports/lint-results-debug.html
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Prepare APK artifact
         run: |
@@ -170,6 +194,7 @@ jobs:
             artifacts/*.apk
             artifacts/*.sha256
           if-no-files-found: error
+          compression-level: 0
           retention-days: 30
 
       - name: Publish GitHub release
