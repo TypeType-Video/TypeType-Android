@@ -22,19 +22,19 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.RequestIdRow
-import dev.typetype.android.core.ui.components.TypeTypeCard
-import dev.typetype.android.core.ui.components.TypeTypePrimaryButton
-import dev.typetype.android.core.ui.components.TypeTypeSecondaryButton
-import dev.typetype.android.domain.imports.PipePipeRestoreSummary
+import dev.typetype.android.domain.imports.TypeTypeBackupCategory
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun ImportDataRoute(
@@ -42,17 +42,45 @@ fun ImportDataRoute(
     viewModel: ImportDataViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val picker = rememberLauncherForActivityResult(
+    val exportName = remember {
+        val date = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+        "typetype-backup-$date.json"
+    }
+    val exporter = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json"),
+        onResult = { uri -> uri?.let(viewModel::exportTypeType) },
+    )
+    val typeTypePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
-    ) { uri -> uri?.let(viewModel::selectDocument) }
+        onResult = { uri -> uri?.let(viewModel::selectTypeTypeDocument) },
+    )
+    val pipePipePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument(),
+        onResult = { uri -> uri?.let(viewModel::selectPipePipeDocument) },
+    )
     ImportDataScreen(
         state = state,
         onNavigateBack = onNavigateBack,
-        onChooseFile = {
-            picker.launch(arrayOf("application/zip", "application/x-zip-compressed"))
+        onToggleCategory = viewModel::toggleTypeTypeCategory,
+        onExportTypeType = { exporter.launch(exportName) },
+        onChooseTypeTypeBackup = {
+            typeTypePicker.launch(
+                arrayOf(
+                    "application/json",
+                    "text/json",
+                    "text/plain",
+                    "application/octet-stream",
+                ),
+            )
         },
-        onRestore = viewModel::restore,
-        onReset = viewModel::reset,
+        onRestoreTypeType = viewModel::restoreTypeType,
+        onDismissTypeTypeRestore = viewModel::dismissTypeTypeRestore,
+        onResetTypeTypeResult = viewModel::resetTypeTypeResult,
+        onChoosePipePipeBackup = {
+            pipePipePicker.launch(arrayOf("application/zip", "application/x-zip-compressed"))
+        },
+        onRestorePipePipe = viewModel::restorePipePipe,
+        onResetPipePipeResult = viewModel::resetPipePipeResult,
     )
 }
 
@@ -60,9 +88,15 @@ fun ImportDataRoute(
 fun ImportDataScreen(
     state: ImportDataState,
     onNavigateBack: () -> Unit,
-    onChooseFile: () -> Unit,
-    onRestore: () -> Unit,
-    onReset: () -> Unit,
+    onToggleCategory: (TypeTypeBackupCategory) -> Unit,
+    onExportTypeType: () -> Unit,
+    onChooseTypeTypeBackup: () -> Unit,
+    onRestoreTypeType: () -> Unit,
+    onDismissTypeTypeRestore: () -> Unit,
+    onResetTypeTypeResult: () -> Unit,
+    onChoosePipePipeBackup: () -> Unit,
+    onRestorePipePipe: () -> Unit,
+    onResetPipePipeResult: () -> Unit,
 ) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
@@ -74,38 +108,32 @@ fun ImportDataScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             ImportTopBar(onNavigateBack)
-            Text(
-                text = stringResource(R.string.settings_import_pipepipe_title),
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.SemiBold,
-                ),
+            TypeTypeBackupSection(
+                state = state,
+                onToggleCategory = onToggleCategory,
+                onExport = onExportTypeType,
+                onChooseBackup = onChooseTypeTypeBackup,
+                onResetResult = onResetTypeTypeResult,
             )
-            Text(
-                text = stringResource(R.string.settings_import_pipepipe_description),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            PipePipeImportSection(
+                state = state,
+                onChooseBackup = onChoosePipePipeBackup,
+                onRestore = onRestorePipePipe,
+                onResetResult = onResetPipePipeResult,
             )
-            state.summary?.let {
-                RestoreSummaryCard(summary = it, onReset = onReset)
-            } ?: TypeTypeCard {
-                TypeTypeSecondaryButton(
-                    text = state.selectedDocument?.displayName
-                        ?: stringResource(R.string.settings_import_choose_file),
-                    onClick = onChooseFile,
-                    enabled = !state.isRestoring,
-                )
-                TypeTypePrimaryButton(
-                    text = stringResource(R.string.settings_import_restore),
-                    onClick = onRestore,
-                    enabled = state.canRestore,
-                    isLoading = state.isRestoring,
-                )
-            }
             importErrorMessage(state.errorKey)?.let {
                 Text(it, color = MaterialTheme.colorScheme.error)
             }
             state.errorRequestId?.let { RequestIdRow(requestId = it) }
         }
+    }
+    state.selectedTypeTypeDocument?.let { document ->
+        TypeTypeRestoreDialog(
+            documentName = document.displayName,
+            restoring = state.isRestoringTypeType,
+            onConfirm = onRestoreTypeType,
+            onDismiss = onDismissTypeTypeRestore,
+        )
     }
 }
 
@@ -129,44 +157,11 @@ private fun ImportTopBar(onNavigateBack: () -> Unit) {
 }
 
 @Composable
-private fun RestoreSummaryCard(
-    summary: PipePipeRestoreSummary,
-    onReset: () -> Unit,
-) {
-    TypeTypeCard {
-        Text(
-            text = stringResource(R.string.settings_import_complete),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
-        )
-        SummaryRow(R.string.settings_import_history, summary.history)
-        SummaryRow(R.string.settings_import_subscriptions, summary.subscriptions)
-        SummaryRow(R.string.settings_import_playlists, summary.playlists)
-        SummaryRow(R.string.settings_import_playlist_videos, summary.playlistVideos)
-        SummaryRow(R.string.settings_import_progress, summary.progress)
-        SummaryRow(R.string.settings_import_search_history, summary.searchHistory)
-        TypeTypeSecondaryButton(
-            text = stringResource(R.string.settings_import_another),
-            onClick = onReset,
-        )
-    }
-}
-
-@Composable
-private fun SummaryRow(labelRes: Int, count: Int) {
-    Row(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = stringResource(labelRes),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f),
-        )
-        Text(text = count.toString(), fontWeight = FontWeight.SemiBold)
-    }
-}
-
-@Composable
 private fun importErrorMessage(key: String?): String? = when (key) {
     null -> null
+    "BACKUP_NO_CATEGORIES" -> stringResource(R.string.settings_backup_select_category)
+    "BACKUP_FILE_NOT_JSON" -> stringResource(R.string.settings_backup_invalid_json)
+    "BACKUP_DESTINATION_UNAVAILABLE" -> stringResource(R.string.settings_backup_unavailable)
     "IMPORT_FILE_NOT_ZIP" -> stringResource(R.string.settings_import_invalid_zip)
     "IMPORT_FILE_TOO_LARGE" -> stringResource(R.string.settings_import_too_large)
     "IMPORT_FILE_EMPTY" -> stringResource(R.string.settings_import_empty)
