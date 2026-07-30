@@ -19,11 +19,7 @@ internal fun PlayerProgressEffects(
     controller: MediaController?,
     activity: Activity?,
     durationMillis: Long,
-    autoplayEnabled: Boolean,
-    explicitQueueActive: Boolean,
-    nextVideoUrl: String?,
     pipSourceRect: Rect?,
-    onPlayVideo: (String) -> Unit,
     onSaveProgress: (Long) -> Unit,
 ) {
     val saveIfEligible: (Long) -> Unit = save@{ positionMillis ->
@@ -40,25 +36,12 @@ internal fun PlayerProgressEffects(
         }
     }
 
-    DisposableEffect(controller, autoplayEnabled, explicitQueueActive, nextVideoUrl, pipSourceRect) {
+    DisposableEffect(controller, pipSourceRect) {
         val current = controller
         if (current == null) {
             onDispose { }
         } else {
             val listener = object : Player.Listener {
-                override fun onPlaybackStateChanged(playbackState: Int) {
-                    if (shouldAutoplayNext(
-                            playbackState = playbackState,
-                            playWhenReady = current.playWhenReady,
-                            explicitQueueActive = explicitQueueActive,
-                            autoplayEnabled = autoplayEnabled,
-                            nextVideoUrl = nextVideoUrl,
-                        )
-                    ) {
-                        nextVideoUrl?.let(onPlayVideo)
-                    }
-                }
-
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
                     applyAutoEnterPipParams(
                         activity,
@@ -109,15 +92,3 @@ internal fun PlayerProgressEffects(
 private const val MIN_PROGRESS_MILLIS = 5_000L
 private const val MAX_PROGRESS_FRACTION = 0.95
 private const val PROGRESS_INTERVAL_MILLIS = 10_000L
-
-internal fun shouldAutoplayNext(
-    playbackState: Int,
-    playWhenReady: Boolean,
-    explicitQueueActive: Boolean,
-    autoplayEnabled: Boolean,
-    nextVideoUrl: String?,
-): Boolean = playbackState == Player.STATE_ENDED &&
-    playWhenReady &&
-    !explicitQueueActive &&
-    autoplayEnabled &&
-    !nextVideoUrl.isNullOrBlank()

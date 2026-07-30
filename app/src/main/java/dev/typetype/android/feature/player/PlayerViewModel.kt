@@ -144,6 +144,7 @@ class PlayerViewModel @Inject constructor(
                             swipeBrightnessVolumeEnabled = prefs.playerSwipeBrightnessVolumeEnabled,
                             longPressSpeedEnabled = prefs.playerLongPressSpeedEnabled,
                         ),
+                        autoplayCountdownSeconds = prefs.playerAutoplayCountdownSeconds,
                     )
                 }
             }
@@ -173,6 +174,10 @@ class PlayerViewModel @Inject constructor(
             PlayerAction.OnToggleFavorite -> toggleFavorite()
             PlayerAction.OnToggleWatchLater -> toggleWatchLater()
             PlayerAction.OnRetry -> if (_state.value.stream == null) currentUrl()?.let(::loadStream) else _state.update(PlayerState::retryPlayback)
+            PlayerAction.OnAdvanceQueue -> playbackQueueCoordinator.playAutoplayNow()
+            PlayerAction.OnCancelQueueAutoplay -> playbackQueueCoordinator.cancelAutoplay()
+            PlayerAction.OnToggleQueueAutoplayPause ->
+                playbackQueueCoordinator.toggleAutoplayPause()
             is PlayerAction.OnDownload -> downloadCurrentVideo(action.selection)
             PlayerAction.OnOpenPlaylistPicker ->
                 _state.update { it.copy(playlistPickerVisible = true) }

@@ -1,6 +1,5 @@
 package dev.typetype.android.feature.player
 
-import android.content.pm.ActivityInfo
 import android.graphics.Rect
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
@@ -20,7 +19,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,13 +33,13 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.paging.PagingData
-import dev.typetype.android.core.ui.util.WindowHelper
 import dev.typetype.android.domain.comments.Comment
 import dev.typetype.android.domain.comments.CommentsRepository
 import dev.typetype.android.domain.library.Playlist
 import dev.typetype.android.domain.playback.PlaybackQueueState
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.feature.player.components.CommentsBar
+import dev.typetype.android.feature.player.components.AutoplayCountdownOverlay
 import dev.typetype.android.feature.player.components.DescriptionSection
 import dev.typetype.android.feature.player.components.LocalMediaController
 import dev.typetype.android.feature.player.components.PlayerGestureConfig
@@ -65,6 +63,7 @@ fun LoadedPlayer(
     isInWatchLater: Boolean,
     gestureConfig: PlayerGestureConfig,
     autoplayEnabled: Boolean,
+    autoplayCountdownSeconds: Int,
     defaultQuality: String,
     defaultAudioLanguage: String,
     subtitlesEnabled: Boolean,
@@ -112,6 +111,19 @@ fun LoadedPlayer(
     var pipSourceRect by remember(stream.id) { mutableStateOf<Rect?>(null) }
     val videoMenuScope = rememberVideoMenuScope(onOpenChannel = onOpenChannel)
     val activity = LocalActivity.current
+    val autoplayCountdown = rememberPlayerAutoplayCountdown(
+        player = controller,
+        stream = stream,
+        playbackQueue = playbackQueue,
+        enabled = autoplayEnabled,
+        countdownSeconds = autoplayCountdownSeconds,
+        onAdvanceQueue = { onAction(PlayerAction.OnAdvanceQueue) },
+        onCancelQueueAutoplay = { onAction(PlayerAction.OnCancelQueueAutoplay) },
+        onToggleQueueAutoplayPause = {
+            onAction(PlayerAction.OnToggleQueueAutoplayPause)
+        },
+        onPlayVideo = onPlayVideo,
+    )
 
     LaunchedEffect(
         stream.id,
@@ -159,33 +171,11 @@ fun LoadedPlayer(
         controller = controller,
         activity = activity,
         durationMillis = stream.durationSeconds * 1000L,
-        autoplayEnabled = autoplayEnabled,
-        explicitQueueActive = playbackQueue.isActive,
-        nextVideoUrl = stream.relatedStreams.firstOrNull()?.url,
         pipSourceRect = pipSourceRect,
-        onPlayVideo = onPlayVideo,
         onSaveProgress = { onAction(PlayerAction.OnSaveProgress(it)) },
     )
 
-    LaunchedEffect(isFullscreen) {
-        val window = activity?.window ?: return@LaunchedEffect
-        if (isFullscreen) {
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-            WindowHelper.toggleFullscreen(window, isFullscreen = true)
-        } else {
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-            WindowHelper.toggleFullscreen(window, isFullscreen = false)
-        }
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            val window = activity?.window ?: return@onDispose
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-            WindowHelper.toggleFullscreen(window, isFullscreen = false)
-            onFullscreenChange(false)
-        }
-    }
+    PlayerFullscreenEffect(activity, isFullscreen, onFullscreenChange)
 
     Box(
         modifier = Modifier
@@ -256,6 +246,12 @@ fun LoadedPlayer(
                     )
                 } else {
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                }
+                autoplayCountdown?.let {
+                    AutoplayCountdownOverlay(
+                        state = it,
+                        modifier = Modifier.fillMaxSize(),
+                    )
                 }
             }
             if (!isFullscreen) {

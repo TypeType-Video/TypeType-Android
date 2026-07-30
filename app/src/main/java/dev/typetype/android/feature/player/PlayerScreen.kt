@@ -153,6 +153,7 @@ fun PlayerScreen(
                     isInWatchLater = state.isInWatchLater,
                     gestureConfig = state.gestureConfig,
                     autoplayEnabled = state.autoplayEnabled,
+                    autoplayCountdownSeconds = state.autoplayCountdownSeconds,
                     defaultQuality = state.defaultQuality,
                     defaultAudioLanguage = state.defaultAudioLanguage,
                     subtitlesEnabled = state.subtitlesEnabled,

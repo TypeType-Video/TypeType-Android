@@ -1,0 +1,35 @@
+package dev.typetype.android.feature.player
+
+import android.app.Activity
+import android.content.pm.ActivityInfo
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import dev.typetype.android.core.ui.util.WindowHelper
+
+@Composable
+internal fun PlayerFullscreenEffect(
+    activity: Activity?,
+    isFullscreen: Boolean,
+    onFullscreenChange: (Boolean) -> Unit,
+) {
+    LaunchedEffect(isFullscreen) {
+        val window = activity?.window ?: return@LaunchedEffect
+        if (isFullscreen) {
+            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            WindowHelper.toggleFullscreen(window, isFullscreen = true)
+        } else {
+            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            WindowHelper.toggleFullscreen(window, isFullscreen = false)
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            val window = activity?.window ?: return@onDispose
+            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            WindowHelper.toggleFullscreen(window, isFullscreen = false)
+            onFullscreenChange(false)
+        }
+    }
+}
