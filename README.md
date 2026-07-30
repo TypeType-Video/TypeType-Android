@@ -103,50 +103,13 @@ credentials, tokens, cookies, or private response bodies.
 
 - Read the [TypeType user guide](https://typetype-video.github.io/Docs-TypeType/guide/).
 - Check the [latest Android Releases](https://github.com/TypeType-Video/TypeType-Android/releases).
+- Want to help? Read [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
 - Report bugs and request features in the
   [central TypeType issue tracker](https://github.com/TypeType-Video/TypeType/issues).
 
 When reporting a playback or network problem, include the Android version, app
 version, TypeType instance version, video URL, the action that failed, and the
 redacted diagnostics export when available.
-
-<details>
-<summary><strong>Development and architecture</strong></summary>
-
-### Technology
-
-| Area | Technology |
-| --- | --- |
-| Language | Kotlin |
-| Interface | Jetpack Compose and Material 3 |
-| Playback | Media3 with the TypeType playback module |
-| Networking | Retrofit, OkHttp, and kotlinx.serialization |
-| Persistence | Room and DataStore |
-| Background work | WorkManager and MediaSessionService |
-| Dependency injection | Hilt |
-
-The project targets API 37 and keeps runtime compatibility down to API 23.
-Server capabilities are discovered at runtime. Extraction, YouTube session
-state, SABR, PO tokens, recommendations, synchronization, and server-side
-downloads remain TypeType-Server responsibilities.
-
-Run the complete local verification with the repository Gradle wrapper:
-
-```sh
-./gradlew --no-daemon \
-  :player:testDebugUnitTest \
-  :app:testDebugUnitTest \
-  :player:lintDebug \
-  :app:lintDebug \
-  :app:assembleDebug \
-  :app:assembleRelease
-```
-
-Development changes target `dev`; `main` represents the stable release line.
-Release signing material, instance URLs, accounts, and credentials are never
-stored in this repository.
-
-</details>
 
 ## TypeType ecosystem
 
