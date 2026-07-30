@@ -10,5 +10,6 @@ interface PreferencesRepository {
     suspend fun setPlayerSwipeBrightnessVolumeEnabled(enabled: Boolean)
     suspend fun setPlayerLongPressSpeedEnabled(enabled: Boolean)
     suspend fun setPlayerAutoplayEnabled(enabled: Boolean)
+    suspend fun setPlayerAutoplayCountdownSeconds(seconds: Int)
     suspend fun setPlayerPauseInBackground(enabled: Boolean)
 }

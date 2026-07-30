@@ -369,6 +369,15 @@
     <string name="about_link_typetype">TypeType (server)</string>
     <string name="about_link_typetype_android">TypeType-Android</string>
     <string name="settings_player_autoplay">Autoplay related videos</string>
+    <string name="settings_player_autoplay_countdown">Autoplay countdown</string>
+    <string name="settings_player_autoplay_countdown_subtitle">Time before the next video starts</string>
+    <string name="settings_player_autoplay_immediate">Immediate</string>
+    <plurals name="settings_player_autoplay_seconds">
+        <item quantity="one">%1$d second</item>
+        <item quantity="other">%1$d seconds</item>
+    </plurals>
+    <string name="settings_player_skip_playlist_autoplay_screen">Skip countdown in playlists</string>
+    <string name="settings_player_skip_playlist_autoplay_screen_subtitle">Start the next playlist item immediately</string>
     <string name="settings_player_pause_in_background">Pause when leaving the app</string>
     <string name="about_app_name">TypeType</string>
     <string name="about_version">Version</string>

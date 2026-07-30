@@ -6,6 +6,8 @@ data class PlayerSettingsState(
     val swipeBrightnessVolumeEnabled: Boolean = true,
     val longPressSpeedEnabled: Boolean = true,
     val autoplayEnabled: Boolean = true,
+    val autoplayCountdownSeconds: Int = 10,
+    val skipPlaylistAutoplayScreen: Boolean = false,
     val pauseInBackgroundEnabled: Boolean = false,
     val defaultQuality: String = "1080p",
     val defaultService: Int = 0,

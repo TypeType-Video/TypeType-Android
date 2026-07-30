@@ -9,6 +9,9 @@ internal fun UserSettings.patchFrom(previous: UserSettings): JsonObject = buildJ
     if (defaultService != previous.defaultService) put("defaultService", defaultService)
     if (defaultQuality != previous.defaultQuality) put("defaultQuality", defaultQuality)
     if (autoplay != previous.autoplay) put("autoplay", autoplay)
+    if (skipPlaylistAutoplayScreen != previous.skipPlaylistAutoplayScreen) {
+        put("skipPlaylistAutoplayScreen", skipPlaylistAutoplayScreen)
+    }
     if (volume != previous.volume) put("volume", volume)
     if (muted != previous.muted) put("muted", muted)
     if (subtitlesEnabled != previous.subtitlesEnabled) put("subtitlesEnabled", subtitlesEnabled)

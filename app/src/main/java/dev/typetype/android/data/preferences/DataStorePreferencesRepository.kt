@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import dev.typetype.android.domain.preferences.AccentColor
 import dev.typetype.android.domain.preferences.AppPreferences
@@ -28,6 +29,9 @@ class DataStorePreferencesRepository @Inject constructor(
             playerSwipeBrightnessVolumeEnabled = prefs[KEY_PLAYER_SWIPE_BRIGHT_VOL] ?: true,
             playerLongPressSpeedEnabled = prefs[KEY_PLAYER_LONG_PRESS_SPEED] ?: true,
             playerAutoplayEnabled = prefs[KEY_PLAYER_AUTOPLAY] ?: true,
+            playerAutoplayCountdownSeconds = (
+                prefs[KEY_PLAYER_AUTOPLAY_COUNTDOWN] ?: DEFAULT_AUTOPLAY_COUNTDOWN_SECONDS
+            ).coerceIn(0, MAX_AUTOPLAY_COUNTDOWN_SECONDS),
             playerPauseInBackground = prefs[KEY_PLAYER_PAUSE_BACKGROUND] ?: false,
         )
     }
@@ -56,6 +60,15 @@ class DataStorePreferencesRepository @Inject constructor(
         dataStore.edit { it[KEY_PLAYER_AUTOPLAY] = enabled }
     }
 
+    override suspend fun setPlayerAutoplayCountdownSeconds(seconds: Int) {
+        dataStore.edit {
+            it[KEY_PLAYER_AUTOPLAY_COUNTDOWN] = seconds.coerceIn(
+                0,
+                MAX_AUTOPLAY_COUNTDOWN_SECONDS,
+            )
+        }
+    }
+
     override suspend fun setPlayerPauseInBackground(enabled: Boolean) {
         dataStore.edit { it[KEY_PLAYER_PAUSE_BACKGROUND] = enabled }
     }
@@ -67,6 +80,9 @@ class DataStorePreferencesRepository @Inject constructor(
         val KEY_PLAYER_SWIPE_BRIGHT_VOL = booleanPreferencesKey("player_swipe_bright_vol")
         val KEY_PLAYER_LONG_PRESS_SPEED = booleanPreferencesKey("player_long_press_speed")
         val KEY_PLAYER_AUTOPLAY = booleanPreferencesKey("player_autoplay")
+        val KEY_PLAYER_AUTOPLAY_COUNTDOWN = intPreferencesKey("player_autoplay_countdown_seconds")
         val KEY_PLAYER_PAUSE_BACKGROUND = booleanPreferencesKey("player_pause_background")
+        const val DEFAULT_AUTOPLAY_COUNTDOWN_SECONDS = 10
+        const val MAX_AUTOPLAY_COUNTDOWN_SECONDS = 60
     }
 }

@@ -34,6 +34,8 @@ class PlayerSettingsViewModel @Inject constructor(
                     swipeBrightnessVolumeEnabled = prefs.playerSwipeBrightnessVolumeEnabled,
                     longPressSpeedEnabled = prefs.playerLongPressSpeedEnabled,
                     autoplayEnabled = server.autoplay,
+                    autoplayCountdownSeconds = prefs.playerAutoplayCountdownSeconds,
+                    skipPlaylistAutoplayScreen = server.skipPlaylistAutoplayScreen,
                     pauseInBackgroundEnabled = prefs.playerPauseInBackground,
                     defaultQuality = server.defaultQuality,
                     defaultService = server.defaultService,
@@ -62,6 +64,10 @@ class PlayerSettingsViewModel @Inject constructor(
                     preferencesRepository.setPlayerPauseInBackground(action.enabled)
                 is PlayerSettingsAction.SetAutoplay ->
                     updateServer { it.copy(autoplay = action.enabled) }
+                is PlayerSettingsAction.SetAutoplayCountdown ->
+                    preferencesRepository.setPlayerAutoplayCountdownSeconds(action.seconds)
+                is PlayerSettingsAction.SetSkipPlaylistAutoplayScreen ->
+                    updateServer { it.copy(skipPlaylistAutoplayScreen = action.enabled) }
                 is PlayerSettingsAction.SetDefaultQuality ->
                     updateServer { it.copy(defaultQuality = action.quality) }
                 is PlayerSettingsAction.SetDefaultService ->
