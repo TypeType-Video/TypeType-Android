@@ -7,40 +7,57 @@ import org.junit.Test
 
 class PlayerProgressEffectsTest {
     @Test
-    fun `autoplay starts after a naturally completed video`() {
+    fun `countdown starts after a naturally completed video`() {
         assertTrue(
-            shouldAutoplayNext(
+            shouldStartAutoplayCountdown(
                 playbackState = Player.STATE_ENDED,
                 playWhenReady = true,
-                explicitQueueActive = false,
-                autoplayEnabled = true,
-                nextVideoUrl = "https://example.com/watch?v=next",
+                enabled = true,
+                targetUrl = "https://example.com/watch?v=next",
             ),
         )
     }
 
     @Test
-    fun `autoplay stays stopped after the sleep timer pauses playback`() {
+    fun `countdown stays stopped after the sleep timer pauses playback`() {
         assertFalse(
-            shouldAutoplayNext(
+            shouldStartAutoplayCountdown(
                 playbackState = Player.STATE_ENDED,
                 playWhenReady = false,
-                explicitQueueActive = false,
-                autoplayEnabled = true,
-                nextVideoUrl = "https://example.com/watch?v=next",
+                enabled = true,
+                targetUrl = "https://example.com/watch?v=next",
             ),
         )
     }
 
     @Test
-    fun `autoplay ignores non-terminal playback states`() {
+    fun `countdown ignores non-terminal playback states`() {
         assertFalse(
-            shouldAutoplayNext(
+            shouldStartAutoplayCountdown(
                 playbackState = Player.STATE_READY,
                 playWhenReady = true,
-                explicitQueueActive = false,
-                autoplayEnabled = true,
-                nextVideoUrl = "https://example.com/watch?v=next",
+                enabled = true,
+                targetUrl = "https://example.com/watch?v=next",
+            ),
+        )
+    }
+
+    @Test
+    fun `countdown requires autoplay and a target`() {
+        assertFalse(
+            shouldStartAutoplayCountdown(
+                playbackState = Player.STATE_ENDED,
+                playWhenReady = true,
+                enabled = false,
+                targetUrl = "https://example.com/watch?v=next",
+            ),
+        )
+        assertFalse(
+            shouldStartAutoplayCountdown(
+                playbackState = Player.STATE_ENDED,
+                playWhenReady = true,
+                enabled = true,
+                targetUrl = null,
             ),
         )
     }
