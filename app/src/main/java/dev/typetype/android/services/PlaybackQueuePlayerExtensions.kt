@@ -9,13 +9,6 @@ import dev.typetype.android.domain.playback.PlaybackQueueMutationResult
 import dev.typetype.android.domain.playback.PlaybackQueueState
 import dev.typetype.android.domain.playback.PlaybackRepeatMode
 
-internal fun Player.indexOfMediaId(mediaId: String): Int {
-    for (index in 0 until mediaItemCount) {
-        if (getMediaItemAt(index).mediaId == mediaId) return index
-    }
-    return -1
-}
-
 internal fun Player.retainCurrentMediaItem() {
     val current = currentMediaItemIndex
     if (current !in 0 until mediaItemCount) return
@@ -69,13 +62,4 @@ internal fun Player.applyQueueRepeatMode(queue: PlaybackQueueState) {
     val repeatCurrent = queue.repeatMode == PlaybackRepeatMode.One ||
         queue.repeatMode == PlaybackRepeatMode.All && queue.entries.size == 1
     repeatMode = if (repeatCurrent) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
-}
-
-internal fun Player.resumeQueueCycleIfNeeded(queue: PlaybackQueueState) {
-    val shouldResume = playbackState == Player.STATE_ENDED && playWhenReady &&
-        queue.repeatMode == PlaybackRepeatMode.All && queue.currentIndex == queue.entries.lastIndex
-    if (!shouldResume) return
-    seekToNextMediaItem()
-    prepare()
-    play()
 }
