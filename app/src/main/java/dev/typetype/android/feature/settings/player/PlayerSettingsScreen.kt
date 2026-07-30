@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -33,6 +34,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.R
 
 private val QUALITY_OPTIONS = listOf("144p", "240p", "360p", "480p", "720p", "1080p", "1440p", "2160p")
+private val AUTOPLAY_COUNTDOWN_OPTIONS = listOf(0, 5, 10, 15, 30, 60)
 
 private data class ServiceOption(
     val id: Int,
@@ -105,6 +107,44 @@ fun PlayerSettingsScreen(
                         subtitle = null,
                         checked = state.autoplayEnabled,
                         onCheckedChange = { onAction(PlayerSettingsAction.SetAutoplay(it)) },
+                    )
+                }
+                item {
+                    DropdownRow(
+                        title = stringResource(R.string.settings_player_autoplay_countdown),
+                        subtitle = stringResource(
+                            R.string.settings_player_autoplay_countdown_subtitle,
+                        ),
+                        options = AUTOPLAY_COUNTDOWN_OPTIONS.map {
+                            it.toString() to if (it == 0) {
+                                stringResource(R.string.settings_player_autoplay_immediate)
+                            } else {
+                                pluralStringResource(
+                                    R.plurals.settings_player_autoplay_seconds,
+                                    it,
+                                    it,
+                                )
+                            }
+                        },
+                        selectedKey = state.autoplayCountdownSeconds.toString(),
+                        onSelect = {
+                            onAction(PlayerSettingsAction.SetAutoplayCountdown(it.toInt()))
+                        },
+                        enabled = state.autoplayEnabled,
+                    )
+                }
+                item {
+                    SwitchRow(
+                        title = stringResource(
+                            R.string.settings_player_skip_playlist_autoplay_screen,
+                        ),
+                        subtitle = stringResource(
+                            R.string.settings_player_skip_playlist_autoplay_screen_subtitle,
+                        ),
+                        checked = state.skipPlaylistAutoplayScreen,
+                        onCheckedChange = {
+                            onAction(PlayerSettingsAction.SetSkipPlaylistAutoplayScreen(it))
+                        },
                     )
                 }
                 item {

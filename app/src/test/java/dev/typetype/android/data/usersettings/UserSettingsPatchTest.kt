@@ -41,6 +41,14 @@ class UserSettingsPatchTest {
     }
 
     @Test
+    fun `playlist countdown preference uses the server field`() {
+        val patch = UserSettings(skipPlaylistAutoplayScreen = true).patchFrom(UserSettings())
+
+        assertEquals(setOf("skipPlaylistAutoplayScreen"), patch.keys)
+        assertTrue(requireNotNull(patch["skipPlaylistAutoplayScreen"]).jsonPrimitive.boolean)
+    }
+
+    @Test
     fun `server privacy value maps into the domain policy`() {
         val dto = JSON.decodeFromString<UserSettingsDto>(
             """
@@ -48,7 +56,8 @@ class UserSettingsPatchTest {
                   "disableWatchHistory": true,
                   "hideHomeRecommendations": true,
                   "hideContinueWatching": true,
-                  "hideComments": true
+                  "hideComments": true,
+                  "skipPlaylistAutoplayScreen": true
                 }
             """.trimIndent(),
         )
@@ -57,6 +66,7 @@ class UserSettingsPatchTest {
         assertTrue(dto.toDomain().hideHomeRecommendations)
         assertTrue(dto.toDomain().hideContinueWatching)
         assertTrue(dto.toDomain().autoplay)
+        assertTrue(dto.toDomain().skipPlaylistAutoplayScreen)
     }
 
     private companion object {

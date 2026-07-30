@@ -6,6 +6,8 @@ sealed interface PlayerSettingsAction {
     data class SetSwipeBrightnessVolume(val enabled: Boolean) : PlayerSettingsAction
     data class SetLongPressSpeed(val enabled: Boolean) : PlayerSettingsAction
     data class SetAutoplay(val enabled: Boolean) : PlayerSettingsAction
+    data class SetAutoplayCountdown(val seconds: Int) : PlayerSettingsAction
+    data class SetSkipPlaylistAutoplayScreen(val enabled: Boolean) : PlayerSettingsAction
     data class SetPauseInBackground(val enabled: Boolean) : PlayerSettingsAction
     data class SetDefaultQuality(val quality: String) : PlayerSettingsAction
     data class SetDefaultService(val service: Int) : PlayerSettingsAction

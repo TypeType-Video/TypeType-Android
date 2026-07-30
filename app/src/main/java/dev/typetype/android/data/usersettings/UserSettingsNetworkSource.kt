@@ -33,6 +33,7 @@ internal fun UserSettingsDto.toDomain(): UserSettings = UserSettings(
     defaultService = defaultService,
     defaultQuality = defaultQuality,
     autoplay = autoplay,
+    skipPlaylistAutoplayScreen = skipPlaylistAutoplayScreen,
     volume = volume,
     muted = muted,
     subtitlesEnabled = subtitlesEnabled,
