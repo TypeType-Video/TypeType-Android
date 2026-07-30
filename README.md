@@ -44,10 +44,6 @@ server-side downloads remain server responsibilities.
 | --- | --- | --- |
 | ![TypeType notifications on Android](assets/screenshots/android-notifications.png) | ![TypeType profile and animated avatar support on Android](assets/screenshots/android-profile.png) | ![TypeType settings on Android](assets/screenshots/android-settings.png) |
 
-These are real captures from the signed Android application connected to the
-TypeType beta with a demonstration account. The displayed content changes over
-time.
-
 ## Features
 
 - Resume unfinished videos from Continue Watching.
