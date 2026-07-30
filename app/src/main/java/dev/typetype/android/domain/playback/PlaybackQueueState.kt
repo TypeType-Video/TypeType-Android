@@ -15,6 +15,7 @@ data class PlaybackQueueState(
     val repeatMode: PlaybackRepeatMode = PlaybackRepeatMode.Off,
     val isPreparingNext: Boolean = false,
     val failedVideoUrl: String? = null,
+    val autoplayCountdown: PlaybackQueueAutoplayCountdown? = null,
 ) {
     val isActive: Boolean
         get() = currentIndex in entries.indices
@@ -31,3 +32,10 @@ data class PlaybackQueueState(
             null
         }
 }
+
+data class PlaybackQueueAutoplayCountdown(
+    val targetVideoUrl: String,
+    val totalMillis: Long,
+    val remainingMillis: Long,
+    val paused: Boolean,
+)
