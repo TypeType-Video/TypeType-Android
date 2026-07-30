@@ -17,3 +17,23 @@ data class PipePipeRestoreSummary(
     val historyMinWatchedAt: Long?,
     val historyMaxWatchedAt: Long?,
 )
+
+enum class TypeTypeBackupCategory(val wireName: String) {
+    Subscriptions("subscriptions"),
+    History("history"),
+    Playlists("playlists"),
+    WatchLater("watchLater"),
+    Favorites("favorites"),
+    Progress("progress"),
+    SearchHistory("searchHistory"),
+    SavedPlaylists("savedPlaylists"),
+    Settings("settings"),
+    ContentFilters("contentFilters"),
+}
+
+data class TypeTypeRestoreSummary(
+    val restored: Map<TypeTypeBackupCategory, Int>,
+) {
+    val total: Int
+        get() = restored.values.sum()
+}
