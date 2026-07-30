@@ -10,7 +10,7 @@ import javax.inject.Inject
 class ImportDocumentReader @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
-    fun read(uri: Uri): ImportDocument {
+    fun read(uri: Uri, fallbackName: String): ImportDocument {
         val metadata = context.contentResolver.query(
             uri,
             arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE),
@@ -29,7 +29,7 @@ class ImportDocumentReader @Inject constructor(
         }
         return ImportDocument(
             uri = uri.toString(),
-            displayName = metadata?.name?.takeIf(String::isNotBlank) ?: "backup.zip",
+            displayName = metadata?.name?.takeIf(String::isNotBlank) ?: fallbackName,
             sizeBytes = metadata?.size,
             mediaType = context.contentResolver.getType(uri),
         )
