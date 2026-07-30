@@ -104,9 +104,7 @@ User-visible text belongs in Android resources, and interactive controls need
 accessible labels. New dependencies need a compatible license and a reasonable
 maintenance story.
 
-The Android client must continue to use TypeType-Server. Do not add client-side
-extraction, a PO-token WebView, native SABR, yt-dlp, FFmpeg, or browser
-automation.
+The Android client must continue to use TypeType-Server.
 
 ## Before opening a pull request
 
@@ -155,7 +153,9 @@ profiles can live in their own larger commit.
 In the pull request description, tell us:
 
 - what changed and why;
-- which issue it addresses;
+- whether it is a bug fix, feature, documentation change, translation, or
+  another kind of contribution;
+- the related issue, when one exists;
 - the TypeType-Server contract involved, when applicable;
 - the Android versions and navigation modes tested;
 - the exact automated and manual validation performed;
