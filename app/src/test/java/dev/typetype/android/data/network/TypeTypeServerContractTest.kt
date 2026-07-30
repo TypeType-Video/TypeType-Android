@@ -210,7 +210,7 @@ class TypeTypeServerContractTest {
     @Test
     fun contractRevisionIsPinnedToInspectedDevelopmentSource() {
         assertEquals(40, SERVER_CONTRACT_REVISION.length)
-        assertEquals("d39ce2c", SERVER_CONTRACT_REVISION.take(7))
+        assertEquals("100b430", SERVER_CONTRACT_REVISION.take(7))
     }
 
     @Test
@@ -327,7 +327,7 @@ class TypeTypeServerContractTest {
         URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20")
 
     private companion object {
-        const val SERVER_CONTRACT_REVISION = "d39ce2cc594787b00b22b645b09ae46864180730"
+        const val SERVER_CONTRACT_REVISION = "100b4303a9c63a7def99d6cf5ba68af67233a41f"
         const val SUBSCRIPTION_FEED_CONTRACT_REVISION = "0c38baee8fa37c313d676fc3df6c5d812081df32"
         const val COLLECTION_CONTRACT_REVISION = "e885c209279684b56edd8be06c6c8fdb6857a1a6"
         const val VIDEO_URL = "https://www.youtube.com/watch?v=video"
