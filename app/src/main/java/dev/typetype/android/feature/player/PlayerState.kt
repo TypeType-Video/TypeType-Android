@@ -18,6 +18,7 @@ data class PlayerState(
     val isInWatchLater: Boolean = false,
     val gestureConfig: PlayerGestureConfig = PlayerGestureConfig(),
     val autoplayEnabled: Boolean = true,
+    val autoplayCountdownSeconds: Int = 10,
     val defaultQuality: String = "1080p",
     val defaultAudioLanguage: String = "",
     val subtitlesEnabled: Boolean = false,

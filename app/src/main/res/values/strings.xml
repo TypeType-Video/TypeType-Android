@@ -43,6 +43,14 @@
     <string name="tab_library">Library</string>
     <string name="player_rewind">Rewind</string>
     <string name="player_play_pause">Play / pause</string>
+    <plurals name="player_autoplay_up_next">
+        <item quantity="one">Up next in %1$d second</item>
+        <item quantity="other">Up next in %1$d seconds</item>
+    </plurals>
+    <string name="player_autoplay_play_now">Play now</string>
+    <string name="player_autoplay_cancel">Cancel autoplay</string>
+    <string name="player_autoplay_pause">Pause autoplay timer</string>
+    <string name="player_autoplay_resume">Resume autoplay timer</string>
     <string name="player_action_play">Resume playback</string>
     <string name="player_action_pause">Pause playback</string>
     <string name="player_state_playing">Playing</string>
