@@ -11,11 +11,12 @@ together.
 
 ## Before you start
 
-Bug reports and feature requests live in the
-[central TypeType issue tracker](https://github.com/TypeType-Video/TypeType/issues).
-Please mention TypeType Android in the title or description. For a large
-feature, or anything that changes the Server API, it is best to agree on the
-expected behavior before writing a lot of code.
+Bug reports and feature requests for the Android app live in the
+[TypeType Android issue tracker](https://github.com/TypeType-Video/TypeType-Android/issues).
+Problems with TypeType-Server, extraction, the web client, or deployment belong
+in the [main TypeType issue tracker](https://github.com/TypeType-Video/TypeType/issues).
+For a large feature, or anything that changes the Server API, it is best to
+agree on the expected behavior before writing a lot of code.
 
 This repository owns the Android app: its Compose interface, local storage,
 downloads, background work, and Media3 integration. TypeType-Server owns

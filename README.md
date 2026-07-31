@@ -17,7 +17,7 @@
 
 <a href="https://typetype.video/fdroid/"><img src="assets/badges/fdroid.svg" alt="Install TypeType with F-Droid" width="30%"></a> <a href="https://github.com/TypeType-Video/TypeType-Android/releases/latest"><img src="assets/badges/signed-apk.svg" alt="Download the latest signed TypeType APK" width="30%"></a>
 
-[User guide](https://typetype-video.github.io/Docs-TypeType/guide/) · [Report a problem](https://github.com/TypeType-Video/TypeType/issues)
+[User guide](https://typetype-video.github.io/Docs-TypeType/guide/) · [Report a problem](https://github.com/TypeType-Video/TypeType-Android/issues)
 
 </div>
 
@@ -114,7 +114,7 @@ credentials, tokens, cookies, or private response bodies.
 - Check the [latest Android Releases](https://github.com/TypeType-Video/TypeType-Android/releases).
 - Want to help? Read [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
 - Report bugs and request features in the
-  [central TypeType issue tracker](https://github.com/TypeType-Video/TypeType/issues).
+  [TypeType Android issue tracker](https://github.com/TypeType-Video/TypeType-Android/issues).
 
 When reporting a playback or network problem, include the Android version, app
 version, TypeType instance version, video URL, the action that failed, and the

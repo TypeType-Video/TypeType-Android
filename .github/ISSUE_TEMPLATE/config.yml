@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: TypeType server and web issues
+    url: https://github.com/TypeType-Video/TypeType/issues
+    about: Report server, extraction, web client, and deployment problems here.
+  - name: TypeType discussions
+    url: https://github.com/TypeType-Video/TypeType/discussions
+    about: Share general feedback and talk with the community.

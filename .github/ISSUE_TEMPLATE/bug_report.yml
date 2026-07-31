@@ -1,0 +1,97 @@
+name: Android bug report
+description: Report a problem specific to the TypeType Android app
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping improve the TypeType Android beta.
+
+        Problems with the TypeType server, extraction, web client, or deployment belong in the [main TypeType tracker](https://github.com/TypeType-Video/TypeType/issues).
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I am using the latest available TypeType Android release.
+          required: true
+        - label: I searched for an existing issue describing the same problem.
+          required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Explain what went wrong and what you expected instead.
+      placeholder: When I ..., I expected ..., but ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open ...
+        2. Select ...
+        3. See ...
+    validations:
+      required: true
+
+  - type: input
+    id: app-version
+    attributes:
+      label: TypeType Android version
+      placeholder: 1.2.1
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Android version and device
+      placeholder: Android 16, Pixel 8
+    validations:
+      required: true
+
+  - type: input
+    id: instance-version
+    attributes:
+      label: TypeType instance version or revision
+      description: Available from the instance information or diagnostics.
+    validations:
+      required: true
+
+  - type: input
+    id: video-url
+    attributes:
+      label: Video URL
+      description: Required only when the problem concerns a specific video.
+
+  - type: dropdown
+    id: network
+    attributes:
+      label: Network
+      options:
+        - Not relevant or not sure
+        - Wi-Fi
+        - Mobile data
+        - VPN
+        - Changed networks during the problem
+    validations:
+      required: true
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Redacted diagnostics
+      description: Export and review them from Settings > Diagnostics.
+      render: text
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Anything else?
+      description: Add screenshots or other useful context.
