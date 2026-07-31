@@ -1,0 +1,36 @@
+name: Android feature request
+description: Suggest an improvement to the TypeType Android app
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This tracker is for the native Android app. Server, web client, and deployment requests belong in the [main TypeType tracker](https://github.com/TypeType-Video/TypeType/issues).
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      placeholder: I often cannot ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to see?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Describe any current workflow or alternative you tried.
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Anything else?
+      description: Add screenshots, examples, or other useful context.
