@@ -7,6 +7,7 @@ import dev.typetype.android.data.network.ApiBaseUrlHolder
 import dev.typetype.android.data.network.NetworkRequestScope
 import dev.typetype.android.domain.diagnostics.DiagnosticEntry
 import dev.typetype.android.domain.diagnostics.DiagnosticsRepository
+import dev.typetype.android.domain.diagnostics.CrashRequestMetadata
 import dev.typetype.android.domain.diagnostics.SabrDiagnosticDetail
 import java.io.File
 import java.security.MessageDigest
@@ -24,6 +25,8 @@ class LocalDiagnosticsRepository @Inject constructor(
 ) : DiagnosticsRepository {
     private val directory = File(context.noBackupFilesDir, "diagnostics")
     private val lock = Any()
+    private var latestRequest: ScopedDiagnosticEntry? = null
+    private var latestSabr: ScopedDiagnosticEntry? = null
 
     override suspend fun listCurrent(): List<DiagnosticEntry> = withContext(Dispatchers.IO) {
         val scope = currentScope() ?: return@withContext emptyList()
@@ -82,6 +85,9 @@ class LocalDiagnosticsRepository @Inject constructor(
             sabr = sabr,
         )
         synchronized(lock) {
+            val scopedEntry = ScopedDiagnosticEntry(scope.serverId, scope.accountId, entry)
+            latestRequest = scopedEntry
+            if (entry.sabr != null) latestSabr = scopedEntry
             directory.mkdirs()
             val file = fileFor(scope)
             file.appendText(encode(entry) + "\n", Charsets.UTF_8)
@@ -105,6 +111,20 @@ class LocalDiagnosticsRepository @Inject constructor(
             val file = fileFor(scope)
             file.appendText(encode(entry) + "\n", Charsets.UTF_8)
             if (file.length() > MAX_FILE_BYTES) trim(file)
+        }
+    }
+
+    internal fun currentCrashContext(): CrashDiagnosticContext {
+        val scope = currentScope() ?: return CrashDiagnosticContext(null, null)
+        return synchronized(lock) {
+            val request = latestRequest?.takeIf { it.matches(scope) }?.entry
+            val sabr = latestSabr?.takeIf { it.matches(scope) }?.entry?.sabr
+            CrashDiagnosticContext(
+                lastRequest = request?.let {
+                    CrashRequestMetadata(it.method, it.route, it.requestId)
+                },
+                lastSabr = sabr,
+            )
         }
     }
 
@@ -168,6 +188,15 @@ class LocalDiagnosticsRepository @Inject constructor(
         val accountId: String,
         val route: String,
     )
+
+    private data class ScopedDiagnosticEntry(
+        val serverId: String,
+        val accountId: String,
+        val entry: DiagnosticEntry,
+    ) {
+        fun matches(scope: DiagnosticScope): Boolean =
+            serverId == scope.serverId && accountId == scope.accountId
+    }
 
     private companion object {
         const val NO_ACCOUNT = "__no_account__"
