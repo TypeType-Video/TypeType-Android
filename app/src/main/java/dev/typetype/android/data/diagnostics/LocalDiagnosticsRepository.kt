@@ -7,6 +7,7 @@ import dev.typetype.android.data.network.ApiBaseUrlHolder
 import dev.typetype.android.data.network.NetworkRequestScope
 import dev.typetype.android.domain.diagnostics.DiagnosticEntry
 import dev.typetype.android.domain.diagnostics.DiagnosticsRepository
+import dev.typetype.android.domain.diagnostics.SabrDiagnosticDetail
 import java.io.File
 import java.security.MessageDigest
 import javax.inject.Inject
@@ -69,6 +70,7 @@ class LocalDiagnosticsRepository @Inject constructor(
         statusCode: Int?,
         durationMillis: Long,
         requestId: String?,
+        sabr: SabrDiagnosticDetail? = null,
     ) {
         val entry = DiagnosticEntry(
             timestampEpochMillis = System.currentTimeMillis(),
@@ -77,6 +79,7 @@ class LocalDiagnosticsRepository @Inject constructor(
             statusCode = statusCode,
             durationMillis = durationMillis.coerceIn(0, MAX_DURATION_MILLIS),
             requestId = requestId?.takeIf(REQUEST_ID_PATTERN::matches),
+            sabr = sabr,
         )
         synchronized(lock) {
             directory.mkdirs()
@@ -136,11 +139,12 @@ class LocalDiagnosticsRepository @Inject constructor(
         entry.statusCode ?: 0,
         entry.durationMillis,
         entry.requestId.orEmpty(),
+        entry.sabr?.let(SabrDiagnosticDetailCodec::encode).orEmpty(),
     ).joinToString("\t")
 
     private fun decode(line: String): DiagnosticEntry? {
-        val fields = line.split('\t', limit = 6)
-        if (fields.size != 6) return null
+        val fields = line.split('\t', limit = 7)
+        if (fields.size !in 6..7) return null
         val route = fields[2].takeIf { it.startsWith('/') && it.length <= 40 } ?: return null
         return DiagnosticEntry(
             timestampEpochMillis = fields[0].toLongOrNull() ?: return null,
@@ -153,6 +157,9 @@ class LocalDiagnosticsRepository @Inject constructor(
             statusCode = fields[3].toIntOrNull()?.takeIf { it in 100..599 },
             durationMillis = fields[4].toLongOrNull() ?: return null,
             requestId = fields[5].takeIf(REQUEST_ID_PATTERN::matches),
+            sabr = fields.getOrNull(6)
+                ?.takeIf(String::isNotEmpty)
+                ?.let(SabrDiagnosticDetailCodec::decode),
         )
     }
 
