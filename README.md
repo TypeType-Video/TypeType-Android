@@ -16,6 +16,8 @@
 <p align="center">
   <a href="https://github.com/TypeType-Video/TypeType-Android/releases/latest"><strong>Download the latest signed APK</strong></a>
   ·
+  <a href="https://typetype.video/fdroid/"><img src="https://typetype.video/fdroid/fdroid-logo.svg" alt="" width="20" height="20"> <strong>Install with F-Droid</strong></a>
+  ·
   <a href="https://typetype-video.github.io/Docs-TypeType/guide/">User guide</a>
   ·
   <a href="https://github.com/TypeType-Video/TypeType/issues">Report a problem</a>
@@ -63,6 +65,19 @@ TypeType Android supports Android 6.0 and newer, and does not require Google
 Play Services.
 
 ## Install
+
+### F-Droid
+
+Use the official TypeType F-Droid repository to install the app and receive
+stable updates:
+
+1. Open the [TypeType F-Droid setup page](https://typetype.video/fdroid/) on
+   your Android device, or scan its QR code.
+2. Tap **Open in F-Droid**, add the repository, then wait for the catalog to
+   refresh.
+3. Search for **TypeType** and install it.
+
+### Signed APK
 
 1. Open the
    [latest Release](https://github.com/TypeType-Video/TypeType-Android/releases/latest).
