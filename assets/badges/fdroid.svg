@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="646" height="210" viewBox="0 0 646 210" role="img" aria-labelledby="title description">
+  <title id="title">Install TypeType with F-Droid</title>
+  <desc id="description">TypeType download button for the official F-Droid repository</desc>
+  <defs>
+    <linearGradient id="surface" x1="0" y1="0" x2="646" y2="210" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#18181b"/>
+      <stop offset="0.62" stop-color="#09090b"/>
+      <stop offset="1" stop-color="#240d10"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="646" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7f1d1d"/>
+      <stop offset="0.55" stop-color="#ef4444"/>
+      <stop offset="1" stop-color="#fda4af"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="translate(585 12) rotate(143) scale(220 180)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ef4444" stop-opacity="0.24"/>
+      <stop offset="1" stop-color="#ef4444" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="1" y="1" width="644" height="208" rx="28" fill="url(#surface)" stroke="#3f3f46" stroke-width="2"/>
+  <rect x="1" y="1" width="644" height="208" rx="28" fill="url(#glow)"/>
+  <path d="M1 178h644v3a28 28 0 0 1-28 28H29A28 28 0 0 1 1 181v-3Z" fill="url(#accent)"/>
+  <rect x="30" y="26" width="150" height="150" rx="30" fill="#18181b" stroke="#3f3f46" stroke-width="2"/>
+  <g transform="translate(53 49)">
+    <path d="m16 19-9-12M88 19 97 7" fill="none" stroke="#a3e635" stroke-width="7" stroke-linecap="round"/>
+    <rect x="10" y="17" width="84" height="34" rx="10" fill="#a3e635"/>
+    <circle cx="33" cy="34" r="5" fill="#18181b"/>
+    <circle cx="71" cy="34" r="5" fill="#18181b"/>
+    <path d="M10 59c0-5 4-9 9-9h66c5 0 9 4 9 9v42c0 7-6 13-13 13H23c-7 0-13-6-13-13V59Z" fill="#38bdf8"/>
+    <path d="m33 72 19 13 19-13v28H33V72Z" fill="#f4f4f5"/>
+    <path d="m33 72 19 13 19-13" fill="none" stroke="#18181b" stroke-width="5" stroke-linejoin="round"/>
+  </g>
+  <text x="215" y="68" fill="#a1a1aa" font-family="Inter, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="21" font-weight="600" letter-spacing="2.5">INSTALL WITH</text>
+  <text x="212" y="126" fill="#f4f4f5" font-family="Inter, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="52" font-weight="750" letter-spacing="-1">F-DROID</text>
+  <text x="215" y="158" fill="#fca5a5" font-family="Inter, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="16" font-weight="600" letter-spacing="1.2">OFFICIAL TYPETYPE REPOSITORY</text>
+</svg>
