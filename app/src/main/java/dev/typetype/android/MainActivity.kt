@@ -31,6 +31,7 @@ import dev.typetype.android.feature.player.components.PIP_ACTION_FORWARD
 import dev.typetype.android.feature.player.components.PIP_ACTION_PLAY_PAUSE
 import dev.typetype.android.feature.player.components.PIP_ACTION_REWIND
 import dev.typetype.android.domain.session.ActiveSessionRepository
+import dev.typetype.android.feature.settings.diagnostics.CrashReportRoute
 import dev.typetype.android.services.PlaybackAudioOnlyCommand
 import javax.inject.Inject
 import kotlinx.coroutines.Job
@@ -61,7 +62,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splash = installSplashScreen()
-        splash.setKeepOnScreenCondition { viewModel.state.value.isLoading }
+        splash.setKeepOnScreenCondition {
+            val state = viewModel.state.value
+            state.isLoading && state.pendingCrashReport == null
+        }
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
@@ -79,10 +83,14 @@ class MainActivity : ComponentActivity() {
             TypeTypeTheme(accentColor = preferences.accentColor) {
                 val state by viewModel.state.collectAsStateWithLifecycle()
                 val startRoute = state.startRoute
-                if (startRoute != null) {
-                    AppNavHost(startRoute = startRoute, mainViewModel = viewModel)
-                } else {
-                    FullScreenLoader()
+                val pendingCrashReport = state.pendingCrashReport
+                when {
+                    pendingCrashReport != null -> CrashReportRoute(
+                        report = pendingCrashReport,
+                        onContinue = viewModel::continueAfterCrash,
+                    )
+                    startRoute != null -> AppNavHost(startRoute = startRoute, mainViewModel = viewModel)
+                    else -> FullScreenLoader()
                 }
             }
         }

@@ -11,6 +11,8 @@ import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.domain.actions.VideoActionsRepository
 import dev.typetype.android.domain.auth.AuthRepository
 import dev.typetype.android.domain.auth.SessionStatus
+import dev.typetype.android.domain.diagnostics.CrashReport
+import dev.typetype.android.domain.diagnostics.CrashReportRepository
 import dev.typetype.android.domain.preferences.AppPreferences
 import dev.typetype.android.domain.library.LibraryRepository
 import dev.typetype.android.domain.preferences.PreferencesRepository
@@ -33,12 +35,14 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
 data class MainState(
     val isLoading: Boolean = true,
     val startRoute: Any? = null,
+    val pendingCrashReport: CrashReport? = null,
 )
 
 sealed interface MainEvent {
@@ -59,6 +63,7 @@ class MainViewModel @Inject constructor(
     private val activeAccountScope: ActiveAccountScope,
     private val playbackResumeRepository: PlaybackResumeRepository,
     private val playbackQueueRepository: PlaybackQueueRepository,
+    private val crashReportRepository: CrashReportRepository,
     val playerHostController: PlayerHostController,
     preferencesRepository: PreferencesRepository,
 ) : ViewModel() {
@@ -105,6 +110,10 @@ class MainViewModel @Inject constructor(
             val initial = withTimeoutOrNull(STARTUP_TIMEOUT_MS) {
                 serverRepository.observeCurrentServer().first()
             }
+            val pendingCrashReport = crashReportRepository.pendingCurrent()
+            if (pendingCrashReport != null) {
+                _state.update { it.copy(pendingCrashReport = pendingCrashReport) }
+            }
             val sessionStatus = if (initial == null) {
                 SessionStatus.Invalid
             } else {
@@ -126,7 +135,7 @@ class MainViewModel @Inject constructor(
                 }
                 restore?.let(::applyPlaybackRestore)
             }
-            _state.value = MainState(isLoading = false, startRoute = startRoute)
+            _state.update { it.copy(isLoading = false, startRoute = startRoute) }
             if (startRoute == HomeRoute) {
                 launch { videoActionsRepository.refreshBlocked() }
                 launch { userSettingsRepository.refresh() }
@@ -153,6 +162,12 @@ class MainViewModel @Inject constructor(
                 eventsChannel.send(MainEvent.NavigateToLogin(server.id))
             }
         }
+    }
+
+    fun continueAfterCrash() {
+        if (_state.value.pendingCrashReport == null) return
+        _state.update { it.copy(pendingCrashReport = null) }
+        viewModelScope.launch { crashReportRepository.acknowledgeCurrent() }
     }
 
     fun onAccountActivated() {
