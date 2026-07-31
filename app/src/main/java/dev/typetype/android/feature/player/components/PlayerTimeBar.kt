@@ -177,7 +177,11 @@ private fun TimelineTrack(
             drawRoundRect(
                 color = activeColor,
                 topLeft = Offset(
-                    x = (progressX - thumbWidth / 2f).coerceIn(0f, size.width - thumbWidth),
+                    x = playerTimeBarThumbStartX(
+                        progressX = progressX,
+                        trackWidth = size.width,
+                        thumbWidth = thumbWidth,
+                    ),
                     y = (size.height - thumbHeight) / 2f,
                 ),
                 size = Size(thumbWidth, thumbHeight),
@@ -185,6 +189,15 @@ private fun TimelineTrack(
             )
         }
     }
+}
+
+internal fun playerTimeBarThumbStartX(
+    progressX: Float,
+    trackWidth: Float,
+    thumbWidth: Float,
+): Float {
+    val maximumStartX = (trackWidth - thumbWidth).coerceAtLeast(0f)
+    return (progressX - thumbWidth / 2f).coerceIn(0f, maximumStartX)
 }
 
 private fun Float.toPositionMs(width: Float, durationMs: Long): Long {
