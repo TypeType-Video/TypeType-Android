@@ -130,8 +130,6 @@ redacted diagnostics export when available.
   extraction, playback sessions, and private user data
 - [TypeType-Frontend](https://github.com/TypeType-Video/TypeType-Frontend),
   browser client
-- [TypeType-IOS](https://github.com/TypeType-Video/TypeType-IOS), native iPhone
-  and iPad client
 - [Docs-TypeType](https://github.com/TypeType-Video/Docs-TypeType), user and
   self-hosting documentation
 
