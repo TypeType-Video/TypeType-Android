@@ -179,7 +179,7 @@
     <string name="settings_privacy_subtitle">Control history tracking and stored activity</string>
     <string name="diagnostics_title">Diagnostics</string>
     <string name="diagnostics_subtitle">Review redacted network activity</string>
-    <string name="diagnostics_explanation">Stored only on this device, separately for the active instance and account. The journal contains redacted network metadata and app exit reasons. URLs, search terms, video IDs, headers, cookies, tokens, request bodies, exception messages and stack traces are never recorded.</string>
+    <string name="diagnostics_explanation">Stored only on this device, separately for the active instance and account. The journal contains redacted network metadata, app exit reasons and predefined SABR failure categories. Session IDs are replaced with local fingerprints. URLs, search terms, video IDs, headers, cookies, tokens, request bodies, raw server messages, exception messages and stack traces are never recorded.</string>
     <string name="diagnostics_refresh">Refresh</string>
     <string name="diagnostics_clear">Clear</string>
     <string name="diagnostics_share">Share</string>
@@ -187,6 +187,7 @@
     <string name="diagnostics_http_status">HTTP %1$d</string>
     <string name="diagnostics_network_error">Network error</string>
     <string name="diagnostics_result">%1$s · %2$d ms</string>
+    <string name="diagnostics_sabr_detail">SABR %1$s</string>
     <string name="diagnostics_request_id">Request %1$s</string>
     <string name="diagnostics_copy_request_id">Copy request ID</string>
     <string name="diagnostics_clipboard_label">TypeType request ID</string>

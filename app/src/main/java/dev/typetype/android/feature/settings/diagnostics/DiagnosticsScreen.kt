@@ -215,6 +215,14 @@ private fun DiagnosticRow(entry: DiagnosticEntry) {
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        entry.sabr?.let {
+            Text(
+                text = stringResource(R.string.diagnostics_sabr_detail, it.redactedSummary()),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontFamily = FontFamily.Monospace,
+            )
+        }
         entry.requestId?.let {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
