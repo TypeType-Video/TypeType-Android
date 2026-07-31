@@ -20,6 +20,9 @@ fun buildDiagnosticReport(entries: List<DiagnosticEntry>): String {
             }
             entry.requestId?.let { append("  request $it") }
             appendLine()
+            entry.sabr?.let {
+                appendLine("  SABR ${it.redactedSummary()}")
+            }
         }
     }
 }
