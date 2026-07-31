@@ -13,15 +13,13 @@
 
 </div>
 
-<p align="center">
-  <a href="https://github.com/TypeType-Video/TypeType-Android/releases/latest"><strong>Download the latest signed APK</strong></a>
-  ·
-  <a href="https://typetype.video/fdroid/"><img src="https://typetype.video/fdroid/fdroid-logo.svg" alt="" width="20" height="20"> <strong>Install with F-Droid</strong></a>
-  ·
-  <a href="https://typetype-video.github.io/Docs-TypeType/guide/">User guide</a>
-  ·
-  <a href="https://github.com/TypeType-Video/TypeType/issues">Report a problem</a>
-</p>
+<div align="center">
+
+<a href="https://typetype.video/fdroid/"><img src="assets/badges/fdroid.svg" alt="Install TypeType with F-Droid" width="44%"></a> <a href="https://github.com/TypeType-Video/TypeType-Android/releases/latest"><img src="assets/badges/signed-apk.svg" alt="Download the latest signed TypeType APK" width="44%"></a>
+
+[User guide](https://typetype-video.github.io/Docs-TypeType/guide/) · [Report a problem](https://github.com/TypeType-Video/TypeType/issues)
+
+</div>
 
 TypeType Android is a native client for
 [TypeType](https://github.com/TypeType-Video/TypeType), a self-hosted video

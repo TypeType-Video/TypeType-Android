@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="646" height="210" viewBox="0 0 646 210" role="img" aria-labelledby="title description">
+  <title id="title">Download the latest signed TypeType APK</title>
+  <desc id="description">TypeType download button for the latest signed GitHub Release</desc>
+  <defs>
+    <linearGradient id="surface" x1="0" y1="0" x2="646" y2="210" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#18181b"/>
+      <stop offset="0.62" stop-color="#09090b"/>
+      <stop offset="1" stop-color="#240d10"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="646" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7f1d1d"/>
+      <stop offset="0.55" stop-color="#ef4444"/>
+      <stop offset="1" stop-color="#fda4af"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="translate(585 12) rotate(143) scale(220 180)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ef4444" stop-opacity="0.24"/>
+      <stop offset="1" stop-color="#ef4444" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="1" y="1" width="644" height="208" rx="28" fill="url(#surface)" stroke="#3f3f46" stroke-width="2"/>
+  <rect x="1" y="1" width="644" height="208" rx="28" fill="url(#glow)"/>
+  <path d="M1 178h644v3a28 28 0 0 1-28 28H29A28 28 0 0 1 1 181v-3Z" fill="url(#accent)"/>
+  <rect x="30" y="26" width="150" height="150" rx="30" fill="#18181b" stroke="#3f3f46" stroke-width="2"/>
+  <g transform="translate(48 45) scale(.45)" fill="none" stroke="#ef4444" stroke-linecap="round" stroke-linejoin="round" stroke-width="16">
+    <rect x="32" y="72" width="192" height="136" rx="8"/>
+    <polyline points="80 24 128 72 176 24"/>
+    <circle cx="188" cy="116" r="12" fill="#ef4444" stroke="none"/>
+    <circle cx="188" cy="164" r="12" fill="#ef4444" stroke="none"/>
+    <line x1="152" y1="208" x2="152" y2="72"/>
+  </g>
+  <text x="215" y="68" fill="#a1a1aa" font-family="Inter, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="21" font-weight="600" letter-spacing="2.5">DOWNLOAD</text>
+  <text x="212" y="126" fill="#f4f4f5" font-family="Inter, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="52" font-weight="750" letter-spacing="-1">SIGNED APK</text>
+  <text x="215" y="158" fill="#fca5a5" font-family="Inter, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="16" font-weight="600" letter-spacing="1.2">LATEST GITHUB RELEASE</text>
+</svg>
