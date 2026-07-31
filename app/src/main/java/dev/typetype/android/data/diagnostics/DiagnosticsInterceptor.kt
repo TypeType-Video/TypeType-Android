@@ -10,6 +10,7 @@ import okhttp3.Response
 @Singleton
 class DiagnosticsInterceptor @Inject constructor(
     private val repository: LocalDiagnosticsRepository,
+    private val sabrSanitizer: SabrDiagnosticSanitizer,
 ) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
@@ -24,6 +25,7 @@ class DiagnosticsInterceptor @Inject constructor(
                     statusCode = response.code,
                     durationMillis = elapsedMillis(startedAt),
                     requestId = response.header("X-Request-Id"),
+                    sabr = sabrSanitizer.sanitize(scope.route, request, response),
                 )
             }
             response
@@ -35,6 +37,7 @@ class DiagnosticsInterceptor @Inject constructor(
                     statusCode = null,
                     durationMillis = elapsedMillis(startedAt),
                     requestId = null,
+                    sabr = sabrSanitizer.sanitizeFailure(scope.route, request),
                 )
             }
             throw failure
