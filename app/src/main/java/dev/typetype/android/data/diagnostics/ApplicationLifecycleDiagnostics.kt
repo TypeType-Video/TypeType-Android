@@ -6,7 +6,9 @@ import android.content.Context
 import android.os.Build
 import android.os.Process
 import dagger.hilt.android.qualifiers.ApplicationContext
+import dev.typetype.android.BuildConfig
 import dev.typetype.android.data.network.ApiBaseUrlHolder
+import dev.typetype.android.domain.diagnostics.CrashReportRepository
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -20,6 +22,7 @@ import kotlinx.coroutines.launch
 class ApplicationLifecycleDiagnostics @Inject constructor(
     @ApplicationContext private val context: Context,
     private val repository: LocalDiagnosticsRepository,
+    private val crashReports: CrashReportRepository,
     private val endpointHolder: ApiBaseUrlHolder,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -42,6 +45,13 @@ class ApplicationLifecycleDiagnostics @Inject constructor(
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             try {
+                crashReports.recordCurrent(
+                    CrashReportSanitizer.create(
+                        throwable = throwable,
+                        environment = currentEnvironment(),
+                        diagnostics = repository.currentCrashContext(),
+                    ),
+                )
                 repository.recordLocalEvent("/app/crash")
             } finally {
                 if (previous != null) {
@@ -53,6 +63,15 @@ class ApplicationLifecycleDiagnostics @Inject constructor(
             }
         }
     }
+
+    private fun currentEnvironment(): CrashEnvironment = CrashEnvironment(
+        appVersion = BuildConfig.VERSION_NAME,
+        appVersionCode = BuildConfig.VERSION_CODE.toLong(),
+        androidVersion = Build.VERSION.RELEASE,
+        apiLevel = Build.VERSION.SDK_INT,
+        deviceManufacturer = Build.MANUFACTURER,
+        deviceModel = Build.MODEL,
+    )
 
     @androidx.annotation.RequiresApi(Build.VERSION_CODES.R)
     private fun collectHistoricalExits() {

@@ -11,6 +11,7 @@ import dev.typetype.android.data.channel.ChannelRepositoryImpl
 import dev.typetype.android.data.comments.CommentsRepositoryImpl
 import dev.typetype.android.data.download.AndroidDownloadRepository
 import dev.typetype.android.data.diagnostics.LocalDiagnosticsRepository
+import dev.typetype.android.data.diagnostics.LocalCrashReportRepository
 import dev.typetype.android.data.feed.HomeFeedRepositoryImpl
 import dev.typetype.android.data.library.OfflineLibraryRepository
 import dev.typetype.android.data.imports.RemoteImportRepository
@@ -41,6 +42,7 @@ import dev.typetype.android.domain.channel.ChannelRepository
 import dev.typetype.android.domain.comments.CommentsRepository
 import dev.typetype.android.domain.download.DownloadRepository
 import dev.typetype.android.domain.diagnostics.DiagnosticsRepository
+import dev.typetype.android.domain.diagnostics.CrashReportRepository
 import dev.typetype.android.domain.feed.HomeFeedRepository
 import dev.typetype.android.domain.library.LibraryRepository
 import dev.typetype.android.domain.imports.ImportRepository
@@ -185,6 +187,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindDiagnosticsRepository(impl: LocalDiagnosticsRepository): DiagnosticsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCrashReportRepository(impl: LocalCrashReportRepository): CrashReportRepository
 
     @Binds
     @Singleton
