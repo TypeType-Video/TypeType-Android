@@ -15,7 +15,7 @@
 
 <div align="center">
 
-<a href="https://typetype.video/fdroid/"><img src="assets/badges/fdroid.svg" alt="Install TypeType with F-Droid" width="44%"></a> <a href="https://github.com/TypeType-Video/TypeType-Android/releases/latest"><img src="assets/badges/signed-apk.svg" alt="Download the latest signed TypeType APK" width="44%"></a>
+<a href="https://typetype.video/fdroid/"><img src="assets/badges/fdroid.svg" alt="Install TypeType with F-Droid" width="30%"></a> <a href="https://github.com/TypeType-Video/TypeType-Android/releases/latest"><img src="assets/badges/signed-apk.svg" alt="Download the latest signed TypeType APK" width="30%"></a>
 
 [User guide](https://typetype-video.github.io/Docs-TypeType/guide/) · [Report a problem](https://github.com/TypeType-Video/TypeType/issues)
 
