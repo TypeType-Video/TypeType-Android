@@ -89,6 +89,7 @@ private fun DiagnosticsScreen(
                 modifier = Modifier.weight(1f),
             ) {
                 item { DiagnosticsExplanation() }
+                state.crashReport?.let { report -> item { CrashDiagnosticCard(report) } }
                 item {
                     DiagnosticsReportSection(
                         state = state,
@@ -103,13 +104,16 @@ private fun DiagnosticsScreen(
                 }
                 item {
                     DiagnosticsActions(
-                        hasEntries = state.entries.isNotEmpty(),
+                        hasEntries = state.entries.isNotEmpty() || state.crashReport != null,
                         onRefresh = onRefresh,
                         onClear = onClear,
                         onShare = {
                             val intent = Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
-                                putExtra(Intent.EXTRA_TEXT, buildDiagnosticReport(state.entries))
+                                putExtra(
+                                    Intent.EXTRA_TEXT,
+                                    buildDiagnosticReport(state.entries, state.crashReport),
+                                )
                             }
                             context.startActivity(
                                 Intent.createChooser(intent, shareLabel),
@@ -119,7 +123,7 @@ private fun DiagnosticsScreen(
                 }
                 when {
                     state.isLoading -> item { DiagnosticsLoading() }
-                    state.entries.isEmpty() -> item { DiagnosticsEmpty() }
+                    state.entries.isEmpty() && state.crashReport == null -> item { DiagnosticsEmpty() }
                     else -> items(state.entries, key = { "${it.timestampEpochMillis}:${it.route}" }) {
                         DiagnosticRow(it)
                     }

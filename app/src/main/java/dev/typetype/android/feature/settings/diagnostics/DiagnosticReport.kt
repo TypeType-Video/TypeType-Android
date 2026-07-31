@@ -1,15 +1,20 @@
 package dev.typetype.android.feature.settings.diagnostics
 
 import dev.typetype.android.domain.diagnostics.DiagnosticEntry
+import dev.typetype.android.domain.diagnostics.CrashReport
 import java.text.DateFormat
 import java.util.Date
 
-fun buildDiagnosticReport(entries: List<DiagnosticEntry>): String {
+fun buildDiagnosticReport(entries: List<DiagnosticEntry>, crashReport: CrashReport? = null): String {
     val formatter = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM)
     return buildString {
         appendLine("TypeType Android diagnostics")
-        appendLine("Redacted network metadata only")
+        appendLine("Redacted local diagnostics")
         appendLine()
+        crashReport?.let {
+            appendLine(buildCrashReportMarkdown(it))
+            appendLine()
+        }
         entries.asReversed().forEach { entry ->
             append(formatter.format(Date(entry.timestampEpochMillis)))
             append("  ${entry.method} ${entry.route}")

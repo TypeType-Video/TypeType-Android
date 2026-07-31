@@ -9,6 +9,8 @@ import dev.typetype.android.R
 import dev.typetype.android.core.ui.error.UserErrorMapper
 import dev.typetype.android.domain.diagnostics.DiagnosticEntry
 import dev.typetype.android.domain.diagnostics.DiagnosticsRepository
+import dev.typetype.android.domain.diagnostics.CrashReport
+import dev.typetype.android.domain.diagnostics.CrashReportRepository
 import dev.typetype.android.domain.support.SupportReportCategory
 import dev.typetype.android.domain.support.SupportReportDraft
 import dev.typetype.android.domain.support.SupportReportReceipt
@@ -21,6 +23,7 @@ import kotlinx.coroutines.launch
 
 data class DiagnosticsState(
     val entries: List<DiagnosticEntry> = emptyList(),
+    val crashReport: CrashReport? = null,
     val isLoading: Boolean = true,
     val reportAvailabilityLoaded: Boolean = false,
     val canSubmitReport: Boolean = false,
@@ -37,6 +40,7 @@ data class DiagnosticsState(
 @HiltViewModel
 class DiagnosticsViewModel @Inject constructor(
     private val repository: DiagnosticsRepository,
+    private val crashReportRepository: CrashReportRepository,
     private val supportRepository: SupportRepository,
     private val errorMapper: UserErrorMapper,
     @param:ApplicationContext private val context: Context,
@@ -53,14 +57,20 @@ class DiagnosticsViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
             val entries = repository.listCurrent()
-            _state.update { it.copy(entries = entries, isLoading = false) }
+            val crashReport = crashReportRepository.latestCurrent()
+            _state.update {
+                it.copy(entries = entries, crashReport = crashReport, isLoading = false)
+            }
         }
     }
 
     fun clear() {
         viewModelScope.launch {
             repository.clearCurrent()
-            _state.update { it.copy(entries = emptyList(), isLoading = false) }
+            crashReportRepository.clearCurrent()
+            _state.update {
+                it.copy(entries = emptyList(), crashReport = null, isLoading = false)
+            }
         }
     }
 
