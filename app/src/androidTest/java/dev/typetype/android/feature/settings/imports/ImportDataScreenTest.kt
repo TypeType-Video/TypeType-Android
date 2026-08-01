@@ -5,6 +5,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performScrollTo
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import dev.typetype.android.domain.imports.ImportDocument
 import dev.typetype.android.domain.imports.PipePipeRestoreSummary
@@ -26,7 +27,7 @@ class ImportDataScreenTest {
     fun selectedArchiveCanBeRestored() {
         setScreen(
             ImportDataState(
-                selectedDocument = ImportDocument(
+                selectedPipePipeDocument = ImportDocument(
                     uri = "content://backup",
                     displayName = "backup.zip",
                     sizeBytes = 1024L,
@@ -35,15 +36,15 @@ class ImportDataScreenTest {
             ),
         )
 
-        composeRule.onNodeWithText("backup.zip").assertIsDisplayed()
-        composeRule.onNodeWithText("Restore backup").assertIsEnabled()
+        composeRule.onNodeWithText("backup.zip").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Restore backup").performScrollTo().assertIsEnabled()
     }
 
     @Test
     fun completedRestoreShowsImportedCounts() {
         setScreen(
             ImportDataState(
-                summary = PipePipeRestoreSummary(
+                pipePipeSummary = PipePipeRestoreSummary(
                     history = 10,
                     subscriptions = 20,
                     playlists = 30,
@@ -56,8 +57,8 @@ class ImportDataScreenTest {
             ),
         )
 
-        composeRule.onNodeWithText("Import complete").assertIsDisplayed()
-        composeRule.onNodeWithText("60").assertIsDisplayed()
+        composeRule.onNodeWithText("Import complete").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("60").performScrollTo().assertIsDisplayed()
     }
 
     private fun setScreen(state: ImportDataState) {
@@ -66,9 +67,15 @@ class ImportDataScreenTest {
                 ImportDataScreen(
                     state = state,
                     onNavigateBack = {},
-                    onChooseFile = {},
-                    onRestore = {},
-                    onReset = {},
+                    onToggleCategory = {},
+                    onExportTypeType = {},
+                    onChooseTypeTypeBackup = {},
+                    onRestoreTypeType = {},
+                    onDismissTypeTypeRestore = {},
+                    onResetTypeTypeResult = {},
+                    onChoosePipePipeBackup = {},
+                    onRestorePipePipe = {},
+                    onResetPipePipeResult = {},
                 )
             }
         }
