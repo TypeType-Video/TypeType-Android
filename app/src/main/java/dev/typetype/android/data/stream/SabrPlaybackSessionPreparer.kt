@@ -1,6 +1,5 @@
 package dev.typetype.android.data.stream
 
-import dev.typetype.android.data.network.ServerResponseException
 import dev.typetype.android.data.network.AlwaysAvailablePlaybackNetworkObserver
 import dev.typetype.android.data.network.PlaybackNetworkObserver
 import dev.typetype.android.data.network.TypeTypeMediaApi
@@ -66,29 +65,22 @@ internal class SabrPlaybackSessionPreparer(
         startTimeMs: Long,
     ): SabrPlaybackSession {
         binding.requireTarget(target)
-        return try {
-            val response = transientPlaybackRequest(pause, network) {
-                api.seekSabrPlayback(
-                    binding.sessionId,
-                    target.controlRequest(startTimeMs),
-                )
-            }
-            response.requireControlEndpoint(
-                baseUrl,
-                listOf("sabr", "playback", binding.sessionId, "seek"),
-                "SABR seek left its server session endpoint",
+        val response = transientPlaybackRequest(pause, network) {
+            api.seekSabrPlayback(
+                binding.sessionId,
+                target.controlRequest(startTimeMs),
             )
-            if (!response.isSuccessful) throw serverResponseException(response)
-            val control = response.body()
-                ?.requireControlResponse(target, binding.sessionId, binding.generation)
-                ?: sabrContractMismatch("SABR returned an empty seek response")
-            waitForWindow(api, baseUrl, target, control, emptyList())
-        } catch (failure: ServerResponseException) {
-            if (failure.statusCode !in RECOVERABLE_CONTROL_STATUS_CODES) throw failure
-            createSessionWithRecovery(api, baseUrl, target, startTimeMs)
-        } catch (failure: SabrPlaybackRecoveryException) {
-            recoverSession(api, baseUrl, target, startTimeMs, failure)
         }
+        response.requireControlEndpoint(
+            baseUrl,
+            listOf("sabr", "playback", binding.sessionId, "seek"),
+            "SABR seek left its server session endpoint",
+        )
+        if (!response.isSuccessful) throw serverResponseException(response)
+        val control = response.body()
+            ?.requireControlResponse(target, binding.sessionId, binding.generation)
+            ?: sabrContractMismatch("SABR returned an empty seek response")
+        return waitForWindow(api, baseUrl, target, control, emptyList())
     }
 
     suspend fun refresh(

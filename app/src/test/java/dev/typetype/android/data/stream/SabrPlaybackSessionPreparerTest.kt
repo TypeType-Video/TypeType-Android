@@ -172,6 +172,28 @@ class SabrPlaybackSessionPreparerTest {
     }
 
     @Test
+    fun seekLeavesFreshSessionRecoveryToThePlaybackService() = runBlocking {
+        enqueueCreate(startTimeMs = 60_000, ready = true, generation = 1)
+        enqueuePosition(60_000, generation = 1)
+        server.enqueue(
+            jsonResponse(
+                """{"sessionId":"session","generation":1,"ready":false,"status":"failed","terminalError":"reload failed","recoveryAction":"retry_fresh_session"}""",
+            ),
+        )
+        enqueueCreate(startTimeMs = 60_000, ready = true, sessionId = "fresh")
+        enqueuePosition(60_000, sessionId = "fresh")
+        enqueuePrefetch(ready = true, sessionId = "fresh")
+        enqueueWindow(startTimeMs = 60_000, endOfStream = false, sessionId = "fresh")
+
+        val failure = runCatching {
+            preparer().seek(api, baseUrl, target(), binding(), 60_000)
+        }.exceptionOrNull()
+
+        assertTrue(failure is SabrPlaybackRecoveryException)
+        assertEquals(3, server.requestCount)
+    }
+
+    @Test
     fun serverRequestedLowerItagMustBelongToTheAndroidRecoverySet() = runBlocking {
         enqueueCreate()
         enqueuePosition(0)
