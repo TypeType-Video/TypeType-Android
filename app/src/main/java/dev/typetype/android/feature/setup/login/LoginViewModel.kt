@@ -11,6 +11,8 @@ import dev.typetype.android.R
 import dev.typetype.android.core.ui.error.UserErrorMapper
 import dev.typetype.android.core.ui.navigation.LoginRoute
 import dev.typetype.android.domain.auth.AuthRepository
+import dev.typetype.android.domain.auth.LoginMethods
+import dev.typetype.android.domain.auth.OidcCallbackRelay
 import dev.typetype.android.domain.server.ServerRepository
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
@@ -26,6 +28,7 @@ class LoginViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val errorMapper: UserErrorMapper,
     private val authRepository: AuthRepository,
+    private val oidcCallbackRelay: OidcCallbackRelay,
     private val serverRepository: ServerRepository,
 ) : ViewModel() {
 
@@ -37,29 +40,47 @@ class LoginViewModel @Inject constructor(
 
     private val eventsChannel = Channel<LoginEvent>(Channel.BUFFERED)
     val events = eventsChannel.receiveAsFlow()
+    private var oidcCallbackInProgress = false
+    private var oidcAutoStartAttempted = false
 
     init {
         viewModelScope.launch {
+            oidcCallbackRelay.callbacks.collect { callbackUrl ->
+                onAction(LoginAction.OnOidcCallback(callbackUrl))
+                oidcCallbackRelay.markConsumed(callbackUrl)
+            }
+        }
+        viewModelScope.launch {
             val server = serverRepository.getServer(serverId)
-            _state.update { current ->
-                if (server == null) {
+            if (server == null) {
+                _state.update { current ->
                     current.copy(
                         isLoadingMethods = false,
                         errorMessage = context.getString(R.string.login_instance_not_found),
                     )
-                } else {
-                    current.copy(
-                        isLoadingMethods = false,
-                        instanceName = server.displayName,
-                        localLoginEnabled = server.localLoginEnabled,
-                        guestAllowed = server.guestAllowed,
-                        registrationAllowed = server.registrationAllowed,
-                        oidcEnabled = server.oidcEnabled,
-                        oidcProviderName = server.oidcProviderName,
-                        oidcAutoRedirect = server.oidcAutoRedirect,
-                    )
                 }
+                return@launch
             }
+            applyLoginMethods(
+                instanceName = server.displayName,
+                guestAllowed = server.guestAllowed,
+                registrationAllowed = server.registrationAllowed,
+                methods = LoginMethods(
+                    localLoginEnabled = server.localLoginEnabled,
+                    oidcEnabled = server.oidcEnabled,
+                    oidcProviderName = server.oidcProviderName,
+                    oidcAutoRedirect = server.oidcAutoRedirect,
+                ),
+            )
+            authRepository.getLoginMethods(serverId).onSuccess { methods ->
+                applyLoginMethods(
+                    instanceName = server.displayName,
+                    guestAllowed = server.guestAllowed,
+                    registrationAllowed = server.registrationAllowed,
+                    methods = methods,
+                )
+            }
+            startOidcAutomatically()
         }
     }
 
@@ -82,6 +103,7 @@ class LoginViewModel @Inject constructor(
                 )
             }
             LoginAction.OnOidcCancelled -> {
+                if (oidcCallbackInProgress || oidcCallbackRelay.hasPendingCallback) return
                 _state.update {
                     it.copy(isSubmitting = false, errorMessage = null, errorRequestId = null)
                 }
@@ -196,6 +218,11 @@ class LoginViewModel @Inject constructor(
     }
 
     private fun finishOidc(callbackUrl: String) {
+        if (oidcCallbackInProgress) return
+        oidcCallbackInProgress = true
+        _state.update {
+            it.copy(isSubmitting = true, errorMessage = null, errorRequestId = null)
+        }
         viewModelScope.launch {
             authRepository.finishOidc(serverId, callbackUrl).fold(
                 onSuccess = {
@@ -203,6 +230,7 @@ class LoginViewModel @Inject constructor(
                     emit(LoginEvent.NavigateToHome)
                 },
                 onFailure = { throwable ->
+                    oidcCallbackInProgress = false
                     val details = errorMapper.authenticationDetails(
                         throwable,
                         R.string.login_oidc_finish_failed,
@@ -217,6 +245,41 @@ class LoginViewModel @Inject constructor(
                 },
             )
         }
+    }
+
+    private fun applyLoginMethods(
+        instanceName: String,
+        guestAllowed: Boolean,
+        registrationAllowed: Boolean,
+        methods: LoginMethods,
+    ) {
+        _state.update { current ->
+            current.copy(
+                isLoadingMethods = false,
+                instanceName = instanceName,
+                localLoginEnabled = methods.localLoginEnabled,
+                guestAllowed = guestAllowed,
+                registrationAllowed = registrationAllowed,
+                oidcEnabled = methods.oidcEnabled,
+                oidcProviderName = methods.oidcProviderName,
+                oidcAutoRedirect = methods.oidcAutoRedirect,
+            )
+        }
+    }
+
+    private fun startOidcAutomatically() {
+        val current = _state.value
+        if (
+            oidcAutoStartAttempted ||
+            oidcCallbackInProgress ||
+            !current.oidcEnabled ||
+            !current.oidcAutoRedirect ||
+            authRepository.hasPendingOidc(serverId)
+        ) {
+            return
+        }
+        oidcAutoStartAttempted = true
+        startOidc()
     }
 
     private fun emit(event: LoginEvent) {

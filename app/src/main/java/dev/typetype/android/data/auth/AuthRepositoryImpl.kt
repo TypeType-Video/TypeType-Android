@@ -13,8 +13,10 @@ import dev.typetype.android.data.network.dto.LoginRequest
 import dev.typetype.android.data.network.dto.OidcCallbackRequest
 import dev.typetype.android.data.network.dto.ResetPasswordRequest
 import dev.typetype.android.domain.auth.AuthRepository
+import dev.typetype.android.domain.auth.LoginMethods
 import dev.typetype.android.domain.auth.OidcAuthorization
 import dev.typetype.android.domain.auth.OidcCallbackParser
+import dev.typetype.android.domain.auth.OidcRedirect
 import dev.typetype.android.domain.auth.SessionStatus
 import dev.typetype.android.domain.server.ServerRepository
 import dev.typetype.android.domain.setup.ServerAddress
@@ -134,12 +136,26 @@ class AuthRepositoryImpl @Inject constructor(
         return if (failure == null) Result.success(Unit) else Result.failure(failure)
     }
 
+    override suspend fun getLoginMethods(serverId: String): Result<LoginMethods> = runCatching {
+        val server = requireNotNull(serverRepository.getServer(serverId)) { "Instance not found" }
+        val response = withContext(Dispatchers.IO) {
+            retrofitFactory.createWithoutAutomaticAuthentication(server.baseUrl).oidcStatus()
+        }
+        response.requireSuccessfulResponse()
+        val status = response.body() ?: error("The instance returned empty sign-in methods")
+        LoginMethods(
+            localLoginEnabled = status.localLoginEnabled,
+            oidcEnabled = status.enabled,
+            oidcProviderName = status.providerName,
+            oidcAutoRedirect = status.autoRedirect,
+        )
+    }
+
     override suspend fun startOidc(serverId: String): Result<OidcAuthorization> = runCatching {
         val server = requireNotNull(serverRepository.getServer(serverId)) { "Instance not found" }
-        require(server.oidcEnabled) { "OIDC is not enabled on this instance" }
         cookieJar.beginAuthentication(serverId, server.baseUrl)
         val api = retrofitFactory.createWithoutAutomaticAuthentication(server.baseUrl)
-        val response = withContext(Dispatchers.IO) { api.startOidc(OIDC_REDIRECT_URI) }
+        val response = withContext(Dispatchers.IO) { api.startOidc(OidcRedirect.uri) }
         response.requireSuccessfulResponse()
         val authorizationUrl = response.body()?.authorizationUrl
             ?: error("The instance returned an empty authorization URL")
@@ -153,7 +169,7 @@ class AuthRepositoryImpl @Inject constructor(
         oidcTransactionStore.start(serverId, state)
         OidcAuthorization(
             authorizationUrl = authorizationUrl,
-            redirectScheme = OIDC_REDIRECT_SCHEME,
+            redirectScheme = OidcRedirect.scheme,
         )
     }.onFailure {
         oidcTransactionStore.clear(serverId)
@@ -161,7 +177,7 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun finishOidc(serverId: String, callbackUrl: String): Result<Unit> = runCatching {
-        val callback = OidcCallbackParser.parse(callbackUrl, OIDC_REDIRECT_SCHEME)
+        val callback = OidcCallbackParser.parse(callbackUrl, OidcRedirect.scheme)
         oidcTransactionStore.requireMatches(serverId, callback.state)
         val server = requireNotNull(serverRepository.getServer(serverId)) { "Instance not found" }
         cookieJar.resumeAuthentication(serverId, server.baseUrl)
@@ -170,7 +186,7 @@ class AuthRepositoryImpl @Inject constructor(
                 OidcCallbackRequest(
                     code = callback.code,
                     state = callback.state,
-                    redirectUri = OIDC_REDIRECT_URI,
+                    redirectUri = OidcRedirect.uri,
                 ),
             )
         }
@@ -189,6 +205,8 @@ class AuthRepositoryImpl @Inject constructor(
         cookieJar.cancelAuthentication(serverId)
     }
 
+    override fun hasPendingOidc(serverId: String): Boolean = oidcTransactionStore.hasPending(serverId)
+
     private suspend fun establishSession(serverId: String, api: dev.typetype.android.data.network.TypeTypeApi, token: String) {
         val profileResponse = withContext(Dispatchers.IO) { api.me("Bearer $token") }
         profileResponse.requireSuccessfulResponse()
@@ -202,8 +220,4 @@ class AuthRepositoryImpl @Inject constructor(
         serverRepository.setCurrentServer(serverId)
     }
 
-    private companion object {
-        const val OIDC_REDIRECT_SCHEME = "dev.typetype.android"
-        const val OIDC_REDIRECT_URI = "$OIDC_REDIRECT_SCHEME://oidc/callback"
-    }
 }

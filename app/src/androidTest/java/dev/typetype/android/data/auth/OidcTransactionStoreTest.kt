@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -15,6 +16,7 @@ class OidcTransactionStoreTest {
         val initial = OidcTransactionStore(context)
         initial.clear(SERVER_ID)
         initial.start(SERVER_ID, EXPECTED_STATE)
+        assertTrue(initial.hasPending(SERVER_ID))
 
         val recreated = OidcTransactionStore(context)
         recreated.requireMatches(SERVER_ID, EXPECTED_STATE)

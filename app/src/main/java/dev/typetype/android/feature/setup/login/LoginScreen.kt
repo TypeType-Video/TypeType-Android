@@ -1,5 +1,6 @@
 package dev.typetype.android.feature.setup.login
 
+import android.content.ActivityNotFoundException
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.browser.auth.AuthTabIntent
 import androidx.browser.customtabs.CustomTabsClient
@@ -80,17 +81,19 @@ fun LoginRoute(
                     onNavigateToResetPassword(event.serverId)
                 is LoginEvent.LaunchOidc -> {
                     val provider = CustomTabsClient.getPackageName(context, null)
-                    if (provider == null || !CustomTabsClient.isAuthTabSupported(context, provider)) {
-                        viewModel.onAction(LoginAction.OnOidcBrowserUnavailable)
-                    } else {
+                    try {
                         AuthTabIntent.Builder()
                             .build()
-                            .also { it.intent.setPackage(provider) }
+                            .also { authIntent ->
+                                provider?.let(authIntent.intent::setPackage)
+                            }
                             .launch(
                                 authLauncher,
                                 event.authorizationUrl.toUri(),
                                 event.redirectScheme,
                             )
+                    } catch (_: ActivityNotFoundException) {
+                        viewModel.onAction(LoginAction.OnOidcBrowserUnavailable)
                     }
                 }
             }

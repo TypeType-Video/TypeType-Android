@@ -1,7 +1,9 @@
 package dev.typetype.android.domain.auth
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class OidcCallbackParserTest {
@@ -52,5 +54,12 @@ class OidcCallbackParserTest {
                 "dev.typetype.android",
             )
         }
+    }
+
+    @Test
+    fun `recognizes only the application callback destination`() {
+        assertTrue(OidcRedirect.matches("${OidcRedirect.uri}?code=a&state=b"))
+        assertFalse(OidcRedirect.matches("${OidcRedirect.scheme}://other/callback?code=a&state=b"))
+        assertFalse(OidcRedirect.matches("https://example.com/oidc/callback?code=a&state=b"))
     }
 }
