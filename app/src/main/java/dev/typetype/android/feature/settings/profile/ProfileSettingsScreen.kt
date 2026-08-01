@@ -52,7 +52,7 @@ fun ProfileSettingsRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val avatarPicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent(),
+        contract = ActivityResultContracts.OpenDocument(),
     ) { uri -> uri?.let(viewModel::uploadAvatar) }
     val snackbarHost = LocalAppSnackbarHost.current
     val savedMessage = stringResource(R.string.settings_profile_save_success)
@@ -105,7 +105,7 @@ fun ProfileSettingsRoute(
                             isSaving = state.isAvatarSaving,
                             errorKey = state.avatarErrorKey,
                             errorRequestId = state.avatarErrorRequestId,
-                            onSelectFile = { avatarPicker.launch("image/*") },
+                            onSelectFile = { avatarPicker.launch(supportedAvatarMimeTypes()) },
                         )
                     }
                     item {
