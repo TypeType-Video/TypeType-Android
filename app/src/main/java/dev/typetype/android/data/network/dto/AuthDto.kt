@@ -43,6 +43,14 @@ data class OidcStartResponse(
 )
 
 @Serializable
+data class OidcStatusResponse(
+    val enabled: Boolean,
+    val providerName: String? = null,
+    val localLoginEnabled: Boolean,
+    val autoRedirect: Boolean,
+)
+
+@Serializable
 data class OidcCallbackRequest(
     val code: String,
     val state: String,

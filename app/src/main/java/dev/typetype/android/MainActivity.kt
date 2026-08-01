@@ -26,6 +26,8 @@ import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.AndroidEntryPoint
 import dev.typetype.android.core.ui.components.FullScreenLoader
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
+import dev.typetype.android.domain.auth.OidcCallbackRelay
+import dev.typetype.android.domain.auth.OidcRedirect
 import dev.typetype.android.feature.player.components.PIP_ACTION_AUDIO_ONLY
 import dev.typetype.android.feature.player.components.PIP_ACTION_FORWARD
 import dev.typetype.android.feature.player.components.PIP_ACTION_PLAY_PAUSE
@@ -44,6 +46,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var activeSessionRepository: ActiveSessionRepository
+
+    @Inject
+    lateinit var oidcCallbackRelay: OidcCallbackRelay
 
     private val viewModel: MainViewModel by viewModels()
     private var activityReportingJob: Job? = null
@@ -77,6 +82,7 @@ class MainActivity : ComponentActivity() {
             }
         }
         super.onCreate(savedInstanceState)
+        receiveOidcCallback(intent)
         registerPipReceiver()
         setContent {
             val preferences by viewModel.preferences.collectAsStateWithLifecycle()
@@ -107,6 +113,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        receiveOidcCallback(intent)
+    }
+
     override fun onStop() {
         activityReportingJob?.cancel()
         activityReportingJob = null
@@ -131,6 +143,13 @@ class MainActivity : ComponentActivity() {
             filter,
             ContextCompat.RECEIVER_NOT_EXPORTED,
         )
+    }
+
+    private fun receiveOidcCallback(intent: Intent) {
+        val callbackUrl = intent.dataString ?: return
+        if (OidcRedirect.matches(callbackUrl)) {
+            oidcCallbackRelay.submit(callbackUrl)
+        }
     }
 
     private fun enterAudioOnlyMode() {

@@ -44,6 +44,20 @@ class OidcTransactionStore @Inject constructor(
         }
     }
 
+    fun hasPending(serverId: String): Boolean {
+        val expectedServerId = preferences.getString(KEY_SERVER_ID, null)
+        val expectedHash = preferences.getString(KEY_STATE_HASH, null)
+        val startedAt = preferences.getLong(KEY_STARTED_AT, 0L)
+        val isCurrent = expectedServerId == serverId &&
+            expectedHash != null &&
+            startedAt > 0L &&
+            System.currentTimeMillis() - startedAt <= MAX_AGE_MILLIS
+        if (!isCurrent && expectedServerId == serverId) {
+            preferences.edit { clear() }
+        }
+        return isCurrent
+    }
+
     private fun stateHash(state: String): String = Base64.encodeToString(
         MessageDigest.getInstance("SHA-256").digest(state.toByteArray(Charsets.UTF_8)),
         Base64.NO_WRAP,

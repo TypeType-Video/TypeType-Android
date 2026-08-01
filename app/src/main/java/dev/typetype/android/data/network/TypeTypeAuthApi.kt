@@ -5,6 +5,7 @@ import dev.typetype.android.data.network.dto.LoginRequest
 import dev.typetype.android.data.network.dto.OidcCallbackRequest
 import dev.typetype.android.data.network.dto.OidcCallbackResponse
 import dev.typetype.android.data.network.dto.OidcStartResponse
+import dev.typetype.android.data.network.dto.OidcStatusResponse
 import dev.typetype.android.data.network.dto.RefreshRequest
 import dev.typetype.android.data.network.dto.ResetPasswordRequest
 import dev.typetype.android.data.network.dto.RegisterRequest
@@ -41,6 +42,9 @@ interface TypeTypeAuthApi {
         @Query("redirectUri") redirectUri: String,
         @Query("returnTo") returnTo: String = "/",
     ): Response<OidcStartResponse>
+
+    @GET("auth/oidc/status")
+    suspend fun oidcStatus(): Response<OidcStatusResponse>
 
     @POST("auth/oidc/callback")
     suspend fun finishOidc(@Body body: OidcCallbackRequest): Response<OidcCallbackResponse>
