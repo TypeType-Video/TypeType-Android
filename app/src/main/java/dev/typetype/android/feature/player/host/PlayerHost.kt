@@ -94,6 +94,11 @@ fun PlayerHost(
                 onFullscreenChange(false)
             }
         }
+        LaunchedEffect(isInPip, isFullscreen) {
+            if (isInPip && isFullscreen) {
+                onFullscreenChange(false)
+            }
+        }
 
         content()
 
