@@ -111,9 +111,13 @@ private object SabrMediaTransportContract {
         responseUrl: String,
         binding: SabrPlaybackBinding,
     ) {
-        val request = requestUrl.toHttpUrlOrNull() ?: invalidSabrMediaTransport()
-        val response = responseUrl.toHttpUrlOrNull() ?: invalidSabrMediaTransport()
-        if (request != response) invalidSabrMediaTransport()
+        val request = requestUrl.toHttpUrlOrNull()
+            ?: invalidSabrMediaTransport(SabrMediaTransportMismatch.RequestUrl)
+        val response = responseUrl.toHttpUrlOrNull()
+            ?: invalidSabrMediaTransport(SabrMediaTransportMismatch.ResponseUrl)
+        if (request != response) {
+            invalidSabrMediaTransport(SabrMediaTransportMismatch.ResponseRedirect)
+        }
         request.requireBinding(binding)
     }
 
@@ -124,19 +128,22 @@ private object SabrMediaTransportContract {
         val itag = segments.getOrNull(playbackIndex + 2)?.toIntOrNull()
         if (
             playbackIndex < 1 || segments.getOrNull(playbackIndex - 1) != "sabr" ||
-            sessionId != binding.sessionId || itag !in setOf(binding.videoItag, binding.audioItag)
+            sessionId != binding.sessionId
         ) {
-            invalidSabrMediaTransport()
+            invalidSabrMediaTransport(SabrMediaTransportMismatch.Session)
+        }
+        if (itag !in setOf(binding.videoItag, binding.audioItag)) {
+            invalidSabrMediaTransport(SabrMediaTransportMismatch.Track)
         }
         if (queryParameterNames.any { it !in ALLOWED_SABR_MEDIA_QUERY_PARAMETERS }) {
-            invalidSabrMediaTransport()
+            invalidSabrMediaTransport(SabrMediaTransportMismatch.Query)
         }
         if (queryParameterValues("generation") != listOf(binding.generation.toString())) {
-            invalidSabrMediaTransport()
+            invalidSabrMediaTransport(SabrMediaTransportMismatch.Generation)
         }
         val sessionValues = queryParameterValues("session")
         if (sessionValues.isNotEmpty() && sessionValues != listOf(binding.sessionId)) {
-            invalidSabrMediaTransport()
+            invalidSabrMediaTransport(SabrMediaTransportMismatch.SessionQuery)
         }
     }
 }
@@ -181,13 +188,25 @@ internal fun Map<String, List<String>>.hasJsonContentType(): Boolean =
 private const val SABR_RETRY_RESPONSE_CODE = 202
 private const val SABR_RETRY_RESPONSE_MESSAGE = "SABR media is not ready"
 private const val MAX_ERROR_BODY_BYTES = 8 * 1024
-private const val SABR_CONTRACT_FAILURE_CODE = "youtube_sabr_contract_mismatch"
+internal const val SABR_CONTRACT_FAILURE_CODE = "youtube_sabr_contract_mismatch"
 private val ALLOWED_SABR_MEDIA_QUERY_PARAMETERS = setOf("session", "generation")
 
-private fun invalidSabrMediaTransport(): Nothing = throw SabrMediaTransportFailure()
+private fun invalidSabrMediaTransport(mismatch: SabrMediaTransportMismatch): Nothing =
+    throw SabrMediaTransportFailure(mismatch)
 
-private class SabrMediaTransportFailure :
-    IOException("SABR media left its validated playback session"),
+private enum class SabrMediaTransportMismatch(val wireValue: String) {
+    RequestUrl("request_url"),
+    ResponseUrl("response_url"),
+    ResponseRedirect("response_redirect"),
+    Session("session"),
+    Track("track"),
+    Query("query"),
+    Generation("generation"),
+    SessionQuery("session_query"),
+}
+
+private class SabrMediaTransportFailure(mismatch: SabrMediaTransportMismatch) :
+    IOException("SABR media contract mismatch: ${mismatch.wireValue}"),
     CodedFailure {
     override val failureCode: String = SABR_CONTRACT_FAILURE_CODE
     override val requestId: String? = null

@@ -1,5 +1,6 @@
 package dev.typetype.android.services
 
+import dev.typetype.android.core.error.CodedFailure
 import dev.typetype.android.data.network.ServerError
 import dev.typetype.android.data.network.ServerResponseException
 import dev.typetype.android.data.stream.SabrPlaybackRecoveryException
@@ -128,6 +129,17 @@ class SabrPlaybackFailureRecoveryTest {
                 SabrPlaybackRecoveryException("failed", null, emptyList()),
             ).isRecoverableSabrSessionFailure(),
         )
+    }
+
+    @Test
+    fun `media contract mismatch creates a fresh bounded session`() {
+        val mismatch = object : IOException(), CodedFailure {
+            override val failureCode: String = SABR_CONTRACT_FAILURE_CODE
+            override val requestId: String? = null
+            override val statusCode: Int? = null
+        }
+
+        assertTrue(IOException("source", mismatch).isRecoverableSabrSessionFailure())
     }
 
     @Test

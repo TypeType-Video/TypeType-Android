@@ -155,6 +155,8 @@ class SabrPlaybackContractDataSourceAndroidTest {
         }.exceptionOrNull()
 
         assertTrue(failure is IOException)
+        assertEquals("SABR media contract mismatch: response_redirect", failure?.message)
+        assertTrue(requireNotNull(failure).isRecoverableSabrSessionFailure())
     }
 
     @Test

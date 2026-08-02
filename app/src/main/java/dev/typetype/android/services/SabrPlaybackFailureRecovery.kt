@@ -112,7 +112,12 @@ internal fun Throwable.isRecoverableSabrSessionFailure(): Boolean {
         val recovery = current as? SabrPlaybackRecoveryException
         if (recovery?.action in RECOVERABLE_WINDOW_ACTIONS) return true
         val coded = current as? CodedFailure
-        if (coded?.statusCode?.isRecoverableSabrSessionStatus() == true) return true
+        if (
+            coded?.failureCode == SABR_CONTRACT_FAILURE_CODE ||
+            coded?.statusCode?.isRecoverableSabrSessionStatus() == true
+        ) {
+            return true
+        }
         val response = current as? HttpDataSource.InvalidResponseCodeException
         if (
             response?.responseCode?.isRecoverableSabrSessionStatus() == true &&

@@ -2,6 +2,7 @@ package dev.typetype.android.services
 
 import android.os.Bundle
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import dev.typetype.android.domain.stream.SabrPlaybackSession
 import dev.typetype.android.domain.stream.SabrPlaybackTarget
 import dev.typetype.android.domain.stream.binding
@@ -83,3 +84,6 @@ internal fun sabrPlaybackMediaUri(sessionId: String): String {
     require(sessionId.isNotBlank())
     return "typetype-sabr://playback/$sessionId"
 }
+
+internal fun Player.currentSabrMediaTimeMs(state: SabrPlaybackSeekState): Long? =
+    sabrMediaTimeMs(currentPosition, state.liveActive)
