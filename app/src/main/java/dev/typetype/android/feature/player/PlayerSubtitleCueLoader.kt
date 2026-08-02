@@ -4,7 +4,7 @@ import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.extractor.text.CuesWithTiming
 import androidx.media3.extractor.text.SubtitleParser
-import androidx.media3.extractor.text.webvtt.WebvttParser
+import androidx.media3.extractor.text.ttml.TtmlParser
 import dev.typetype.android.domain.stream.StreamSubtitleSource
 import dev.typetype.android.domain.stream.SubtitleRepository
 import javax.inject.Inject
@@ -19,7 +19,7 @@ class PlayerSubtitleCueLoader @Inject constructor(
     suspend fun load(source: StreamSubtitleSource): Result<List<CuesWithTiming>> =
         repository.load(source).mapCatching { bytes ->
             buildList {
-                WebvttParser().parse(
+                TtmlParser().parse(
                     bytes,
                     SubtitleParser.OutputOptions.allCues(),
                     ::add,

@@ -155,7 +155,8 @@ internal fun PlayerSurfaceBox(
                 player = player,
                 surfaceKey = surfaceKey,
                 resizeMode = gestureState.resizeMode.value,
-                showNativeSubtitles = isInPip && selectedSubtitleKey != null,
+                showNativeSubtitles = isInPip && externalSubtitle == null &&
+                    selectedSubtitleKey != null,
                 modifier = Modifier.fillMaxSize(),
             )
         }

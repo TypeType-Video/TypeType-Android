@@ -10,7 +10,7 @@ internal fun List<StreamSubtitleSource>.toSubtitleConfigurations():
     distinctBy(StreamSubtitleSource::key).map { source ->
         MediaItem.SubtitleConfiguration.Builder(source.url.toUri())
             .setId(source.key)
-            .setMimeType(source.mimeType.ifBlank { MimeTypes.TEXT_VTT })
+            .setMimeType(source.mimeType.ifBlank { MimeTypes.APPLICATION_TTML })
             .setLanguage(source.languageTag.takeIf(String::isNotBlank))
             .setLabel(source.displayLanguageName)
             .setSelectionFlags(0)
