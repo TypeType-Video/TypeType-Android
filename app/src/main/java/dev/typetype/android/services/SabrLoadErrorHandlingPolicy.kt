@@ -133,4 +133,3 @@ private const val MAX_SEGMENT_RETRY_DELAY_MS = 3_000L
 private const val MAX_CAUSE_DEPTH = 8
 private const val MAX_SEGMENT_RETRIES = 59
 private const val MAX_MEDIA_LOAD_RETRIES = 24
-private const val SABR_CONTRACT_FAILURE_CODE = "youtube_sabr_contract_mismatch"

@@ -64,6 +64,24 @@ class PlaybackNetworkRecoveryGateTest {
     }
 
     @Test
+    fun `route changes do not overlap an active recovery`() {
+        val gate = PlaybackNetworkRecoveryGate()
+        gate.transition("video")
+        gate.networkChanged(PlaybackNetworkState(false, 1L))
+
+        assertEquals(
+            PlaybackNetworkRecoveryAction.RetryAfter(0L),
+            gate.networkChanged(PlaybackNetworkState(true, 2L)),
+        )
+        assertTrue(gate.startRecovery("video"))
+        assertFalse(gate.startRecovery("video"))
+        assertEquals(
+            PlaybackNetworkRecoveryAction.Wait,
+            gate.networkChanged(PlaybackNetworkState(true, 3L)),
+        )
+    }
+
+    @Test
     fun `media transition prevents a stale retry`() {
         val gate = PlaybackNetworkRecoveryGate()
         gate.failed("first", PlaybackNetworkState(false, 0L))

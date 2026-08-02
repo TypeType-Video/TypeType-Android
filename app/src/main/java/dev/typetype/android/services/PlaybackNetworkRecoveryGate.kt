@@ -16,6 +16,7 @@ internal sealed interface PlaybackNetworkRecoveryAction {
 internal class PlaybackNetworkRecoveryGate {
     private var mediaId: String? = null
     private var pending = false
+    private var recoveryInFlight = false
     private var networkGeneration = Long.MIN_VALUE
     private var attempt = 0
 
@@ -23,6 +24,7 @@ internal class PlaybackNetworkRecoveryGate {
         if (nextMediaId == mediaId) return
         mediaId = nextMediaId
         pending = false
+        recoveryInFlight = false
         networkGeneration = Long.MIN_VALUE
         attempt = 0
     }
@@ -33,6 +35,7 @@ internal class PlaybackNetworkRecoveryGate {
     ): PlaybackNetworkRecoveryAction {
         transition(failedMediaId)
         pending = true
+        recoveryInFlight = false
         if (networkGeneration != network.generation) {
             networkGeneration = network.generation
             attempt = 0
@@ -47,6 +50,7 @@ internal class PlaybackNetworkRecoveryGate {
     fun networkChanged(network: PlaybackNetworkState): PlaybackNetworkRecoveryAction {
         if (!network.isAvailable) {
             pending = mediaId != null
+            recoveryInFlight = false
             networkGeneration = network.generation
             return PlaybackNetworkRecoveryAction.Wait
         }
@@ -54,12 +58,20 @@ internal class PlaybackNetworkRecoveryGate {
             return PlaybackNetworkRecoveryAction.Wait
         }
         networkGeneration = network.generation
+        if (recoveryInFlight) return PlaybackNetworkRecoveryAction.Wait
         attempt = 1
         return PlaybackNetworkRecoveryAction.RetryAfter(0L)
     }
 
+    fun startRecovery(expectedMediaId: String): Boolean {
+        if (!isPending(expectedMediaId) || recoveryInFlight) return false
+        recoveryInFlight = true
+        return true
+    }
+
     fun recovered() {
         pending = false
+        recoveryInFlight = false
         attempt = 0
     }
 
