@@ -35,9 +35,18 @@ data class SearchPlaylist(
 data class SearchFilters(
     val content: List<SearchFilterOption>,
     val sort: List<SearchFilterOption>,
+    val groups: List<SearchFilterGroup> = emptyList(),
 )
 
 data class SearchFilterOption(
     val value: String,
     val label: String,
+    val isDefault: Boolean = false,
+)
+
+data class SearchFilterGroup(
+    val key: String,
+    val label: String,
+    val multiSelect: Boolean,
+    val options: List<SearchFilterOption>,
 )
