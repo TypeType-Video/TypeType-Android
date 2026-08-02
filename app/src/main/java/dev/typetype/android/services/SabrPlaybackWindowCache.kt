@@ -12,7 +12,8 @@ class SabrPlaybackWindowCache @Inject constructor() {
     private val sessions = ConcurrentHashMap<Key, SabrPlaybackSession>()
 
     fun put(session: SabrPlaybackSession) {
-        if (session.audioWindow == null) return
+        if (session.audioWindow?.segments.isNullOrEmpty()) return
+        if (session.videoWindow != null && session.videoWindow.segments.isEmpty()) return
         sessions[session.binding.toKey()] = session
         sessions.keys.removeIf { it.sessionId == session.sessionId && it.generation != session.generation }
     }

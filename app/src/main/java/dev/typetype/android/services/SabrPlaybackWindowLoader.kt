@@ -30,8 +30,10 @@ internal class SabrPlaybackWindowLoader(
     private val transportState: SabrPlaybackTransportState,
     private val recoveryDispatcher: SabrPlaybackRecoveryDispatcher,
     private val playbackRate: () -> Float,
+    initialWindow: PlaybackWindow? = null,
 ) : PlaybackWindowLoader {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private var currentWindow = initialWindow
 
     override fun load(
         request: () -> PlaybackWindowRequest,
@@ -109,7 +111,7 @@ internal class SabrPlaybackWindowLoader(
                     "SABR changed the audio track during active playback"
                 }
                 transportState.accept(session)
-                session.toPlayerWindow()
+                session.toPlayerWindow(currentWindow).also { currentWindow = it }
             }
             callback(result)
         }
@@ -117,15 +119,21 @@ internal class SabrPlaybackWindowLoader(
     }
 }
 
-internal fun SabrPlaybackSession.toPlayerWindow(): PlaybackWindow {
+internal fun SabrPlaybackSession.toPlayerWindow(
+    previous: PlaybackWindow? = null,
+): PlaybackWindow {
     val audio = requireNotNull(audioWindow) { "SABR omitted its validated audio window" }
     return PlaybackWindow(
         generation = generation,
         durationUs = durationMs.toMicroseconds(),
         startPositionUs = startTimeMs.toMicroseconds(),
         endOfStream = endOfStream,
-        audio = audio.toPlayerTrack(PlaybackTrackKind.Audio),
-        video = videoWindow?.toPlayerTrack(PlaybackTrackKind.Video),
+        audio = audio.toPlayerTrack(PlaybackTrackKind.Audio, previous?.audio, endOfStream),
+        video = videoWindow?.toPlayerTrack(
+            PlaybackTrackKind.Video,
+            previous?.video,
+            endOfStream,
+        ),
         live = live?.let {
             PlaybackLiveWindow(
                 active = it.active,
@@ -140,19 +148,36 @@ internal fun SabrPlaybackSession.toPlayerWindow(): PlaybackWindow {
     )
 }
 
-private fun SabrPlaybackWindowTrack.toPlayerTrack(kind: PlaybackTrackKind) = PlaybackTrack(
-    kind = kind,
-    id = itag.toString(),
-    mimeType = mimeType,
-    initializationUrl = initializationUrl,
-    segments = segments.map {
-        PlaybackSegment(
-            url = it.url,
-            startPositionUs = it.startMs.toMicroseconds(),
-            durationUs = it.durationMs.toMicroseconds(),
-        )
-    },
-)
+private fun SabrPlaybackWindowTrack.toPlayerTrack(
+    kind: PlaybackTrackKind,
+    previous: PlaybackTrack?,
+    endOfStream: Boolean,
+): PlaybackTrack {
+    if (segments.isEmpty()) {
+        check(endOfStream) { "SABR returned an empty active playback window" }
+        return requireNotNull(previous) { "SABR ended before providing a playback window" }
+            .also {
+                check(
+                    it.kind == kind &&
+                        it.id == itag.toString() &&
+                        it.mimeType == mimeType,
+                ) { "SABR changed a terminal playback track" }
+            }
+    }
+    return PlaybackTrack(
+        kind = kind,
+        id = itag.toString(),
+        mimeType = mimeType,
+        initializationUrl = initializationUrl,
+        segments = segments.map {
+            PlaybackSegment(
+                url = it.url,
+                startPositionUs = it.startMs.toMicroseconds(),
+                durationUs = it.durationMs.toMicroseconds(),
+            )
+        },
+    )
+}
 
 private fun Long.toMicroseconds(): Long = Math.multiplyExact(this, 1_000L)
 

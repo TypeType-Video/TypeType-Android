@@ -53,29 +53,53 @@ internal fun SabrPlaybackWindowResponseDto.requireWindowResponse(
             },
         )
     }
+    val terminalWindow = endOfStream == true
     val audioTrack = audio ?: sabrContractMismatch("SABR omitted its audio window")
-    val audioWindow = audioTrack.requireTrack(baseUrl, control, target.audioItag, "audio")
+    val audioWindow = audioTrack.requireTrack(
+        baseUrl,
+        control,
+        target.audioItag,
+        "audio",
+        terminalWindow,
+    )
     val videoWindow = when {
         target.audioOnly && video != null ->
             sabrContractMismatch("SABR returned video in audio-only mode")
         target.audioOnly -> null
         else -> (video ?: sabrContractMismatch("SABR omitted its video window"))
-            .requireTrack(baseUrl, control, target.videoItag, "video")
+            .requireTrack(baseUrl, control, target.videoItag, "video", terminalWindow)
     }
-    val startMs = startTimeMs ?: control.startTimeMs
-    val windowEndMs = videoWindow?.let { minOf(audioWindow.endMs, it.endMs) }
-        ?: audioWindow.endMs
     val liveWindow = live.requireReadyLive(target)
     val presentationDurationMs = if (liveWindow?.active == true) {
-        maxOf(durationMs ?: 0L, liveWindow.headTimeMs, windowEndMs)
+        maxOf(
+            durationMs ?: 0L,
+            liveWindow.headTimeMs,
+            audioWindow.endMsOrNull() ?: 0L,
+            videoWindow?.endMsOrNull() ?: 0L,
+        )
     } else {
         durationMs
             ?.takeIf { it > 0L }
             ?: sabrContractMismatch("SABR omitted its presentation duration")
     }
+    val trackEnds = listOfNotNull(
+        audioWindow.endMsOrNull(),
+        videoWindow?.endMsOrNull(),
+    )
+    val windowEndMs = trackEnds.minOrNull() ?: presentationDurationMs
+    val reportedStartMs = startTimeMs ?: control.startTimeMs
+    val startMs = if (trackEnds.isEmpty() && terminalWindow) {
+        reportedStartMs.coerceAtMost(presentationDurationMs)
+    } else {
+        reportedStartMs
+    }
     val exceedsPresentation = liveWindow?.active != true &&
         windowEndMs > presentationDurationMs + END_TOLERANCE_MS
-    if (startMs < 0L || windowEndMs <= startMs || exceedsPresentation) {
+    val emptyActiveWindow = trackEnds.isEmpty() && !terminalWindow
+    val invalidTrackBounds = trackEnds.isNotEmpty() && windowEndMs <= startMs
+    if (
+        startMs < 0L || invalidTrackBounds || emptyActiveWindow || exceedsPresentation
+    ) {
         sabrContractMismatch("SABR returned an invalid bounded playback window")
     }
     val manifestUrl = resolveSabrPlaybackManifestUrl(
@@ -142,6 +166,7 @@ private fun SabrPlaybackWindowTrackDto.requireTrack(
     control: SabrPlaybackResponse,
     expectedItag: Int,
     expectedKind: String,
+    allowEmpty: Boolean = false,
 ): SabrPlaybackWindowTrack {
     if (!mime.substringBefore(';').trim().startsWith("$expectedKind/", ignoreCase = true)) {
         sabrContractMismatch("SABR returned an invalid $expectedKind track")
@@ -153,7 +178,9 @@ private fun SabrPlaybackWindowTrackDto.requireTrack(
         expectedItag,
         initialization = true,
     )
-    if (segments.isEmpty()) sabrContractMismatch("SABR returned an empty $expectedKind window")
+    if (segments.isEmpty() && !allowEmpty) {
+        sabrContractMismatch("SABR returned an empty $expectedKind window")
+    }
     var previousEndMs = -1L
     val resolvedSegments = segments.map { segment ->
         if (
@@ -188,6 +215,9 @@ private fun SabrPlaybackWindowTrackDto.requireTrack(
         segments = resolvedSegments,
     )
 }
+
+private fun SabrPlaybackWindowTrack.endMsOrNull(): Long? =
+    segments.maxOfOrNull { Math.addExact(it.startMs, it.durationMs) }
 
 private fun requireMediaUrl(
     baseUrl: String,

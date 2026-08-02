@@ -13,6 +13,43 @@ import org.junit.Test
 
 class SabrPlaybackContractTest {
     @Test
+    fun terminalWindowAcceptsEmptyValidatedTracks() {
+        val session = SabrPlaybackWindowResponseDto(
+            sessionId = SESSION_ID,
+            generation = 0,
+            ready = true,
+            durationMs = 120_000,
+            endOfStream = true,
+            audio = emptyTrack(140, "audio"),
+            video = emptyTrack(137, "video"),
+            startTimeMs = 120_500,
+        ).requireWindowResponse(BASE_URL, target(), control())
+
+        assertTrue(session.endOfStream)
+        assertTrue(requireNotNull(session.audioWindow).segments.isEmpty())
+        assertTrue(requireNotNull(session.videoWindow).segments.isEmpty())
+        assertEquals(120_000, session.startTimeMs)
+        assertEquals(120_000, session.windowEndMs)
+    }
+
+    @Test
+    fun activeWindowRejectsEmptyTracks() {
+        val failure = runCatching {
+            SabrPlaybackWindowResponseDto(
+                sessionId = SESSION_ID,
+                generation = 0,
+                ready = true,
+                durationMs = 120_000,
+                endOfStream = false,
+                audio = emptyTrack(140, "audio"),
+                video = emptyTrack(137, "video"),
+            ).requireWindowResponse(BASE_URL, target(), control())
+        }.exceptionOrNull()
+
+        assertTrue(failure?.message.orEmpty().contains("empty audio window"))
+    }
+
+    @Test
     fun oneMillisecondTimelineOverlapIsAcceptedAsRounding() {
         val session = window(secondSegmentStartMs = 9_984).requireWindowResponse(
             baseUrl = BASE_URL,
@@ -103,6 +140,12 @@ class SabrPlaybackContractTest {
             segment(itag, sequence = 1, startMs = 0),
             segment(itag, sequence = 2, startMs = secondSegmentStartMs),
         ),
+    )
+
+    private fun emptyTrack(itag: Int, kind: String) = SabrPlaybackWindowTrackDto(
+        mime = "$kind/mp4",
+        initUrl = "/api/sabr/playback/$SESSION_ID/$itag/init?generation=0",
+        segments = emptyList(),
     )
 
     private fun segment(
