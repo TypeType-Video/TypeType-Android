@@ -13,3 +13,16 @@ data class ChannelResponse(
     val videos: List<VideoItem> = emptyList(),
     val nextpage: String? = null,
 )
+
+@Serializable
+data class ChannelPageRequest(
+    val url: String,
+    val nextpage: String? = null,
+    val sort: String? = null,
+)
+
+@Serializable
+data class ChannelPlaylistsResponse(
+    val playlists: List<SearchPlaylistDto> = emptyList(),
+    val nextpage: String? = null,
+)
