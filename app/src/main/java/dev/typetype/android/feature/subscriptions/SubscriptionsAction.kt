@@ -4,4 +4,5 @@ sealed interface SubscriptionsAction {
     data object OnRefresh : SubscriptionsAction
     data object OnLoadMore : SubscriptionsAction
     data object OnRetrySync : SubscriptionsAction
+    data class OnTabSelect(val tab: SubscriptionsTab) : SubscriptionsAction
 }
