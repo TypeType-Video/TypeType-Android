@@ -265,7 +265,12 @@ internal fun PlayerSurfaceBox(
             modifier = Modifier.align(Alignment.BottomStart).padding(8.dp),
         )
 
-        SponsorBlockSkipper(player = player, segments = sponsorBlockSegments)
+        SponsorBlockPlaybackFeedback(
+            player = player,
+            segments = sponsorBlockSegments,
+            visible = !isInPip,
+            modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
+        )
 
         if (optionsVisible && !isInPip) {
             PlaybackOptionsSheet(
