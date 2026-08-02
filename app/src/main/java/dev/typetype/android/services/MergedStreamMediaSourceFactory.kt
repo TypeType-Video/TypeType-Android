@@ -164,7 +164,7 @@ private fun createSubtitleMediaSource(
     loadErrorHandlingPolicy: LoadErrorHandlingPolicy?,
 ): MediaSource {
     val factory = SingleSampleMediaSource.Factory(dataSourceFactory)
-        .setTreatLoadErrorsAsEndOfStream(false)
+        .setTreatLoadErrorsAsEndOfStream(true)
     loadErrorHandlingPolicy?.let(factory::setLoadErrorHandlingPolicy)
     return factory.createMediaSource(subtitle, C.TIME_UNSET)
 }

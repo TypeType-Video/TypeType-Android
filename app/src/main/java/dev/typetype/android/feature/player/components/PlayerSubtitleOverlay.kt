@@ -77,9 +77,7 @@ fun PlayerSubtitleOverlay(
         }
         while (isActive) {
             val positionUs = player.currentPosition.coerceAtLeast(0L) * 1_000L
-            activeExternalCues = externalCues
-                .filter { positionUs >= it.startTimeUs && positionUs < it.endTimeUs }
-                .flatMap(CuesWithTiming::cues)
+            activeExternalCues = externalCues.activeAt(positionUs)
             delay(CUE_REFRESH_INTERVAL_MS)
         }
     }
@@ -123,5 +121,10 @@ private fun List<Cue>.subtitleText(): String =
         .joinToString("\n")
 
 private val zeroWidthCharacters = Regex("[\\u200B\\u200C\\u200D\\uFEFF]")
+
+@androidx.annotation.OptIn(markerClass = [UnstableApi::class])
+internal fun List<CuesWithTiming>.activeAt(positionUs: Long): List<Cue> =
+    filter { positionUs >= it.startTimeUs && positionUs < it.endTimeUs }
+        .flatMap(CuesWithTiming::cues)
 
 private const val CUE_REFRESH_INTERVAL_MS = 100L
