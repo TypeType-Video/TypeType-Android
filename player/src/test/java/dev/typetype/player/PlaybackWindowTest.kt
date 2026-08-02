@@ -76,12 +76,20 @@ class PlaybackWindowTest {
     }
 
     @Test
-    fun bufferedSeekMatchesTheMseLocalSeekBoundary() {
-        assertTrue(canSeekWithinPlaybackBuffer(40_000_000, 40_000_000, 67_000_000))
-        assertTrue(canSeekWithinPlaybackBuffer(40_000_000, 10_000_000, 67_000_000))
-        assertFalse(canSeekWithinPlaybackBuffer(40_000_000, 9_999_999, 67_000_000))
-        assertTrue(canSeekWithinPlaybackBuffer(40_000_000, 66_750_000, 67_000_000))
-        assertFalse(canSeekWithinPlaybackBuffer(40_000_000, 66_750_001, 67_000_000))
+    fun bufferedSeekUsesTheActualRetainedMediaBoundary() {
+        assertTrue(canSeekWithinPlaybackBuffer(10_000_000, 40_000_000, 67_000_000))
+        assertTrue(canSeekWithinPlaybackBuffer(10_000_000, 10_000_000, 67_000_000))
+        assertFalse(canSeekWithinPlaybackBuffer(10_000_000, 9_999_999, 67_000_000))
+        assertTrue(canSeekWithinPlaybackBuffer(10_000_000, 66_750_000, 67_000_000))
+        assertFalse(canSeekWithinPlaybackBuffer(10_000_000, 66_750_001, 67_000_000))
+        assertFalse(canSeekWithinPlaybackBuffer(C.TIME_UNSET, 40_000_000, 67_000_000))
+    }
+
+    @Test
+    fun retainedPlaybackStartsAtTheAudioVideoIntersection() {
+        assertEquals(10_000_000L, retainedPlaybackStartUs(listOf(8_000_000L, 10_000_000L)))
+        assertEquals(C.TIME_UNSET, retainedPlaybackStartUs(listOf(8_000_000L, C.TIME_UNSET)))
+        assertEquals(C.TIME_UNSET, retainedPlaybackStartUs(emptyList()))
     }
 
     @Test

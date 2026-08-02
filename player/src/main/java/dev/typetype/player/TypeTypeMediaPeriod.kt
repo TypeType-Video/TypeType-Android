@@ -106,9 +106,11 @@ internal class TypeTypeMediaPeriod(
     override fun readDiscontinuity(): Long = C.TIME_UNSET
 
     override fun seekToUs(positionUs: Long): Long {
-        val currentPositionUs = playbackPositionUs().coerceAtLeast(0L)
+        val bufferedStartUs = retainedPlaybackStartUs(
+            streams.map { it.chunkSource.bufferedStartPositionUs },
+        )
         val bufferedEndUs = loader.bufferedPositionUs
-        if (!canSeekWithinPlaybackBuffer(currentPositionUs, positionUs, bufferedEndUs)) {
+        if (!canSeekWithinPlaybackBuffer(bufferedStartUs, positionUs, bufferedEndUs)) {
             coordinator.seek(positionUs)
         }
         streams.forEach { it.seekToUs(positionUs) }
@@ -282,17 +284,22 @@ internal fun playbackBufferStartUs(
 }
 
 internal fun canSeekWithinPlaybackBuffer(
-    currentPositionUs: Long,
+    bufferedStartUs: Long,
     targetPositionUs: Long,
     bufferedEndUs: Long,
 ): Boolean {
+    if (bufferedStartUs == C.TIME_UNSET) return false
     if (bufferedEndUs == C.TIME_END_OF_SOURCE || bufferedEndUs == C.TIME_UNSET) return false
-    val bufferedStartUs = (currentPositionUs - LOCAL_SEEK_BACK_BUFFER_US).coerceAtLeast(0L)
     return targetPositionUs >= bufferedStartUs &&
         targetPositionUs <= bufferedEndUs - LOCAL_SEEK_END_MARGIN_US
 }
 
-private const val LOCAL_SEEK_BACK_BUFFER_US = 30_000_000L
+internal fun retainedPlaybackStartUs(trackStartsUs: List<Long>): Long =
+    trackStartsUs
+        .takeIf { starts -> starts.isNotEmpty() && starts.none { it == C.TIME_UNSET } }
+        ?.maxOrNull()
+        ?: C.TIME_UNSET
+
 private const val LOCAL_SEEK_END_MARGIN_US = 250_000L
 private const val BACK_BUFFER_US = 30_000_000L
 private const val WINDOW_REFRESH_THRESHOLD_US = 20_000_000L
