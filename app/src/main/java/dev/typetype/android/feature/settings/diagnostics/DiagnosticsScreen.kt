@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -124,13 +125,15 @@ private fun DiagnosticsScreen(
                 when {
                     state.isLoading -> item { DiagnosticsLoading() }
                     state.entries.isEmpty() && state.crashReport == null -> item { DiagnosticsEmpty() }
-                    else -> items(state.entries, key = { "${it.timestampEpochMillis}:${it.route}" }) {
-                        DiagnosticRow(it)
-                    }
+                    else -> diagnosticRows(state.entries)
                 }
             }
         }
     }
+}
+
+internal fun LazyListScope.diagnosticRows(entries: List<DiagnosticEntry>) {
+    items(entries) { entry -> DiagnosticRow(entry) }
 }
 
 @Composable
