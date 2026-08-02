@@ -1,6 +1,7 @@
 package dev.typetype.android.feature.player
 
 import dev.typetype.android.domain.channel.ChannelRepository
+import dev.typetype.android.domain.channel.ChannelQuery
 import dev.typetype.android.domain.library.LibraryRepository
 import dev.typetype.android.domain.library.VideoMeta
 import dev.typetype.android.domain.library.VideoMetaRepository
@@ -39,7 +40,8 @@ class PlayerStreamLoader @Inject constructor(
 
     private suspend fun loadChannelMetadata(stream: Stream): Result<Stream>? {
         if (stream.uploaderSubscriberCount >= 0L || stream.uploaderUrl.isBlank()) return null
-        return channelRepository.loadChannel(stream.uploaderUrl).map { channel ->
+        return channelRepository.loadChannel(ChannelQuery(stream.uploaderUrl)).map { page ->
+            val channel = page.channel
             stream.copy(
                 uploaderName = channel.name,
                 uploaderAvatarUrl = channel.avatarUrl,
