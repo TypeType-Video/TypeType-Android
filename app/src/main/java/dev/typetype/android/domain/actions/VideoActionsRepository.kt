@@ -15,6 +15,7 @@ interface VideoActionsRepository {
 
     fun observeBlockedVideos(): Flow<List<BlockedItem>>
     fun observeBlockedChannels(): Flow<List<BlockedItem>>
+    fun observeBlockedKeywords(): Flow<List<BlockedKeyword>>
 
     suspend fun refreshBlocked(): Result<Unit>
 
@@ -26,4 +27,6 @@ interface VideoActionsRepository {
         avatarUrl: String? = null,
     ): Result<Unit>
     suspend fun unblockChannel(channelUrl: String): Result<Unit>
+    suspend fun blockKeyword(keyword: String): Result<Unit>
+    suspend fun unblockKeyword(keyword: String): Result<Unit>
 }

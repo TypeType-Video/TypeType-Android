@@ -4,6 +4,8 @@ import dev.typetype.android.data.network.dto.AddHistoryRequest
 import dev.typetype.android.data.network.dto.AddPlaylistVideoRequest
 import dev.typetype.android.data.network.dto.AddWatchLaterRequest
 import dev.typetype.android.data.network.dto.BlockChannelRequest
+import dev.typetype.android.data.network.dto.BlockedKeywordDto
+import dev.typetype.android.data.network.dto.BlockedKeywordRequest
 import dev.typetype.android.data.network.dto.BlockVideoRequest
 import dev.typetype.android.data.network.dto.BlockedItemDto
 import dev.typetype.android.data.network.dto.CreatePlaylistRequest
@@ -124,9 +126,18 @@ interface TypeTypeLibraryApi {
     @GET("blocked/channels")
     suspend fun blockedChannels(): Response<List<BlockedItemDto>>
 
+    @GET("blocked/keywords")
+    suspend fun blockedKeywords(): Response<List<BlockedKeywordDto>>
+
+    @POST("blocked/keywords")
+    suspend fun blockKeyword(@Body body: BlockedKeywordRequest): Response<BlockedKeywordDto>
+
     @DELETE("blocked/videos/{videoUrl}")
     suspend fun unblockVideo(@Path("videoUrl") videoUrl: String): Response<Unit>
 
     @DELETE("blocked/channels/{channelUrl}")
     suspend fun unblockChannel(@Path("channelUrl") channelUrl: String): Response<Unit>
+
+    @DELETE("blocked/keywords/{keyword}")
+    suspend fun unblockKeyword(@Path("keyword") keyword: String): Response<Unit>
 }

@@ -70,6 +70,10 @@ class VideoMenuHandlerViewModel @Inject constructor(
     val blockedChannelUrls = videoActionsRepository.observeBlockedChannelUrls()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
 
+    val blockedKeywords = videoActionsRepository.observeBlockedKeywords()
+        .map { items -> items.map { it.keyword }.toSet() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
+
     private val _events = Channel<VideoMenuEvent>(Channel.BUFFERED)
     val events: Flow<VideoMenuEvent> = _events.receiveAsFlow()
 
