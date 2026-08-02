@@ -102,10 +102,11 @@ internal class MergedStreamMediaSourceFactory(
         val baseItem = mediaItem.buildUpon()
             .setSubtitleConfigurations(emptyList())
             .build()
+        val initialWindow = sabrPlaybackWindowCache.take(binding)?.toPlayerWindow()
         val videoSource = TypeTypeMediaSource(
             mediaItem = baseItem,
             initialPositionUs = mediaItem.initialSabrPositionUs(),
-            initialWindow = sabrPlaybackWindowCache.take(binding)?.toPlayerWindow(),
+            initialWindow = initialWindow,
             playbackPositionUs = playbackPositionUs,
             windowLoader = SabrPlaybackWindowLoader(
                 repository = sabrPlaybackRepository,
@@ -113,6 +114,7 @@ internal class MergedStreamMediaSourceFactory(
                 transportState = transportState,
                 recoveryDispatcher = recoveryDispatcher,
                 playbackRate = playbackRate,
+                initialWindow = initialWindow,
             ),
             dataSourceFactory = mediaDataSource,
             loadErrorHandlingPolicy = policy,
