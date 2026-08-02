@@ -4,19 +4,22 @@ import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.network.TypeTypeApiHolder
 import dev.typetype.android.data.network.dto.SearchChannelDto
 import dev.typetype.android.data.network.dto.SearchFilterOptionDto
+import dev.typetype.android.data.network.dto.SearchFilterGroupDto
 import dev.typetype.android.data.network.dto.SearchPlaylistDto
 import dev.typetype.android.data.network.dto.toDomainVideo
 import dev.typetype.android.data.network.requireSuccessfulResponse
 import dev.typetype.android.domain.search.SearchChannel
 import dev.typetype.android.domain.search.SearchFilterOption
+import dev.typetype.android.domain.search.SearchFilterGroup
 import dev.typetype.android.domain.search.SearchFilters
 import dev.typetype.android.domain.search.SearchPage
 import dev.typetype.android.domain.search.SearchPlaylist
 import dev.typetype.android.domain.search.SearchRepository
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Singleton
 class SearchRepositoryImpl @Inject constructor(
@@ -29,8 +32,8 @@ class SearchRepositoryImpl @Inject constructor(
         service: Int,
         nextPage: String?,
         contentFilter: String?,
-        sortFilter: String?,
-    ): Result<SearchPage> = runCatching {
+        filters: List<String>,
+    ): Result<SearchPage> = catching {
         val scope = activeAccountScope.require()
         val api = apiHolder.require(scope)
         val response = withContext(Dispatchers.IO) {
@@ -39,7 +42,7 @@ class SearchRepositoryImpl @Inject constructor(
                 service = service,
                 nextpage = nextPage,
                 contentFilter = contentFilter,
-                sortFilter = sortFilter,
+                filters = filters,
             )
         }
         response.requireSuccessfulResponse()
@@ -55,20 +58,21 @@ class SearchRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun filters(service: Int): Result<SearchFilters> = runCatching {
+    override suspend fun filters(service: Int, contentFilter: String?): Result<SearchFilters> = catching {
         val scope = activeAccountScope.require()
         val api = apiHolder.require(scope)
-        val response = withContext(Dispatchers.IO) { api.searchFilters(service) }
+        val response = withContext(Dispatchers.IO) { api.searchFilters(service, contentFilter) }
         response.requireSuccessfulResponse()
         val body = response.body() ?: error("Empty search filters body")
         activeAccountScope.verify(scope)
         SearchFilters(
             content = body.contentFilters.map { it.toDomain() },
             sort = body.sortFilters.map { it.toDomain() },
+            groups = body.filterGroups.map { it.toDomain() },
         )
     }
 
-    override suspend fun suggestions(query: String, service: Int): Result<List<String>> = runCatching {
+    override suspend fun suggestions(query: String, service: Int): Result<List<String>> = catching {
         val scope = activeAccountScope.require()
         val api = apiHolder.require(scope)
         val response = withContext(Dispatchers.IO) {
@@ -100,5 +104,16 @@ class SearchRepositoryImpl @Inject constructor(
         playlistType = playlistType,
     )
 
-    private fun SearchFilterOptionDto.toDomain() = SearchFilterOption(value, label)
+    private fun SearchFilterOptionDto.toDomain() = SearchFilterOption(value, label, isDefault)
+
+    private fun SearchFilterGroupDto.toDomain() = SearchFilterGroup(
+        key = key,
+        label = label,
+        multiSelect = multiSelect,
+        options = options.map { it.toDomain() },
+    )
+}
+
+private inline fun <T> catching(block: () -> T): Result<T> = runCatching(block).onFailure {
+    if (it is CancellationException) throw it
 }
