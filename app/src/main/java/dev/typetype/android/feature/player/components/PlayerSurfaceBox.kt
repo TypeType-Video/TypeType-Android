@@ -118,6 +118,10 @@ internal fun PlayerSurfaceBox(
         isFullscreen = isFullscreen,
         selectedPercent = playbackBrightnessPercent,
     )
+    PlaybackKeepScreenOnEffect(
+        window = activity?.window,
+        videoIsPlaying = playbackStatus.isPlaying && !audioOnlyState.active,
+    )
 
     LaunchedEffect(controlsVisible, playbackStatus.isPlaying) {
         if (controlsVisible && playbackStatus.isPlaying) {
