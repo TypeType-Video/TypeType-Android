@@ -35,6 +35,7 @@ class SubscriptionsViewModel @Inject constructor(
     private val videoMetaRepository: VideoMetaRepository,
     private val errorMapper: UserErrorMapper,
     private val subscriptionsRepository: SubscriptionsRepository,
+    private val channelsProvider: SubscriptionChannelsProvider,
     private val activeAccountScope: ActiveAccountScope,
 ) : ViewModel() {
 
@@ -49,6 +50,7 @@ class SubscriptionsViewModel @Inject constructor(
 
     init {
         observeSyncState()
+        observeChannels()
         observeAccountChanges()
         refresh()
     }
@@ -58,6 +60,13 @@ class SubscriptionsViewModel @Inject constructor(
             SubscriptionsAction.OnRefresh -> refresh()
             SubscriptionsAction.OnLoadMore -> loadMore()
             SubscriptionsAction.OnRetrySync -> retrySync()
+            is SubscriptionsAction.OnTabSelect -> _state.update { it.copy(selectedTab = action.tab) }
+        }
+    }
+
+    private fun observeChannels() {
+        viewModelScope.launch {
+            channelsProvider.channels.collect { channels -> _state.update { it.copy(channels = channels) } }
         }
     }
 
@@ -113,6 +122,7 @@ class SubscriptionsViewModel @Inject constructor(
         requestJob?.cancel()
         refreshMonitorJob?.cancel()
         requestJob = viewModelScope.launch { loadFirstPage() }
+        viewModelScope.launch { channelsProvider.refresh() }
     }
 
     private suspend fun loadFirstPage() {

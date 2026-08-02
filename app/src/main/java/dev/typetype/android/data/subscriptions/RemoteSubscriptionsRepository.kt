@@ -39,6 +39,9 @@ class RemoteSubscriptionsRepository @Inject constructor(
     override fun observeSubscribedChannelUrls(): Flow<Set<String>> = scopedRows()
         .map { rows -> rows.map { it.channelUrl }.toSet() }
 
+    override fun observeSubscriptions(): Flow<List<SubscriptionSummary>> = scopedRows()
+        .map { rows -> rows.map(SubscriptionEntity::toSummary) }
+
     override fun observeSyncState(): Flow<LibraryCollectionSyncState?> = syncTracker.observe()
         .map { it[LibraryCollection.Subscriptions] }
 
@@ -81,7 +84,7 @@ class RemoteSubscriptionsRepository @Inject constructor(
     override suspend fun listSubscriptions(): Result<List<SubscriptionSummary>> = subscriptionResult {
         val scope = activeAccountScope.require()
         refresh().getOrThrow()
-        dao.getAll(scope.serverId, scope.accountId).map { SubscriptionSummary(it.channelUrl) }
+        dao.getAll(scope.serverId, scope.accountId).map(SubscriptionEntity::toSummary)
     }
 
     override suspend fun subscribe(
@@ -164,6 +167,13 @@ class RemoteSubscriptionsRepository @Inject constructor(
         if (current) syncTracker.fail(token, failure)
     }
 }
+
+private fun SubscriptionEntity.toSummary() = SubscriptionSummary(
+    channelUrl = channelUrl,
+    name = name,
+    avatarUrl = avatarUrl,
+    subscribedAtMillis = subscribedAtMillis,
+)
 
 private suspend fun <T> subscriptionResult(block: suspend () -> T): Result<T> = try {
     Result.success(block())

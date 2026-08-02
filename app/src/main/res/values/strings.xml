@@ -31,6 +31,14 @@
     <string name="subscriptions_preparing">Preparing subscriptions</string>
     <string name="subscriptions_empty_title">Your subscriptions will appear here</string>
     <string name="subscriptions_empty_description">Subscribe to channels to build a personal feed of their latest videos.</string>
+    <string name="subscriptions_title">Subscriptions</string>
+    <string name="subscriptions_tab_videos">Videos</string>
+    <string name="subscriptions_tab_channels">Channels</string>
+    <string name="subscriptions_channels_empty">Your subscribed channels will appear here.</string>
+    <plurals name="subscriptions_channel_count">
+        <item quantity="one">%1$d channel followed</item>
+        <item quantity="other">%1$d channels followed</item>
+    </plurals>
     <string name="library_refresh_failed">Couldn\'t refresh the library</string>
     <string name="library_refreshing">Refreshing library</string>
     <string name="library_last_synced">Updated %1$s</string>

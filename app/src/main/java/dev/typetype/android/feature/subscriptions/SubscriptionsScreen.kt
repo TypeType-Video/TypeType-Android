@@ -49,6 +49,7 @@ fun SubscriptionsRoute(
         onRetry = { viewModel.onAction(SubscriptionsAction.OnRefresh) },
         onRetrySync = { viewModel.onAction(SubscriptionsAction.OnRetrySync) },
         onLoadMore = { viewModel.onAction(SubscriptionsAction.OnLoadMore) },
+        onTabSelect = { viewModel.onAction(SubscriptionsAction.OnTabSelect(it)) },
     )
 }
 
@@ -60,6 +61,7 @@ fun SubscriptionsScreen(
     onRetry: () -> Unit,
     onRetrySync: () -> Unit,
     onLoadMore: () -> Unit,
+    onTabSelect: (SubscriptionsTab) -> Unit,
 ) {
     val menuScope = rememberVideoMenuScope(onOpenChannel = onOpenChannel)
     val visibleVideos = state.videos.filterNot(menuScope::isHidden)
@@ -82,21 +84,34 @@ fun SubscriptionsScreen(
             hasContent = state.videos.isNotEmpty(),
             onRetry = onRetry,
         )
+        SubscriptionsHeader(
+            selectedTab = state.selectedTab,
+            channelCount = state.channels.size,
+            onTabSelect = onTabSelect,
+        )
         PullToRefreshBox(
             isRefreshing = state.isLoading && state.videos.isNotEmpty(),
             onRefresh = onRetry,
             modifier = Modifier.fillMaxWidth().weight(1f),
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
-                SubscriptionsContent(
-                    state = state,
-                    visibleVideos = visibleVideos,
-                    onPlayVideo = onPlayVideo,
-                    onOpenChannel = onOpenChannel,
-                    onRetry = onRetry,
-                    onLoadMore = onLoadMore,
-                    menuScope = menuScope,
-                )
+                if (state.selectedTab == SubscriptionsTab.Channels) {
+                    SubscriptionChannelsGrid(
+                        channels = state.channels,
+                        isLoading = state.isLoading,
+                        onOpenChannel = onOpenChannel,
+                    )
+                } else {
+                    SubscriptionsContent(
+                        state = state,
+                        visibleVideos = visibleVideos,
+                        onPlayVideo = onPlayVideo,
+                        onOpenChannel = onOpenChannel,
+                        onRetry = onRetry,
+                        onLoadMore = onLoadMore,
+                        menuScope = menuScope,
+                    )
+                }
             }
         }
     }
