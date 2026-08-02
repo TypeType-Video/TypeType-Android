@@ -6,10 +6,10 @@ interface SearchRepository {
         service: Int = 0,
         nextPage: String? = null,
         contentFilter: String? = null,
-        sortFilter: String? = null,
+        filters: List<String> = emptyList(),
     ): Result<SearchPage>
 
-    suspend fun filters(service: Int = 0): Result<SearchFilters>
+    suspend fun filters(service: Int = 0, contentFilter: String? = null): Result<SearchFilters>
 
     suspend fun suggestions(query: String, service: Int = 0): Result<List<String>>
 }

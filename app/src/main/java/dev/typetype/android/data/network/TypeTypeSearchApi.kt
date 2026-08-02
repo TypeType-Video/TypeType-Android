@@ -21,12 +21,13 @@ interface TypeTypeSearchApi {
         @Query("service") service: Int = 0,
         @Query("nextpage") nextpage: String? = null,
         @Query("contentFilter") contentFilter: String? = null,
-        @Query("sortFilter") sortFilter: String? = null,
+        @Query("filter") filters: List<String> = emptyList(),
     ): Response<SearchResponse>
 
     @GET("search/filters")
     suspend fun searchFilters(
         @Query("service") service: Int = 0,
+        @Query("contentFilter") contentFilter: String? = null,
     ): Response<SearchFiltersResponse>
 
     @GET("playlist")

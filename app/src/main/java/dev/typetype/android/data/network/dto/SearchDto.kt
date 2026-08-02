@@ -39,12 +39,22 @@ data class SearchPlaylistDto(
 data class SearchFiltersResponse(
     val contentFilters: List<SearchFilterOptionDto> = emptyList(),
     val sortFilters: List<SearchFilterOptionDto> = emptyList(),
+    val filterGroups: List<SearchFilterGroupDto> = emptyList(),
 )
 
 @Serializable
 data class SearchFilterOptionDto(
     val value: String,
     val label: String,
+    val isDefault: Boolean = false,
+)
+
+@Serializable
+data class SearchFilterGroupDto(
+    val key: String,
+    val label: String,
+    val multiSelect: Boolean = false,
+    val options: List<SearchFilterOptionDto> = emptyList(),
 )
 
 @Serializable

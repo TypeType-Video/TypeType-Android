@@ -432,6 +432,10 @@
     <string name="search_placeholder">Search videos…</string>
     <string name="search_filter_all">All</string>
     <string name="search_filter_relevance">Relevance</string>
+    <string name="search_filters">Filters</string>
+    <string name="search_filters_active">Filters (%1$d)</string>
+    <string name="search_filters_reset">Reset</string>
+    <string name="search_filter_remove">Remove %1$s filter</string>
     <string name="search_channel_verified">Verified channel</string>
     <string name="search_channel_metadata">%1$s subscribers, %2$s videos</string>
     <string name="search_playlist_video_count">%1$s videos</string>

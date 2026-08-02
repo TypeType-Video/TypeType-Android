@@ -38,6 +38,7 @@ class SearchViewModel @Inject constructor(
     val state = _state.asStateFlow()
 
     private var searchJob: Job? = null
+    private var filtersJob: Job? = null
 
     init {
         loadHistory()
@@ -82,7 +83,8 @@ class SearchViewModel @Inject constructor(
                 )
             }
             is SearchAction.OnContentFilterSelect -> selectContentFilter(action.value)
-            is SearchAction.OnSortFilterSelect -> selectSortFilter(action.value)
+            is SearchAction.OnFilterToggle -> toggleFilter(action.groupKey, action.optionValue)
+            SearchAction.OnResetFilters -> resetFilters()
             SearchAction.OnLoadMore -> loadMore()
             is SearchAction.OnDeleteHistoryEntry -> deleteHistoryEntry(action.query)
             is SearchAction.OnHistoryEntryClick -> {
@@ -120,13 +122,25 @@ class SearchViewModel @Inject constructor(
         }
     }
 
-    private fun loadFilters() {
-        viewModelScope.launch {
-            searchRepository.filters().onSuccess { filters ->
-                _state.update {
-                    it.copy(contentFilters = filters.content, sortFilters = filters.sort)
-                }
-            }
+    private fun loadFilters(contentFilter: String? = null, searchAfter: Boolean = false) {
+        filtersJob?.cancel()
+        filtersJob = viewModelScope.launch {
+            searchRepository.filters(contentFilter = contentFilter).fold(
+                onSuccess = { filters ->
+                    val groups = filters.resolvedGroups()
+                    _state.update {
+                        it.copy(
+                            contentFilters = filters.content,
+                            filterGroups = groups,
+                            selectedFilters = sanitizeSearchFilters(groups, it.selectedFilters),
+                        )
+                    }
+                },
+                onFailure = {
+                    _state.update { it.copy(filterGroups = emptyList(), selectedFilters = emptyList()) }
+                },
+            )
+            if (searchAfter) performSearch(_state.value.query)
         }
     }
 
@@ -154,7 +168,7 @@ class SearchViewModel @Inject constructor(
             searchRepository.search(
                 query = query,
                 contentFilter = current.selectedContentFilter,
-                sortFilter = current.selectedSortFilter,
+                filters = current.selectedFilters,
             ).fold(
                 onSuccess = { page ->
                     _state.update {
@@ -165,7 +179,7 @@ class SearchViewModel @Inject constructor(
                             playlists = page.playlists,
                             searchSuggestion = page.suggestion,
                             isCorrectedSearch = page.isCorrected,
-                            nextPage = page.nextPage,
+                            nextPage = page.nextSearchCursor(),
                             hasSearched = true,
                         )
                     }
@@ -189,13 +203,26 @@ class SearchViewModel @Inject constructor(
 
     private fun selectContentFilter(value: String?) {
         if (_state.value.selectedContentFilter == value) return
-        _state.update { it.copy(selectedContentFilter = value) }
+        _state.update { it.copy(selectedContentFilter = value, selectedFilters = emptyList()) }
+        loadFilters(contentFilter = value, searchAfter = true)
+    }
+
+    private fun toggleFilter(groupKey: String, optionValue: String) {
+        val current = _state.value
+        val selected = toggleSearchFilter(
+            groups = current.filterGroups,
+            selected = current.selectedFilters,
+            groupKey = groupKey,
+            optionValue = optionValue,
+        )
+        if (selected == current.selectedFilters) return
+        _state.update { it.copy(selectedFilters = selected) }
         performSearch(_state.value.query)
     }
 
-    private fun selectSortFilter(value: String?) {
-        if (_state.value.selectedSortFilter == value) return
-        _state.update { it.copy(selectedSortFilter = value) }
+    private fun resetFilters() {
+        if (_state.value.selectedFilters.isEmpty()) return
+        _state.update { it.copy(selectedFilters = emptyList()) }
         performSearch(_state.value.query)
     }
 
@@ -209,7 +236,7 @@ class SearchViewModel @Inject constructor(
                 query = snapshot.query,
                 nextPage = cursor,
                 contentFilter = snapshot.selectedContentFilter,
-                sortFilter = snapshot.selectedSortFilter,
+                filters = snapshot.selectedFilters,
             ).fold(
                 onSuccess = { page ->
                     _state.update {
@@ -218,7 +245,7 @@ class SearchViewModel @Inject constructor(
                             channels = (it.channels + page.channels).distinctBy { channel -> channel.url },
                             playlists = (it.playlists + page.playlists)
                                 .distinctBy { playlist -> playlist.url },
-                            nextPage = page.nextPage,
+                            nextPage = page.nextSearchCursor(cursor),
                             isLoadingMore = false,
                         )
                     }

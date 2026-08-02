@@ -3,6 +3,7 @@ package dev.typetype.android.feature.search
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.search.SearchChannel
 import dev.typetype.android.domain.search.SearchFilterOption
+import dev.typetype.android.domain.search.SearchFilterGroup
 import dev.typetype.android.domain.search.SearchPlaylist
 
 data class SearchState(
@@ -17,9 +18,9 @@ data class SearchState(
     val searchHistory: List<String> = emptyList(),
     val suggestions: List<String> = emptyList(),
     val contentFilters: List<SearchFilterOption> = emptyList(),
-    val sortFilters: List<SearchFilterOption> = emptyList(),
+    val filterGroups: List<SearchFilterGroup> = emptyList(),
     val selectedContentFilter: String? = null,
-    val selectedSortFilter: String? = null,
+    val selectedFilters: List<String> = emptyList(),
     val searchSuggestion: String? = null,
     val isCorrectedSearch: Boolean = false,
     val nextPage: String? = null,

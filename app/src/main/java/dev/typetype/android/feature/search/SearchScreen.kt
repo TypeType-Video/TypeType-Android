@@ -107,11 +107,14 @@ fun SearchScreen(
         )
         SearchFilterBar(
             contentFilters = state.contentFilters,
-            sortFilters = state.sortFilters,
+            filterGroups = state.filterGroups,
             selectedContent = state.selectedContentFilter,
-            selectedSort = state.selectedSortFilter,
+            selectedFilters = state.selectedFilters,
             onContentSelect = { onAction(SearchAction.OnContentFilterSelect(it)) },
-            onSortSelect = { onAction(SearchAction.OnSortFilterSelect(it)) },
+            onFilterToggle = { groupKey, value ->
+                onAction(SearchAction.OnFilterToggle(groupKey, value))
+            },
+            onResetFilters = { onAction(SearchAction.OnResetFilters) },
         )
 
         when {
