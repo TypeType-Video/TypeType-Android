@@ -21,6 +21,7 @@ import dev.typetype.android.core.ui.components.VideoMenuItemState
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
 import dev.typetype.android.core.ui.share.buildShareUrl
 import dev.typetype.android.domain.feed.Video
+import dev.typetype.android.domain.actions.titleMatchesBlockedKeyword
 import dev.typetype.android.feature.download.DownloadSelectionSheet
 import dev.typetype.android.feature.player.components.PlaylistPickerSheet
 
@@ -29,6 +30,7 @@ class VideoMenuScope internal constructor(
     val watchedUrls: Set<String>,
     val blockedVideoUrls: Set<String>,
     val blockedChannelUrls: Set<String>,
+    val blockedKeywords: Set<String>,
     private val favorites: Set<String>,
     private val watchLater: Set<String>,
     val onAction: (VideoMenuAction, Video) -> Unit,
@@ -40,7 +42,9 @@ class VideoMenuScope internal constructor(
     )
 
     fun isHidden(video: Video): Boolean =
-        video.url in blockedVideoUrls || video.uploaderUrl in blockedChannelUrls
+        video.url in blockedVideoUrls ||
+            video.uploaderUrl in blockedChannelUrls ||
+            titleMatchesBlockedKeyword(video.title, blockedKeywords)
 }
 
 @Composable
@@ -55,6 +59,7 @@ fun rememberVideoMenuScope(
     val watched by viewModel.watchedUrls.collectAsStateWithLifecycle()
     val blockedVideos by viewModel.blockedVideoUrls.collectAsStateWithLifecycle()
     val blockedChannels by viewModel.blockedChannelUrls.collectAsStateWithLifecycle()
+    val blockedKeywords by viewModel.blockedKeywords.collectAsStateWithLifecycle()
     val shareChooserTitle = stringResource(R.string.video_menu_share_chooser)
     val serverBaseUrl = LocalServerBaseUrl.current
 
@@ -123,11 +128,12 @@ fun rememberVideoMenuScope(
         }
     }
 
-    return remember(favorites, watchLater, watched, blockedVideos, blockedChannels) {
+    return remember(favorites, watchLater, watched, blockedVideos, blockedChannels, blockedKeywords) {
         VideoMenuScope(
             watchedUrls = watched,
             blockedVideoUrls = blockedVideos,
             blockedChannelUrls = blockedChannels,
+            blockedKeywords = blockedKeywords,
             favorites = favorites,
             watchLater = watchLater,
             onAction = onAction,

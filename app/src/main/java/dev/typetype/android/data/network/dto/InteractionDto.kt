@@ -80,3 +80,15 @@ data class BlockedItemDto(
     val blockedAt: Long = 0,
     val global: Boolean? = null,
 )
+
+@Serializable
+data class BlockedKeywordRequest(
+    val keyword: String,
+)
+
+@Serializable
+data class BlockedKeywordDto(
+    val keyword: String,
+    val blockedAt: Long = 0,
+    val global: Boolean = false,
+)

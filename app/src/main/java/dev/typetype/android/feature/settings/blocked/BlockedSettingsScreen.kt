@@ -21,9 +21,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -43,6 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
 import dev.typetype.android.domain.actions.BlockedItem
+import dev.typetype.android.domain.actions.BlockedKeyword
 
 @Composable
 fun BlockedSettingsRoute(
@@ -57,6 +60,24 @@ fun BlockedSettingsRoute(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                item { SectionHeader(stringResource(R.string.settings_blocked_section_keywords)) }
+                item {
+                    KeywordInput(
+                        value = state.keywordInput,
+                        isAdding = state.isAddingKeyword,
+                        error = state.keywordError,
+                        onValueChange = viewModel::onKeywordChange,
+                        onAdd = viewModel::addKeyword,
+                    )
+                }
+                if (state.keywords.isEmpty()) {
+                    item { EmptyRow(stringResource(R.string.settings_blocked_empty_keywords)) }
+                } else {
+                    items(state.keywords, key = { "keyword-${it.keyword}" }) { item ->
+                        BlockedKeywordRow(item, onUnblock = { viewModel.unblockKeyword(item.keyword) })
+                    }
+                }
+                item { Spacer(Modifier.size(8.dp)) }
                 item { SectionHeader(stringResource(R.string.settings_blocked_section_channels)) }
                 if (state.channels.isEmpty()) {
                     item { EmptyRow(stringResource(R.string.settings_blocked_empty_channels)) }
@@ -83,6 +104,62 @@ fun BlockedSettingsRoute(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun KeywordInput(
+    value: String,
+    isAdding: Boolean,
+    error: String?,
+    onValueChange: (String) -> Unit,
+    onAdd: () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(stringResource(R.string.settings_blocked_keyword_label)) },
+            singleLine = true,
+            isError = error != null,
+            supportingText = error?.let { message -> ({ Text(message) }) },
+            trailingIcon = {
+                IconButton(onClick = onAdd, enabled = value.isNotBlank() && !isAdding) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = stringResource(R.string.settings_blocked_keyword_add),
+                    )
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun BlockedKeywordRow(item: BlockedKeyword, onUnblock: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = item.keyword,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        TextButton(onClick = onUnblock) {
+            Text(
+                text = stringResource(R.string.settings_blocked_unblock),
+                color = MaterialTheme.colorScheme.error,
+            )
         }
     }
 }
