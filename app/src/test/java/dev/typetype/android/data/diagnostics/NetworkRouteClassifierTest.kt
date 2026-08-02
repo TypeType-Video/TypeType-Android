@@ -34,6 +34,17 @@ class NetworkRouteClassifierTest {
     }
 
     @Test
+    fun identifiesYouTubeSubtitlesWithoutRecordingTrackIdentifiers() {
+        val url = "https://video.example/api/v1/subtitles/youtube/private-video" +
+            "?language=fr&sourceLanguage=en&name=private-track"
+
+        assertEquals(
+            "/subtitles/youtube",
+            NetworkRouteClassifier.classify(endpoint, url.toHttpUrl()),
+        )
+    }
+
+    @Test
     fun identifiesSharedSabrSeekWithoutRecordingTheSession() {
         val url = "https://video.example/api/v1/sabr/playback/private-session/seek".toHttpUrl()
 

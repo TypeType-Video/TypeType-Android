@@ -26,6 +26,7 @@ object NetworkRouteClassifier {
         "sessions",
         "settings",
         "streams",
+        "subtitles",
         "subscriptions",
         "suggestions",
         "trending",
@@ -40,6 +41,7 @@ object NetworkRouteClassifier {
         "profile" to setOf("avatar"),
         "recommendations" to setOf("home"),
         "streams" to setOf("youtube"),
+        "subtitles" to setOf("youtube"),
         "subscriptions" to setOf("feed"),
         "sessions" to setOf("activity", "playback"),
     )
