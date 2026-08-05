@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.domain.notifications.NotificationItem
 import java.util.Date
 
@@ -37,6 +38,12 @@ internal fun NotificationRow(
     onOpenVideo: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val branding = rememberVideoBranding(
+        sourceUrl = item.video.url,
+        title = item.video.title,
+        thumbnailUrl = item.video.thumbnailUrl,
+        durationSeconds = item.video.durationSeconds,
+    )
     Surface(
         onClick = onOpenVideo,
         modifier = modifier,
@@ -49,7 +56,7 @@ internal fun NotificationRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AsyncImage(
-                model = item.video.thumbnailUrl,
+                model = branding.thumbnailUrl,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -71,7 +78,7 @@ internal fun NotificationRow(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = item.video.title,
+                    text = branding.title,
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,

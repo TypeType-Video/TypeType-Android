@@ -34,6 +34,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.feature.player.DevicePlaybackCodecSupport
 import dev.typetype.android.feature.player.PlayerViewModel
 import dev.typetype.android.feature.player.bindStreamToController
@@ -104,11 +105,17 @@ internal fun MiniPlayerRuntime(
 
     val item = currentItem
     if (controller != null && item != null) {
+        val branding = rememberVideoBranding(
+            sourceUrl = state.videoUrl,
+            title = item.mediaMetadata.title?.toString().orEmpty(),
+            thumbnailUrl = item.mediaMetadata.artworkUri?.toString().orEmpty(),
+            durationSeconds = stream?.durationSeconds ?: 0,
+        )
         MiniPlayerBar(
             player = controller,
-            title = item.mediaMetadata.title?.toString().orEmpty(),
+            title = branding.title,
             subtitle = item.mediaMetadata.artist?.toString().orEmpty(),
-            artworkUri = item.mediaMetadata.artworkUri?.toString(),
+            artworkUri = branding.thumbnailUrl,
             onExpand = onExpand,
             onSendToBackground = onSendToBackground,
             onClose = onClose,

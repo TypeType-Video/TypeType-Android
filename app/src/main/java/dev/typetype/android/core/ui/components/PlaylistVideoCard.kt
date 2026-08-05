@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.domain.library.PlaylistVideo
 import dev.typetype.android.domain.library.VideoMeta
 
@@ -56,6 +57,12 @@ fun PlaylistVideoCard(
     val channelUrl = video.channelUrl.takeIf { it.isNotBlank() }
         ?: meta?.channelUrl?.takeIf { it.isNotBlank() }
     val hasChannelInfo = avatarUrl != null || channelName != null
+    val branding = rememberVideoBranding(
+        sourceUrl = video.url,
+        title = video.title,
+        thumbnailUrl = video.thumbnailUrl,
+        durationSeconds = video.durationSeconds,
+    )
     val channelActionDescription = when {
         onChannelClick == null || channelUrl == null -> null
         channelName != null -> stringResource(R.string.video_open_channel_accessibility, channelName)
@@ -76,7 +83,7 @@ fun PlaylistVideoCard(
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
             AsyncImage(
-                model = video.thumbnailUrl,
+                model = branding.thumbnailUrl,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
@@ -160,7 +167,7 @@ fun PlaylistVideoCard(
                 Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = video.title,
+                        text = branding.title,
                         style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
                         color = MaterialTheme.colorScheme.onBackground,
                         maxLines = 2,
@@ -188,7 +195,7 @@ fun PlaylistVideoCard(
             }
         } else {
             Text(
-                text = video.title,
+                text = branding.title,
                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
                 color = MaterialTheme.colorScheme.onBackground,
                 maxLines = 2,

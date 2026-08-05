@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
+import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.domain.playback.PlaybackQueueState
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.usersettings.UserSettings
@@ -42,12 +43,18 @@ internal fun PlayerDetails(
     modifier: Modifier = Modifier,
 ) {
     val videoMenuScope = rememberVideoMenuScope(onOpenChannel = onOpenChannel)
+    val branding = rememberVideoBranding(
+        sourceUrl = videoUrl,
+        title = stream.title,
+        thumbnailUrl = stream.thumbnailUrl,
+        durationSeconds = stream.durationSeconds,
+    )
     Column(
         modifier = modifier.padding(horizontal = 16.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         DescriptionSection(
-            title = stream.title,
+            title = branding.title,
             viewCount = stream.viewCount,
             likeCount = stream.likeCount,
             description = stream.description,

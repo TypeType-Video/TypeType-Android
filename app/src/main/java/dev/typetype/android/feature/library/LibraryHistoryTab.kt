@@ -49,6 +49,7 @@ import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.core.ui.components.AnimatedLoader
 import dev.typetype.android.core.ui.components.FullScreenLoader
 import dev.typetype.android.core.ui.components.VideoMoreActionsButton
@@ -150,6 +151,12 @@ private fun HistoryRow(
     onPlayNext: () -> Unit,
     onAddToQueue: () -> Unit,
 ) {
+    val branding = rememberVideoBranding(
+        sourceUrl = item.url,
+        title = item.title,
+        thumbnailUrl = item.thumbnailUrl,
+        durationSeconds = item.durationSeconds,
+    )
     val channelUrl = item.channelUrl.takeIf { it.isNotBlank() }
         ?: meta?.channelUrl?.takeIf { it.isNotBlank() }
     val avatarUrl = item.channelAvatarUrl.takeIf { it.isNotBlank() }
@@ -177,7 +184,7 @@ private fun HistoryRow(
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
             AsyncImage(
-                model = item.thumbnailUrl,
+                model = branding.thumbnailUrl,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
@@ -202,7 +209,7 @@ private fun HistoryRow(
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = item.title,
+                text = branding.title,
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 2,
