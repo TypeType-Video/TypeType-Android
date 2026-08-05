@@ -76,18 +76,19 @@ fun PlayerHost(
                 initialValue = state.target.draggableTarget(),
             )
         }
-        LaunchedEffect(anchors, state.requestStamp, mediaController) {
+        LaunchedEffect(anchors, state.requestStamp) {
             val target = state.target.draggableTarget()
             anchoredState.updateAnchors(anchors, target)
             if (anchoredState.currentValue != target) {
                 anchoredState.animateTo(target)
             }
-            if (state.target == PlayerHostTarget.Hidden) {
-                mediaController?.let { ctrl ->
-                    ctrl.stop()
-                    ctrl.clearMediaItems()
-                }
-            }
+        }
+        LaunchedEffect(state.playbackClearRequestStamp, mediaController) {
+            val requestStamp = state.playbackClearRequestStamp ?: return@LaunchedEffect
+            val player = mediaController ?: return@LaunchedEffect
+            player.stop()
+            player.clearMediaItems()
+            controller.acknowledgePlaybackClear(requestStamp)
         }
         LaunchedEffect(state.target, isFullscreen) {
             if (state.target != PlayerHostTarget.Expanded && isFullscreen) {
