@@ -29,6 +29,7 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.math.roundToLong
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -152,12 +153,15 @@ class StreamRepositoryImpl @Inject constructor(
                 .map { it.toDomainAudioSource(baseUrl) },
             subtitles = subtitles.mapNotNull { it.toYoutubeSubtitleSource(baseUrl, id) },
             startPositionMillis = startPosition * 1000L,
-            sponsorBlockSegments = sponsorBlockSegments.map { it.toDomain() },
+            sponsorBlockSegments = sponsorBlockSegments.mapNotNull {
+                it.toDomainSponsorBlockSegment(duration)
+            },
             chapters = streamSegments.map { it.toChapter() },
             relatedStreams = relatedStreams.map { it.toDomainVideo() },
             isLive = isLive,
             isPostLive = isPostLive,
             isLiveContent = isLiveContent,
+            category = category,
         )
     }
 
@@ -206,19 +210,28 @@ class StreamRepositoryImpl @Inject constructor(
         itag = itag,
     )
 
-    private fun SponsorBlockSegmentItem.toDomain(): SponsorBlockSegment = SponsorBlockSegment(
-        startMs = startTime.toLong(),
-        endMs = endTime.toLong(),
-        category = SponsorCategory.fromKey(category),
-        action = SponsorAction.fromKey(action),
-    )
-
     private fun StreamSegmentItem.toChapter(): Chapter = Chapter(
         title = title,
         startMs = startTimeSeconds.toLong() * 1_000L,
         previewUrl = previewUrl,
     )
 
+}
+
+internal fun SponsorBlockSegmentItem.toDomainSponsorBlockSegment(
+    durationSeconds: Long,
+): SponsorBlockSegment? {
+    if (!startTime.isFinite() || !endTime.isFinite()) return null
+    val scale = if (durationSeconds > 0L && endTime > durationSeconds + 30L) 1.0 else 1_000.0
+    val startMs = (startTime * scale).roundToLong().coerceAtLeast(0L)
+    val endMs = (endTime * scale).roundToLong().coerceAtLeast(0L)
+    if (endMs <= startMs) return null
+    return SponsorBlockSegment(
+        startMs = startMs,
+        endMs = endMs,
+        category = SponsorCategory.fromKey(category),
+        action = SponsorAction.fromKey(action),
+    )
 }
 
 internal suspend fun <T> cancellableStreamResult(
