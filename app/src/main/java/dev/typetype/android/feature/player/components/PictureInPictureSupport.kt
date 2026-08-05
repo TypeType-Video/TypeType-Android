@@ -18,13 +18,7 @@ import androidx.core.util.Consumer
 private val DEFAULT_ASPECT_RATIO = Rational(16, 9)
 
 const val PIP_ACTION_AUDIO_ONLY = "dev.typetype.android.PIP_AUDIO_ONLY"
-const val PIP_ACTION_REWIND = "dev.typetype.android.PIP_REWIND"
-const val PIP_ACTION_PLAY_PAUSE = "dev.typetype.android.PIP_PLAY_PAUSE"
-const val PIP_ACTION_FORWARD = "dev.typetype.android.PIP_FORWARD"
 internal const val PIP_REQUEST_AUDIO_ONLY = 1010
-internal const val PIP_REQUEST_REWIND = 1011
-internal const val PIP_REQUEST_PLAY_PAUSE = 1012
-internal const val PIP_REQUEST_FORWARD = 1013
 
 @Composable
 fun rememberIsInPipMode(): State<Boolean> {
