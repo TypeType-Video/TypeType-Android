@@ -7,11 +7,11 @@ Compose interaction model.
 
 ## Audited revisions
 
-The comparison was refreshed on 2026-08-05 from clean clones:
+The comparison was refreshed on 2026-08-06 from clean clones:
 
 | Repository | Branch | Revision |
 | --- | --- | --- |
-| TypeType-Android | `dev` | `7a17aee5f40b6182c5631c99c7b9a79d200b1975` |
+| TypeType-Android | `dev` | `8f47fdbca45226d59dac6cc58919c2fdbf5caafb` |
 | TypeType frontend | `dev` | `97103f7302c91accdea3322d1f5b8f610607f378` |
 | TypeType-Server | `dev` | `6f31f93c4ecfb0e31c03c777b0d96f5cdc51f7bc` |
 | TypeType-Web-Player | `dev` | `f2fe3e6976cd9beec603f324adf37edee923ee20` |
@@ -80,7 +80,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | --- | --- | --- | --- |
 | Provider playback | `/streams` and Server media URLs | Implemented | Decoder-aware Media3 source selection |
 | YouTube VOD SABR | `/streams/youtube/sabr/bootstrap`, `/sabr/playback/*` | Implemented | Shared lifecycle, bounded windows, recovery, and generation tests |
-| Live and DVR playback | Shared SABR live window | Partial | Follower and timeline tests exist; long real live and post-live verification remains |
+| Live and DVR playback | Shared SABR live window | Partial | A real beta live ran for more than 13 minutes on API 29 through forward and backward DVR seeks, background and foreground transitions, and a 60-second outage. A separate 150-second pause exhausted multiple SABR sessions; Android rebuilt the native playback binding, recovered without a process restart, and remained stable for three minutes. Follower and timeline tests pass; post-live verification remains |
 | Audio-only playback | SABR audio target | Implemented | Service command and audio-only contract/coordinator tests |
 | Quality, codec, audio, subtitle, and speed selection | Stream and playback contracts | Implemented | Native sheet state and selection tests |
 | Server-proxied YouTube subtitles | `/subtitles/youtube/{videoId}` | Implemented | TTML endpoint mapping, overlay, cue loader, and device tests |
@@ -90,7 +90,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | Comments and replies | `/comments`, `/comments/replies` | Implemented | Paging source and native bottom sheet |
 | Related videos and channel actions | Stream metadata and subscriptions | Implemented | Shared video menus and player channel state |
 | Phone, tablet, fullscreen, mini-player, PiP | MediaSession and device capabilities | Partial | Adaptive watch layout is tested. The API 23 AOSP lane without Google services has a 152-test baseline, plus a 10-minute local H.264 run through the shared MediaSession with eight bidirectional seeks. API 29 and API 34 verify H.264 playback continuing in system PiP and pausing through that same service-owned path; API 34 also covers notification permission and foreground-service publication. On the API 37 16 KiB image, 153 of 156 baseline tests pass enforcing and the three codec-dependent tests pass in a separate permissive diagnostic run, confirming an image policy defect rather than physical-codec support. Signed PiP, rotation, and physical Android 17 codec retests remain |
-| Network loss and reconnection | Fresh Server session and bounded retry | Partial | Recovery distinguishes validated, blocked, and suspended routes and ignores capability-only noise. A random beta VOD played for more than 12 minutes on API 29 through forward and backward seeks, background and foreground transitions, and a 63-second network outage: cached media played until depletion, buffering stayed bounded, the same session resumed about 9 seconds after reconnection, and playback reached 12:30 without a player error. The equivalent long real live matrix remains |
+| Network loss and reconnection | Fresh Server session and bounded retry | Partial | Recovery distinguishes validated, blocked, and suspended routes and ignores capability-only noise. A random beta VOD played for more than 12 minutes on API 29 through bidirectional seeks, app-state transitions, and a 63-second outage; cached media played until depletion and the same session resumed about 9 seconds after reconnection. A real beta live passed the equivalent 60-second outage and recovered within 8 seconds. Signed-release and post-live network verification remain |
 | Playback restoration after process death | Stable video identity, `/progress` | Implemented | Room close/reopen restores exact position, queue, repeat mode, and account scope without persisting signed media URLs |
 | Danmaku overlay | `/bullet-comments` | Implemented | Capability-aware contract, bounded lane scheduling, native overlay, speed and size controls, TalkBack suppression, and Compose/performance tests |
 
