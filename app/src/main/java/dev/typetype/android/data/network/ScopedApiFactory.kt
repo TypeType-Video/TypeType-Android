@@ -31,6 +31,18 @@ class ScopedApiFactory @Inject constructor(
             .sabrControlClient()
         return retrofitFactory.createWithClient(baseUrl, type, client)
     }
+
+    fun <T> createYoutubeTakeoutImport(
+        baseUrl: String,
+        serverId: String,
+        accountId: String,
+        token: String,
+        type: Class<T>,
+    ): T {
+        val client = scopedHttpClientFactory.create(baseUrl, serverId, accountId, token)
+            .youtubeTakeoutImportClient()
+        return retrofitFactory.createWithClient(baseUrl, type, client)
+    }
 }
 
 internal fun okhttp3.OkHttpClient.sabrControlClient(): okhttp3.OkHttpClient = newBuilder()
@@ -44,3 +56,16 @@ internal fun okhttp3.OkHttpClient.sabrControlClient(): okhttp3.OkHttpClient = ne
 
 private const val SABR_CONTROL_READ_TIMEOUT_SECONDS = 30L
 private const val SABR_CONTROL_CALL_TIMEOUT_SECONDS = 45L
+
+internal fun okhttp3.OkHttpClient.youtubeTakeoutImportClient(): okhttp3.OkHttpClient = newBuilder()
+    .followRedirects(false)
+    .followSslRedirects(false)
+    .retryOnConnectionFailure(false)
+    .writeTimeout(YOUTUBE_TAKEOUT_WRITE_TIMEOUT_MINUTES, TimeUnit.MINUTES)
+    .readTimeout(YOUTUBE_TAKEOUT_READ_TIMEOUT_MINUTES, TimeUnit.MINUTES)
+    .callTimeout(YOUTUBE_TAKEOUT_CALL_TIMEOUT_HOURS, TimeUnit.HOURS)
+    .build()
+
+private const val YOUTUBE_TAKEOUT_WRITE_TIMEOUT_MINUTES = 2L
+private const val YOUTUBE_TAKEOUT_READ_TIMEOUT_MINUTES = 15L
+private const val YOUTUBE_TAKEOUT_CALL_TIMEOUT_HOURS = 6L
