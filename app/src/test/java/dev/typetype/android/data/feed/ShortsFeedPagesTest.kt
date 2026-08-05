@@ -3,6 +3,7 @@ package dev.typetype.android.data.feed
 import dev.typetype.android.data.network.RetrofitFactory
 import dev.typetype.android.data.network.TypeTypeApi
 import dev.typetype.android.domain.feed.ShortsContinuation
+import dev.typetype.android.domain.feed.ShortsPage
 import dev.typetype.android.domain.feed.Video
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -66,13 +67,27 @@ class ShortsFeedPagesTest {
     fun guestDiscoveryUsesTheStandardSearchContract() = runBlocking {
         server.enqueue(searchResponse(nextPage = "opaque-next"))
 
-        val page = loadDiscoveryShorts(api, nextPage = null, service = 0, limit = 1)
+        val page = loadDiscoveryShorts(api, nextPage = null, service = 0)
 
         val request = server.takeRequest().requestUrl
         assertEquals("/search", request?.encodedPath)
         assertEquals("shorts", request?.queryParameter("q"))
-        assertEquals(1, page.videos.size)
+        assertEquals(2, page.videos.size)
         assertEquals(ShortsContinuation.Discovery("opaque-next"), page.continuation)
+    }
+
+    @Test
+    fun discoveryKeepsCandidatesBeyondTheRequestedShortLimit() = runBlocking {
+        server.enqueue(
+            searchResponse(
+                nextPage = "next",
+                videos = listOf(videoJson("long", 600, false), videoJson("short", 30, true)),
+            ),
+        )
+
+        val page = loadDiscoveryShorts(api, nextPage = null, service = 0)
+
+        assertEquals(listOf("long", "short"), page.videos.map(Video::id))
     }
 
     @Test
@@ -88,6 +103,20 @@ class ShortsFeedPagesTest {
         val normalized = videos.normalizedShorts()
 
         assertEquals(listOf("a1", "b1", "a2"), normalized.map(Video::id))
+    }
+
+    @Test
+    fun pageLimitIsAppliedAfterShortClassification() {
+        val page = ShortsPage(
+            videos = listOf(
+                video("long", "channel-a", 600),
+                video("first", "channel-b", 30),
+                video("second", "channel-c", 45),
+            ),
+            continuation = null,
+        )
+
+        assertEquals(listOf("first"), page.normalized(limit = 1).videos.map(Video::id))
     }
 
     @Test
@@ -107,9 +136,23 @@ class ShortsFeedPagesTest {
         """{"$collection":[$VIDEO],"nextCursor":$nextField,"nextpage":$nextField,"hasMore":$hasMore}""",
     )
 
-    private fun searchResponse(nextPage: String) = jsonResponse(
-        """{"items":[$VIDEO,$VIDEO],"channels":[],"playlists":[],"nextpage":"$nextPage"}""",
+    private fun searchResponse(
+        nextPage: String,
+        videos: List<String> = listOf(VIDEO, VIDEO),
+    ) = jsonResponse(
+        """{"items":[${videos.joinToString()}],"channels":[],"playlists":[],"nextpage":"$nextPage"}""",
     )
+
+    private fun videoJson(id: String, duration: Long, short: Boolean) = """
+        {
+          "id":"$id","title":"$id","url":"https://video/$id",
+          "thumbnailUrl":"thumb","uploaderName":"Channel",
+          "uploaderUrl":"channel","uploaderAvatarUrl":"avatar",
+          "duration":$duration,"viewCount":7,"uploadDate":"","uploaded":1,
+          "streamType":"VIDEO_STREAM","isShortFormContent":$short,
+          "uploaderVerified":false
+        }
+    """.trimIndent()
 
     private fun jsonResponse(body: String) = MockResponse()
         .setResponseCode(200)

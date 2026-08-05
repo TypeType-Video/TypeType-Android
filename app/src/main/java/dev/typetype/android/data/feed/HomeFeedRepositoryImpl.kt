@@ -93,29 +93,29 @@ class HomeFeedRepositoryImpl @Inject constructor(
                 api = api,
                 nextPage = (continuation as? ShortsContinuation.Discovery)?.nextPage,
                 service = service,
-                limit = limit,
-            )
+            ).normalized(limit)
             continuation is ShortsContinuation.Subscriptions -> loadSubscriptionShorts(
                 api = api,
                 page = continuation.page,
                 service = service,
                 limit = limit,
-            )
+            ).normalized(limit)
             else -> loadRecommendationShorts(
                 api = api,
                 cursor = (continuation as? ShortsContinuation.Recommendations)?.cursor,
                 service = service,
                 limit = limit,
-            ).takeUnless { continuation == null && it.videos.isEmpty() }
+            ).normalized(limit)
+                .takeUnless { continuation == null && it.videos.isEmpty() }
                 ?: loadSubscriptionShorts(
                     api = api,
                     page = 0,
                     service = service,
                     limit = limit,
-                )
+                ).normalized(limit)
         }
         activeAccountScope.verify(scope)
-        page.copy(videos = page.videos.normalizedShorts())
+        page
     }
 
     private suspend fun loadCachedFeed(feed: String): List<Video> {
