@@ -9,7 +9,10 @@ data object WelcomeRoute
 data object AddServerRoute
 
 @Serializable
-data class LoginRoute(val serverId: String)
+data class LoginRoute(
+    val serverId: String,
+    val accountId: String? = null,
+)
 
 @Serializable
 data class ResetPasswordRoute(val serverId: String)

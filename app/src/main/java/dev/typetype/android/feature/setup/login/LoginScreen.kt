@@ -139,7 +139,10 @@ fun LoginScreen(
                 SectionHeader(text = stringResource(R.string.setup_section))
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = stringResource(R.string.login_title),
+                    text = stringResource(
+                        if (state.isReauthentication) R.string.login_again_title
+                        else R.string.login_title,
+                    ),
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = (-0.3).sp,
@@ -148,7 +151,9 @@ fun LoginScreen(
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text = if (state.instanceName.isBlank()) {
+                    text = if (state.isReauthentication) {
+                        stringResource(R.string.login_again_subtitle, state.instanceName)
+                    } else if (state.instanceName.isBlank()) {
                         stringResource(R.string.login_subtitle)
                     } else {
                         stringResource(R.string.login_instance_subtitle, state.instanceName)
@@ -216,7 +221,10 @@ fun LoginScreen(
                     )
                     Spacer(Modifier.height(20.dp))
                     TypeTypePrimaryButton(
-                        text = stringResource(R.string.login_title),
+                        text = stringResource(
+                            if (state.isReauthentication) R.string.login_again_title
+                            else R.string.login_title,
+                        ),
                         onClick = { onAction(LoginAction.OnLoginClick) },
                         enabled = !state.isSubmitting,
                         isLoading = state.isSubmitting,

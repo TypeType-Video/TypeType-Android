@@ -20,6 +20,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -45,7 +46,7 @@ fun InstanceAccountsCard(
     busyAccountId: String?,
     onSelect: (String, String) -> Unit,
     onForget: (String, String) -> Unit,
-    onSignIn: () -> Unit,
+    onSignIn: (String?) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -90,10 +91,11 @@ fun InstanceAccountsCard(
                     busy = busyAccountId == account.id,
                     onSelect = { onSelect(server.id, account.id) },
                     onForget = { onForget(server.id, account.id) },
+                    onSignIn = { onSignIn(account.id) },
                 )
             }
         }
-        OutlinedButton(onClick = onSignIn, modifier = Modifier.fillMaxWidth()) {
+        OutlinedButton(onClick = { onSignIn(null) }, modifier = Modifier.fillMaxWidth()) {
             Icon(Icons.Filled.PersonAdd, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
             Text(stringResource(R.string.accounts_sign_in_another))
@@ -109,6 +111,7 @@ private fun AccountRow(
     busy: Boolean,
     onSelect: () -> Unit,
     onForget: () -> Unit,
+    onSignIn: () -> Unit,
 ) {
     val displayName = account.publicUsername?.takeIf { it.isNotBlank() }
         ?: if (account.isGuest) stringResource(R.string.accounts_guest) else account.id
@@ -144,6 +147,11 @@ private fun AccountRow(
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            if (!account.isGuest) {
+                TextButton(onClick = onSignIn, enabled = !busy) {
+                    Text(stringResource(R.string.accounts_sign_in_again))
+                }
+            }
         }
         when {
             busy -> CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp)

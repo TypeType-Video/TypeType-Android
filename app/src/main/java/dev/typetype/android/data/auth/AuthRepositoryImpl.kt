@@ -44,6 +44,7 @@ class AuthRepositoryImpl @Inject constructor(
         serverId: String,
         identifier: String,
         password: String,
+        expectedAccountId: String?,
     ): Result<Unit> = runCatching {
         val server = requireNotNull(serverRepository.getServer(serverId)) { "Server not found" }
         cookieJar.beginAuthentication(serverId, server.baseUrl)
@@ -53,7 +54,7 @@ class AuthRepositoryImpl @Inject constructor(
         }
         response.requireSuccessfulResponse()
         val token = response.body()?.accessToken ?: error("Empty token in response")
-        establishSession(serverId, api, token)
+        establishSession(serverId, api, token, expectedAccountId)
     }.onFailure { cookieJar.cancelAuthentication(serverId) }
 
     override suspend fun loginAsGuest(serverId: String): Result<Unit> = runCatching {
@@ -176,7 +177,11 @@ class AuthRepositoryImpl @Inject constructor(
         cookieJar.cancelAuthentication(serverId)
     }
 
-    override suspend fun finishOidc(serverId: String, callbackUrl: String): Result<Unit> = runCatching {
+    override suspend fun finishOidc(
+        serverId: String,
+        callbackUrl: String,
+        expectedAccountId: String?,
+    ): Result<Unit> = runCatching {
         val callback = OidcCallbackParser.parse(callbackUrl, OidcRedirect.scheme)
         oidcTransactionStore.requireMatches(serverId, callback.state)
         val server = requireNotNull(serverRepository.getServer(serverId)) { "Instance not found" }
@@ -196,6 +201,7 @@ class AuthRepositoryImpl @Inject constructor(
             serverId,
             retrofitFactory.createWithoutAutomaticAuthentication(server.baseUrl),
             token,
+            expectedAccountId,
         )
     }.onFailure { cookieJar.cancelAuthentication(serverId) }
         .also { oidcTransactionStore.clear(serverId) }
@@ -207,10 +213,16 @@ class AuthRepositoryImpl @Inject constructor(
 
     override fun hasPendingOidc(serverId: String): Boolean = oidcTransactionStore.hasPending(serverId)
 
-    private suspend fun establishSession(serverId: String, api: dev.typetype.android.data.network.TypeTypeApi, token: String) {
+    private suspend fun establishSession(
+        serverId: String,
+        api: TypeTypeApi,
+        token: String,
+        expectedAccountId: String? = null,
+    ) {
         val profileResponse = withContext(Dispatchers.IO) { api.me("Bearer $token") }
         profileResponse.requireSuccessfulResponse()
         val profile = profileResponse.body() ?: error("The instance returned an empty account")
+        requireExpectedAccount(expectedAccountId, profile.id)
         val previousGeneration = accountDao.get(serverId, profile.id)?.sessionGeneration ?: 0L
         val generation = maxOf(System.currentTimeMillis(), previousGeneration + 1L)
         accountDao.upsert(AccountEntity.fromProfile(serverId, profile, generation))

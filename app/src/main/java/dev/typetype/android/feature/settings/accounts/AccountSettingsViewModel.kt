@@ -31,7 +31,7 @@ data class AccountSettingsState(
 
 sealed interface AccountSettingsEvent {
     data object AccountActivated : AccountSettingsEvent
-    data class SignIn(val serverId: String) : AccountSettingsEvent
+    data class SignIn(val serverId: String, val accountId: String?) : AccountSettingsEvent
     data object AddInstance : AccountSettingsEvent
 }
 
@@ -102,8 +102,10 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    fun signIn(serverId: String) {
-        viewModelScope.launch { eventChannel.send(AccountSettingsEvent.SignIn(serverId)) }
+    fun signIn(serverId: String, accountId: String? = null) {
+        viewModelScope.launch {
+            eventChannel.send(AccountSettingsEvent.SignIn(serverId, accountId))
+        }
     }
 
     fun addInstance() {

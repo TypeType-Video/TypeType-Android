@@ -14,4 +14,5 @@ data class LoginState(
     val oidcEnabled: Boolean = false,
     val oidcProviderName: String? = null,
     val oidcAutoRedirect: Boolean = false,
+    val isReauthentication: Boolean = false,
 )

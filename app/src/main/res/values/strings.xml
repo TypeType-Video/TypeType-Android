@@ -323,6 +323,7 @@
     <string name="accounts_subtitle">Switch instance or account</string>
     <string name="accounts_add_instance">Add an instance</string>
     <string name="accounts_sign_in_another">Sign in with another account</string>
+    <string name="accounts_sign_in_again">Sign in again</string>
     <string name="accounts_none_saved">No saved account on this instance.</string>
     <string name="accounts_guest">Guest</string>
     <string name="accounts_member">Member</string>
@@ -496,6 +497,9 @@
     <string name="setup_cleartext_warning">HTTP does not encrypt your password or account data. Use it only on a trusted local network.</string>
     <string name="setup_server_version">v%1$s</string>
     <string name="login_title">Sign in</string>
+    <string name="login_again_title">Sign in again</string>
+    <string name="login_again_subtitle">Renew this account on %1$s without removing its local data.</string>
+    <string name="login_account_mismatch">Sign in with the same account to keep its local data.</string>
     <string name="login_subtitle">Use your TypeType account credentials.</string>
     <string name="reset_password_title">Reset password</string>
     <string name="reset_password_subtitle">Use the token generated from the admin panel.</string>

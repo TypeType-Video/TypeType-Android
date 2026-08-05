@@ -263,7 +263,9 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
                             launchSingleTop = true
                         }
                     },
-                    onSignIn = { serverId -> navController.navigate(LoginRoute(serverId)) },
+                    onSignIn = { serverId, accountId ->
+                        navController.navigate(LoginRoute(serverId, accountId))
+                    },
                     onAddInstance = { navController.navigate(AddServerRoute) },
                 )
             }
