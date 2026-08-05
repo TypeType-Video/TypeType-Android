@@ -8,7 +8,13 @@ import android.media.MediaMuxer
 import java.io.File
 import java.nio.ByteBuffer
 
-internal fun createSyntheticH264Video(context: Context): File {
+internal fun createSyntheticH264Video(
+    context: Context,
+    durationSeconds: Int = DEFAULT_DURATION_SECONDS,
+    frameRate: Int = DEFAULT_FRAME_RATE,
+): File {
+    require(durationSeconds > 0)
+    require(frameRate > 0)
     val output = File.createTempFile("playback-smoke-", ".mp4", context.cacheDir)
     val codec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
     val muxer = MediaMuxer(output.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
@@ -16,19 +22,24 @@ internal fun createSyntheticH264Video(context: Context): File {
     var muxerStarted = false
     var trackIndex = -1
     val bufferInfo = MediaCodec.BufferInfo()
-    val frameCount = FRAME_RATE * DURATION_SECONDS
+    val frameCount = frameRate * durationSeconds
     var nextFrame = 0
     var outputEnded = false
 
     try {
-        codec.configure(videoFormat(codec.codecInfo), null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+        codec.configure(
+            videoFormat(codec.codecInfo, frameRate),
+            null,
+            null,
+            MediaCodec.CONFIGURE_FLAG_ENCODE,
+        )
         codec.start()
         codecStarted = true
         while (!outputEnded) {
             if (nextFrame <= frameCount) {
                 val inputIndex = codec.dequeueInputBuffer(CODEC_TIMEOUT_US)
                 if (inputIndex >= 0) {
-                    val presentationTimeUs = nextFrame * MICROS_PER_SECOND / FRAME_RATE
+                    val presentationTimeUs = nextFrame * MICROS_PER_SECOND / frameRate
                     if (nextFrame == frameCount) {
                         codec.queueInputBuffer(
                             inputIndex,
@@ -91,7 +102,10 @@ internal fun createSyntheticH264Video(context: Context): File {
 }
 
 @Suppress("DEPRECATION")
-private fun videoFormat(codecInfo: MediaCodecInfo): MediaFormat =
+private fun videoFormat(
+    codecInfo: MediaCodecInfo,
+    frameRate: Int,
+): MediaFormat =
     MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, WIDTH, HEIGHT).apply {
         setInteger(
             MediaFormat.KEY_COLOR_FORMAT,
@@ -101,7 +115,7 @@ private fun videoFormat(codecInfo: MediaCodecInfo): MediaFormat =
                 ?: MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible,
         )
         setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE)
-        setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE)
+        setInteger(MediaFormat.KEY_FRAME_RATE, frameRate)
         setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
     }
 
@@ -116,8 +130,8 @@ private fun writeFrame(buffer: ByteBuffer, frameNumber: Int): Int {
 
 private const val WIDTH = 320
 private const val HEIGHT = 180
-private const val FRAME_RATE = 15
-private const val DURATION_SECONDS = 3
+private const val DEFAULT_FRAME_RATE = 15
+private const val DEFAULT_DURATION_SECONDS = 3
 private const val BIT_RATE = 250_000
 private const val CODEC_TIMEOUT_US = 10_000L
 private const val MICROS_PER_SECOND = 1_000_000L
