@@ -11,7 +11,7 @@ The comparison was refreshed on 2026-08-05 from clean clones:
 
 | Repository | Branch | Revision |
 | --- | --- | --- |
-| TypeType-Android | `dev` | `0714e20d14f31812eb62d6d5e40b9a70ff046917` |
+| TypeType-Android | `dev` | `b1436cd38afd2959324e7baffde5cc572ae0ab94` |
 | TypeType frontend | `dev` | `97103f7302c91accdea3322d1f5b8f610607f378` |
 | TypeType-Server | `dev` | `6f31f93c4ecfb0e31c03c777b0d96f5cdc51f7bc` |
 | TypeType-Web-Player | `dev` | `f2fe3e6976cd9beec603f324adf37edee923ee20` |
@@ -44,8 +44,8 @@ Android gap, not an invitation to move a Server responsibility into the app.
 
 | Frontend behavior | Server contract | Android state | Evidence or next requirement |
 | --- | --- | --- | --- |
-| Home recommendations | `/recommendations/home` | Implemented | Cached section state and Home repository |
-| Continue watching with progress | `/progress`, `/history` | Implemented | Native first section and durable progress outbox |
+| Home recommendations | `/recommendations/home` | Implemented | Cached content remains visible during refresh, the empty state is explicit, and the real Compose surface passes on API 23 and API 37 |
+| Continue watching with progress | `/progress`, `/history` | Implemented | Native first section, durable progress outbox, accessible progress semantics, and stable video navigation pass on API 23 and API 37 |
 | Trending fallback | `/trending` | Implemented | Home distinguishes fallback from recommendations |
 | Subscription feed | `/subscriptions/feed` | Implemented | Progressive client, cached rows, retry status, and load harness |
 | Subscribed channel directory | `/subscriptions` | Implemented | Native channels grid and provider tests |
@@ -89,8 +89,8 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | Sleep timer | Device-owned Media3 state | Implemented | Service timer and device tests |
 | Comments and replies | `/comments`, `/comments/replies` | Implemented | Paging source and native bottom sheet |
 | Related videos and channel actions | Stream metadata and subscriptions | Implemented | Shared video menus and player channel state |
-| Phone, tablet, fullscreen, mini-player, PiP | MediaSession and device capabilities | Partial | Adaptive watch layout is tested. The audited revision passes 152 device tests on API 23 AOSP without Google services. API 29 and API 34 verify H.264 playback continuing in system PiP and pausing through the same service-owned MediaSession; API 34 also covers notification permission and foreground-service publication. On the API 37 16 KiB image, 153 of 156 tests pass enforcing and the three codec-dependent tests pass in a separate permissive diagnostic run, confirming an image policy defect rather than physical-codec support. Signed PiP, rotation, and physical Android 17 codec retests remain |
-| Network loss and reconnection | Fresh Server session and bounded retry | Partial | Recovery gates exist; long VOD/live network-transition matrix remains |
+| Phone, tablet, fullscreen, mini-player, PiP | MediaSession and device capabilities | Partial | Adaptive watch layout is tested. The API 23 AOSP lane without Google services has a 152-test baseline, plus a 10-minute local H.264 run through the shared MediaSession with eight bidirectional seeks. API 29 and API 34 verify H.264 playback continuing in system PiP and pausing through that same service-owned path; API 34 also covers notification permission and foreground-service publication. On the API 37 16 KiB image, 153 of 156 baseline tests pass enforcing and the three codec-dependent tests pass in a separate permissive diagnostic run, confirming an image policy defect rather than physical-codec support. Signed PiP, rotation, and physical Android 17 codec retests remain |
+| Network loss and reconnection | Fresh Server session and bounded retry | Partial | Recovery distinguishes validated, blocked, and suspended routes and ignores capability-only noise; the long real VOD/live network-transition matrix remains |
 | Playback restoration after process death | Stable video identity, `/progress` | Implemented | Room close/reopen restores exact position, queue, repeat mode, and account scope without persisting signed media URLs |
 | Danmaku overlay | `/bullet-comments` | Implemented | Capability-aware contract, bounded lane scheduling, native overlay, speed and size controls, TalkBack suppression, and Compose/performance tests |
 
@@ -105,7 +105,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | DeArrow preferences | Implemented | Native content controls cover title, thumbnail, and trust modes; a real beta search displayed the Server title and representative frame |
 | Diagnostics review, export, and clear | Implemented | Bounded redacted local store and sanitizer tests |
 | Native bug report | Implemented | Preview and explicit submission path; pinned Server retest remains |
-| Loading, cached refresh, empty, partial, and fatal states | Partial | Major lists preserve cache; semantic state audit is not complete for every route |
+| Loading, cached refresh, empty, partial, and fatal states | Partial | Home cached-refresh and empty states pass on API 23 and API 37; the semantic state audit is not complete for every route |
 | Font scale, TalkBack, RTL, keyboard, D-pad, foldable | Partial | Targeted tests exist; full route matrix is still required |
 
 ## Deliberate platform differences
