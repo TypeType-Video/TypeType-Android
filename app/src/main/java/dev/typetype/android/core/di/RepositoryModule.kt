@@ -7,6 +7,7 @@ import dagger.hilt.components.SingletonComponent
 import dev.typetype.android.data.actions.VideoActionsRepositoryImpl
 import dev.typetype.android.data.account.RoomAccountRepository
 import dev.typetype.android.data.auth.AuthRepositoryImpl
+import dev.typetype.android.data.branding.RemoteDeArrowRepository
 import dev.typetype.android.data.channel.ChannelRepositoryImpl
 import dev.typetype.android.data.comments.CommentsRepositoryImpl
 import dev.typetype.android.data.download.AndroidDownloadRepository
@@ -41,6 +42,7 @@ import dev.typetype.android.data.youtubesession.OkHttpYoutubeRemoteBrowserConnec
 import dev.typetype.android.domain.actions.VideoActionsRepository
 import dev.typetype.android.domain.account.AccountRepository
 import dev.typetype.android.domain.auth.AuthRepository
+import dev.typetype.android.domain.branding.DeArrowRepository
 import dev.typetype.android.domain.channel.ChannelRepository
 import dev.typetype.android.domain.comments.CommentsRepository
 import dev.typetype.android.domain.download.DownloadRepository
@@ -99,6 +101,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindDeArrowRepository(impl: RemoteDeArrowRepository): DeArrowRepository
 
     @Binds
     @Singleton
