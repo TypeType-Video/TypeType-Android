@@ -28,6 +28,8 @@ import dev.typetype.android.core.ui.components.FullScreenLoader
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import dev.typetype.android.domain.auth.OidcCallbackRelay
 import dev.typetype.android.domain.auth.OidcRedirect
+import dev.typetype.android.domain.navigation.resolveIncomingVideoUrl
+import dev.typetype.android.domain.navigation.resolveSharedVideoUrl
 import dev.typetype.android.feature.player.components.PIP_ACTION_AUDIO_ONLY
 import dev.typetype.android.domain.session.ActiveSessionRepository
 import dev.typetype.android.feature.settings.diagnostics.CrashReportRoute
@@ -76,6 +78,7 @@ class MainActivity : ComponentActivity() {
         }
         super.onCreate(savedInstanceState)
         receiveOidcCallback(intent)
+        if (savedInstanceState == null) receiveExternalVideo(intent)
         registerPipReceiver()
         setContent {
             val preferences by viewModel.preferences.collectAsStateWithLifecycle()
@@ -110,6 +113,7 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         receiveOidcCallback(intent)
+        receiveExternalVideo(intent)
     }
 
     override fun onStop() {
@@ -140,6 +144,23 @@ class MainActivity : ComponentActivity() {
         if (OidcRedirect.matches(callbackUrl)) {
             oidcCallbackRelay.submit(callbackUrl)
         }
+    }
+
+    private fun receiveExternalVideo(intent: Intent) {
+        val videoUrl = when (intent.action) {
+            Intent.ACTION_VIEW -> resolveIncomingVideoUrl(intent.dataString)
+            Intent.ACTION_SEND -> intent.takeIf { it.type?.startsWith("text/") == true }
+                ?.getStringExtra(Intent.EXTRA_TEXT)
+                ?.let(::resolveSharedVideoUrl)
+            else -> null
+        } ?: return
+        viewModel.openExternalVideo(videoUrl)
+        setIntent(
+            Intent(this, MainActivity::class.java).apply {
+                action = Intent.ACTION_MAIN
+                addCategory(Intent.CATEGORY_LAUNCHER)
+            },
+        )
     }
 
     private fun enterAudioOnlyMode() {
