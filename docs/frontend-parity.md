@@ -11,7 +11,7 @@ The comparison was refreshed on 2026-08-05 from clean clones:
 
 | Repository | Branch | Revision |
 | --- | --- | --- |
-| TypeType-Android | `dev` | `cb02ab0b00f4e3e7107732d76d5eb2e8892ed1a9` |
+| TypeType-Android | `dev` | `96f5423cdd5cad50e54efcfaba9be67a0410df07` |
 | TypeType frontend | `dev` | `a8bdf1fbe78d76c38136188e1a6b621204f93102` |
 | TypeType-Server | `dev` | `2b2aacbbf47a67723cec8c13fcbe599c731bb920` |
 | TypeType-Web-Player | `main` | `f4844c6e65d021c0ad1ab61169f4f51cfcd77694` |
@@ -51,7 +51,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | Search services, grouped filters, and pagination | `/search`, `/search/filters` | Implemented | Contract, selection, and continuation tests |
 | Public playlist detail and save | `/playlist`, `/saved-playlists` | Implemented | Native detail, pagination, save boundary, and Library cache |
 | Podcast episodes and queue | `/podcasts/episodes` | Implemented | Paged detail and service-owned queue |
-| Shorts recommendations and subscriptions | `/recommendations/shorts`, `/subscriptions/shorts` | Missing | Add a native vertical feed while honoring `hideShorts` everywhere |
+| Shorts recommendations and subscriptions | `/recommendations/shorts`, `/subscriptions/shorts` | Partial | Native vertical pager, typed recommendation cursor, subscription fallback, filtering, channel interleaving, explicit states, and `hideShorts` navigation have contract and API 29 Compose coverage. A real beta account exercised both endpoints, the empty result, settings round trip, and process recreation; in-pager autoplay and real beta content remain unverified |
 | DeArrow titles and thumbnails | `/dearrow`, `/dearrow/thumbnail` | Implemented | Server-synchronized preferences, trusted-candidate resolution, shared card/player presentation, contract and Compose tests, plus a real beta process-recreation check |
 | Block video, channel, and title keyword | `/blocked/*` | Implemented | Native menus/settings and contract tests |
 | Notifications and unread count | `/notifications*` | Implemented | Screen, badge, read-all flow, DTO and Compose tests |
