@@ -33,6 +33,9 @@ data object SubscriptionsRoute
 data object LibraryRoute
 
 @Serializable
+data class LibraryLandingRoute(val tab: String)
+
+@Serializable
 data object SettingsRoute
 
 @Serializable

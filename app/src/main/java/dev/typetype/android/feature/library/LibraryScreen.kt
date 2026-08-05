@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Composable
 fun LibraryRoute(
+    initialTab: LibraryTab? = null,
     onPlayVideo: (videoUrl: String) -> Unit,
     onOpenPlaylist: (playlistId: String) -> Unit = {},
     onOpenPublicPlaylist: (playlistUrl: String) -> Unit = {},
@@ -34,6 +35,9 @@ fun LibraryRoute(
     viewModel: LibraryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    LaunchedEffect(initialTab) {
+        initialTab?.let { viewModel.onAction(LibraryAction.OnTabSelect(it)) }
+    }
     LibraryScreen(
         state = state,
         historyPagingData = viewModel.historyPagingData,

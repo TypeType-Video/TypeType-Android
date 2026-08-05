@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.core.ui.components.LocalAppSnackbarHost
@@ -175,7 +176,7 @@ internal fun isAppChromeVisible(
 
 private fun NavHostController.navigateTopLevel(route: Any) {
     navigate(route) {
-        popUpTo(dev.typetype.android.core.ui.navigation.HomeRoute) { saveState = true }
+        popUpTo(graph.findStartDestination().id) { saveState = true }
         launchSingleTop = true
         restoreState = true
     }
