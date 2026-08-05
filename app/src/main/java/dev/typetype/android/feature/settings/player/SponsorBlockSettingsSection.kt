@@ -18,6 +18,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.ui.res.stringResource
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.components.DropdownRow
+import dev.typetype.android.core.ui.components.SettingsSectionHeader
+import dev.typetype.android.core.ui.components.SwitchRow
 import dev.typetype.android.domain.usersettings.SponsorBlockMode
 
 private data class SponsorBlockCategorySetting(
@@ -44,7 +47,7 @@ internal fun LazyListScope.sponsorBlockSettingsItems(
     onAction: (PlayerSettingsAction) -> Unit,
 ) {
     item { Spacer(Modifier.size(4.dp)) }
-    item { SectionHeader(stringResource(R.string.settings_player_section_sponsorblock)) }
+    item { SettingsSectionHeader(stringResource(R.string.settings_player_section_sponsorblock)) }
     item {
         DropdownRow(
             title = stringResource(R.string.settings_player_sponsorblock_mode),
