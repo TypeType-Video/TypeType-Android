@@ -34,7 +34,14 @@ class RegisterViewModel @Inject constructor(
     private val serverRepository: ServerRepository,
 ) : ViewModel() {
     private val serverId = savedStateHandle.toRoute<RegisterRoute>().serverId
-    private val _state = MutableStateFlow(RegisterState())
+    private val draftStore = RegistrationDraftStore(savedStateHandle)
+    private val draft = draftStore.restore()
+    private val _state = MutableStateFlow(
+        RegisterState(
+            name = draft.name,
+            email = draft.email,
+        ),
+    )
     val state = _state.asStateFlow()
     private val eventsChannel = Channel<RegisterEvent>(Channel.BUFFERED)
     val events = eventsChannel.receiveAsFlow()
@@ -52,8 +59,14 @@ class RegisterViewModel @Inject constructor(
 
     fun onAction(action: RegisterAction) {
         when (action) {
-            is RegisterAction.OnNameChange -> updateInput { copy(name = action.value) }
-            is RegisterAction.OnEmailChange -> updateInput { copy(email = action.value) }
+            is RegisterAction.OnNameChange -> {
+                draftStore.setName(action.value)
+                updateInput { copy(name = action.value) }
+            }
+            is RegisterAction.OnEmailChange -> {
+                draftStore.setEmail(action.value)
+                updateInput { copy(email = action.value) }
+            }
             is RegisterAction.OnPasswordChange -> updateInput { copy(password = action.value) }
             RegisterAction.OnRegisterClick -> register()
             RegisterAction.OnOidcClick -> startOidc()
@@ -139,6 +152,7 @@ class RegisterViewModel @Inject constructor(
                 password = current.password,
             ).fold(
                 onSuccess = {
+                    draftStore.clear()
                     _state.update { it.copy(isSubmitting = false) }
                     emit(RegisterEvent.NavigateToHome)
                 },
@@ -203,6 +217,7 @@ class RegisterViewModel @Inject constructor(
         viewModelScope.launch {
             authRepository.finishOidc(serverId, callbackUrl).fold(
                 onSuccess = {
+                    draftStore.clear()
                     _state.update { it.copy(isSubmitting = false) }
                     emit(RegisterEvent.NavigateToHome)
                 },
