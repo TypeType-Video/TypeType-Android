@@ -70,6 +70,7 @@ internal fun ResilientPlayerSurface(
                     (LayoutInflater.from(context).inflate(R.layout.player_view_texture, parent, false) as PlayerView).apply {
                         useController = false
                         setShutterBackgroundColor(Color.BLACK)
+                        retainContentAcrossPlayerResets()
                         this.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
                         subtitleView?.visibility =
                             if (showNativeSubtitles) View.VISIBLE else View.GONE
@@ -138,6 +139,10 @@ internal fun ResilientPlayerSurface(
             }
         }
     }
+}
+
+internal fun PlayerView.retainContentAcrossPlayerResets() {
+    setKeepContentOnPlayerReset(true)
 }
 
 private data class SurfaceScale(
