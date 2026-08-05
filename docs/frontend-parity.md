@@ -52,7 +52,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | Public playlist detail and save | `/playlist`, `/saved-playlists` | Implemented | Native detail, pagination, save boundary, and Library cache |
 | Podcast episodes and queue | `/podcasts/episodes` | Implemented | Paged detail and service-owned queue |
 | Shorts recommendations and subscriptions | `/recommendations/shorts`, `/subscriptions/shorts` | Missing | Add a native vertical feed while honoring `hideShorts` everywhere |
-| DeArrow titles and thumbnails | `/dearrow`, `/dearrow/thumbnail` | Partial | Settings are synchronized; cards do not resolve or display replacements yet |
+| DeArrow titles and thumbnails | `/dearrow`, `/dearrow/thumbnail` | Implemented | Server-synchronized preferences, trusted-candidate resolution, shared card/player presentation, contract and Compose tests, plus a real beta process-recreation check |
 | Block video, channel, and title keyword | `/blocked/*` | Implemented | Native menus/settings and contract tests |
 | Notifications and unread count | `/notifications*` | Implemented | Screen, badge, read-all flow, DTO and Compose tests |
 
@@ -97,7 +97,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | Player defaults and caption style | Implemented | Server settings patches and Android caption integration |
 | SponsorBlock preferences | Implemented | Server-synchronized controls and policy tests |
 | Content visibility and history privacy | Implemented | Server-synchronized controls and write gates |
-| DeArrow preferences | Partial | Persisted, but browsing replacements are not applied |
+| DeArrow preferences | Implemented | Native content controls cover title, thumbnail, and trust modes; a real beta search displayed the Server title and representative frame |
 | Diagnostics review, export, and clear | Implemented | Bounded redacted local store and sanitizer tests |
 | Native bug report | Implemented | Preview and explicit submission path; pinned Server retest remains |
 | Loading, cached refresh, empty, partial, and fatal states | Partial | Major lists preserve cache; semantic state audit is not complete for every route |
