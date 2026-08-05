@@ -2,10 +2,8 @@ package dev.typetype.android.feature.player
 
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
 import androidx.media3.common.MimeTypes
 import androidx.media3.session.MediaController
-import androidx.core.net.toUri
 import dev.typetype.android.domain.stream.SabrPlaybackBinding
 import dev.typetype.android.domain.stream.SabrPlaybackTarget
 import dev.typetype.android.domain.stream.Stream
@@ -94,6 +92,8 @@ internal suspend fun bindStreamToController(
             source.playbackSubtitles(stream.subtitles)
         },
         startPositionMillis = itemStartPosition,
+        preferOriginalAudio = preferOriginalLanguage,
+        preferredAudioLocale = defaultAudioLanguage,
     )
     val extras = currentItem?.requestMetadata?.extras
     val sameSource = sameMedia && samePlayableSource(
@@ -121,35 +121,6 @@ internal suspend fun bindStreamToController(
         controller.prepare()
     }
     controller.playWhenReady = requestedPlayWhenReady
-}
-
-internal fun buildResolvedMediaItem(
-    stream: Stream,
-    videoUrl: String,
-    source: PlayableSource,
-    subtitles: List<StreamSubtitleSource>,
-    startPositionMillis: Long,
-): MediaItem {
-    val metadata = MediaMetadata.Builder()
-        .setTitle(stream.title)
-        .setArtist(stream.uploaderName)
-        .setArtworkUri(stream.thumbnailUrl.toUri())
-        .build()
-    return MediaItem.Builder()
-        .setUri(source.url)
-        .setMediaId(videoUrl)
-        .setMediaMetadata(metadata)
-        .setRequestMetadata(
-            source.toRequestMetadata(
-                scope = stream.requestScope,
-                resumePositionMillis = startPositionMillis.coerceAtLeast(0L),
-                isLiveContent = stream.isLiveContent || stream.isLive,
-                stream = stream,
-            ),
-        )
-        .apply { source.mimeType?.let { setMimeType(it) } }
-        .setSubtitleConfigurations(subtitles.toSubtitleConfigurations())
-        .build()
 }
 
 internal fun replacementPlayWhenReady(
