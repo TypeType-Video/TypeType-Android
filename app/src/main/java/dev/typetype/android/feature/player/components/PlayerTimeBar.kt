@@ -87,6 +87,7 @@ fun PlayerTimeBar(
                 player.seekTo(targetMs)
                 scrubPositionMs = null
             },
+            onScrubCancelled = { scrubPositionMs = null },
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = if (compact) 2.dp else 4.dp)
@@ -106,13 +107,14 @@ fun PlayerTimeBar(
 }
 
 @Composable
-private fun TimelineTrack(
+internal fun TimelineTrack(
     positionMs: Long,
     durationMs: Long,
     segments: List<SponsorBlockSegment>,
     compact: Boolean,
     onScrub: (Long) -> Unit,
     onScrubFinished: (Long) -> Unit,
+    onScrubCancelled: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val activeColor = MaterialTheme.colorScheme.primary
@@ -138,7 +140,7 @@ private fun TimelineTrack(
                         onScrub(lastTargetMs)
                     },
                     onDragEnd = { onScrubFinished(lastTargetMs) },
-                    onDragCancel = { onScrubFinished(lastTargetMs) },
+                    onDragCancel = onScrubCancelled,
                 )
             },
     ) {
