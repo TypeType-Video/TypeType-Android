@@ -14,12 +14,15 @@ import dev.typetype.android.core.ui.navigation.PrivacySettingsRoute
 import dev.typetype.android.core.ui.navigation.ProfileSettingsRoute
 import dev.typetype.android.core.ui.navigation.SettingsRoute
 import dev.typetype.android.core.ui.navigation.StorageSettingsRoute
+import dev.typetype.android.core.ui.navigation.YoutubeSessionRoute
 import dev.typetype.android.feature.settings.SettingsScreen
 import dev.typetype.android.feature.settings.imports.ImportDataRoute as ImportDataRouteScreen
+import dev.typetype.android.feature.settings.youtubesession.YoutubeSessionRoute as YoutubeSessionRouteScreen
 
 internal fun NavGraphBuilder.settingsDestinations(
     navController: NavHostController,
     importsAvailable: Boolean,
+    youtubeSessionAvailable: Boolean,
     onSignOut: () -> Unit,
 ) {
     composable<SettingsRoute> {
@@ -29,6 +32,8 @@ internal fun NavGraphBuilder.settingsDestinations(
             onOpenProfile = { navController.navigate(ProfileSettingsRoute) },
             onOpenImport = { navController.navigate(ImportDataRoute) },
             importsAvailable = importsAvailable,
+            onOpenYoutubeSession = { navController.navigate(YoutubeSessionRoute) },
+            youtubeSessionAvailable = youtubeSessionAvailable,
             onOpenAppearance = { navController.navigate(AppearanceRoute) },
             onOpenPlayer = { navController.navigate(PlayerSettingsRoute) },
             onOpenStorage = { navController.navigate(StorageSettingsRoute) },
@@ -41,6 +46,11 @@ internal fun NavGraphBuilder.settingsDestinations(
     }
     composable<ImportDataRoute> {
         ImportDataRouteScreen(
+            onNavigateBack = { navController.popBackStack() },
+        )
+    }
+    composable<YoutubeSessionRoute> {
+        YoutubeSessionRouteScreen(
             onNavigateBack = { navController.popBackStack() },
         )
     }
