@@ -9,6 +9,8 @@ import dev.typetype.android.data.download.DownloadDao
 import dev.typetype.android.data.download.DownloadEntity
 import dev.typetype.android.data.feed.FeedVideoDao
 import dev.typetype.android.data.feed.FeedVideoEntity
+import dev.typetype.android.data.imports.YoutubeTakeoutImportDao
+import dev.typetype.android.data.imports.YoutubeTakeoutImportEntity
 import dev.typetype.android.data.library.local.FavoriteEntity
 import dev.typetype.android.data.library.local.FavoritesDao
 import dev.typetype.android.data.library.local.HistoryDao
@@ -56,8 +58,9 @@ import dev.typetype.android.data.subscriptions.SubscriptionEntity
         PlaybackQueueEntity::class,
         SavedPublicPlaylistEntity::class,
         FeedVideoEntity::class,
+        YoutubeTakeoutImportEntity::class,
     ],
-    version = 20,
+    version = 21,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
@@ -89,4 +92,5 @@ abstract class TypeTypeDatabase : RoomDatabase() {
     abstract fun playbackQueueDao(): PlaybackQueueDao
     abstract fun savedPublicPlaylistDao(): SavedPublicPlaylistDao
     abstract fun feedVideoDao(): FeedVideoDao
+    abstract fun youtubeTakeoutImportDao(): YoutubeTakeoutImportDao
 }

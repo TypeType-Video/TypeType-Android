@@ -3,6 +3,34 @@ package dev.typetype.android.data.database
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 internal object TypeTypeDatabaseMigrationSql {
+    fun createYoutubeTakeoutImports(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE `youtube_takeout_imports` (" +
+                "`serverId` TEXT NOT NULL, `accountId` TEXT NOT NULL, " +
+                "`sessionGeneration` INTEGER NOT NULL, `requestId` TEXT NOT NULL, " +
+                "`workId` TEXT NOT NULL, `documentUri` TEXT NOT NULL, `displayName` TEXT NOT NULL, " +
+                "`sizeBytes` INTEGER, `serverJobId` TEXT, `status` TEXT NOT NULL, `phase` TEXT, " +
+                "`progressPercent` INTEGER, `previewSubscriptions` INTEGER, " +
+                "`previewPlaylists` INTEGER, `previewPlaylistItems` INTEGER, " +
+                "`previewFavorites` INTEGER, `previewWatchLater` INTEGER, `previewHistory` INTEGER, " +
+                "`importedCount` INTEGER, `skippedCount` INTEGER, `failedCount` INTEGER, " +
+                "`warningCount` INTEGER NOT NULL, `errorCount` INTEGER NOT NULL, " +
+                "`failureCode` TEXT, `failureRequestId` TEXT, " +
+                "`collectionsRefreshed` INTEGER NOT NULL, " +
+                "`createdAtMillis` INTEGER NOT NULL, `updatedAtMillis` INTEGER NOT NULL, " +
+                "PRIMARY KEY(`serverId`, `accountId`, `requestId`), " +
+                accountForeignKey() + ")",
+        )
+        db.execSQL(
+            "CREATE INDEX `index_youtube_takeout_imports_serverId_accountId` " +
+                "ON `youtube_takeout_imports` (`serverId`, `accountId`)",
+        )
+        db.execSQL(
+            "CREATE UNIQUE INDEX `index_youtube_takeout_imports_workId` " +
+                "ON `youtube_takeout_imports` (`workId`)",
+        )
+    }
+
     fun addCollectionMetadata(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE `favorites` ADD COLUMN `title` TEXT NOT NULL DEFAULT ''")
         db.execSQL("ALTER TABLE `favorites` ADD COLUMN `thumbnailUrl` TEXT NOT NULL DEFAULT ''")
