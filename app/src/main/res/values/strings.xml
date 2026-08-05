@@ -223,6 +223,8 @@
     <string name="settings_player_danmaku_enabled_subtitle">Available on supported NicoNico videos</string>
     <string name="settings_player_danmaku_speed">Bullet comment speed</string>
     <string name="settings_player_danmaku_size">Bullet comment size</string>
+    <string name="player_danmaku_loading">Loading bullet comments…</string>
+    <string name="player_danmaku_unavailable">Bullet comments are temporarily unavailable</string>
     <string name="settings_player_subtitles_enabled">Enable subtitles</string>
     <string name="settings_player_subtitles_enabled_subtitle">Show subtitles by default</string>
     <string name="settings_player_subtitle_language">Subtitle language</string>

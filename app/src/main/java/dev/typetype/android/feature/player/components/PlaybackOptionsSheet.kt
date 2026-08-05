@@ -21,6 +21,8 @@ import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.stream.StreamPlaybackContract
 import dev.typetype.android.feature.player.AUTO_QUALITY_KEY
 import dev.typetype.android.feature.player.PlaybackCodecSupport
+import dev.typetype.android.feature.player.PlayerDanmakuAction
+import dev.typetype.android.feature.player.PlayerDanmakuState
 import dev.typetype.android.feature.player.RECOMMENDED_CODEC_KEY
 import dev.typetype.android.feature.player.RECOMMENDED_QUALITY_KEY
 import dev.typetype.android.feature.player.hasAdaptiveSource
@@ -42,6 +44,7 @@ internal fun PlaybackOptionsSheet(
     audioOnlyEnabled: Boolean,
     audioOnlyChanging: Boolean,
     showAudioOnly: Boolean,
+    danmakuState: PlayerDanmakuState = PlayerDanmakuState(),
     onSelectCodec: (String) -> Unit,
     onSelectQuality: (String) -> Unit,
     onSelectAudio: (String?) -> Unit,
@@ -49,6 +52,7 @@ internal fun PlaybackOptionsSheet(
     onSelectSpeed: (Float) -> Unit,
     onSelectResizeMode: (ResizeMode) -> Unit,
     onAudioOnlyChange: (Boolean) -> Unit,
+    onDanmakuAction: (PlayerDanmakuAction) -> Unit = {},
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -126,6 +130,12 @@ internal fun PlaybackOptionsSheet(
                 audioOnlyEnabled = audioOnlyEnabled,
                 audioOnlyChanging = audioOnlyChanging,
                 showAudioOnly = showAudioOnly,
+                showDanmaku = danmakuState.available,
+                danmakuEnabled = danmakuState.enabled,
+                danmakuSpeedLabel = "${formatSpeed(danmakuState.speed)}x",
+                danmakuSizeLabel = "${(danmakuState.size * 100).toInt()}%",
+                danmakuLoading = danmakuState.isLoading,
+                danmakuLoadFailed = danmakuState.loadFailed,
                 onOpenCodec = { page = PlaybackOptionsPage.Codec },
                 onOpenQuality = { page = PlaybackOptionsPage.Quality },
                 onOpenCaptions = { page = PlaybackOptionsPage.Captions },
@@ -133,6 +143,9 @@ internal fun PlaybackOptionsSheet(
                 onOpenSpeed = { page = PlaybackOptionsPage.Speed },
                 onOpenResize = { page = PlaybackOptionsPage.Resize },
                 onAudioOnlyChange = onAudioOnlyChange,
+                onDanmakuChange = { onDanmakuAction(PlayerDanmakuAction.SetEnabled(it)) },
+                onOpenDanmakuSpeed = { page = PlaybackOptionsPage.DanmakuSpeed },
+                onOpenDanmakuSize = { page = PlaybackOptionsPage.DanmakuSize },
             )
             PlaybackOptionsPage.Codec -> PickerPage(
                 title = stringResource(R.string.playback_options_codec),
@@ -202,6 +215,34 @@ internal fun PlaybackOptionsSheet(
                     onDismiss()
                 },
             )
+            PlaybackOptionsPage.DanmakuSpeed -> PickerPage(
+                title = stringResource(R.string.settings_player_danmaku_speed),
+                options = DANMAKU_VALUES.map {
+                    PlaybackPickerOption(it.toString(), "${formatSpeed(it)}x")
+                },
+                selectedKey = danmakuState.speed.toString(),
+                emptyLabel = "${formatSpeed(danmakuState.speed)}x",
+                onBack = { page = PlaybackOptionsPage.Main },
+                onSelect = { value ->
+                    value?.toFloatOrNull()?.let {
+                        onDanmakuAction(PlayerDanmakuAction.SetSpeed(it))
+                    }
+                },
+            )
+            PlaybackOptionsPage.DanmakuSize -> PickerPage(
+                title = stringResource(R.string.settings_player_danmaku_size),
+                options = DANMAKU_VALUES.map {
+                    PlaybackPickerOption(it.toString(), "${(it * 100).toInt()}%")
+                },
+                selectedKey = danmakuState.size.toString(),
+                emptyLabel = "${(danmakuState.size * 100).toInt()}%",
+                onBack = { page = PlaybackOptionsPage.Main },
+                onSelect = { value ->
+                    value?.toFloatOrNull()?.let {
+                        onDanmakuAction(PlayerDanmakuAction.SetSize(it))
+                    }
+                },
+            )
         }
     }
 }
@@ -251,7 +292,11 @@ private enum class PlaybackOptionsPage {
     Audio,
     Speed,
     Resize,
+    DanmakuSpeed,
+    DanmakuSize,
 }
+
+private val DANMAKU_VALUES = listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f)
 
 private fun formatSpeed(value: Float): String =
     if (value % 1f == 0f) value.toInt().toString() else value.toString()
