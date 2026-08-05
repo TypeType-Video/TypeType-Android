@@ -11,7 +11,7 @@ The comparison was refreshed on 2026-08-05 from clean clones:
 
 | Repository | Branch | Revision |
 | --- | --- | --- |
-| TypeType-Android | `dev` | `ce7197682bd1a2bd6494da42f24e4be06a89d587` |
+| TypeType-Android | `dev` | `976679011a6e4265a59a19ff1c974ea08d0bab6c` |
 | TypeType frontend | `dev` | `97103f7302c91accdea3322d1f5b8f610607f378` |
 | TypeType-Server | `dev` | `6f31f93c4ecfb0e31c03c777b0d96f5cdc51f7bc` |
 | TypeType-Web-Player | `main` | `f4844c6e65d021c0ad1ab61169f4f51cfcd77694` |
@@ -34,7 +34,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | Reauthentication of the selected account | `/auth/login`, `/auth/oidc/callback` | Implemented | Account identity is checked before replacing credentials |
 | Multiple instances and accounts | Account-scoped authenticated API | Implemented | Room scope, cookies, tokens, workers, cache, and navigation are isolated |
 | Profile identity | `/profile`, `/profile/account` | Implemented | Native profile settings and identity Compose test |
-| Emoji, custom, and reset avatar | `/profile/avatar/*` | Implemented | Picker, GIF decoder, upload DTO, and repository tests; real release retest remains |
+| Emoji, custom, and reset avatar | `/profile/avatar/*` | Implemented | Picker, GIF decoder, upload DTO, and repository tests; an authenticated OIDC account exercised WebP and animated GIF uploads, profile refresh, and process recreation on API 29; signed-release retest remains |
 | YouTube session status and pairing | `/youtube-session/*` | Partial | Native capability, status, authenticated remote browser, disconnect, expiry, and unavailable states have contract, unit, and API 33 Compose coverage; process recreation and signed-release retest remain |
 
 ## Discovery and browsing
