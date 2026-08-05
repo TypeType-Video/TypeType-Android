@@ -11,7 +11,7 @@ The comparison was refreshed on 2026-08-06 from clean clones:
 
 | Repository | Branch | Revision |
 | --- | --- | --- |
-| TypeType-Android | `dev` | `8f47fdbca45226d59dac6cc58919c2fdbf5caafb` |
+| TypeType-Android | `dev` | `30d8a662726de16d74c5b91e002d968eeeaf15c9` |
 | TypeType frontend | `dev` | `97103f7302c91accdea3322d1f5b8f610607f378` |
 | TypeType-Server | `dev` | `6f31f93c4ecfb0e31c03c777b0d96f5cdc51f7bc` |
 | TypeType-Web-Player | `dev` | `f2fe3e6976cd9beec603f324adf37edee923ee20` |
@@ -37,7 +37,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | Reauthentication of the selected account | `/auth/login`, `/auth/oidc/callback` | Implemented | Account identity is checked before replacing credentials |
 | Multiple instances and accounts | Account-scoped authenticated API | Implemented | Room scope, cookies, tokens, workers, cache, and navigation are isolated |
 | Profile identity | `/profile`, `/profile/account` | Implemented | Native profile settings and identity Compose test |
-| Emoji, custom, and reset avatar | `/profile/avatar/*` | Implemented | Picker, GIF decoder, upload DTO, and repository tests; an authenticated OIDC account exercised WebP and animated GIF uploads, profile refresh, and process recreation on API 29; signed-release retest remains |
+| Emoji, custom, and reset avatar | `/profile/avatar/*` | Implemented | Picker, GIF decoder, upload DTO, and repository tests; authenticated beta accounts exercised WebP and animated GIF uploads, profile refresh, force-stop recreation, and reset on API 29, with successful upload, identity refresh, and delete responses; signed-release retest remains |
 | YouTube session status and pairing | `/youtube-session/*` | Partial | Native capability, status, authenticated remote browser, disconnect, expiry, and unavailable states have contract, unit, and API 33 Compose coverage; process recreation and signed-release retest remain |
 
 ## Discovery and browsing
@@ -83,10 +83,11 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | Live and DVR playback | Shared SABR live window | Partial | A real beta live ran for more than 13 minutes on API 29 through forward and backward DVR seeks, background and foreground transitions, and a 60-second outage. A separate 150-second pause exhausted multiple SABR sessions; Android rebuilt the native playback binding, recovered without a process restart, and remained stable for three minutes. Follower and timeline tests pass; post-live verification remains |
 | Audio-only playback | SABR audio target | Implemented | Service command and audio-only contract/coordinator tests |
 | Quality, codec, audio, subtitle, and speed selection | Stream and playback contracts | Implemented | Native sheet state and selection tests |
-| Server-proxied YouTube subtitles | `/subtitles/youtube/{videoId}` | Implemented | TTML endpoint mapping, overlay, cue loader, and device tests |
+| Server-proxied YouTube subtitles | `/subtitles/youtube/{videoId}` | Implemented | TTML endpoint mapping, overlay, cue loader, manual, automatic, translated-track, seek, and bounded-failure device tests pass on API 23, 29, and 37. A real beta TED video reached the native track selector and preserved playback when the Server returned the typed 429 unavailable state; visual caption success remains blocked by the current beta egress |
 | SponsorBlock actions and chapters | Stream segment metadata and settings | Implemented | Category policy, skip/mute/manual notice, chapter and Compose tests |
 | Queue, autoplay, shuffle, and repeat | Stable video identities | Implemented | One service-owned queue and persistence tests |
 | Sleep timer | Device-owned Media3 state | Implemented | Service timer and device tests |
+| Keep the display awake during video playback | Device window state | Implemented | The window flag follows the single MediaSession playback state in portrait, fullscreen, and Shorts. On API 29, a real beta VOD stayed awake for 12 seconds in both portrait and fullscreen with a five-second system timeout; pausing removed the flag and the display slept within ten seconds |
 | Comments and replies | `/comments`, `/comments/replies` | Implemented | Paging source and native bottom sheet |
 | Related videos and channel actions | Stream metadata and subscriptions | Implemented | Shared video menus and player channel state |
 | Phone, tablet, fullscreen, mini-player, PiP | MediaSession and device capabilities | Partial | Adaptive watch layout is tested. The API 23 AOSP lane without Google services has a 152-test baseline, a 10-minute local H.264 run through the shared MediaSession with eight bidirectional seeks, and a current-app launch proving PiP code remains gated when the platform feature is absent. On API 29 AOSP, the real System UI play and pause actions control the same service-owned session without starting another process or activity; live playback exposes only the valid playback action, while VOD also exposes audio-only. API 34 covers H.264 PiP, notification permission, and foreground-service publication. The API 37 16 KiB enforcing image passes the PiP action contract and basic transition; 153 of 156 baseline tests pass there, while the three codec-dependent tests pass only in a separate permissive diagnostic run, confirming an emulator image policy defect rather than physical-codec support. Signed PiP, rotation, and physical Android 17 codec retests remain |
