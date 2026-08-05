@@ -13,7 +13,9 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.extractor.text.CuesWithTiming
 import dev.typetype.android.domain.stream.StreamSubtitleSource
+import java.util.concurrent.atomic.AtomicInteger
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -60,6 +62,30 @@ class PlayerSubtitleOverlayTest {
 
         composeRule.onNodeWithText("Automatic subtitle").assertIsDisplayed()
         composeRule.onAllNodesWithText("Manual subtitle").assertCountEquals(0)
+    }
+
+    @Test
+    fun failedServerSubtitleShowsTemporaryMessageWithoutRetrying() {
+        val attempts = AtomicInteger()
+        composeRule.setContent {
+            MaterialTheme {
+                PlayerSubtitleOverlay(
+                    player = player,
+                    controlsVisible = false,
+                    subtitlesVisible = true,
+                    externalSource = selectedSource.value,
+                    loadExternalCues = {
+                        attempts.incrementAndGet()
+                        Result.failure(IllegalStateException("subtitle_upstream_throttled"))
+                    },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText(
+            "Subtitles are temporarily unavailable. Video playback will continue.",
+        ).assertIsDisplayed()
+        composeRule.runOnIdle { assertEquals(1, attempts.get()) }
     }
 
     private fun cueFor(trackId: String): CuesWithTiming = CuesWithTiming(

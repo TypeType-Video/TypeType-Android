@@ -21,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -29,6 +30,7 @@ import androidx.media3.common.text.Cue
 import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.extractor.text.CuesWithTiming
+import dev.typetype.android.R
 import dev.typetype.android.domain.stream.StreamSubtitleSource
 import dev.typetype.android.feature.player.LoadSubtitleCues
 import kotlinx.coroutines.delay
@@ -52,6 +54,10 @@ fun PlayerSubtitleOverlay(
     var activeExternalCues by remember(externalSource?.url) {
         mutableStateOf(emptyList<Cue>())
     }
+    var externalLoadFailed by remember(externalSource?.url) { mutableStateOf(false) }
+    val temporarilyUnavailable = stringResource(
+        R.string.player_subtitles_temporarily_unavailable,
+    )
 
     DisposableEffect(player) {
         val listener = object : Player.Listener {
@@ -65,9 +71,13 @@ fun PlayerSubtitleOverlay(
     }
 
     LaunchedEffect(externalSource?.url) {
-        externalCues = externalSource
-            ?.let { loadExternalCues(it).getOrDefault(emptyList()) }
-            .orEmpty()
+        val result = externalSource?.let { loadExternalCues(it) }
+        externalCues = result?.getOrDefault(emptyList()).orEmpty()
+        externalLoadFailed = result?.isFailure == true
+        if (externalLoadFailed) {
+            delay(EXTERNAL_FAILURE_VISIBILITY_MS)
+            externalLoadFailed = false
+        }
     }
 
     LaunchedEffect(player, externalSource?.url, externalCues) {
@@ -84,7 +94,9 @@ fun PlayerSubtitleOverlay(
 
     if (!subtitlesVisible) return
     val cues = if (externalSource == null) nativeCues else activeExternalCues
-    val text = cues.subtitleText()
+    val text = cues.subtitleText().ifBlank {
+        temporarilyUnavailable.takeIf { externalLoadFailed }.orEmpty()
+    }
     if (text.isBlank()) return
 
     Box(
@@ -128,3 +140,4 @@ internal fun List<CuesWithTiming>.activeAt(positionUs: Long): List<Cue> =
         .flatMap(CuesWithTiming::cues)
 
 private const val CUE_REFRESH_INTERVAL_MS = 100L
+private const val EXTERNAL_FAILURE_VISIBILITY_MS = 4_000L
