@@ -5,6 +5,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import java.util.concurrent.atomic.AtomicInteger
 import org.junit.Assert.assertEquals
@@ -40,5 +43,31 @@ class LazyPaginationFooterTest {
         composeRule.waitForIdle()
 
         assertEquals(2, loadCount.get())
+    }
+
+    @Test
+    fun failedContinuationWaitsForAnExplicitRetry() {
+        val loadCount = AtomicInteger()
+
+        composeRule.setContent {
+            MaterialTheme {
+                LazyPaginationFooter(
+                    continuationKey = "page-two",
+                    isLoading = false,
+                    hasError = true,
+                    onLoadMore = loadCount::incrementAndGet,
+                )
+            }
+        }
+
+        composeRule.waitForIdle()
+        assertEquals(0, loadCount.get())
+
+        val retryLabel = InstrumentationRegistry.getInstrumentation()
+            .targetContext
+            .getString(dev.typetype.android.R.string.search_load_more_retry)
+        composeRule.onNodeWithText(retryLabel).performClick()
+
+        assertEquals(1, loadCount.get())
     }
 }
