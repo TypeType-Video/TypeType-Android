@@ -7,6 +7,7 @@ import dev.typetype.android.core.ui.navigation.AboutRoute
 import dev.typetype.android.core.ui.navigation.AccountsRoute
 import dev.typetype.android.core.ui.navigation.AppearanceRoute
 import dev.typetype.android.core.ui.navigation.BlockedSettingsRoute
+import dev.typetype.android.core.ui.navigation.ContentSettingsRoute
 import dev.typetype.android.core.ui.navigation.DiagnosticsRoute
 import dev.typetype.android.core.ui.navigation.ImportDataRoute
 import dev.typetype.android.core.ui.navigation.PlayerSettingsRoute
@@ -35,6 +36,7 @@ internal fun NavGraphBuilder.settingsDestinations(
             onOpenYoutubeSession = { navController.navigate(YoutubeSessionRoute) },
             youtubeSessionAvailable = youtubeSessionAvailable,
             onOpenAppearance = { navController.navigate(AppearanceRoute) },
+            onOpenContent = { navController.navigate(ContentSettingsRoute) },
             onOpenPlayer = { navController.navigate(PlayerSettingsRoute) },
             onOpenStorage = { navController.navigate(StorageSettingsRoute) },
             onOpenPrivacy = { navController.navigate(PrivacySettingsRoute) },
