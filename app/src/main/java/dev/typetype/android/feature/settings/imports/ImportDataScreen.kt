@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -40,8 +41,11 @@ import java.util.Locale
 fun ImportDataRoute(
     onNavigateBack: () -> Unit,
     viewModel: ImportDataViewModel = hiltViewModel(),
+    youtubeViewModel: YoutubeTakeoutImportViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val youtubeState by youtubeViewModel.state.collectAsStateWithLifecycle()
+    val uriHandler = LocalUriHandler.current
     val exportName = remember {
         val date = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
         "typetype-backup-$date.json"
@@ -58,8 +62,13 @@ fun ImportDataRoute(
         contract = ActivityResultContracts.OpenDocument(),
         onResult = { uri -> uri?.let(viewModel::selectPipePipeDocument) },
     )
+    val youtubeTakeoutPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenMultipleDocuments(),
+        onResult = youtubeViewModel::selectDocuments,
+    )
     ImportDataScreen(
         state = state,
+        youtubeState = youtubeState,
         onNavigateBack = onNavigateBack,
         onToggleCategory = viewModel::toggleTypeTypeCategory,
         onExportTypeType = { exporter.launch(exportName) },
@@ -81,12 +90,21 @@ fun ImportDataRoute(
         },
         onRestorePipePipe = viewModel::restorePipePipe,
         onResetPipePipeResult = viewModel::resetPipePipeResult,
+        onOpenYoutubeTakeout = { uriHandler.openUri(YOUTUBE_TAKEOUT_URL) },
+        onChooseYoutubeTakeout = {
+            youtubeTakeoutPicker.launch(arrayOf("application/zip", "application/x-zip-compressed"))
+        },
+        onRetryYoutubeTakeout = youtubeViewModel::retry,
+        onCancelYoutubeTakeout = youtubeViewModel::cancel,
+        onRemoveYoutubeTakeout = youtubeViewModel::remove,
+        onRetryYoutubeRefresh = youtubeViewModel::retryCollectionRefresh,
     )
 }
 
 @Composable
 fun ImportDataScreen(
     state: ImportDataState,
+    youtubeState: YoutubeTakeoutImportState,
     onNavigateBack: () -> Unit,
     onToggleCategory: (TypeTypeBackupCategory) -> Unit,
     onExportTypeType: () -> Unit,
@@ -97,6 +115,12 @@ fun ImportDataScreen(
     onChoosePipePipeBackup: () -> Unit,
     onRestorePipePipe: () -> Unit,
     onResetPipePipeResult: () -> Unit,
+    onOpenYoutubeTakeout: () -> Unit,
+    onChooseYoutubeTakeout: () -> Unit,
+    onRetryYoutubeTakeout: (String) -> Unit,
+    onCancelYoutubeTakeout: (String) -> Unit,
+    onRemoveYoutubeTakeout: (String) -> Unit,
+    onRetryYoutubeRefresh: () -> Unit,
 ) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
@@ -114,6 +138,15 @@ fun ImportDataScreen(
                 onExport = onExportTypeType,
                 onChooseBackup = onChooseTypeTypeBackup,
                 onResetResult = onResetTypeTypeResult,
+            )
+            YoutubeTakeoutImportSection(
+                state = youtubeState,
+                onOpenTakeout = onOpenYoutubeTakeout,
+                onChooseArchives = onChooseYoutubeTakeout,
+                onRetry = onRetryYoutubeTakeout,
+                onCancel = onCancelYoutubeTakeout,
+                onRemove = onRemoveYoutubeTakeout,
+                onRetryCollectionRefresh = onRetryYoutubeRefresh,
             )
             PipePipeImportSection(
                 state = state,
@@ -136,6 +169,9 @@ fun ImportDataScreen(
         )
     }
 }
+
+private const val YOUTUBE_TAKEOUT_URL =
+    "https://takeout.google.com/settings/takeout/custom/youtube,my_activity?dest=mail&frequency=once"
 
 @Composable
 private fun ImportTopBar(onNavigateBack: () -> Unit) {
