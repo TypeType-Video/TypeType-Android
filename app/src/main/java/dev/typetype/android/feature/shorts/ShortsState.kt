@@ -8,6 +8,7 @@ data class ShortsState(
     val isLoadingMore: Boolean = false,
     val hasMore: Boolean = false,
     val hidden: Boolean = false,
+    val autoplayEnabled: Boolean = true,
     val errorMessage: String? = null,
     val errorRequestId: String? = null,
     val loadMoreError: Boolean = false,

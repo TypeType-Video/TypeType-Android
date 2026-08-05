@@ -45,6 +45,7 @@ import dev.typetype.android.feature.home.HomeRoute as HomeRouteScreen
 import dev.typetype.android.feature.home.HomeViewModel
 import dev.typetype.android.feature.library.playlist.PlaylistRoute as PlaylistRouteScreen
 import dev.typetype.android.feature.notifications.rememberNotificationBadge
+import dev.typetype.android.feature.player.PlayerViewModel
 import dev.typetype.android.feature.search.SearchRoute as SearchRouteScreen
 import dev.typetype.android.feature.shorts.ShortsRoute as ShortsRouteScreen
 import dev.typetype.android.feature.settings.accounts.AccountSettingsRoute as AccountSettingsRouteScreen
@@ -68,6 +69,7 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
     val currentProfile by mainViewModel.currentProfile.collectAsStateWithLifecycle()
     val notificationBadge by rememberNotificationBadge()
     val deArrowViewModel = hiltViewModel<DeArrowBrandingViewModel>()
+    val playerViewModel = hiltViewModel<PlayerViewModel>()
     val deArrowSettings by deArrowViewModel.settings.collectAsStateWithLifecycle()
     val deArrowEnvironment = remember(deArrowSettings, deArrowViewModel) {
         DeArrowBrandingEnvironment(
@@ -207,6 +209,8 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
                 ShortsRouteScreen(
                     onPlayVideo = onPlayVideo,
                     onOpenChannel = onOpenChannel,
+                    playerHostController = playerHostController,
+                    playerViewModel = playerViewModel,
                 )
             }
             notificationsDestination(navController, onPlayVideo)
