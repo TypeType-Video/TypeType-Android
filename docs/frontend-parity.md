@@ -35,7 +35,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | Multiple instances and accounts | Account-scoped authenticated API | Implemented | Room scope, cookies, tokens, workers, cache, and navigation are isolated |
 | Profile identity | `/profile`, `/profile/account` | Implemented | Native profile settings and identity Compose test |
 | Emoji, custom, and reset avatar | `/profile/avatar/*` | Implemented | Picker, GIF decoder, upload DTO, and repository tests; real release retest remains |
-| YouTube session status and pairing | `/youtube-session/*` | Missing | Add native status, pairing, disconnect, expiry, and unavailable states |
+| YouTube session status and pairing | `/youtube-session/*` | Partial | Native capability, status, authenticated remote browser, disconnect, expiry, and unavailable states have contract, unit, and API 33 Compose coverage; process recreation and signed-release retest remain |
 
 ## Discovery and browsing
 
