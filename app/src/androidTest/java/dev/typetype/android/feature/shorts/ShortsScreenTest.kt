@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
+import dev.typetype.android.core.ui.components.VideoMenuAction
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import dev.typetype.android.domain.feed.Video
 import java.util.concurrent.atomic.AtomicReference
@@ -84,12 +85,27 @@ class ShortsScreenTest {
         composeRule.onNodeWithText("Embedded Short two").assertIsDisplayed()
     }
 
+    @Test
+    fun activeShortExposesNativeLibraryActions() {
+        val selectedAction = AtomicReference<VideoMenuAction>()
+
+        show(
+            state = ShortsState(videos = listOf(video("one")), isLoading = false),
+            embeddedPlaybackEnabled = true,
+            onMenuAction = { action, _ -> selectedAction.set(action) },
+        )
+
+        composeRule.onNodeWithContentDescription("Add to favorites").performClick()
+        assertEquals(VideoMenuAction.ToggleFavorite, selectedAction.get())
+    }
+
     private fun show(
         state: ShortsState,
         onPlayVideo: (String) -> Unit = {},
         embeddedPlaybackEnabled: Boolean = false,
         onActiveVideoChanged: (Video?) -> Unit = {},
         embeddedPlayback: @Composable (Video, () -> Unit) -> Unit = { _, _ -> },
+        onMenuAction: (VideoMenuAction, Video) -> Unit = { _, _ -> },
     ) {
         composeRule.setContent {
             TypeTypeTheme {
@@ -102,6 +118,7 @@ class ShortsScreenTest {
                     embeddedPlaybackEnabled = embeddedPlaybackEnabled,
                     onActiveVideoChanged = onActiveVideoChanged,
                     embeddedPlayback = embeddedPlayback,
+                    onMenuAction = onMenuAction,
                 )
             }
         }
