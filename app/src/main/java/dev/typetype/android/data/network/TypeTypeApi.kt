@@ -9,6 +9,7 @@ interface TypeTypeApi :
     TypeTypeSearchApi,
     TypeTypePodcastApi,
     TypeTypeNotificationsApi,
+    TypeTypeVersionApi,
     TypeTypeImportApi,
     TypeTypeYoutubeSessionApi,
     TypeTypeLibraryApi,
