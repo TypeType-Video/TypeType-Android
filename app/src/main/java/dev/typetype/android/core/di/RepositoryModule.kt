@@ -10,6 +10,7 @@ import dev.typetype.android.data.auth.AuthRepositoryImpl
 import dev.typetype.android.data.branding.RemoteDeArrowRepository
 import dev.typetype.android.data.channel.ChannelRepositoryImpl
 import dev.typetype.android.data.comments.CommentsRepositoryImpl
+import dev.typetype.android.data.comments.RemoteBulletCommentsRepository
 import dev.typetype.android.data.download.AndroidDownloadRepository
 import dev.typetype.android.data.diagnostics.LocalDiagnosticsRepository
 import dev.typetype.android.data.diagnostics.LocalCrashReportRepository
@@ -44,6 +45,7 @@ import dev.typetype.android.domain.account.AccountRepository
 import dev.typetype.android.domain.auth.AuthRepository
 import dev.typetype.android.domain.branding.DeArrowRepository
 import dev.typetype.android.domain.channel.ChannelRepository
+import dev.typetype.android.domain.comments.BulletCommentsRepository
 import dev.typetype.android.domain.comments.CommentsRepository
 import dev.typetype.android.domain.download.DownloadRepository
 import dev.typetype.android.domain.diagnostics.DiagnosticsRepository
@@ -139,6 +141,12 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindCommentsRepository(impl: CommentsRepositoryImpl): CommentsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindBulletCommentsRepository(
+        impl: RemoteBulletCommentsRepository,
+    ): BulletCommentsRepository
 
     @Binds
     @Singleton
