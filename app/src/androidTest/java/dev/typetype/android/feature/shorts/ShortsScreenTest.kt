@@ -1,11 +1,14 @@
 package dev.typetype.android.feature.shorts
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import dev.typetype.android.domain.feed.Video
 import java.util.concurrent.atomic.AtomicReference
@@ -54,9 +57,39 @@ class ShortsScreenTest {
         composeRule.onNodeWithText("Request request-shorts").assertIsDisplayed()
     }
 
+    @Test
+    fun embeddedPlaybackCanAdvanceToTheNextShort() {
+        val activeUrl = AtomicReference<String>()
+
+        show(
+            state = ShortsState(
+                videos = listOf(video("one"), video("two")),
+                isLoading = false,
+            ),
+            embeddedPlaybackEnabled = true,
+            onActiveVideoChanged = { activeUrl.set(it?.url) },
+            embeddedPlayback = { video, onAdvance ->
+                Text("Embedded ${video.title}")
+                Button(onClick = onAdvance) { Text("Advance") }
+            },
+        )
+
+        composeRule.waitUntil { activeUrl.get() == "https://video/one" }
+        composeRule.onNodeWithText("Embedded Short one").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(
+            "Open Short one in the full player",
+        ).assertIsDisplayed()
+        composeRule.onNodeWithText("Advance").performClick()
+        composeRule.waitUntil { activeUrl.get() == "https://video/two" }
+        composeRule.onNodeWithText("Embedded Short two").assertIsDisplayed()
+    }
+
     private fun show(
         state: ShortsState,
         onPlayVideo: (String) -> Unit = {},
+        embeddedPlaybackEnabled: Boolean = false,
+        onActiveVideoChanged: (Video?) -> Unit = {},
+        embeddedPlayback: @Composable (Video, () -> Unit) -> Unit = { _, _ -> },
     ) {
         composeRule.setContent {
             TypeTypeTheme {
@@ -66,6 +99,9 @@ class ShortsScreenTest {
                     onOpenChannel = {},
                     onRefresh = {},
                     onLoadMore = {},
+                    embeddedPlaybackEnabled = embeddedPlaybackEnabled,
+                    onActiveVideoChanged = onActiveVideoChanged,
+                    embeddedPlayback = embeddedPlayback,
                 )
             }
         }

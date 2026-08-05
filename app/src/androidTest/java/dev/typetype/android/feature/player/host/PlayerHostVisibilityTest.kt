@@ -59,6 +59,32 @@ class PlayerHostVisibilityTest {
             composeRule.onAllNodesWithTag(PLAYER_HOST_OVERLAY_TAG).fetchSemanticsNodes().size,
         )
     }
+
+    @Test
+    fun embeddedPlaybackDoesNotRenderThePlayerOverlay() {
+        val controller = PlayerHostController(FakePlaybackQueueController())
+        controller.openEmbeddedVideo("short", autoplay = true)
+
+        composeRule.setContent {
+            PlayerHost(
+                controller = controller,
+                bottomBarHeightDp = 0f,
+                isFullscreen = false,
+                onFullscreenChange = {},
+                mediaController = null,
+                onOpenChannel = {},
+                onOpenAccounts = {},
+                onClosePlayback = {},
+                content = {},
+            )
+        }
+        composeRule.waitForIdle()
+
+        assertEquals(
+            0,
+            composeRule.onAllNodesWithTag(PLAYER_HOST_OVERLAY_TAG).fetchSemanticsNodes().size,
+        )
+    }
 }
 
 private class FakePlaybackQueueController : PlaybackQueueController {
