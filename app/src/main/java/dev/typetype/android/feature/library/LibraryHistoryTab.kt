@@ -27,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
+import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -56,9 +57,6 @@ import dev.typetype.android.core.ui.components.VideoMoreActionsButton
 import dev.typetype.android.domain.library.HistoryItem
 import dev.typetype.android.domain.library.VideoMeta
 import dev.typetype.android.feature.library.components.rememberVideoMetas
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -76,9 +74,11 @@ fun HistoryTab(
     onOpenChannel: (String) -> Unit,
     onPlayNext: (HistoryItem) -> Unit,
     onAddToQueue: (HistoryItem) -> Unit,
+    onRemove: (HistoryItem) -> Unit,
     onLoadMore: () -> Unit,
 ) {
     val items = pagingData.collectAsLazyPagingItems()
+    var pendingRemoval by remember { mutableStateOf<HistoryItem?>(null) }
     if (items.itemCount == 0 && isRefreshing) {
         FullScreenLoader()
         return
@@ -129,6 +129,7 @@ fun HistoryTab(
                     onOpenChannel = onOpenChannel,
                     onPlayNext = { onPlayNext(item) },
                     onAddToQueue = { onAddToQueue(item) },
+                    onRemove = { pendingRemoval = item },
                 )
             }
         }
@@ -140,6 +141,16 @@ fun HistoryTab(
             }
         }
     }
+    pendingRemoval?.let { item ->
+        HistoryRemovalDialog(
+            title = item.title,
+            onConfirm = {
+                pendingRemoval = null
+                onRemove(item)
+            },
+            onDismiss = { pendingRemoval = null },
+        )
+    }
 }
 
 @Composable
@@ -150,6 +161,7 @@ private fun HistoryRow(
     onOpenChannel: (String) -> Unit,
     onPlayNext: () -> Unit,
     onAddToQueue: () -> Unit,
+    onRemove: () -> Unit,
 ) {
     val branding = rememberVideoBranding(
         sourceUrl = item.url,
@@ -254,10 +266,14 @@ private fun HistoryRow(
             Text(
                 text = formatDate(item.watchedAtMillis),
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.outlineVariant,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        HistoryQueueMenu(onPlayNext = onPlayNext, onAddToQueue = onAddToQueue)
+        HistoryQueueMenu(
+            onPlayNext = onPlayNext,
+            onAddToQueue = onAddToQueue,
+            onRemove = onRemove,
+        )
     }
 }
 
@@ -265,6 +281,7 @@ private fun HistoryRow(
 private fun HistoryQueueMenu(
     onPlayNext: () -> Unit,
     onAddToQueue: () -> Unit,
+    onRemove: () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     Box {
@@ -288,16 +305,16 @@ private fun HistoryQueueMenu(
                     onAddToQueue()
                 },
             )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.video_menu_unmark_as_watched)) },
+                leadingIcon = {
+                    Icon(Icons.Outlined.DeleteOutline, contentDescription = null)
+                },
+                onClick = {
+                    expanded = false
+                    onRemove()
+                },
+            )
         }
     }
 }
-
-private fun formatVideoDuration(seconds: Long): String {
-    val h = seconds / 3600
-    val m = (seconds % 3600) / 60
-    val s = seconds % 60
-    return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%d:%02d".format(m, s)
-}
-
-private fun formatDate(millis: Long): String =
-    SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(Date(millis))

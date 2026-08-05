@@ -10,6 +10,7 @@ import dev.typetype.android.core.ui.components.LibrarySortMode
 import dev.typetype.android.core.ui.error.UserErrorMapper
 import dev.typetype.android.domain.library.FavoriteItem
 import dev.typetype.android.domain.library.HistoryItem
+import dev.typetype.android.domain.library.HistoryDateRange
 import dev.typetype.android.domain.library.HistoryOrder
 import dev.typetype.android.domain.library.HistoryQuery
 import dev.typetype.android.domain.library.LibraryCollection
@@ -32,6 +33,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
 @HiltViewModel
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -99,6 +101,7 @@ class LibraryViewModel @Inject constructor(
     )
 
     private var refreshJob: Job? = null
+    private var historyQueryRefreshJob: Job? = null
 
     init {
         refresh()
@@ -119,14 +122,52 @@ class LibraryViewModel @Inject constructor(
         }
     }
 
-    fun updateHistoryQuery(search: String, sort: LibrarySortMode) {
+    fun updateHistoryQuery(
+        search: String,
+        sort: LibrarySortMode,
+        dateRange: HistoryDateRange?,
+    ) {
         val order = when (sort) {
             LibrarySortMode.OldestFirst -> HistoryOrder.Oldest
             LibrarySortMode.TitleAZ -> HistoryOrder.TitleAscending
             LibrarySortMode.TitleZA -> HistoryOrder.TitleDescending
             else -> HistoryOrder.Recent
         }
-        historyQuery.value = HistoryQuery(search = search, order = order)
+        val query = HistoryQuery(
+            search = search,
+            order = order,
+            fromMillis = dateRange?.fromMillis,
+            toMillis = dateRange?.toMillis,
+        )
+        val previous = historyQuery.value
+        historyQuery.value = query
+        if (previous.remoteFilterKey() == query.remoteFilterKey()) return
+        historyQueryRefreshJob?.cancel()
+        historyQueryRefreshJob = viewModelScope.launch {
+            delay(HISTORY_QUERY_DEBOUNCE_MS)
+            refreshHistoryQuery(query)
+        }
+    }
+
+    private suspend fun refreshHistoryQuery(query: HistoryQuery) {
+        mutableState.update {
+            it.copy(
+                isLoading = true,
+                isLoadingMoreHistory = false,
+                historyHasMore = !query.hasRemoteFilter,
+                errorMessage = null,
+                errorRequestId = null,
+            )
+        }
+        val failure = repository.refreshHistory(query).exceptionOrNull()
+        val details = failure?.let { errorMapper.details(it, R.string.library_refresh_failed) }
+        mutableState.update {
+            it.copy(
+                isLoading = false,
+                errorMessage = details?.message,
+                errorRequestId = details?.requestId,
+            )
+        }
     }
 
     private fun refresh() {
@@ -142,7 +183,7 @@ class LibraryViewModel @Inject constructor(
                 )
             }
             val results = mapOf(
-                LibraryCollection.History to async { repository.refreshHistory() },
+                LibraryCollection.History to async { repository.refreshHistory(historyQuery.value) },
                 LibraryCollection.Favorites to async { repository.refreshFavorites() },
                 LibraryCollection.WatchLater to async { repository.refreshWatchLater() },
                 LibraryCollection.Playlists to async { repository.refreshPlaylists() },
@@ -169,7 +210,7 @@ class LibraryViewModel @Inject constructor(
         if (current.isLoading || current.isLoadingMoreHistory || !current.historyHasMore) return
         viewModelScope.launch {
             mutableState.update { it.copy(isLoadingMoreHistory = true) }
-            repository.loadMoreHistory().fold(
+            repository.loadMoreHistory(historyQuery.value).fold(
                 onSuccess = { hasMore ->
                     mutableState.update {
                         it.copy(isLoadingMoreHistory = false, historyHasMore = hasMore)
@@ -277,49 +318,8 @@ class LibraryViewModel @Inject constructor(
         }
     }
 
-    private fun LibraryTab.syncCollection(): LibraryCollection = when (this) {
-        LibraryTab.History -> LibraryCollection.History
-        LibraryTab.Favorites -> LibraryCollection.Favorites
-        LibraryTab.WatchLater -> LibraryCollection.WatchLater
-        LibraryTab.Playlists -> LibraryCollection.Playlists
-        LibraryTab.SavedPlaylists -> LibraryCollection.SavedPlaylists
-    }
-
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
+        const val HISTORY_QUERY_DEBOUNCE_MS = 300L
     }
 }
-
-private data class LibraryContent(
-    val historyCount: Int,
-    val favorites: List<FavoriteItem>,
-    val watchLater: List<WatchLaterItem>,
-    val playlists: List<Playlist>,
-    val savedPlaylists: List<SavedPublicPlaylist>,
-)
-
-private fun FavoriteItem.asPlaylistVideo() = PlaylistVideo(
-    id = videoUrl,
-    url = videoUrl,
-    title = title,
-    thumbnailUrl = thumbnailUrl,
-    durationSeconds = durationSeconds,
-    position = 0,
-    channelName = channelName,
-    channelUrl = channelUrl,
-    channelAvatarUrl = channelAvatarUrl,
-    viewCount = viewCount,
-)
-
-private fun WatchLaterItem.asPlaylistVideo() = PlaylistVideo(
-    id = url,
-    url = url,
-    title = title,
-    thumbnailUrl = thumbnailUrl,
-    durationSeconds = durationSeconds,
-    position = 0,
-    channelName = channelName,
-    channelUrl = channelUrl,
-    channelAvatarUrl = channelAvatarUrl,
-    viewCount = viewCount,
-)

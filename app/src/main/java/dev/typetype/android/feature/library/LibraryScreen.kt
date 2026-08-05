@@ -19,8 +19,11 @@ import dev.typetype.android.core.ui.components.FullScreenLoader
 import dev.typetype.android.core.ui.components.LibraryFilterBar
 import dev.typetype.android.core.ui.components.LibrarySortMode
 import dev.typetype.android.domain.library.HistoryItem
+import dev.typetype.android.domain.library.HistoryDateRange
 import dev.typetype.android.feature.menu.blockVideoUrl
+import dev.typetype.android.feature.menu.clearWatchHistory
 import dev.typetype.android.feature.menu.removeFavoriteUrl
+import dev.typetype.android.feature.menu.removeHistoryUrl
 import dev.typetype.android.feature.menu.removeWatchLaterUrl
 import dev.typetype.android.feature.menu.toggleWatchedUrl
 import kotlinx.coroutines.flow.Flow
@@ -59,16 +62,22 @@ fun LibraryScreen(
     onOpenPublicPlaylist: (playlistUrl: String) -> Unit,
     onOpenChannel: (channelUrl: String) -> Unit,
     onAction: (LibraryAction) -> Unit,
-    onHistoryQueryChange: (String, LibrarySortMode) -> Unit,
+    onHistoryQueryChange: (String, LibrarySortMode, HistoryDateRange?) -> Unit,
 ) {
     var filter by rememberSaveable(state.selectedTab) { mutableStateOf("") }
     var sort by rememberSaveable(state.selectedTab) {
         mutableStateOf(defaultSortFor(state.selectedTab))
     }
+    var historyDateSelectionName by rememberSaveable {
+        mutableStateOf(HistoryDateSelection.All.name)
+    }
+    var selectedHistoryDateMillis by rememberSaveable { mutableStateOf<Long?>(null) }
+    val historyDateSelection = HistoryDateSelection.valueOf(historyDateSelectionName)
+    val historyRange = historyDateRange(historyDateSelection, selectedHistoryDateMillis)
     val (menuVm, watchedUrls) = rememberLibraryMenuHandler()
-    LaunchedEffect(state.selectedTab, filter, sort) {
+    LaunchedEffect(state.selectedTab, filter, sort, historyRange) {
         if (state.selectedTab == LibraryTab.History) {
-            onHistoryQueryChange(filter, sort)
+            onHistoryQueryChange(filter, sort, historyRange)
         }
     }
 
@@ -101,6 +110,19 @@ fun LibraryScreen(
             onSortChange = { sort = it },
         )
 
+        if (state.selectedTab == LibraryTab.History) {
+            HistoryDateFilterBar(
+                selection = historyDateSelection,
+                selectedDateMillis = selectedHistoryDateMillis,
+                canClearHistory = state.historyItemCount > 0,
+                onSelectionChange = { selection, dateMillis ->
+                    historyDateSelectionName = selection.name
+                    selectedHistoryDateMillis = dateMillis
+                },
+                onClearHistory = menuVm::clearWatchHistory,
+            )
+        }
+
         when (state.selectedTab) {
             LibraryTab.History -> HistoryTab(
                 pagingData = historyPagingData,
@@ -112,6 +134,7 @@ fun LibraryScreen(
                 onOpenChannel = onOpenChannel,
                 onPlayNext = { menuVm.playNext(it.toPlaybackQueueEntry()) },
                 onAddToQueue = { menuVm.addToQueue(it.toPlaybackQueueEntry()) },
+                onRemove = { menuVm.removeHistoryUrl(it.url) },
                 onLoadMore = { onAction(LibraryAction.OnLoadMoreHistory) },
             )
             LibraryTab.Favorites -> PlaylistContextTab(
