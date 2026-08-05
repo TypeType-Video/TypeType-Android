@@ -692,6 +692,15 @@
     <string name="library_empty_favorites">No favorites yet</string>
     <string name="library_empty_watch_later">Nothing in Watch Later</string>
     <string name="library_empty_history">No watch history yet</string>
+    <string name="library_history_today">Today</string>
+    <string name="library_history_this_week">This week</string>
+    <string name="library_history_this_month">This month</string>
+    <string name="library_history_choose_date">Choose date</string>
+    <string name="library_history_clear_all">Clear all</string>
+    <string name="library_history_clear_message">This removes every video from your watch history.</string>
+    <string name="library_history_remove_title">Remove from watch history?</string>
+    <string name="library_history_remove_message">Remove “%1$s” from your watch history?</string>
+    <string name="library_history_remove_action">Remove</string>
     <string name="library_empty_playlists">No playlists yet</string>
     <string name="library_empty_saved_playlists">No public playlists saved yet</string>
     <string name="library_saved_playlists_sign_in">Sign in with a member account to save public playlists.</string>
@@ -771,6 +780,7 @@
     <string name="snackbar_added_to_playlist_default">Added to playlist</string>
     <string name="snackbar_marked_as_watched">Marked as watched</string>
     <string name="snackbar_unmarked_as_watched">Removed from history</string>
+    <string name="snackbar_history_cleared">Watch history cleared</string>
     <string name="snackbar_download_queued">Preparing download</string>
     <string name="snackbar_download_cached">Preparing cached download</string>
     <string name="snackbar_download_enqueued">Download added to system downloads</string>
