@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.Audiotrack
 import androidx.compose.material.icons.filled.ClosedCaption
@@ -26,6 +27,12 @@ fun PlaybackOptionsMainPage(
     audioOnlyEnabled: Boolean,
     audioOnlyChanging: Boolean,
     showAudioOnly: Boolean,
+    showDanmaku: Boolean,
+    danmakuEnabled: Boolean,
+    danmakuSpeedLabel: String,
+    danmakuSizeLabel: String,
+    danmakuLoading: Boolean,
+    danmakuLoadFailed: Boolean,
     onOpenCodec: () -> Unit,
     onOpenQuality: () -> Unit,
     onOpenCaptions: () -> Unit,
@@ -33,6 +40,9 @@ fun PlaybackOptionsMainPage(
     onOpenSpeed: () -> Unit,
     onOpenResize: () -> Unit,
     onAudioOnlyChange: (Boolean) -> Unit,
+    onDanmakuChange: (Boolean) -> Unit,
+    onOpenDanmakuSpeed: () -> Unit,
+    onOpenDanmakuSize: () -> Unit,
 ) {
     LazyColumn(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
@@ -55,6 +65,43 @@ fun PlaybackOptionsMainPage(
                     enabled = !audioOnlyChanging,
                     onCheckedChange = onAudioOnlyChange,
                 )
+            }
+        }
+        if (showDanmaku) {
+            item {
+                PlaybackOptionsToggleRow(
+                    icon = Icons.AutoMirrored.Filled.Chat,
+                    title = stringResource(R.string.settings_player_danmaku_enabled),
+                    checked = danmakuEnabled,
+                    enabled = true,
+                    onCheckedChange = onDanmakuChange,
+                )
+            }
+            if (danmakuEnabled) {
+                item {
+                    PlaybackOptionsMenuRow(
+                        icon = Icons.Filled.Speed,
+                        title = stringResource(R.string.settings_player_danmaku_speed),
+                        value = danmakuSpeedLabel,
+                        onClick = onOpenDanmakuSpeed,
+                    )
+                }
+                item {
+                    PlaybackOptionsMenuRow(
+                        icon = Icons.AutoMirrored.Filled.Chat,
+                        title = stringResource(R.string.settings_player_danmaku_size),
+                        value = danmakuSizeLabel,
+                        onClick = onOpenDanmakuSize,
+                    )
+                }
+                when {
+                    danmakuLoading -> item {
+                        PlaybackOptionsHint(stringResource(R.string.player_danmaku_loading))
+                    }
+                    danmakuLoadFailed -> item {
+                        PlaybackOptionsHint(stringResource(R.string.player_danmaku_unavailable))
+                    }
+                }
             }
         }
         item {
