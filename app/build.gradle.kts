@@ -107,6 +107,7 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.test.espressoCore)
     androidTestImplementation(libs.androidx.test.junit)
+    androidTestImplementation(libs.androidx.uiautomator)
     androidTestImplementation(libs.room.testing)
     androidTestImplementation(libs.okhttp.mockwebserver)
     coreLibraryDesugaring(libs.desugaring)
