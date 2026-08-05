@@ -59,7 +59,10 @@ class YoutubeSessionScreenTest {
         )
 
         composeRule.onNodeWithText("Connected").assertIsDisplayed()
-        composeRule.onNodeWithText("Disconnect").assertIsDisplayed().assertIsEnabled()
+        composeRule.onNodeWithText("Disconnect")
+            .performScrollTo()
+            .assertIsDisplayed()
+            .assertIsEnabled()
     }
 
     @Test

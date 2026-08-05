@@ -1,9 +1,11 @@
 package dev.typetype.android.feature.player
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import dev.typetype.android.core.ui.components.LocalAnimatedStatePlayback
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import dev.typetype.android.feature.player.error.StreamErrorClass
 import dev.typetype.android.feature.player.error.StreamErrorKind
@@ -20,17 +22,19 @@ class PlayerErrorStateTest {
     fun expiredAuthenticationExplainsRecoveryAndOpensAccounts() {
         val openedAccounts = AtomicBoolean(false)
         composeRule.setContent {
-            TypeTypeTheme {
-                ErrorState(
-                    classification = StreamErrorClass(
-                        kind = StreamErrorKind.AuthenticationExpired,
-                        rawMessage = null,
-                        requestId = "request-auth",
-                    ),
-                    onNavigateBack = {},
-                    onRetry = {},
-                    onOpenAccounts = { openedAccounts.set(true) },
-                )
+            CompositionLocalProvider(LocalAnimatedStatePlayback provides false) {
+                TypeTypeTheme {
+                    ErrorState(
+                        classification = StreamErrorClass(
+                            kind = StreamErrorKind.AuthenticationExpired,
+                            rawMessage = null,
+                            requestId = "request-auth",
+                        ),
+                        onNavigateBack = {},
+                        onRetry = {},
+                        onOpenAccounts = { openedAccounts.set(true) },
+                    )
+                }
             }
         }
 
@@ -47,17 +51,19 @@ class PlayerErrorStateTest {
     fun terminalPreparationFailureOffersFreshSessionRetry() {
         val retried = AtomicBoolean(false)
         composeRule.setContent {
-            TypeTypeTheme {
-                ErrorState(
-                    classification = StreamErrorClass(
-                        kind = StreamErrorKind.SabrPreparationFailed,
-                        rawMessage = null,
-                        requestId = "request-playback",
-                    ),
-                    onNavigateBack = {},
-                    onRetry = { retried.set(true) },
-                    onOpenAccounts = {},
-                )
+            CompositionLocalProvider(LocalAnimatedStatePlayback provides false) {
+                TypeTypeTheme {
+                    ErrorState(
+                        classification = StreamErrorClass(
+                            kind = StreamErrorKind.SabrPreparationFailed,
+                            rawMessage = null,
+                            requestId = "request-playback",
+                        ),
+                        onNavigateBack = {},
+                        onRetry = { retried.set(true) },
+                        onOpenAccounts = {},
+                    )
+                }
             }
         }
 
