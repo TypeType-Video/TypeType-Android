@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicReference
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.SocketPolicy
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -93,6 +94,25 @@ class SabrMediaLoaderAndroidTest {
         assertTrue(result.completed)
         assertNull(result.failure)
         assertEquals(2, server.requestCount)
+    }
+
+    @Test
+    fun repeatedConnectionCutsRecoverWithoutChangingTheMediaRequest() {
+        repeat(CONNECTION_CUT_COUNT) {
+            server.enqueue(
+                MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST),
+            )
+        }
+        server.enqueue(mediaResponse())
+
+        val result = loadMedia(
+            timeoutSeconds = 20,
+            retryDelayTransform = { 0L },
+        )
+
+        assertTrue(result.completed)
+        assertNull(result.failure)
+        assertEquals(CONNECTION_CUT_COUNT + 1, server.requestCount)
     }
 
     @Test
@@ -272,3 +292,4 @@ private fun IOException.findHttpResponse(): HttpDataSource.InvalidResponseCodeEx
 }
 
 private val BINDING = SabrPlaybackBinding("session", 0L, 137, 140)
+private const val CONNECTION_CUT_COUNT = 8
