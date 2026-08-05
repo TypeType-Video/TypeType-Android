@@ -11,22 +11,25 @@ The comparison was refreshed on 2026-08-05 from clean clones:
 
 | Repository | Branch | Revision |
 | --- | --- | --- |
-| TypeType-Android | `dev` | `a29c6b662990e79266aee863e187b34c872589bf` |
+| TypeType-Android | `dev` | `0714e20d14f31812eb62d6d5e40b9a70ff046917` |
 | TypeType frontend | `dev` | `97103f7302c91accdea3322d1f5b8f610607f378` |
 | TypeType-Server | `dev` | `6f31f93c4ecfb0e31c03c777b0d96f5cdc51f7bc` |
-| TypeType-Web-Player | `main` | `f4844c6e65d021c0ad1ab61169f4f51cfcd77694` |
+| TypeType-Web-Player | `dev` | `f2fe3e6976cd9beec603f324adf37edee923ee20` |
 
 `Implemented` means a user can reach the native feature and the relevant
 contract has automated coverage. `Partial` means useful behavior exists but a
 visible path, state, or verification lane is missing. `Missing` is an accepted
 Android gap, not an invitation to move a Server responsibility into the app.
+`Adapted` records an intentional native boundary with its reason.
 
 ## Setup, accounts, and profile
 
 | Frontend behavior | Server contract | Android state | Evidence or next requirement |
 | --- | --- | --- | --- |
+| F-Droid or release installation and first launch | None before setup | Partial | Debug cold launch is covered on API 23 through 37; signed upgrade, signature, checksum, and F-Droid artifact parity remain release gates |
 | Instance discovery and compatibility | `/health`, `/instance` | Implemented | Setup repository and discovery contract tests |
 | Local password login | `/auth/login`, `/auth/me`, `/auth/refresh` | Implemented | Scoped authenticator and account validation tests |
+| Session renewal and reconnect | `/auth/refresh`, `/auth/me` | Implemented | A refresh 401 invalidates the account; transient refresh failures preserve credentials and surface an unknown session until the Server recovers |
 | Guest access | `/auth/guest` | Implemented | Capability-driven login screen |
 | External-browser OIDC | `/auth/oidc/start`, `/status`, `/callback` | Implemented | OIDC contract, callback parser, encrypted transaction device test |
 | Password reset | `/auth/reset-password` | Implemented | Native reset screen and typed errors |
@@ -55,6 +58,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | DeArrow titles and thumbnails | `/dearrow`, `/dearrow/thumbnail` | Implemented | Server-synchronized preferences, trusted-candidate resolution, shared card/player presentation, contract and Compose tests, plus a real beta process-recreation check |
 | Block video, channel, and title keyword | `/blocked/*` | Implemented | Native menus/settings and contract tests |
 | Notifications and unread count | `/notifications*` | Implemented | Screen, badge, read-all flow, DTO and Compose tests |
+| Web administration | Admin capabilities and routes | Adapted | The viewer exposes native bug reporting and account controls; deployment, user moderation, allow-list, and Server administration remain in the web console |
 
 ## Library, import, and downloads
 
@@ -85,9 +89,10 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | Sleep timer | Device-owned Media3 state | Implemented | Service timer and device tests |
 | Comments and replies | `/comments`, `/comments/replies` | Implemented | Paging source and native bottom sheet |
 | Related videos and channel actions | Stream metadata and subscriptions | Implemented | Shared video menus and player channel state |
-| Phone, tablet, fullscreen, mini-player, PiP | MediaSession and device capabilities | Partial | Adaptive watch layout is tested. API 23 AOSP without Google services passes 139 device tests, including cold launch, H.264 service playback, activity reconnection, background continuation, and old-platform UI states. API 29 and API 34 verify H.264 playback continuing in system PiP and pausing through the same service-owned MediaSession. API 34 also verifies notification and foreground-service publication with notification permission denied and granted. Android 16 with real 16 KiB pages passes 15 device tests in enforcing mode, including install, cold launch, H.264, MediaSession, notification, foreground service, background playback, PiP, edge-to-edge, and DownloadManager. API 37 passes the non-codec lifecycle suite; its emulator codec required an image-only SELinux workaround for the three H.264 tests. Signed PiP and rotation retest remain |
+| Phone, tablet, fullscreen, mini-player, PiP | MediaSession and device capabilities | Partial | Adaptive watch layout is tested. The audited revision passes 152 device tests on API 23 AOSP without Google services. API 29 and API 34 verify H.264 playback continuing in system PiP and pausing through the same service-owned MediaSession; API 34 also covers notification permission and foreground-service publication. On the API 37 16 KiB image, 153 of 156 tests pass enforcing and the three codec-dependent tests pass in a separate permissive diagnostic run, confirming an image policy defect rather than physical-codec support. Signed PiP, rotation, and physical Android 17 codec retests remain |
 | Network loss and reconnection | Fresh Server session and bounded retry | Partial | Recovery gates exist; long VOD/live network-transition matrix remains |
-| Danmaku overlay | Comment-derived frontend presentation | Missing | Define accessibility, density, performance, and settings behavior first |
+| Playback restoration after process death | Stable video identity, `/progress` | Implemented | Room close/reopen restores exact position, queue, repeat mode, and account scope without persisting signed media URLs |
+| Danmaku overlay | `/bullet-comments` | Implemented | Capability-aware contract, bounded lane scheduling, native overlay, speed and size controls, TalkBack suppression, and Compose/performance tests |
 
 ## Settings and product states
 
