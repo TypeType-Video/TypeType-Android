@@ -68,7 +68,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | PipePipe restore | `/restore/pipepipe` | Implemented | ZIP validation, summary, refresh, and contract tests |
 | YouTube Takeout import | `/imports/youtube-takeout*` | Partial | Native multi-archive queue, long-running scoped work, persisted Server jobs, preview/report states, cache refresh, contract tests, Room tests, and API 33 Compose tests pass; the Server does not advertise this capability and interrupted multipart uploads cannot resume, while real beta, process recreation, and old-API verification remain |
 | Server download selection and jobs | `/downloader/jobs*` | Implemented | Native format sheet, WorkManager observation, typed errors |
-| Completed artifact transfer | Signed artifact URL | Partial | DownloadManager reconciliation exists; reboot and signed-release retest remain |
+| Completed artifact transfer | Signed artifact URL | Partial | API 29 and API 34 complete and reconcile a real local DownloadManager transfer; reboot and signed-release retest remain |
 
 ## Watch and playback
 
@@ -85,7 +85,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | Sleep timer | Device-owned Media3 state | Implemented | Service timer and device tests |
 | Comments and replies | `/comments`, `/comments/replies` | Implemented | Paging source and native bottom sheet |
 | Related videos and channel actions | Stream metadata and subscriptions | Implemented | Shared video menus and player channel state |
-| Phone, tablet, fullscreen, mini-player, PiP | MediaSession and device capabilities | Partial | Adaptive watch layout is tested; API 29 verifies H.264 playback continuing in system PiP and pausing through the same service-owned MediaSession, while signed PiP and rotation retest remains |
+| Phone, tablet, fullscreen, mini-player, PiP | MediaSession and device capabilities | Partial | Adaptive watch layout is tested; API 29 and API 34 verify H.264 playback continuing in system PiP and pausing through the same service-owned MediaSession. API 34 also verifies media notification and foreground-service publication with notification permission denied and granted; signed PiP and rotation retest remains |
 | Network loss and reconnection | Fresh Server session and bounded retry | Partial | Recovery gates exist; long VOD/live network-transition matrix remains |
 | Danmaku overlay | Comment-derived frontend presentation | Missing | Define accessibility, density, performance, and settings behavior first |
 
