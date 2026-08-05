@@ -2,6 +2,7 @@ package dev.typetype.android.data.network
 
 import dev.typetype.android.data.network.dto.BulletCommentsPageResponse
 import dev.typetype.android.data.network.dto.CommentsPageResponse
+import dev.typetype.android.data.network.dto.AudioOnlyStreamResponse
 import dev.typetype.android.data.network.dto.InstanceResponse
 import dev.typetype.android.data.network.dto.SabrPlaybackPositionRequestDto
 import dev.typetype.android.data.network.dto.SabrPlaybackPositionResponseDto
@@ -37,6 +38,13 @@ interface TypeTypeMediaApi {
 
     @GET("streams/bilibili")
     suspend fun biliBiliStreams(@Query("url") videoUrl: String): Response<StreamResponse>
+
+    @GET("streams/audio-only")
+    suspend fun audioOnlyStream(
+        @Query("url") videoUrl: String,
+        @Query("preferOriginal") preferOriginal: Boolean,
+        @Query("preferredLocale") preferredLocale: String,
+    ): Response<AudioOnlyStreamResponse>
 
     @POST("sabr/playback/{videoId}")
     suspend fun createSabrPlayback(
