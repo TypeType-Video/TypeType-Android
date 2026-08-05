@@ -44,6 +44,7 @@ import dev.typetype.android.core.ui.components.RequestIdRow
 import dev.typetype.android.core.ui.components.VideoMenuAction
 import dev.typetype.android.core.ui.components.VideoMenuItemState
 import dev.typetype.android.domain.feed.Video
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -58,6 +59,7 @@ fun ShortsScreen(
     onLoadMore: () -> Unit,
     embeddedPlaybackEnabled: Boolean = false,
     onActiveVideoChanged: (Video?) -> Unit = {},
+    onNextVideoChanged: suspend (Video?) -> Unit = {},
     embeddedPlayback: @Composable (Video, onAdvance: () -> Unit) -> Unit = { _, _ -> },
     menuItemState: (Video) -> VideoMenuItemState = { VideoMenuItemState() },
     onMenuAction: (VideoMenuAction, Video) -> Unit = { _, _ -> },
@@ -80,6 +82,7 @@ fun ShortsScreen(
             val scope = rememberCoroutineScope()
             val currentLoadMore by rememberUpdatedState(onLoadMore)
             val currentActiveVideoChanged by rememberUpdatedState(onActiveVideoChanged)
+            val currentNextVideoChanged by rememberUpdatedState(onNextVideoChanged)
             LaunchedEffect(pagerState, state.videos.size, state.hasMore) {
                 snapshotFlow { pagerState.settledPage }
                     .map { it >= state.videos.lastIndex - 3 }
@@ -94,6 +97,15 @@ fun ShortsScreen(
                         state.videos.getOrNull(pagerState.settledPage)
                     }
                 }.distinctUntilChanged().collect(currentActiveVideoChanged)
+            }
+            LaunchedEffect(pagerState, state.videos) {
+                snapshotFlow {
+                    if (pagerState.isScrollInProgress) {
+                        null
+                    } else {
+                        state.videos.getOrNull(pagerState.settledPage + 1)
+                    }
+                }.distinctUntilChanged().collectLatest(currentNextVideoChanged)
             }
             Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
                 VerticalPager(
