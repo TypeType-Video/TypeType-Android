@@ -51,6 +51,9 @@ data object ProfileSettingsRoute
 data object ImportDataRoute
 
 @Serializable
+data object YoutubeSessionRoute
+
+@Serializable
 data object PrivacySettingsRoute
 
 @Serializable

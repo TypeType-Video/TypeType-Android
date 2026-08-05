@@ -217,6 +217,7 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
             settingsDestinations(
                 navController = navController,
                 importsAvailable = currentProfile?.id?.startsWith("guest:") == false,
+                youtubeSessionAvailable = currentProfile?.id?.startsWith("guest:") == false,
                 onSignOut = mainViewModel::signOut,
             )
             composable<AccountsRoute> {
