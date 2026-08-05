@@ -2,20 +2,13 @@ package dev.typetype.android.feature.shorts
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
@@ -36,15 +29,11 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
@@ -73,6 +62,9 @@ fun ShortsScreen(
     menuItemState: (Video) -> VideoMenuItemState = { VideoMenuItemState() },
     onMenuAction: (VideoMenuAction, Video) -> Unit = { _, _ -> },
     onShowComments: ((Video) -> Unit)? = null,
+    isSubscribed: (Video) -> Boolean = { false },
+    subscriptionInFlight: (Video) -> Boolean = { false },
+    onToggleSubscription: (Video) -> Unit = {},
 ) {
     when {
         state.isLoading && state.videos.isEmpty() -> FullScreenLoader()
@@ -121,6 +113,9 @@ fun ShortsScreen(
                         onShowComments = onShowComments?.let { callback ->
                             { callback(state.videos[page]) }
                         },
+                        isSubscribed = isSubscribed(state.videos[page]),
+                        subscriptionInFlight = subscriptionInFlight(state.videos[page]),
+                        onToggleSubscription = { onToggleSubscription(state.videos[page]) },
                         embeddedPlayback = {
                             embeddedPlayback(state.videos[page]) {
                                 if (page < state.videos.lastIndex) {
@@ -193,6 +188,9 @@ private fun ShortPage(
     menuItemState: VideoMenuItemState,
     onMenuAction: (VideoMenuAction) -> Unit,
     onShowComments: (() -> Unit)?,
+    isSubscribed: Boolean,
+    subscriptionInFlight: Boolean,
+    onToggleSubscription: () -> Unit,
     embeddedPlayback: @Composable () -> Unit,
 ) {
     val branding = rememberVideoBranding(
@@ -239,42 +237,15 @@ private fun ShortPage(
                 )
             }
         }
-        Column(
-            modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth()
-                .padding(start = 20.dp, top = 20.dp, end = 80.dp, bottom = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Text(
-                text = branding.title,
-                style = MaterialTheme.typography.titleLarge,
-                color = Color.White,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(999.dp))
-                    .clickable(role = Role.Button) { onOpenChannel(video.uploaderUrl) }
-                    .padding(vertical = 6.dp, horizontal = 8.dp),
-            ) {
-                AsyncImage(
-                    model = video.uploaderAvatarUrl,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(34.dp).clip(CircleShape),
-                )
-                Spacer(Modifier.width(10.dp))
-                Text(
-                    text = video.uploaderName,
-                    color = Color.White,
-                    style = MaterialTheme.typography.labelLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
+        ShortsInfoOverlay(
+            video = video,
+            title = branding.title,
+            isSubscribed = isSubscribed,
+            subscriptionInFlight = subscriptionInFlight,
+            onOpenChannel = { onOpenChannel(video.uploaderUrl) },
+            onToggleSubscription = onToggleSubscription,
+            modifier = Modifier.align(Alignment.BottomStart),
+        )
     }
 }
 

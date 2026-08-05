@@ -46,18 +46,22 @@ class PlayerChannelActionsViewModel @Inject constructor(
     }
 
     fun toggle(stream: Stream) {
-        val channelUrl = canonicalChannelUrl(stream.uploaderUrl)
-        if (channelUrl.isBlank() || mutableState.value.updatingUrl != null) return
-        val subscribed = mutableState.value.isSubscribed(channelUrl)
+        toggle(stream.uploaderUrl, stream.uploaderName, stream.uploaderAvatarUrl)
+    }
+
+    fun toggle(channelUrl: String, name: String, avatarUrl: String) {
+        val canonicalUrl = canonicalChannelUrl(channelUrl)
+        if (canonicalUrl.isBlank() || mutableState.value.updatingUrl != null) return
+        val subscribed = mutableState.value.isSubscribed(canonicalUrl)
         viewModelScope.launch {
-            mutableState.update { it.copy(updatingUrl = channelUrl) }
+            mutableState.update { it.copy(updatingUrl = canonicalUrl) }
             val result = if (subscribed) {
-                subscriptionsRepository.unsubscribe(channelUrl)
+                subscriptionsRepository.unsubscribe(canonicalUrl)
             } else {
                 subscriptionsRepository.subscribe(
-                    channelUrl = channelUrl,
-                    name = stream.uploaderName,
-                    avatarUrl = stream.uploaderAvatarUrl,
+                    channelUrl = canonicalUrl,
+                    name = name,
+                    avatarUrl = avatarUrl,
                 )
             }
             mutableState.update { it.copy(updatingUrl = null) }
