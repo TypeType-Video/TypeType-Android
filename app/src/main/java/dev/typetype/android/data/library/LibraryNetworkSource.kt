@@ -15,6 +15,7 @@ import dev.typetype.android.data.network.dto.PlaylistReorderRequest
 import dev.typetype.android.data.network.dto.SaveProgressRequest
 import dev.typetype.android.data.network.dto.SubscriptionItemDto
 import dev.typetype.android.data.network.requireSuccessfulResponse
+import dev.typetype.android.domain.library.HistoryQuery
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
@@ -27,10 +28,17 @@ class LibraryNetworkSource @Inject constructor(
 
     internal suspend fun fetchHistory(
         scope: AccountScope,
-        limit: Int = HISTORY_PAGE_SIZE,
+        query: HistoryQuery = HistoryQuery(),
+        limit: Int = if (query.hasRemoteFilter) FILTERED_HISTORY_LIMIT else HISTORY_PAGE_SIZE,
         offset: Int = 0,
     ): HistoryPage = withContext(Dispatchers.IO) {
-        val response = apiHolder.require(scope).history(limit = limit, offset = offset)
+        val response = apiHolder.require(scope).history(
+            search = query.search.trim().takeIf(String::isNotEmpty),
+            fromMillis = query.fromMillis,
+            toMillis = query.toMillis,
+            limit = limit,
+            offset = offset,
+        )
         response.requireSuccessfulResponse()
         val totalCount = response.headers()["X-Total-Count"]
             ?.toIntOrNull()
@@ -310,5 +318,6 @@ class LibraryNetworkSource @Inject constructor(
 
     private companion object {
         const val HISTORY_PAGE_SIZE = 60
+        const val FILTERED_HISTORY_LIMIT = 500
     }
 }

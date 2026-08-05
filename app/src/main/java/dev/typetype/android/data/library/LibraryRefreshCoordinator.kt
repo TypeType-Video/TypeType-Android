@@ -14,6 +14,7 @@ import dev.typetype.android.data.library.sync.LibraryMutationOverlay
 import dev.typetype.android.data.library.sync.LibraryRefreshToken
 import dev.typetype.android.data.library.sync.LibrarySyncTracker
 import dev.typetype.android.domain.library.LibraryCollection
+import dev.typetype.android.domain.library.HistoryQuery
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -38,6 +39,7 @@ class LibraryRefreshCoordinator @Inject constructor(
 ) {
     private val historyPageMutex = Mutex()
     private var historyPageScope: AccountScope? = null
+    private var historyPageQuery = HistoryQuery()
     private var nextHistoryOffset = 0
     private var hasMoreHistory = false
     private val historyTotal = MutableStateFlow<ScopedHistoryTotal?>(null)
@@ -56,31 +58,46 @@ class LibraryRefreshCoordinator @Inject constructor(
         historyTotal.value = ScopedHistoryTotal(scope, 0)
     }
 
-    suspend fun history(): Result<Unit> = historyPageMutex.withLock {
+    suspend fun history(query: HistoryQuery = HistoryQuery()): Result<Unit> = historyPageMutex.withLock {
         historyPageScope = null
         nextHistoryOffset = 0
         hasMoreHistory = false
         refresh(
             collection = LibraryCollection.History,
-            load = network::fetchHistory,
+            load = { scope -> network.fetchHistory(scope, query) },
             updateCache = { scope, page ->
-                historyDao.replaceAll(scope.serverId, scope.accountId, page.rows)
+                if (query.hasRemoteFilter) {
+                    historyDao.deleteMatching(
+                        scope.serverId,
+                        scope.accountId,
+                        query.search.trim(),
+                        query.fromMillis,
+                        query.toMillis,
+                    )
+                    historyDao.upsertAll(page.rows)
+                } else {
+                    historyDao.replaceAll(scope.serverId, scope.accountId, page.rows)
+                }
                 historyPageScope = scope
+                historyPageQuery = query
                 nextHistoryOffset = page.nextOffset
-                hasMoreHistory = page.hasMore
-                historyTotal.value = ScopedHistoryTotal(scope, page.totalCount)
+                hasMoreHistory = !query.hasRemoteFilter && page.hasMore
+                if (!query.hasRemoteFilter) {
+                    historyTotal.value = ScopedHistoryTotal(scope, page.totalCount)
+                }
             },
         )
     }
 
-    suspend fun loadMoreHistory(): Result<Boolean> = historyPageMutex.withLock {
+    suspend fun loadMoreHistory(query: HistoryQuery = HistoryQuery()): Result<Boolean> =
+        historyPageMutex.withLock {
         val scope = resultPreservingCancellation { activeAccountScope.require() }
             .getOrElse { return@withLock Result.failure(it) }
-        if (historyPageScope != scope || !hasMoreHistory) {
+        if (historyPageScope != scope || historyPageQuery != query || !hasMoreHistory) {
             return@withLock Result.success(false)
         }
         try {
-            val page = network.fetchHistory(scope, offset = nextHistoryOffset)
+            val page = network.fetchHistory(scope, query = query, offset = nextHistoryOffset)
             activeAccountScope.verify(scope)
             database.withTransaction {
                 historyDao.upsertAll(page.rows)

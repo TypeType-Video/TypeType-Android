@@ -65,9 +65,11 @@ class OfflineLibraryRepository @Inject constructor(
     override fun observeIsInWatchLater(url: String): Flow<Boolean> =
         cacheObserver.watchLaterMembership(url)
 
-    override suspend fun refreshHistory(): Result<Unit> = refreshCoordinator.history()
+    override suspend fun refreshHistory(query: HistoryQuery): Result<Unit> =
+        refreshCoordinator.history(query)
 
-    override suspend fun loadMoreHistory(): Result<Boolean> = refreshCoordinator.loadMoreHistory()
+    override suspend fun loadMoreHistory(query: HistoryQuery): Result<Boolean> =
+        refreshCoordinator.loadMoreHistory(query)
 
     override suspend fun refreshFavorites(): Result<Unit> = refreshCoordinator.favorites()
 

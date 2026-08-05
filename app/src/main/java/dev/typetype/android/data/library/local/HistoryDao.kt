@@ -12,8 +12,10 @@ import kotlinx.coroutines.flow.Flow
 interface HistoryDao {
     @Query(
         "SELECT * FROM history WHERE serverId = :serverId AND accountId = :accountId " +
-            "AND (:search = '' OR instr(lower(title), lower(:search)) > 0 " +
-            "OR instr(lower(channelName), lower(:search)) > 0) " +
+        "AND (:search = '' OR instr(lower(title), lower(:search)) > 0 " +
+        "OR instr(lower(channelName), lower(:search)) > 0) " +
+            "AND (:fromMillis IS NULL OR watchedAtMillis >= :fromMillis) " +
+            "AND (:toMillis IS NULL OR watchedAtMillis < :toMillis) " +
             "ORDER BY " +
             "CASE WHEN :orderKey = 0 THEN watchedAtMillis END DESC, " +
             "CASE WHEN :orderKey = 1 THEN watchedAtMillis END ASC, " +
@@ -25,7 +27,24 @@ interface HistoryDao {
         accountId: String,
         search: String,
         orderKey: Int,
+        fromMillis: Long?,
+        toMillis: Long?,
     ): PagingSource<Int, HistoryEntity>
+
+    @Query(
+        "DELETE FROM history WHERE serverId = :serverId AND accountId = :accountId " +
+            "AND (:search = '' OR instr(lower(title), lower(:search)) > 0 " +
+            "OR instr(lower(channelName), lower(:search)) > 0) " +
+            "AND (:fromMillis IS NULL OR watchedAtMillis >= :fromMillis) " +
+            "AND (:toMillis IS NULL OR watchedAtMillis < :toMillis)",
+    )
+    suspend fun deleteMatching(
+        serverId: String,
+        accountId: String,
+        search: String,
+        fromMillis: Long?,
+        toMillis: Long?,
+    )
 
     @Query("SELECT COUNT(*) FROM history WHERE serverId = :serverId AND accountId = :accountId")
     fun observeCount(serverId: String, accountId: String): Flow<Int>
