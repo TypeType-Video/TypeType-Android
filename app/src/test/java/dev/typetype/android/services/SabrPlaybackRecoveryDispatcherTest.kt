@@ -1,6 +1,7 @@
 package dev.typetype.android.services
 
 import dev.typetype.android.data.stream.SabrPlaybackRecoveryException
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -32,6 +33,41 @@ class SabrPlaybackRecoveryDispatcherTest {
         }
 
         assertTrue(requireNotNull(result).isSuccess)
+    }
+
+    @Test
+    fun `requests for one session share the active recovery`() {
+        val dispatcher = SabrPlaybackRecoveryDispatcher()
+        val results = mutableListOf<Result<Unit>>()
+        var listenerCalls = 0
+        var finish: ((Result<Unit>) -> Unit)? = null
+        dispatcher.setListener { _, _, complete ->
+            listenerCalls++
+            finish = complete
+        }
+
+        dispatcher.request("session", recoveryFailure(), results::add)
+        dispatcher.request("session", recoveryFailure(), results::add)
+        requireNotNull(finish)(Result.success(Unit))
+
+        assertEquals(1, listenerCalls)
+        assertEquals(2, results.size)
+        assertTrue(results.all(Result<Unit>::isSuccess))
+    }
+
+    @Test
+    fun `detaching listener fails every pending request`() {
+        val dispatcher = SabrPlaybackRecoveryDispatcher()
+        val failure = recoveryFailure()
+        val results = mutableListOf<Result<Unit>>()
+        dispatcher.setListener { _, _, _ -> }
+        dispatcher.request("session", failure, results::add)
+        dispatcher.request("session", failure, results::add)
+
+        dispatcher.setListener(null)
+
+        assertEquals(2, results.size)
+        assertTrue(results.all { it.exceptionOrNull() === failure })
     }
 
     private fun recoveryFailure() = SabrPlaybackRecoveryException(

@@ -100,7 +100,12 @@ private fun ShortsPlayerSurface(
         defaultPlaybackSpeed = state.userSettings.defaultPlaybackSpeed,
     )
     val sponsorBlockPolicy = rememberSponsorBlockPlaybackPolicy(stream, state.userSettings)
-    val playbackStatus = controller?.let { rememberPlayerPlaybackStatus(it) }
+    val playbackStatus = controller?.let {
+        rememberPlayerPlaybackStatus(
+            it,
+            onRetry.takeIf { stream.playbackContract == StreamPlaybackContract.ServerSabr },
+        )
+    }
     val externalSubtitle = stream.subtitles.firstOrNull {
         stream.playbackContract == StreamPlaybackContract.ServerSabr &&
             it.key == selections.selectedSubtitleKey

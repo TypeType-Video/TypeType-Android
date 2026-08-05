@@ -30,9 +30,10 @@ internal class SabrPlaybackRecoveryGate {
 
     fun begin(mediaId: String, sessionId: String): SabrPlaybackRecoveryDecision {
         transition(mediaId)
-        if (sessionId == recoveringSessionId || sessionId in handledSessionIds) {
+        if (sessionId == recoveringSessionId) {
             return SabrPlaybackRecoveryDecision.Ignore
         }
+        if (sessionId in handledSessionIds) return SabrPlaybackRecoveryDecision.Exhausted
         handledSessionIds += sessionId
         if (recoveryCount >= MAX_SESSION_RECOVERIES) {
             return SabrPlaybackRecoveryDecision.Exhausted

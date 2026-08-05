@@ -6,9 +6,16 @@ import java.io.IOException
 
 internal class SabrPlaybackRecoveryDispatcher {
     private var listener: Listener? = null
+    private val pendingRecoveries = mutableMapOf<String, PendingRecovery>()
 
     fun setListener(listener: Listener?) {
         this.listener = listener
+        if (listener != null) return
+        val abandoned = pendingRecoveries.values.toList()
+        pendingRecoveries.clear()
+        abandoned.forEach { pending ->
+            pending.completions.forEach { it(Result.failure(pending.failure)) }
+        }
     }
 
     fun request(
@@ -19,8 +26,18 @@ internal class SabrPlaybackRecoveryDispatcher {
         val active = listener
         if (active == null) {
             complete(Result.failure(failure))
-        } else {
-            active.onRecoveryRequired(sessionId, failure, complete)
+            return
+        }
+        pendingRecoveries[sessionId]?.let {
+            it.completions += complete
+            return
+        }
+        pendingRecoveries[sessionId] = PendingRecovery(
+            failure = failure,
+            completions = mutableListOf(complete),
+        )
+        active.onRecoveryRequired(sessionId, failure) { result ->
+            pendingRecoveries.remove(sessionId)?.completions?.forEach { it(result) }
         }
     }
 
@@ -31,6 +48,11 @@ internal class SabrPlaybackRecoveryDispatcher {
             complete: (Result<Unit>) -> Unit,
         )
     }
+
+    private data class PendingRecovery(
+        val failure: SabrPlaybackRecoveryException,
+        val completions: MutableList<(Result<Unit>) -> Unit>,
+    )
 }
 
 internal class SabrPlaybackRecoveryExhaustedException(

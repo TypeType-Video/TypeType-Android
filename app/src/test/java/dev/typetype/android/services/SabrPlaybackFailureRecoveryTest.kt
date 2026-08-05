@@ -31,6 +31,7 @@ class SabrPlaybackFailureRecoveryTest {
         assertTrue(gate.takeAttempt())
         assertEquals(SabrPlaybackRecoveryDecision.Ignore, gate.begin("video", "session-1"))
         gate.finish("session-1")
+        assertEquals(SabrPlaybackRecoveryDecision.Exhausted, gate.begin("video", "session-1"))
         assertEquals(SabrPlaybackRecoveryDecision.Recover, gate.begin("video", "session-2"))
         assertTrue(gate.takeAttempt())
         gate.finish("session-2")
