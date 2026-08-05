@@ -25,7 +25,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -182,7 +185,10 @@ private fun WatchProgressBar(
         modifier = modifier
             .fillMaxWidth()
             .height(4.dp)
-            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)),
+            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
+            .semantics {
+                progressBarRangeInfo = ProgressBarRangeInfo(fraction, 0f..1f)
+            },
     ) {
         Box(
             modifier = Modifier

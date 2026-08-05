@@ -26,6 +26,7 @@ import dev.typetype.android.core.ui.components.FullScreenLoader
 import dev.typetype.android.core.ui.components.LazyPaginationFooter
 import dev.typetype.android.core.ui.components.SectionHeader
 import dev.typetype.android.core.ui.components.VideoCard
+import dev.typetype.android.feature.menu.VideoMenuScope
 import dev.typetype.android.feature.menu.rememberVideoMenuScope
 
 @Composable
@@ -53,6 +54,25 @@ fun HomeScreen(
     onLoadMore: () -> Unit,
 ) {
     val menuScope = rememberVideoMenuScope(onOpenChannel = onOpenChannel)
+    HomeContent(
+        state = state,
+        menuScope = menuScope,
+        onPlayVideo = onPlayVideo,
+        onOpenChannel = onOpenChannel,
+        onRetry = onRetry,
+        onLoadMore = onLoadMore,
+    )
+}
+
+@Composable
+internal fun HomeContent(
+    state: HomeState,
+    menuScope: VideoMenuScope,
+    onPlayVideo: (videoUrl: String) -> Unit,
+    onOpenChannel: (channelUrl: String) -> Unit,
+    onRetry: () -> Unit,
+    onLoadMore: () -> Unit,
+) {
     val visibleVideos = state.videos.filterNot(menuScope::isHidden)
     val continueWatching = if (state.hideContinueWatching) emptyList() else state.continueWatching
     val showRecommendations = !state.hideHomeRecommendations
