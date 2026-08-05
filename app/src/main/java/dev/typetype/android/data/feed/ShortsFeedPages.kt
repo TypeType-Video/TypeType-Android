@@ -52,7 +52,6 @@ internal suspend fun loadDiscoveryShorts(
     api: TypeTypeApi,
     nextPage: String?,
     service: Int,
-    limit: Int,
 ): ShortsPage {
     val response = withContext(Dispatchers.IO) {
         api.search(query = "shorts", service = service, nextpage = nextPage)
@@ -60,7 +59,7 @@ internal suspend fun loadDiscoveryShorts(
     response.requireSuccessfulResponse()
     val body = response.body() ?: error("Empty Shorts discovery body")
     return ShortsPage(
-        videos = body.items.take(limit).map { it.toDomainVideo() },
+        videos = body.items.map { it.toDomainVideo() },
         continuation = body.nextpage
             ?.takeIf(String::isNotBlank)
             ?.let(ShortsContinuation::Discovery),
@@ -80,6 +79,10 @@ internal fun List<Video>.normalizedShorts(): List<Video> = asSequence()
             }
         }
     }
+
+internal fun ShortsPage.normalized(limit: Int): ShortsPage = copy(
+    videos = videos.normalizedShorts().take(limit),
+)
 
 private fun Video.isLikelyShort(): Boolean =
     isShortFormContent || url.contains("/shorts/") || durationSeconds in 0L..180L
