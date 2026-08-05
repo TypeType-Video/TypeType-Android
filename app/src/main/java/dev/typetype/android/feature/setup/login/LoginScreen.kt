@@ -1,9 +1,5 @@
 package dev.typetype.android.feature.setup.login
 
-import android.content.ActivityNotFoundException
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.browser.auth.AuthTabIntent
-import androidx.browser.customtabs.CustomTabsClient
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,7 +29,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -43,7 +38,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.core.net.toUri
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.SectionHeader
 import dev.typetype.android.core.ui.components.TypeTypeCard
@@ -52,6 +46,7 @@ import dev.typetype.android.core.ui.components.TypeTypeSecondaryButton
 import dev.typetype.android.core.ui.components.TypeTypeTextField
 import dev.typetype.android.core.ui.components.TypeTypeTextLink
 import dev.typetype.android.core.ui.components.RequestIdRow
+import dev.typetype.android.feature.setup.auth.rememberOidcAuthLauncher
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -62,16 +57,11 @@ fun LoginRoute(
     viewModel: LoginViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val context = LocalContext.current
-    val authLauncher = rememberLauncherForActivityResult(
-        contract = AuthTabIntent.AuthenticateUserResultContract(),
-    ) { result ->
-        if (result.resultCode == AuthTabIntent.RESULT_OK && result.resultUri != null) {
-            viewModel.onAction(LoginAction.OnOidcCallback(result.resultUri.toString()))
-        } else {
-            viewModel.onAction(LoginAction.OnOidcCancelled)
-        }
-    }
+    val launchOidc = rememberOidcAuthLauncher(
+        onCallback = { viewModel.onAction(LoginAction.OnOidcCallback(it)) },
+        onCancelled = { viewModel.onAction(LoginAction.OnOidcCancelled) },
+        onBrowserUnavailable = { viewModel.onAction(LoginAction.OnOidcBrowserUnavailable) },
+    )
     LaunchedEffect(viewModel) {
         viewModel.events.collectLatest { event ->
             when (event) {
@@ -79,23 +69,8 @@ fun LoginRoute(
                 LoginEvent.NavigateToHome -> onNavigateToHome()
                 is LoginEvent.NavigateToResetPassword ->
                     onNavigateToResetPassword(event.serverId)
-                is LoginEvent.LaunchOidc -> {
-                    val provider = CustomTabsClient.getPackageName(context, null)
-                    try {
-                        AuthTabIntent.Builder()
-                            .build()
-                            .also { authIntent ->
-                                provider?.let(authIntent.intent::setPackage)
-                            }
-                            .launch(
-                                authLauncher,
-                                event.authorizationUrl.toUri(),
-                                event.redirectScheme,
-                            )
-                    } catch (_: ActivityNotFoundException) {
-                        viewModel.onAction(LoginAction.OnOidcBrowserUnavailable)
-                    }
-                }
+                is LoginEvent.LaunchOidc ->
+                    launchOidc(event.authorizationUrl, event.redirectScheme)
             }
         }
     }
