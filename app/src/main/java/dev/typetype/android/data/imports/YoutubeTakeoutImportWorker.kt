@@ -17,7 +17,6 @@ import dev.typetype.android.data.network.dto.YoutubeTakeoutImportStatsDto
 import dev.typetype.android.data.network.dto.YoutubeTakeoutJobStatusDto
 import dev.typetype.android.data.network.dto.YoutubeTakeoutReportDto
 import dev.typetype.android.data.network.extractServerError
-import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import okhttp3.MediaType.Companion.toMediaType
@@ -69,11 +68,10 @@ class YoutubeTakeoutImportWorker @AssistedInject constructor(
             }
         } catch (cancelled: CancellationException) {
             throw cancelled
-        } catch (_: IOException) {
-            if (runAttemptCount < MAX_ATTEMPTS) retry(YoutubeTakeoutFailureCodes.Network)
-            else fail(YoutubeTakeoutFailureCodes.Network)
-        } catch (_: Exception) {
-            fail(YoutubeTakeoutFailureCodes.Unknown)
+        } catch (failure: Exception) {
+            val code = YoutubeTakeoutFailureCodes.fromThrowable(failure)
+            if (code == YoutubeTakeoutFailureCodes.Network && runAttemptCount < MAX_ATTEMPTS) retry(code)
+            else fail(code)
         }
     }
 

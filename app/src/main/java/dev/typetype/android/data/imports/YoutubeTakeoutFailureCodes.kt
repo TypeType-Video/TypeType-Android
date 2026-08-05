@@ -1,5 +1,8 @@
 package dev.typetype.android.data.imports
 
+import java.io.FileNotFoundException
+import java.io.IOException
+
 internal object YoutubeTakeoutFailureCodes {
     const val Authentication = "YOUTUBE_IMPORT_AUTHENTICATION"
     const val AccountRequired = "YOUTUBE_IMPORT_ACCOUNT_REQUIRED"
@@ -29,4 +32,19 @@ internal object YoutubeTakeoutFailureCodes {
 
     fun isRetryable(statusCode: Int): Boolean =
         statusCode == 408 || statusCode == 429 || statusCode in 500..599
+
+    fun fromThrowable(failure: Throwable): String {
+        var current: Throwable? = failure
+        var containsIoFailure = false
+        while (current != null) {
+            when {
+                current is SecurityException -> return Permission
+                current is FileNotFoundException && current.message == "IMPORT_FILE_UNAVAILABLE" -> return Permission
+                current.message == "IMPORT_FILE_TOO_LARGE" -> return TooLarge
+                current is IOException -> containsIoFailure = true
+            }
+            current = current.cause
+        }
+        return if (containsIoFailure) Network else Unknown
+    }
 }
