@@ -35,9 +35,11 @@ fun PlayerRoute(
     onOpenChannel: (channelUrl: String) -> Unit = {},
     viewModel: PlayerViewModel = hiltViewModel(),
     channelActionsViewModel: PlayerChannelActionsViewModel = hiltViewModel(),
+    danmakuViewModel: PlayerDanmakuViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val channelState by channelActionsViewModel.state.collectAsStateWithLifecycle()
+    val danmakuState by danmakuViewModel.state.collectAsStateWithLifecycle()
     val playerEvents = remember(viewModel.events, channelActionsViewModel.events) {
         merge(viewModel.events, channelActionsViewModel.events)
     }
@@ -60,6 +62,8 @@ fun PlayerRoute(
         onToggleSubscription = {
             state.stream?.let(channelActionsViewModel::toggle)
         },
+        danmakuState = danmakuState,
+        onDanmakuAction = danmakuViewModel::onAction,
         onAction = viewModel::onAction,
     )
 }
@@ -81,6 +85,8 @@ fun PlayerScreen(
     isSubscribed: Boolean = false,
     subscriptionInFlight: Boolean = false,
     onToggleSubscription: () -> Unit = {},
+    danmakuState: PlayerDanmakuState = PlayerDanmakuState(),
+    onDanmakuAction: (PlayerDanmakuAction) -> Unit = {},
     onAction: (PlayerAction) -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -172,6 +178,8 @@ fun PlayerScreen(
                     isSubscribed = isSubscribed,
                     subscriptionInFlight = subscriptionInFlight,
                     onToggleSubscription = onToggleSubscription,
+                    danmakuState = danmakuState,
+                    onDanmakuAction = onDanmakuAction,
                     onAction = onAction,
                 )
             }

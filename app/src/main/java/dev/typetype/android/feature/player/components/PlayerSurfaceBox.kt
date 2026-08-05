@@ -39,6 +39,8 @@ import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.stream.StreamPlaybackContract
 import dev.typetype.android.feature.player.LoadSubtitleCues
 import dev.typetype.android.feature.player.PlaybackCodecSupport
+import dev.typetype.android.feature.player.PlayerDanmakuAction
+import dev.typetype.android.feature.player.PlayerDanmakuState
 import dev.typetype.android.feature.player.SponsorBlockPlaybackPolicy
 import dev.typetype.android.feature.player.key
 import dev.typetype.android.feature.player.state.PlayerGestureState
@@ -77,6 +79,8 @@ internal fun PlayerSurfaceBox(
     playbackBrightnessPercent: Int?,
     onPlaybackBrightnessChange: (Int) -> Unit,
     loadSubtitleCues: LoadSubtitleCues,
+    danmakuState: PlayerDanmakuState = PlayerDanmakuState(),
+    onDanmakuAction: (PlayerDanmakuAction) -> Unit = {},
 ) {
     val activity = LocalActivity.current
     val context = LocalContext.current
@@ -162,6 +166,12 @@ internal fun PlayerSurfaceBox(
         }
 
         if (!audioOnlyState.active && (!isInPip || externalSubtitle != null)) {
+            DanmakuOverlay(
+                player = player,
+                state = danmakuState,
+                visible = !isInPip,
+                modifier = Modifier.fillMaxSize(),
+            )
             PlayerSubtitleOverlay(
                 player = player,
                 controlsVisible = controlsVisible && !isInPip,
@@ -259,55 +269,46 @@ internal fun PlayerSurfaceBox(
             )
         }
 
-        PipPlaybackStateOverlay(
-            visible = isInPip,
-            isPlaying = playbackStatus.isPlaying,
-            modifier = Modifier.align(Alignment.BottomStart).padding(8.dp),
-        )
-
-        SponsorBlockPlaybackFeedback(
+        PlayerSurfaceFeedback(
             player = player,
-            policy = sponsorBlockPolicy,
-            visible = !isInPip,
-            modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
+            isPlaying = playbackStatus.isPlaying,
+            isInPip = isInPip,
+            sponsorBlockPolicy = sponsorBlockPolicy,
         )
 
-        if (optionsVisible && !isInPip) {
-            PlaybackOptionsSheet(
-                player = player,
-                stream = stream,
-                selectedCodec = selectedCodec,
-                selectedQuality = selectedQuality,
-                selectedAudioKey = selectedAudioKey,
-                selectedSubtitleKey = selectedSubtitleKey,
-                selectedSpeed = selectedSpeed,
-                codecSupport = codecSupport,
-                resizeMode = gestureState.resizeMode.value,
-                audioOnlyEnabled = audioOnlyState.active,
-                audioOnlyChanging = audioOnlyState.changing,
-                showAudioOnly = audioOnlyState.available,
-                onSelectCodec = onSelectCodec,
-                onSelectQuality = onSelectQuality,
-                onSelectAudio = onSelectAudio,
-                onSelectSubtitle = onSelectSubtitle,
-                onSelectSpeed = onSelectSpeed,
-                onSelectResizeMode = { gestureState.resizeMode.value = it },
-                onAudioOnlyChange = audioOnlyState::setEnabled,
-                onDismiss = { optionsVisible = false },
-            )
-        }
-
-        if (chaptersVisible && chapters.isNotEmpty() && !isInPip) {
-            ChaptersSheet(
-                chapters = chapters,
-                currentPositionMs = player.currentPosition,
-                onChapterClick = { chapter ->
-                    player.seekTo(chapter.startMs)
-                    chaptersVisible = false
-                },
-                onDismiss = { chaptersVisible = false },
-            )
-        }
+        PlayerSurfaceSheets(
+            player = player,
+            stream = stream,
+            codecSupport = codecSupport,
+            optionsVisible = optionsVisible,
+            chaptersVisible = chaptersVisible,
+            isInPip = isInPip,
+            chapters = chapters,
+            options = PlayerOptionsState(
+                selectedCodec,
+                selectedQuality,
+                selectedAudioKey,
+                selectedSubtitleKey,
+                selectedSpeed,
+                gestureState.resizeMode.value,
+                audioOnlyState.active,
+                audioOnlyState.changing,
+                audioOnlyState.available,
+                danmakuState,
+            ),
+            actions = PlayerOptionsActions(
+                onSelectCodec,
+                onSelectQuality,
+                onSelectAudio,
+                onSelectSubtitle,
+                onSelectSpeed,
+                { gestureState.resizeMode.value = it },
+                audioOnlyState::setEnabled,
+                onDanmakuAction,
+            ),
+            onDismissOptions = { optionsVisible = false },
+            onDismissChapters = { chaptersVisible = false },
+        )
 
         playbackStatus.error?.takeIf { !isInPip }?.let { error ->
             PlaybackFailureOverlay(

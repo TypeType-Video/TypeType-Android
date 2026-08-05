@@ -68,6 +68,8 @@ fun LoadedPlayer(
     isSubscribed: Boolean = false,
     subscriptionInFlight: Boolean = false,
     onToggleSubscription: () -> Unit = {},
+    danmakuState: PlayerDanmakuState = PlayerDanmakuState(),
+    onDanmakuAction: (PlayerDanmakuAction) -> Unit = {},
     onAction: (PlayerAction) -> Unit = {},
 ) {
     val controller = LocalMediaController.current
@@ -215,6 +217,8 @@ fun LoadedPlayer(
                             playbackBrightnessPercent = playbackBrightnessPercent,
                             onPlaybackBrightnessChange = { playbackBrightnessPercent = it },
                             loadSubtitleCues = loadSubtitleCues,
+                            danmakuState = danmakuState,
+                            onDanmakuAction = onDanmakuAction,
                             modifier = Modifier.fillMaxSize(),
                         )
                     } else {
