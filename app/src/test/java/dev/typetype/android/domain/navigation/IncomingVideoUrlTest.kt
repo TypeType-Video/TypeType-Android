@@ -30,6 +30,10 @@ class IncomingVideoUrlTest {
                 "https://beta.typetype.video/watch?v=https%3A%2F%2Fwww.nicovideo.jp%2Fwatch%2Fsm9",
             ),
         )
+        assertEquals(
+            "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+            resolveIncomingVideoUrl("https://example.com/watch?v=dQw4w9WgXcQ"),
+        )
     }
 
     @Test
@@ -60,6 +64,8 @@ class IncomingVideoUrlTest {
     fun unsafeOrNonVideoValuesAreRejected() {
         assertNull(resolveIncomingVideoUrl("file:///private/video.mp4"))
         assertNull(resolveIncomingVideoUrl("https://user:password@example.com/video"))
+        assertNull(resolveIncomingVideoUrl("https://example.com/video"))
+        assertNull(resolveIncomingVideoUrl("https://beta.typetype.video/watch"))
         assertNull(resolveIncomingVideoUrl("not a video"))
         assertNull(resolveSharedVideoUrl("plain text without a link"))
     }

@@ -48,12 +48,18 @@ private fun resolveWebUrl(uri: URI, depth: Int): String? {
     niconicoVideoId(uri)?.let { return "https://www.nicovideo.jp/watch/$it" }
     bilibiliWatchParam(uri)?.let { return resolveVideoSource(it, depth + 1) }
     if (uri.path.orEmpty().trimEnd('/') == "/watch") {
-        queryParameter(uri, "v")?.let { value ->
-            resolveVideoSource(value, depth + 1)?.let { return it }
-        }
+        return queryParameter(uri, "v")?.let { value -> resolveVideoSource(value, depth + 1) }
     }
-    return uri.toString()
+    return uri.toString().takeIf { isSupportedVideoHost(uri.host.lowercase()) }
 }
+
+private fun isSupportedVideoHost(host: String): Boolean =
+    host == "youtu.be" ||
+        hostMatches(host, "youtube.com") ||
+        host == "nico.ms" ||
+        hostMatches(host, "nicovideo.jp") ||
+        host == "b23.tv" ||
+        hostMatches(host, "bilibili.com")
 
 private fun youtubeVideoId(uri: URI): String? {
     val host = uri.host.lowercase()
