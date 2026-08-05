@@ -1,10 +1,12 @@
 package dev.typetype.android.feature.settings.player
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
@@ -28,8 +30,9 @@ class PlayerSettingsDanmakuTest {
             }
         }
 
+        composeRule.onNode(hasScrollAction())
+            .performScrollToNode(hasText("Show bullet comments"))
         composeRule.onNodeWithText("Show bullet comments")
-            .performScrollTo()
             .assertIsDisplayed()
             .performClick()
 

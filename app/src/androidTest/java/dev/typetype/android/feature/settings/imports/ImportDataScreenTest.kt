@@ -3,9 +3,11 @@ package dev.typetype.android.feature.settings.imports
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import dev.typetype.android.domain.imports.ImportDocument
 import dev.typetype.android.domain.imports.PipePipeRestoreSummary
@@ -36,8 +38,10 @@ class ImportDataScreenTest {
             ),
         )
 
-        composeRule.onNodeWithText("backup.zip").performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Restore backup").performScrollTo().assertIsEnabled()
+        scrollTo("backup.zip")
+        composeRule.onNodeWithText("backup.zip").assertIsDisplayed()
+        scrollTo("Restore backup")
+        composeRule.onNodeWithText("Restore backup").assertIsEnabled()
     }
 
     @Test
@@ -57,8 +61,10 @@ class ImportDataScreenTest {
             ),
         )
 
-        composeRule.onNodeWithText("Import complete").performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("60").performScrollTo().assertIsDisplayed()
+        scrollTo("Import complete")
+        composeRule.onNodeWithText("Import complete").assertIsDisplayed()
+        scrollTo("60")
+        composeRule.onNodeWithText("60").assertIsDisplayed()
     }
 
     private fun setScreen(state: ImportDataState) {
@@ -86,5 +92,9 @@ class ImportDataScreenTest {
                 )
             }
         }
+    }
+
+    private fun scrollTo(text: String) {
+        composeRule.onNode(hasScrollAction()).performScrollToNode(hasText(text))
     }
 }
