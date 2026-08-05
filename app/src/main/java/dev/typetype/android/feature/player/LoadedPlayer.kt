@@ -38,6 +38,7 @@ import dev.typetype.android.domain.comments.CommentsRepository
 import dev.typetype.android.domain.library.Playlist
 import dev.typetype.android.domain.playback.PlaybackQueueState
 import dev.typetype.android.domain.stream.Stream
+import dev.typetype.android.domain.usersettings.UserSettings
 import dev.typetype.android.feature.player.components.CommentsBar
 import dev.typetype.android.feature.player.components.AutoplayCountdownOverlay
 import dev.typetype.android.feature.player.components.DescriptionSection
@@ -48,6 +49,7 @@ import dev.typetype.android.feature.player.sleep.PlaybackSleepTimerControls
 import dev.typetype.android.feature.player.components.PlayerSurfaceBox
 import dev.typetype.android.feature.player.components.RelatedStreamsSection
 import dev.typetype.android.feature.player.components.UploaderCard
+import dev.typetype.android.feature.player.components.rememberPlaybackChapters
 import dev.typetype.android.feature.menu.rememberVideoMenuScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.math.roundToInt
@@ -62,13 +64,8 @@ fun LoadedPlayer(
     isFavorited: Boolean,
     isInWatchLater: Boolean,
     gestureConfig: PlayerGestureConfig,
-    autoplayEnabled: Boolean,
     autoplayCountdownSeconds: Int,
-    defaultQuality: String,
-    defaultAudioLanguage: String,
-    subtitlesEnabled: Boolean,
-    defaultSubtitleLanguage: String,
-    preferOriginalLanguage: Boolean,
+    userSettings: UserSettings,
     playlists: List<Playlist>,
     playlistPickerVisible: Boolean,
     playlistActionInFlight: Boolean,
@@ -102,12 +99,15 @@ fun LoadedPlayer(
     }
     val selections = rememberPlayerPlaybackSelectionState(
         stream = stream,
-        defaultQuality = defaultQuality,
-        defaultAudioLanguage = defaultAudioLanguage,
-        subtitlesEnabled = subtitlesEnabled,
-        defaultSubtitleLanguage = defaultSubtitleLanguage,
-        preferOriginalLanguage = preferOriginalLanguage,
+        defaultQuality = userSettings.defaultQuality,
+        defaultAudioLanguage = userSettings.defaultAudioLanguage,
+        subtitlesEnabled = userSettings.subtitlesEnabled,
+        defaultSubtitleLanguage = userSettings.defaultSubtitleLanguage,
+        preferOriginalLanguage = userSettings.preferOriginalLanguage,
+        defaultPlaybackSpeed = userSettings.defaultPlaybackSpeed,
     )
+    val sponsorBlockPolicy = rememberSponsorBlockPlaybackPolicy(stream, userSettings)
+    val playbackChapters = rememberPlaybackChapters(stream.chapters, sponsorBlockPolicy)
     var pipSourceRect by remember(stream.id) { mutableStateOf<Rect?>(null) }
     val videoMenuScope = rememberVideoMenuScope(onOpenChannel = onOpenChannel)
     val activity = LocalActivity.current
@@ -115,7 +115,7 @@ fun LoadedPlayer(
         player = controller,
         stream = stream,
         playbackQueue = playbackQueue,
-        enabled = autoplayEnabled,
+        enabled = userSettings.autoplay,
         countdownSeconds = autoplayCountdownSeconds,
         onAdvanceQueue = { onAction(PlayerAction.OnAdvanceQueue) },
         onCancelQueueAutoplay = { onAction(PlayerAction.OnCancelQueueAutoplay) },
@@ -133,9 +133,9 @@ fun LoadedPlayer(
         selections.selectedCodec,
         selections.selectedQuality,
         selections.selectedAudioKey,
-        defaultAudioLanguage,
-        defaultQuality,
-        preferOriginalLanguage,
+        userSettings.defaultAudioLanguage,
+        userSettings.defaultQuality,
+        userSettings.preferOriginalLanguage,
         initialPlayWhenReady,
     ) {
         controller?.let { ctrl ->
@@ -147,9 +147,9 @@ fun LoadedPlayer(
                 selectedQuality = selections.selectedQuality,
                 selectedAudioKey = selections.selectedAudioKey,
                 selectedSubtitleKey = selections.selectedSubtitleKey,
-                defaultAudioLanguage = defaultAudioLanguage,
-                automaticQualityCap = defaultQuality,
-                preferOriginalLanguage = preferOriginalLanguage,
+                defaultAudioLanguage = userSettings.defaultAudioLanguage,
+                automaticQualityCap = userSettings.defaultQuality,
+                preferOriginalLanguage = userSettings.preferOriginalLanguage,
                 initialPlayWhenReady = initialPlayWhenReady,
                 codecSupport = codecSupport,
                 prepareSabrPlayback = prepareSabrPlayback,
@@ -236,8 +236,8 @@ fun LoadedPlayer(
                         pipSourceRect = pipSourceRect,
                         isFullscreen = isFullscreen,
                         onToggleFullscreen = { onFullscreenChange(!isFullscreen) },
-                        sponsorBlockSegments = stream.sponsorBlockSegments,
-                        chapters = stream.chapters,
+                        sponsorBlockPolicy = sponsorBlockPolicy,
+                        chapters = playbackChapters,
                         gestureConfig = gestureConfig,
                         playbackBrightnessPercent = playbackBrightnessPercent,
                         onPlaybackBrightnessChange = { playbackBrightnessPercent = it },
@@ -292,20 +292,24 @@ fun LoadedPlayer(
                         onSubscribeClick = onToggleSubscription,
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-                    CommentsBar(onClick = { commentsVisible = true })
-                    RelatedStreamsSection(
-                        videos = stream.relatedStreams,
-                        onPlayVideo = onPlayVideo,
-                        menuScope = videoMenuScope,
-                        onOpenChannel = onOpenChannel,
-                    )
+                    if (!userSettings.hideComments) {
+                        CommentsBar(onClick = { commentsVisible = true })
+                    }
+                    if (!userSettings.hideRelatedVideos) {
+                        RelatedStreamsSection(
+                            videos = stream.relatedStreams,
+                            onPlayVideo = onPlayVideo,
+                            menuScope = videoMenuScope,
+                            onOpenChannel = onOpenChannel,
+                        )
+                    }
                 }
             }
         }
     }
 
     PlayerAuxiliarySheets(
-        commentsVisible = commentsVisible,
+        commentsVisible = commentsVisible && !userSettings.hideComments,
         onDismissComments = { commentsVisible = false },
         commentsFlow = commentsFlow,
         commentsRepository = commentsRepository,

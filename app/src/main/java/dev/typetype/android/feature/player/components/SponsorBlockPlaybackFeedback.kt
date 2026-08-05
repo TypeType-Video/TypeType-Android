@@ -31,6 +31,7 @@ import androidx.media3.common.Player
 import dev.typetype.android.R
 import dev.typetype.android.domain.stream.SponsorBlockSegment
 import dev.typetype.android.domain.stream.SponsorCategory
+import dev.typetype.android.feature.player.SponsorBlockPlaybackPolicy
 import kotlinx.coroutines.delay
 
 private const val SKIP_NOTICE_DURATION_MS = 2_600L
@@ -38,15 +39,21 @@ private const val SKIP_NOTICE_DURATION_MS = 2_600L
 @Composable
 internal fun SponsorBlockPlaybackFeedback(
     player: Player,
-    segments: List<SponsorBlockSegment>,
+    policy: SponsorBlockPlaybackPolicy,
     visible: Boolean,
     modifier: Modifier = Modifier,
 ) {
     var skippedSegment by remember { mutableStateOf<SponsorBlockSegment?>(null) }
+    var automaticAction by remember { mutableStateOf(SponsorBlockAutomaticAction.Skipped) }
     var skippedEvent by remember { mutableIntStateOf(0) }
 
-    SponsorBlockSkipper(player = player, segments = segments) { segment ->
+    SponsorBlockSkipper(
+        player = player,
+        segments = policy.automaticSegments,
+        muteInsteadOfSkip = policy.muteInsteadOfSkip,
+    ) { segment, action ->
         skippedSegment = segment
+        automaticAction = action
         skippedEvent += 1
     }
     LaunchedEffect(skippedEvent) {
@@ -54,11 +61,18 @@ internal fun SponsorBlockPlaybackFeedback(
         delay(SKIP_NOTICE_DURATION_MS)
         skippedSegment = null
     }
-    SponsorBlockSkipNotice(
-        segment = skippedSegment,
-        visible = visible,
+    Column(
         modifier = modifier,
-    )
+        horizontalAlignment = Alignment.End,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        SponsorBlockCurrentSegment(player = player, policy = policy, visible = visible)
+        SponsorBlockSkipNotice(
+            segment = skippedSegment,
+            action = automaticAction,
+            visible = visible,
+        )
+    }
 }
 
 @Composable
@@ -66,6 +80,7 @@ internal fun SponsorBlockSkipNotice(
     segment: SponsorBlockSegment?,
     modifier: Modifier = Modifier,
     visible: Boolean = true,
+    action: SponsorBlockAutomaticAction = SponsorBlockAutomaticAction.Skipped,
 ) {
     AnimatedVisibility(
         visible = visible && segment != null,
@@ -91,7 +106,16 @@ internal fun SponsorBlockSkipNotice(
                 )
                 Column {
                     Text(
-                        text = stringResource(R.string.player_sponsorblock_skipped),
+                        text = stringResource(
+                            when (action) {
+                                SponsorBlockAutomaticAction.Skipped -> {
+                                    R.string.player_sponsorblock_skipped
+                                }
+                                SponsorBlockAutomaticAction.Muted -> {
+                                    R.string.player_sponsorblock_muted
+                                }
+                            },
+                        ),
                         style = MaterialTheme.typography.labelLarge,
                     )
                     Text(
@@ -105,9 +129,10 @@ internal fun SponsorBlockSkipNotice(
     }
 }
 
-private fun SponsorCategory.labelResource(): Int = when (this) {
+internal fun SponsorCategory.labelResource(): Int = when (this) {
     SponsorCategory.Sponsor -> R.string.player_sponsorblock_category_sponsor
     SponsorCategory.SelfPromo -> R.string.player_sponsorblock_category_self_promotion
+    SponsorCategory.ExclusiveAccess -> R.string.player_sponsorblock_category_exclusive_access
     SponsorCategory.Interaction -> R.string.player_sponsorblock_category_interaction
     SponsorCategory.Poi -> R.string.player_sponsorblock_category_highlight
     SponsorCategory.Intro -> R.string.player_sponsorblock_category_intro
@@ -115,5 +140,6 @@ private fun SponsorCategory.labelResource(): Int = when (this) {
     SponsorCategory.Preview -> R.string.player_sponsorblock_category_preview
     SponsorCategory.MusicOffTopic -> R.string.player_sponsorblock_category_music
     SponsorCategory.Filler -> R.string.player_sponsorblock_category_filler
+    SponsorCategory.Chapter -> R.string.player_sponsorblock_category_chapter
     SponsorCategory.Unknown -> R.string.player_sponsorblock_category_other
 }
