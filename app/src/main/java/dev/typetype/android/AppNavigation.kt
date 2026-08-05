@@ -46,6 +46,7 @@ import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import dev.typetype.android.core.ui.navigation.HomeRoute
 import dev.typetype.android.core.ui.navigation.LibraryRoute
+import dev.typetype.android.core.ui.navigation.ShortsRoute
 import dev.typetype.android.core.ui.navigation.SubscriptionsRoute
 import dev.typetype.android.core.ui.components.ProfileAvatar
 
@@ -57,9 +58,13 @@ internal data class TopLevelTab(
 
 internal val topLevelTabs = listOf(
     TopLevelTab(HomeRoute, R.string.tab_home, R.drawable.ic_home),
+    TopLevelTab(ShortsRoute, R.string.tab_shorts, R.drawable.ic_shorts),
     TopLevelTab(SubscriptionsRoute, R.string.tab_subscriptions, R.drawable.ic_subscriptions),
     TopLevelTab(LibraryRoute, R.string.tab_library, R.drawable.ic_library),
 )
+
+internal fun visibleTopLevelTabs(showShorts: Boolean): List<TopLevelTab> =
+    topLevelTabs.filter { showShorts || it.route != ShortsRoute }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -139,6 +144,7 @@ internal fun AppBottomBar(
     currentDestination: NavDestination?,
     fallbackTabRouteQualifiedName: String?,
     onTabClick: (Any) -> Unit,
+    tabs: List<TopLevelTab> = topLevelTabs,
 ) {
     androidx.compose.foundation.layout.Column {
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
@@ -146,8 +152,8 @@ internal fun AppBottomBar(
             modifier = Modifier.testTag(APP_BOTTOM_NAVIGATION_TAG),
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
-            topLevelTabs.forEach { tab ->
-                val selected = tab.isSelected(currentDestination, fallbackTabRouteQualifiedName)
+            tabs.forEach { tab ->
+                val selected = tab.isSelected(currentDestination, fallbackTabRouteQualifiedName, tabs)
                 NavigationBarItem(
                     selected = selected,
                     onClick = { if (!currentDestination.matchesRoute(tab.route)) onTabClick(tab.route) },
@@ -164,6 +170,7 @@ internal fun AppNavigationRail(
     currentDestination: NavDestination?,
     fallbackTabRouteQualifiedName: String?,
     onTabClick: (Any) -> Unit,
+    tabs: List<TopLevelTab> = topLevelTabs,
 ) {
     NavigationRail(
         modifier = Modifier
@@ -173,8 +180,8 @@ internal fun AppNavigationRail(
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
         Spacer(Modifier.weight(1f))
-        topLevelTabs.forEach { tab ->
-            val selected = tab.isSelected(currentDestination, fallbackTabRouteQualifiedName)
+        tabs.forEach { tab ->
+            val selected = tab.isSelected(currentDestination, fallbackTabRouteQualifiedName, tabs)
             NavigationRailItem(
                 selected = selected,
                 onClick = { if (!currentDestination.matchesRoute(tab.route)) onTabClick(tab.route) },
@@ -213,9 +220,10 @@ private fun ProfileAvatarButton(
 private fun TopLevelTab.isSelected(
     destination: NavDestination?,
     fallbackRouteName: String?,
+    tabs: List<TopLevelTab>,
 ): Boolean {
     val direct = destination.matchesRoute(route)
-    val anyDirect = topLevelTabs.any { destination.matchesRoute(it.route) }
+    val anyDirect = tabs.any { destination.matchesRoute(it.route) }
     return direct || (!anyDirect && route::class.qualifiedName == fallbackRouteName)
 }
 
@@ -223,6 +231,7 @@ internal fun NavDestination?.matchesRoute(route: Any): Boolean {
     val destination = this ?: return false
     return when (route) {
         HomeRoute -> destination.hasRoute<HomeRoute>()
+        ShortsRoute -> destination.hasRoute<ShortsRoute>()
         SubscriptionsRoute -> destination.hasRoute<SubscriptionsRoute>()
         LibraryRoute -> destination.hasRoute<LibraryRoute>()
         else -> false

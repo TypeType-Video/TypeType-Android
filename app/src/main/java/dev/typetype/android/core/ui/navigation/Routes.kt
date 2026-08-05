@@ -24,6 +24,9 @@ data class ResetPasswordRoute(val serverId: String)
 data object HomeRoute
 
 @Serializable
+data object ShortsRoute
+
+@Serializable
 data object SubscriptionsRoute
 
 @Serializable

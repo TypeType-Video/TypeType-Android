@@ -35,6 +35,7 @@ import dev.typetype.android.core.ui.navigation.NotificationsRoute
 import dev.typetype.android.core.ui.navigation.PlayerSettingsRoute
 import dev.typetype.android.core.ui.navigation.PlaylistRoute
 import dev.typetype.android.core.ui.navigation.SearchRoute
+import dev.typetype.android.core.ui.navigation.ShortsRoute
 import dev.typetype.android.core.ui.navigation.SettingsRoute
 import dev.typetype.android.core.ui.navigation.StorageSettingsRoute
 import dev.typetype.android.core.ui.navigation.SubscriptionsRoute
@@ -45,6 +46,7 @@ import dev.typetype.android.feature.home.HomeViewModel
 import dev.typetype.android.feature.library.playlist.PlaylistRoute as PlaylistRouteScreen
 import dev.typetype.android.feature.notifications.rememberNotificationBadge
 import dev.typetype.android.feature.search.SearchRoute as SearchRouteScreen
+import dev.typetype.android.feature.shorts.ShortsRoute as ShortsRouteScreen
 import dev.typetype.android.feature.settings.accounts.AccountSettingsRoute as AccountSettingsRouteScreen
 import dev.typetype.android.feature.settings.about.AboutScreen
 import dev.typetype.android.feature.settings.appearance.AppearanceRoute as AppearanceRouteScreen
@@ -139,6 +141,7 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
         unreadNotificationsCount = notificationBadge.unreadCount,
         avatarUrl = avatarUrl,
         avatarFallbackLetter = avatarFallback,
+        showShorts = !deArrowSettings.hideShorts,
         onPlayVideo = onPlayVideo,
         onOpenChannel = onOpenChannel,
         onClosePlayback = mainViewModel::closePlayback,
@@ -198,6 +201,12 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
                             launchSingleTop = true
                         }
                     },
+                )
+            }
+            composable<ShortsRoute> {
+                ShortsRouteScreen(
+                    onPlayVideo = onPlayVideo,
+                    onOpenChannel = onOpenChannel,
                 )
             }
             notificationsDestination(navController, onPlayVideo)
