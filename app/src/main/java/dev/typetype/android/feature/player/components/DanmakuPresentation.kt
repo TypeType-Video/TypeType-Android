@@ -17,28 +17,51 @@ internal fun presentBulletComments(
 ): List<PresentedBulletComment> {
     if (laneCount <= 0) return emptyList()
     val boundedSpeed = speed.coerceIn(0.5f, 2f)
-    return comments.asSequence()
-        .filter { it.position != BulletCommentPosition.Bottom }
-        .mapIndexedNotNull { index, comment ->
-            val duration = when (comment.position) {
-                BulletCommentPosition.Regular -> (REGULAR_DISPLAY_MILLIS / boundedSpeed).toLong()
-                else -> STATIC_DISPLAY_MILLIS
+    val regularDuration = (REGULAR_DISPLAY_MILLIS / boundedSpeed).toLong()
+    val earliestTime = (positionMillis - maxOf(regularDuration, STATIC_DISPLAY_MILLIS))
+        .coerceAtLeast(0L)
+    val visible = ArrayList<PresentedBulletComment>(MAX_VISIBLE_COMMENTS)
+    var index = comments.lowerBound(earliestTime)
+    while (index < comments.size && visible.size < MAX_VISIBLE_COMMENTS) {
+        val comment = comments[index]
+        if (comment.presentationTimeMillis > positionMillis) break
+        if (comment.position != BulletCommentPosition.Bottom) {
+            val duration = if (comment.position == BulletCommentPosition.Regular) {
+                regularDuration
+            } else {
+                STATIC_DISPLAY_MILLIS
             }
             val elapsed = positionMillis - comment.presentationTimeMillis
-            if (elapsed !in 0 until duration) return@mapIndexedNotNull null
-            val lanes = if (comment.position == BulletCommentPosition.Regular) {
-                laneCount
-            } else {
-                minOf(laneCount, STATIC_LANES)
+            if (elapsed < duration) {
+                val lanes = if (comment.position == BulletCommentPosition.Regular) {
+                    laneCount
+                } else {
+                    minOf(laneCount, STATIC_LANES)
+                }
+                visible += PresentedBulletComment(
+                    comment = comment,
+                    lane = index % lanes,
+                    progress = elapsed.toFloat() / duration,
+                )
             }
-            PresentedBulletComment(
-                comment = comment,
-                lane = index % lanes,
-                progress = elapsed.toFloat() / duration,
-            )
         }
-        .take(MAX_VISIBLE_COMMENTS)
-        .toList()
+        index += 1
+    }
+    return visible
+}
+
+private fun List<BulletComment>.lowerBound(timeMillis: Long): Int {
+    var low = 0
+    var high = size
+    while (low < high) {
+        val middle = (low + high) ushr 1
+        if (this[middle].presentationTimeMillis < timeMillis) {
+            low = middle + 1
+        } else {
+            high = middle
+        }
+    }
+    return low
 }
 
 internal const val DANMAKU_LANES = 8
