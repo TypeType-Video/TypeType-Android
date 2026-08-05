@@ -57,6 +57,7 @@ internal fun MediaItem.withSabrPlayback(
         putBoolean(MergedStreamMediaKeys.EXTRA_SABR_SESSION_CONTINUATION, true)
         putBoolean(MergedStreamMediaKeys.EXTRA_SABR_IS_LIVE, target.isLive)
         putBoolean(MergedStreamMediaKeys.EXTRA_SABR_AUDIO_ONLY, target.audioOnly)
+        putBoolean(MergedStreamMediaKeys.EXTRA_AUDIO_ONLY_ACTIVE, target.audioOnly)
         putLong(MergedStreamMediaKeys.EXTRA_SABR_WINDOW_END_MS, session.windowEndMs)
         putLong(MergedStreamMediaKeys.EXTRA_SABR_DURATION_MS, session.durationMs)
         putBoolean(MergedStreamMediaKeys.EXTRA_SABR_END_OF_STREAM, session.endOfStream)
