@@ -38,15 +38,20 @@ class ShortsViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             userSettingsRepository.observe()
-                .map { ShortsConfiguration(it.defaultService, it.hideShorts) }
+                .map { ShortsConfiguration(it.defaultService, it.hideShorts, it.autoplay) }
                 .distinctUntilChanged()
                 .collect { configuration ->
                     service = configuration.service
                     if (configuration.hidden) {
                         loadJob?.cancel()
                         continuation = null
-                        _state.value = ShortsState(isLoading = false, hidden = true)
+                        _state.value = ShortsState(
+                            isLoading = false,
+                            hidden = true,
+                            autoplayEnabled = configuration.autoplay,
+                        )
                     } else {
+                        _state.update { it.copy(autoplayEnabled = configuration.autoplay) }
                         refresh()
                     }
                 }
@@ -126,4 +131,8 @@ class ShortsViewModel @Inject constructor(
     }
 }
 
-private data class ShortsConfiguration(val service: Int, val hidden: Boolean)
+private data class ShortsConfiguration(
+    val service: Int,
+    val hidden: Boolean,
+    val autoplay: Boolean,
+)

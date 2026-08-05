@@ -18,6 +18,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.CircularProgressIndicator
@@ -31,6 +32,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,8 +47,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.branding.rememberVideoBranding
@@ -55,22 +56,7 @@ import dev.typetype.android.core.ui.components.RequestIdRow
 import dev.typetype.android.domain.feed.Video
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-
-@Composable
-fun ShortsRoute(
-    onPlayVideo: (String) -> Unit,
-    onOpenChannel: (String) -> Unit,
-    viewModel: ShortsViewModel = hiltViewModel(),
-) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    ShortsScreen(
-        state = state,
-        onPlayVideo = onPlayVideo,
-        onOpenChannel = onOpenChannel,
-        onRefresh = { viewModel.onAction(ShortsAction.Refresh) },
-        onLoadMore = { viewModel.onAction(ShortsAction.LoadMore) },
-    )
-}
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -80,6 +66,9 @@ fun ShortsScreen(
     onOpenChannel: (String) -> Unit,
     onRefresh: () -> Unit,
     onLoadMore: () -> Unit,
+    embeddedPlaybackEnabled: Boolean = false,
+    onActiveVideoChanged: (Video?) -> Unit = {},
+    embeddedPlayback: @Composable (Video, onAdvance: () -> Unit) -> Unit = { _, _ -> },
 ) {
     when {
         state.isLoading && state.videos.isEmpty() -> FullScreenLoader()
@@ -92,11 +81,23 @@ fun ShortsScreen(
         state.videos.isEmpty() -> ShortsMessage(R.string.shorts_empty)
         else -> {
             val pagerState = rememberPagerState(pageCount = { state.videos.size })
+            val scope = rememberCoroutineScope()
+            val currentLoadMore by rememberUpdatedState(onLoadMore)
+            val currentActiveVideoChanged by rememberUpdatedState(onActiveVideoChanged)
             LaunchedEffect(pagerState, state.videos.size, state.hasMore) {
                 snapshotFlow { pagerState.settledPage }
                     .map { it >= state.videos.lastIndex - 3 }
                     .distinctUntilChanged()
-                    .collect { nearEnd -> if (nearEnd && state.hasMore) onLoadMore() }
+                    .collect { nearEnd -> if (nearEnd && state.hasMore) currentLoadMore() }
+            }
+            LaunchedEffect(pagerState, state.videos) {
+                snapshotFlow {
+                    if (pagerState.isScrollInProgress) {
+                        null
+                    } else {
+                        state.videos.getOrNull(pagerState.settledPage)
+                    }
+                }.distinctUntilChanged().collect(currentActiveVideoChanged)
             }
             Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
                 VerticalPager(
@@ -106,8 +107,18 @@ fun ShortsScreen(
                 ) { page ->
                     ShortPage(
                         video = state.videos[page],
+                        isActive = embeddedPlaybackEnabled &&
+                            page == pagerState.settledPage &&
+                            !pagerState.isScrollInProgress,
                         onPlayVideo = onPlayVideo,
                         onOpenChannel = onOpenChannel,
+                        embeddedPlayback = {
+                            embeddedPlayback(state.videos[page]) {
+                                if (page < state.videos.lastIndex) {
+                                    scope.launch { pagerState.animateScrollToPage(page + 1) }
+                                }
+                            }
+                        },
                     )
                 }
                 IconButton(
@@ -167,8 +178,10 @@ private fun ShortsInlineError(
 @Composable
 private fun ShortPage(
     video: Video,
+    isActive: Boolean,
     onPlayVideo: (String) -> Unit,
     onOpenChannel: (String) -> Unit,
+    embeddedPlayback: @Composable () -> Unit,
 ) {
     val branding = rememberVideoBranding(
         sourceUrl = video.url,
@@ -183,6 +196,7 @@ private fun ShortPage(
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
         )
+        if (isActive) embeddedPlayback()
         Box(
             modifier = Modifier.fillMaxSize().background(
                 Brush.verticalGradient(
@@ -194,12 +208,18 @@ private fun ShortPage(
         )
         FilledIconButton(
             onClick = { onPlayVideo(video.url) },
-            modifier = Modifier.align(Alignment.Center).size(68.dp),
+            modifier = Modifier.align(if (isActive) Alignment.CenterEnd else Alignment.Center)
+                .padding(if (isActive) 16.dp else 0.dp)
+                .size(if (isActive) 48.dp else 68.dp),
         ) {
             Icon(
-                Icons.Filled.PlayArrow,
-                contentDescription = stringResource(R.string.shorts_play, branding.title),
-                modifier = Modifier.size(38.dp),
+                imageVector = if (isActive) Icons.Filled.Fullscreen else Icons.Filled.PlayArrow,
+                contentDescription = if (isActive) {
+                    stringResource(R.string.shorts_open_player, branding.title)
+                } else {
+                    stringResource(R.string.shorts_play, branding.title)
+                },
+                modifier = Modifier.size(if (isActive) 26.dp else 38.dp),
             )
         }
         Column(
