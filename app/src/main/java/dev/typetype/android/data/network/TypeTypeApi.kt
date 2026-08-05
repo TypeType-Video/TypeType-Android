@@ -4,6 +4,7 @@ interface TypeTypeApi :
     TypeTypeDiscoveryApi,
     TypeTypeAuthApi,
     TypeTypeProfileApi,
+    TypeTypeBrandingApi,
     TypeTypeFeedApi,
     TypeTypeSearchApi,
     TypeTypePodcastApi,
