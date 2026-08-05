@@ -17,6 +17,13 @@ data class RegisterRequest(
 )
 
 @Serializable
+data class RegisterStatusResponse(
+    val allowRegistration: Boolean,
+    val bootstrapAvailable: Boolean,
+    val localLoginEnabled: Boolean = true,
+)
+
+@Serializable
 data class RefreshRequest(
     val token: String? = null,
 )

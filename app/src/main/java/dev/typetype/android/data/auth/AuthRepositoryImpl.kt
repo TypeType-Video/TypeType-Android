@@ -12,11 +12,13 @@ import dev.typetype.android.data.network.requireSuccessfulResponse
 import dev.typetype.android.data.network.dto.LoginRequest
 import dev.typetype.android.data.network.dto.OidcCallbackRequest
 import dev.typetype.android.data.network.dto.ResetPasswordRequest
+import dev.typetype.android.data.network.dto.RegisterRequest
 import dev.typetype.android.domain.auth.AuthRepository
 import dev.typetype.android.domain.auth.LoginMethods
 import dev.typetype.android.domain.auth.OidcAuthorization
 import dev.typetype.android.domain.auth.OidcCallbackParser
 import dev.typetype.android.domain.auth.OidcRedirect
+import dev.typetype.android.domain.auth.RegistrationStatus
 import dev.typetype.android.domain.auth.SessionStatus
 import dev.typetype.android.domain.server.ServerRepository
 import dev.typetype.android.domain.setup.ServerAddress
@@ -66,6 +68,38 @@ class AuthRepositoryImpl @Inject constructor(
         val token = response.body()?.token ?: error("Empty token in response")
         establishSession(serverId, api, token)
     }.onFailure { cookieJar.cancelAuthentication(serverId) }
+
+    override suspend fun registerWithCredentials(
+        serverId: String,
+        name: String,
+        email: String,
+        password: String,
+    ): Result<Unit> = runCatching {
+        val server = requireNotNull(serverRepository.getServer(serverId)) { "Server not found" }
+        cookieJar.beginAuthentication(serverId, server.baseUrl)
+        val api = retrofitFactory.createWithoutAutomaticAuthentication(server.baseUrl)
+        val response = withContext(Dispatchers.IO) {
+            api.register(RegisterRequest(email = email, password = password, name = name))
+        }
+        response.requireSuccessfulResponse()
+        val token = response.body()?.accessToken ?: error("Empty token in response")
+        establishSession(serverId, api, token)
+    }.onFailure { cookieJar.cancelAuthentication(serverId) }
+
+    override suspend fun getRegistrationStatus(serverId: String): Result<RegistrationStatus> =
+        runCatching {
+            val server = requireNotNull(serverRepository.getServer(serverId)) { "Instance not found" }
+            val response = withContext(Dispatchers.IO) {
+                retrofitFactory.createWithoutAutomaticAuthentication(server.baseUrl).registerStatus()
+            }
+            response.requireSuccessfulResponse()
+            val status = response.body() ?: error("The instance returned empty registration status")
+            RegistrationStatus(
+                allowRegistration = status.allowRegistration,
+                bootstrapAvailable = status.bootstrapAvailable,
+                localLoginEnabled = status.localLoginEnabled,
+            )
+        }
 
     override suspend fun resetPassword(
         serverId: String,

@@ -10,6 +10,13 @@ interface AuthRepository {
         expectedAccountId: String? = null,
     ): Result<Unit>
     suspend fun loginAsGuest(serverId: String): Result<Unit>
+    suspend fun registerWithCredentials(
+        serverId: String,
+        name: String,
+        email: String,
+        password: String,
+    ): Result<Unit>
+    suspend fun getRegistrationStatus(serverId: String): Result<RegistrationStatus>
     suspend fun resetPassword(
         serverId: String,
         resetToken: String,
@@ -34,6 +41,15 @@ data class LoginMethods(
     val oidcProviderName: String?,
     val oidcAutoRedirect: Boolean,
 )
+
+data class RegistrationStatus(
+    val allowRegistration: Boolean,
+    val bootstrapAvailable: Boolean,
+    val localLoginEnabled: Boolean,
+) {
+    val isOpen: Boolean
+        get() = localLoginEnabled && (allowRegistration || bootstrapAvailable)
+}
 
 data class OidcAuthorization(
     val authorizationUrl: String,
