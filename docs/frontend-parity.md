@@ -11,7 +11,7 @@ The comparison was refreshed on 2026-08-05 from clean clones:
 
 | Repository | Branch | Revision |
 | --- | --- | --- |
-| TypeType-Android | `dev` | `b1436cd38afd2959324e7baffde5cc572ae0ab94` |
+| TypeType-Android | `dev` | `7a17aee5f40b6182c5631c99c7b9a79d200b1975` |
 | TypeType frontend | `dev` | `97103f7302c91accdea3322d1f5b8f610607f378` |
 | TypeType-Server | `dev` | `6f31f93c4ecfb0e31c03c777b0d96f5cdc51f7bc` |
 | TypeType-Web-Player | `dev` | `f2fe3e6976cd9beec603f324adf37edee923ee20` |
@@ -64,7 +64,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 
 | Frontend behavior | Server contract | Android state | Evidence or next requirement |
 | --- | --- | --- | --- |
-| History with paging, search, sort, and clear | `/history` | Implemented | Room Paging, scoped refresh metadata, clear action |
+| History with paging, search, date filters, and deletion | `/history` | Implemented | Server-side query and date bounds, native today/week/month/day filters, per-item removal, confirmed clear-all, scoped Room refresh, contract and Compose tests on API 23, 29, and 37, plus a real beta surface check |
 | Favorites and watch later | `/favorites`, `/watch-later` | Implemented | Durable desired-state outbox and cached tabs |
 | Playlist create, rename, delete, reorder | `/playlists*` | Implemented | Native dialogs, rollback, and summary/detail separation |
 | Saved public playlists | `/saved-playlists` | Implemented | Dedicated cached Library tab |
@@ -90,7 +90,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | Comments and replies | `/comments`, `/comments/replies` | Implemented | Paging source and native bottom sheet |
 | Related videos and channel actions | Stream metadata and subscriptions | Implemented | Shared video menus and player channel state |
 | Phone, tablet, fullscreen, mini-player, PiP | MediaSession and device capabilities | Partial | Adaptive watch layout is tested. The API 23 AOSP lane without Google services has a 152-test baseline, plus a 10-minute local H.264 run through the shared MediaSession with eight bidirectional seeks. API 29 and API 34 verify H.264 playback continuing in system PiP and pausing through that same service-owned path; API 34 also covers notification permission and foreground-service publication. On the API 37 16 KiB image, 153 of 156 baseline tests pass enforcing and the three codec-dependent tests pass in a separate permissive diagnostic run, confirming an image policy defect rather than physical-codec support. Signed PiP, rotation, and physical Android 17 codec retests remain |
-| Network loss and reconnection | Fresh Server session and bounded retry | Partial | Recovery distinguishes validated, blocked, and suspended routes and ignores capability-only noise; the long real VOD/live network-transition matrix remains |
+| Network loss and reconnection | Fresh Server session and bounded retry | Partial | Recovery distinguishes validated, blocked, and suspended routes and ignores capability-only noise. A random beta VOD played for more than 12 minutes on API 29 through forward and backward seeks, background and foreground transitions, and a 63-second network outage: cached media played until depletion, buffering stayed bounded, the same session resumed about 9 seconds after reconnection, and playback reached 12:30 without a player error. The equivalent long real live matrix remains |
 | Playback restoration after process death | Stable video identity, `/progress` | Implemented | Room close/reopen restores exact position, queue, repeat mode, and account scope without persisting signed media URLs |
 | Danmaku overlay | `/bullet-comments` | Implemented | Capability-aware contract, bounded lane scheduling, native overlay, speed and size controls, TalkBack suppression, and Compose/performance tests |
 
