@@ -147,6 +147,7 @@ private fun ShortsPlayerSurface(
         controller = controller,
         activity = activity,
         durationMillis = stream.durationSeconds * 1_000L,
+        audioOnlyAvailable = !stream.isLive && !stream.isLiveContent,
         pipSourceRect = null,
         onSaveProgress = onSaveProgress,
     )
