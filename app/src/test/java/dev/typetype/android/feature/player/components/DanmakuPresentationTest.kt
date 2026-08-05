@@ -36,6 +36,20 @@ class DanmakuPresentationTest {
         assertTrue(visible.all { it.lane in 0..7 })
     }
 
+    @Test
+    fun serverLimitPayloadOnlyPresentsTheActiveWindow() {
+        val comments = List(20_000) { index ->
+            comment(text = "$index", atMillis = index * 1_000L)
+        }
+
+        val visible = presentBulletComments(comments, 19_999_000L, 1f, 8)
+
+        assertEquals(
+            listOf("19994", "19995", "19996", "19997", "19998", "19999"),
+            visible.map { it.comment.text },
+        )
+    }
+
     private fun comment(
         atMillis: Long,
         text: String = if (atMillis < 5_000) "first" else "second",
