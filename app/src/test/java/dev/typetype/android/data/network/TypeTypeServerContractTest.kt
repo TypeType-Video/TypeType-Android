@@ -70,6 +70,24 @@ class TypeTypeServerContractTest {
     }
 
     @Test
+    fun bulletCommentsUseTheServerOwnedNicoNicoContract() = runBlocking {
+        server.enqueue(
+            jsonResponse(
+                """{"comments":[{"text":"Hello","argbColor":-1,"position":"REGULAR","relativeFontSize":1.0,"durationMs":4200,"isLive":false}],"nextpage":null}""",
+                200,
+            ),
+        )
+
+        val response = requireNotNull(api.bulletComments(NICONICO_URL).body())
+
+        assertEquals("Hello", response.comments.single().text)
+        assertEquals(
+            "/bullet-comments?url=${encode(NICONICO_URL)}",
+            server.takeRequest().path,
+        )
+    }
+
+    @Test
     fun sharedSabrRoutesMatchPinnedServerContract() = runBlocking {
         repeat(6) { server.enqueue(errorResponse()) }
 

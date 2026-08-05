@@ -1,5 +1,6 @@
 package dev.typetype.android.data.network
 
+import dev.typetype.android.data.network.dto.BulletCommentsPageResponse
 import dev.typetype.android.data.network.dto.CommentsPageResponse
 import dev.typetype.android.data.network.dto.InstanceResponse
 import dev.typetype.android.data.network.dto.SabrPlaybackPositionRequestDto
@@ -84,6 +85,11 @@ interface TypeTypeMediaApi {
         @Query("url") videoUrl: String,
         @Query("repliesPage") repliesPage: String,
     ): Response<CommentsPageResponse>
+
+    @GET("bullet-comments")
+    suspend fun bulletComments(
+        @Query("url") videoUrl: String,
+    ): Response<BulletCommentsPageResponse>
 
     @GET
     suspend fun subtitle(@Url url: String): Response<ResponseBody>
