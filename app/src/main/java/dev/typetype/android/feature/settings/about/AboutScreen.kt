@@ -49,8 +49,8 @@ import dev.typetype.android.R
 private data class AboutLink(val labelRes: Int, val url: String)
 
 private val LINKS = listOf(
-    AboutLink(R.string.about_link_typetype, "https://github.com/Priveetee/TypeType"),
-    AboutLink(R.string.about_link_typetype_android, "https://github.com/Priveetee/TypeType-Android"),
+    AboutLink(R.string.about_link_typetype, "https://github.com/TypeType-Video/TypeType"),
+    AboutLink(R.string.about_link_typetype_android, "https://github.com/TypeType-Video/TypeType-Android"),
 )
 
 @Composable
@@ -73,10 +73,24 @@ fun AboutScreen(
                 item { SectionHeader(stringResource(R.string.about_section_app)) }
                 item {
                     InfoCard {
-                        InfoRow(label = stringResource(R.string.about_app_name), value = "TypeType")
+                        InfoRow(
+                            label = stringResource(R.string.about_app_name),
+                            value = stringResource(R.string.app_name),
+                        )
                         InfoRow(label = stringResource(R.string.about_version), value = BuildConfig.VERSION_NAME)
-                        InfoRow(label = "License", value = "GPL v3")
+                        InfoRow(
+                            label = stringResource(R.string.about_license),
+                            value = stringResource(R.string.about_license_value),
+                        )
                     }
+                }
+                item { Spacer(Modifier.size(8.dp)) }
+                item {
+                    AboutVersionsSection(
+                        versions = state.componentVersions,
+                        isLoading = state.isLoadingVersions,
+                        onRefresh = viewModel::refreshVersions,
+                    )
                 }
                 if (state.serverBaseUrl.isNotBlank()) {
                     item { Spacer(Modifier.size(8.dp)) }
@@ -186,7 +200,7 @@ private fun AppHeader() {
                 color = MaterialTheme.colorScheme.onBackground,
             )
             Text(
-                text = stringResource(R.string.about_version),
+                text = BuildConfig.VERSION_NAME,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
