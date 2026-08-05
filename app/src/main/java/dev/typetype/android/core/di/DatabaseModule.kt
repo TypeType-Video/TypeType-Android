@@ -15,6 +15,7 @@ import dev.typetype.android.data.database.TypeTypeDatabaseMigrations
 import dev.typetype.android.data.account.AccountDao
 import dev.typetype.android.data.download.DownloadDao
 import dev.typetype.android.data.feed.FeedVideoDao
+import dev.typetype.android.data.imports.YoutubeTakeoutImportDao
 import dev.typetype.android.data.library.local.FavoritesDao
 import dev.typetype.android.data.library.local.HistoryDao
 import dev.typetype.android.data.library.local.PlaylistsDao
@@ -98,6 +99,10 @@ object DatabaseModule {
 
     @Provides
     fun provideFeedVideoDao(database: TypeTypeDatabase): FeedVideoDao = database.feedVideoDao()
+
+    @Provides
+    fun provideYoutubeTakeoutImportDao(database: TypeTypeDatabase): YoutubeTakeoutImportDao =
+        database.youtubeTakeoutImportDao()
 
     @Provides
     @Singleton

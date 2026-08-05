@@ -132,6 +132,12 @@ object TypeTypeDatabaseMigrations {
         }
     }
 
+    val MIGRATION_20_21 = object : Migration(20, 21) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            TypeTypeDatabaseMigrationSql.createYoutubeTakeoutImports(db)
+        }
+    }
+
     val ALL = arrayOf(
         MIGRATION_7_8,
         MIGRATION_11_12,
@@ -142,5 +148,6 @@ object TypeTypeDatabaseMigrations {
         MIGRATION_17_18,
         MIGRATION_18_19,
         MIGRATION_19_20,
+        MIGRATION_20_21,
     )
 }
