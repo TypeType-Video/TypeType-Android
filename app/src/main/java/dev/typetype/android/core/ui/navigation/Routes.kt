@@ -15,6 +15,9 @@ data class LoginRoute(
 )
 
 @Serializable
+data class RegisterRoute(val serverId: String)
+
+@Serializable
 data class ResetPasswordRoute(val serverId: String)
 
 @Serializable
