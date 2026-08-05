@@ -2,6 +2,8 @@ package dev.typetype.android.feature.player
 
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.stream.StreamPlaybackContract
+import dev.typetype.android.domain.stream.StreamRequestScope
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
@@ -94,7 +96,43 @@ class PlayerStreamLoaderTest {
         assertEquals(1_530_000L, enriched.stream.uploaderSubscriberCount)
     }
 
-    private fun stream(title: String) = Stream(
+    @Test
+    fun `prefetched metadata with the same account scope avoids another request`() = runBlocking {
+        val metadataRequests = AtomicInteger()
+        val updates = loadProgressiveStream(
+            loadPlayback = { Result.success(stream("Bootstrap")) },
+            loadMetadata = {
+                metadataRequests.incrementAndGet()
+                Result.success(stream("Unexpected"))
+            },
+            loadProgress = { 0L },
+            prefetchedMetadata = stream("Prefetched"),
+        ).take(2).toList()
+
+        val enriched = updates[1] as PlayerStreamUpdate.MetadataEnriched
+        assertEquals("Prefetched", enriched.stream.title)
+        assertEquals(0, metadataRequests.get())
+    }
+
+    @Test
+    fun `prefetched metadata from another account is reloaded`() = runBlocking {
+        val metadataRequests = AtomicInteger()
+        val updates = loadProgressiveStream(
+            loadPlayback = { Result.success(stream("Bootstrap")) },
+            loadMetadata = {
+                metadataRequests.incrementAndGet()
+                Result.success(stream("Fresh"))
+            },
+            loadProgress = { 0L },
+            prefetchedMetadata = stream("Wrong account", accountId = "other"),
+        ).take(2).toList()
+
+        val enriched = updates[1] as PlayerStreamUpdate.MetadataEnriched
+        assertEquals("Fresh", enriched.stream.title)
+        assertEquals(1, metadataRequests.get())
+    }
+
+    private fun stream(title: String, accountId: String = "account") = Stream(
         playbackContract = StreamPlaybackContract.ServerSabr,
         id = "video",
         title = title,
@@ -115,6 +153,7 @@ class PlayerStreamLoaderTest {
         progressiveUrl = null,
         serverDashManifestUrl = null,
         serverHlsManifestUrl = null,
+        requestScope = StreamRequestScope("server", accountId, "https://instance.example/api/"),
         startPositionMillis = 0L,
     )
 }
