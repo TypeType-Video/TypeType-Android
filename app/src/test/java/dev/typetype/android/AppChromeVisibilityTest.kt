@@ -10,6 +10,7 @@ class AppChromeVisibilityTest {
     fun hiddenAndMiniPlayersKeepAppChrome() {
         assertTrue(isAppChromeVisible(PlayerHostTarget.Hidden, false))
         assertTrue(isAppChromeVisible(PlayerHostTarget.Mini, false))
+        assertTrue(isAppChromeVisible(PlayerHostTarget.Embedded, false))
     }
 
     @Test

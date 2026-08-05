@@ -73,16 +73,16 @@ fun PlayerHost(
 
         val anchoredState = remember {
             AnchoredDraggableState(
-                initialValue = state.target,
+                initialValue = state.target.draggableTarget(),
             )
         }
         LaunchedEffect(anchors, state.requestStamp, mediaController) {
-            val target = state.target
+            val target = state.target.draggableTarget()
             anchoredState.updateAnchors(anchors, target)
             if (anchoredState.currentValue != target) {
                 anchoredState.animateTo(target)
             }
-            if (target == PlayerHostTarget.Hidden) {
+            if (state.target == PlayerHostTarget.Hidden) {
                 mediaController?.let { ctrl ->
                     ctrl.stop()
                     ctrl.clearMediaItems()
@@ -102,7 +102,7 @@ fun PlayerHost(
 
         content()
 
-        val hasVideo = state.videoUrl != null
+        val hasVideo = state.videoUrl != null && state.target != PlayerHostTarget.Embedded
 
         if (hasVideo) {
             val isMini = !isInPip && (
@@ -163,4 +163,9 @@ fun PlayerHost(
             }
         }
     }
+}
+
+private fun PlayerHostTarget.draggableTarget(): PlayerHostTarget = when (this) {
+    PlayerHostTarget.Embedded -> PlayerHostTarget.Hidden
+    else -> this
 }

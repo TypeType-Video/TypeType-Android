@@ -53,6 +53,30 @@ class PlayerHostControllerTest {
         assertEquals(PlayerHostTarget.Hidden, state.target)
         assertTrue(state.initialPlayWhenReady)
     }
+
+    @Test
+    fun `embedded playback keeps the host overlay hidden`() {
+        val controller = PlayerHostController(FakePlaybackQueueController())
+
+        controller.openEmbeddedVideo("short", autoplay = false)
+
+        val state = controller.state.value
+        assertEquals("short", state.videoUrl)
+        assertEquals(PlayerHostTarget.Embedded, state.target)
+        assertFalse(state.initialPlayWhenReady)
+    }
+
+    @Test
+    fun `leaving Shorts only closes embedded playback`() {
+        val controller = PlayerHostController(FakePlaybackQueueController())
+        controller.openEmbeddedVideo("short", autoplay = true)
+        controller.closeEmbeddedPlayback()
+        assertEquals(PlayerHostTarget.Hidden, controller.state.value.target)
+
+        controller.openVideo("video")
+        controller.closeEmbeddedPlayback()
+        assertEquals(PlayerHostTarget.Expanded, controller.state.value.target)
+    }
 }
 
 private class FakePlaybackQueueController : PlaybackQueueController {
