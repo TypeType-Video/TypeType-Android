@@ -6,6 +6,7 @@ import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
@@ -22,8 +23,10 @@ class ContentSettingsScreenTest {
 
         composeRule.onNodeWithText("Titles").assertIsDisplayed()
         composeRule.onNodeWithText("Thumbnails").assertIsDisplayed()
-        composeRule.onNodeWithText("Confidence").assertIsDisplayed()
-        composeRule.onNodeWithText("Community, then neutral frame").assertIsDisplayed()
+        composeRule.onNodeWithText("Confidence").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Community, then neutral frame")
+            .performScrollTo()
+            .assertIsDisplayed()
     }
 
     @Test
