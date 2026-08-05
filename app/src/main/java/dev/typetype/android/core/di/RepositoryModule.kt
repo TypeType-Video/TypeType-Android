@@ -35,6 +35,8 @@ import dev.typetype.android.data.stream.RemoteSubtitleRepository
 import dev.typetype.android.data.subscriptions.RemoteSubscriptionsRepository
 import dev.typetype.android.data.support.RemoteSupportRepository
 import dev.typetype.android.data.usersettings.RemoteUserSettingsRepository
+import dev.typetype.android.data.youtubesession.RemoteYoutubeSessionRepository
+import dev.typetype.android.data.youtubesession.OkHttpYoutubeRemoteBrowserConnector
 import dev.typetype.android.domain.actions.VideoActionsRepository
 import dev.typetype.android.domain.account.AccountRepository
 import dev.typetype.android.domain.auth.AuthRepository
@@ -67,6 +69,8 @@ import dev.typetype.android.domain.stream.SubtitleRepository
 import dev.typetype.android.domain.subscriptions.SubscriptionsRepository
 import dev.typetype.android.domain.support.SupportRepository
 import dev.typetype.android.domain.usersettings.UserSettingsRepository
+import dev.typetype.android.domain.youtubesession.YoutubeSessionRepository
+import dev.typetype.android.domain.youtubesession.YoutubeRemoteBrowserConnector
 import dev.typetype.android.services.PlaybackQueueCoordinator
 import javax.inject.Singleton
 
@@ -201,6 +205,18 @@ abstract class RepositoryModule {
     abstract fun bindActiveSessionRepository(
         impl: RemoteActiveSessionRepository,
     ): ActiveSessionRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindYoutubeSessionRepository(
+        impl: RemoteYoutubeSessionRepository,
+    ): YoutubeSessionRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindYoutubeRemoteBrowserConnector(
+        impl: OkHttpYoutubeRemoteBrowserConnector,
+    ): YoutubeRemoteBrowserConnector
 
     @Binds
     @Singleton
