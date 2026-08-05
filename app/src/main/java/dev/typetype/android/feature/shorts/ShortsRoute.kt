@@ -6,6 +6,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.typetype.android.feature.menu.rememberVideoMenuScope
 import dev.typetype.android.feature.player.PlayerViewModel
 import dev.typetype.android.feature.player.ShortsPlayerRoute
 import dev.typetype.android.feature.player.components.LocalMediaController
@@ -23,18 +24,20 @@ fun ShortsRoute(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val playerHostState by playerHostController.state.collectAsStateWithLifecycle()
     val mediaController = LocalMediaController.current
+    val menuScope = rememberVideoMenuScope(onOpenChannel)
+    val visibleState = state.copy(videos = state.videos.filterNot(menuScope::isHidden))
 
     DisposableEffect(playerHostController) {
         onDispose { playerHostController.closeEmbeddedPlayback() }
     }
-    LaunchedEffect(state.hidden, state.videos.isEmpty()) {
-        if (state.hidden || state.videos.isEmpty()) {
+    LaunchedEffect(visibleState.hidden, visibleState.videos.isEmpty()) {
+        if (visibleState.hidden || visibleState.videos.isEmpty()) {
             playerHostController.closeEmbeddedPlayback()
         }
     }
 
     ShortsScreen(
-        state = state,
+        state = visibleState,
         onPlayVideo = { url ->
             if (
                 playerHostState.videoUrl == url &&
