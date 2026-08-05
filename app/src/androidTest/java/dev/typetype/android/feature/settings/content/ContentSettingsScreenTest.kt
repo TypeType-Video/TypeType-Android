@@ -2,11 +2,13 @@ package dev.typetype.android.feature.settings.content
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
@@ -23,9 +25,10 @@ class ContentSettingsScreenTest {
 
         composeRule.onNodeWithText("Titles").assertIsDisplayed()
         composeRule.onNodeWithText("Thumbnails").assertIsDisplayed()
-        composeRule.onNodeWithText("Confidence").performScrollTo().assertIsDisplayed()
+        scrollTo("Confidence")
+        composeRule.onNodeWithText("Confidence").assertIsDisplayed()
+        scrollTo("Community, then neutral frame")
         composeRule.onNodeWithText("Community, then neutral frame")
-            .performScrollTo()
             .assertIsDisplayed()
     }
 
@@ -73,5 +76,9 @@ class ContentSettingsScreenTest {
                 )
             }
         }
+    }
+
+    private fun scrollTo(text: String) {
+        composeRule.onNode(hasScrollAction()).performScrollToNode(hasText(text))
     }
 }

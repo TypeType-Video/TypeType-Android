@@ -2,12 +2,14 @@ package dev.typetype.android.feature.setup
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import dev.typetype.android.feature.setup.login.LoginAction
 import dev.typetype.android.feature.setup.login.LoginScreen
@@ -98,7 +100,10 @@ class SetupAuthScreenTest {
             }
         }
 
-        composeRule.onNode(hasText("Create account") and hasClickAction()).performClick()
+        composeRule.onNode(hasScrollAction()).performScrollToNode(hasText("Create account"))
+        composeRule.onNode(hasText("Create account") and hasClickAction())
+            .assertIsDisplayed()
+            .performClick()
 
         assertEquals(LoginAction.OnRegisterClick, action.get())
     }

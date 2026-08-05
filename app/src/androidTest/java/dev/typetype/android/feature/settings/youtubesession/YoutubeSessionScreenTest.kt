@@ -3,10 +3,12 @@ package dev.typetype.android.feature.settings.youtubesession
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import dev.typetype.android.domain.youtubesession.YoutubeRemoteBrowserPhase
 import dev.typetype.android.domain.youtubesession.YoutubeSession
@@ -40,8 +42,8 @@ class YoutubeSessionScreenTest {
             onStart = { started.set(true) },
         )
 
+        scrollTo("Connect with YouTube")
         composeRule.onNodeWithText("Connect with YouTube")
-            .performScrollTo()
             .assertIsEnabled()
             .performClick()
 
@@ -59,8 +61,8 @@ class YoutubeSessionScreenTest {
         )
 
         composeRule.onNodeWithText("Connected").assertIsDisplayed()
+        scrollTo("Disconnect")
         composeRule.onNodeWithText("Disconnect")
-            .performScrollTo()
             .assertIsDisplayed()
             .assertIsEnabled()
     }
@@ -77,8 +79,10 @@ class YoutubeSessionScreenTest {
             onCancel = { cancelled.set(true) },
         )
 
-        composeRule.onNodeWithText("Phase: waiting for sign-in").performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Cancel sign-in").performScrollTo().performClick()
+        scrollTo("Phase: waiting for sign-in")
+        composeRule.onNodeWithText("Phase: waiting for sign-in").assertIsDisplayed()
+        scrollTo("Cancel sign-in")
+        composeRule.onNodeWithText("Cancel sign-in").performClick()
 
         assertTrue(cancelled.get())
     }
@@ -102,5 +106,9 @@ class YoutubeSessionScreenTest {
                 )
             }
         }
+    }
+
+    private fun scrollTo(text: String) {
+        composeRule.onNode(hasScrollAction()).performScrollToNode(hasText(text))
     }
 }
