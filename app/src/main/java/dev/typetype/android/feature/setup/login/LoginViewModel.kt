@@ -36,9 +36,13 @@ class LoginViewModel @Inject constructor(
     private val route: LoginRoute = savedStateHandle.toRoute<LoginRoute>()
     private val serverId: String = route.serverId
     private val expectedAccountId: String? = route.accountId
+    private val draftStore = LoginDraftStore(savedStateHandle)
 
     private val _state = MutableStateFlow(
-        LoginState(isReauthentication = expectedAccountId != null),
+        LoginState(
+            identifier = draftStore.restoreIdentifier(),
+            isReauthentication = expectedAccountId != null,
+        ),
     )
     val state = _state.asStateFlow()
 
@@ -98,8 +102,11 @@ class LoginViewModel @Inject constructor(
 
     fun onAction(action: LoginAction) {
         when (action) {
-            is LoginAction.OnIdentifierChange -> _state.update {
-                it.copy(identifier = action.value, errorMessage = null, errorRequestId = null)
+            is LoginAction.OnIdentifierChange -> {
+                draftStore.setIdentifier(action.value)
+                _state.update {
+                    it.copy(identifier = action.value, errorMessage = null, errorRequestId = null)
+                }
             }
             is LoginAction.OnPasswordChange -> _state.update {
                 it.copy(password = action.value, errorMessage = null, errorRequestId = null)
@@ -155,6 +162,7 @@ class LoginViewModel @Inject constructor(
                 )
                 .fold(
                     onSuccess = {
+                        draftStore.clear()
                         _state.update { it.copy(isSubmitting = false) }
                         emit(LoginEvent.NavigateToHome)
                     },
@@ -187,6 +195,7 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             authRepository.loginAsGuest(serverId).fold(
                 onSuccess = {
+                    draftStore.clear()
                     _state.update { it.copy(isSubmitting = false) }
                     emit(LoginEvent.NavigateToHome)
                 },
@@ -248,6 +257,7 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             authRepository.finishOidc(serverId, callbackUrl, expectedAccountId).fold(
                 onSuccess = {
+                    draftStore.clear()
                     _state.update { it.copy(isSubmitting = false) }
                     emit(LoginEvent.NavigateToHome)
                 },
