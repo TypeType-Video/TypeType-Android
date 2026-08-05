@@ -8,6 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -39,6 +40,7 @@ fun ShortsRoute(
     val menuScope = rememberVideoMenuScope(onOpenChannel)
     val visibleState = state.copy(videos = state.videos.filterNot(menuScope::isHidden))
     val snackbarHost = LocalAppSnackbarHost.current
+    val context = LocalContext.current
     val actionFailed = stringResource(R.string.snackbar_action_failed)
     var commentsVideoUrl by remember { mutableStateOf<String?>(null) }
 
@@ -95,6 +97,11 @@ fun ShortsRoute(
                     mediaController?.pause()
                 }
                 playerHostController.openEmbeddedVideo(video.url, state.autoplayEnabled)
+            }
+        },
+        onNextVideoChanged = { video ->
+            if (video != null && context.allowsShortsMetadataPrefetch()) {
+                playerViewModel.prefetchMetadata(video.url)
             }
         },
         embeddedPlayback = { video, onAdvance ->

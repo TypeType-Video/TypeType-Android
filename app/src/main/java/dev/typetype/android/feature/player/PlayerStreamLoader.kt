@@ -31,12 +31,20 @@ class PlayerStreamLoader @Inject constructor(
     private val videoMetaRepository: VideoMetaRepository,
     private val channelRepository: ChannelRepository,
 ) {
+    private val metadataPrefetchCache = PlayerMetadataPrefetchCache()
+
     fun load(url: String): Flow<PlayerStreamUpdate> = loadProgressiveStream(
         loadPlayback = { streamRepository.loadPlaybackStream(url) },
         loadMetadata = { streamRepository.loadPlaybackMetadata(url) },
         loadChannelMetadata = { stream -> loadChannelMetadata(stream) },
         loadProgress = { libraryRepository.fetchProgressMillis(url).getOrNull() ?: 0L },
+        prefetchedMetadata = metadataPrefetchCache.take(url),
     )
+
+    suspend fun prefetchMetadata(url: String) {
+        val metadata = streamRepository.loadPlaybackMetadata(url)?.getOrNull() ?: return
+        metadataPrefetchCache.put(url, metadata)
+    }
 
     private suspend fun loadChannelMetadata(stream: Stream): Result<Stream>? {
         if (stream.uploaderSubscriberCount >= 0L || stream.uploaderUrl.isBlank()) return null
@@ -72,9 +80,10 @@ internal fun loadProgressiveStream(
     loadMetadata: suspend () -> Result<Stream>?,
     loadChannelMetadata: suspend (Stream) -> Result<Stream>? = { null },
     loadProgress: suspend () -> Long,
+    prefetchedMetadata: Stream? = null,
 ): Flow<PlayerStreamUpdate> = channelFlow {
     val savedProgress = async { loadProgress() }
-    val metadata = async { loadMetadata() }
+    val metadata = if (prefetchedMetadata == null) async { loadMetadata() } else null
     loadPlayback().fold(
         onSuccess = { stream ->
             val loaded = LoadedStreamResult(
@@ -91,12 +100,18 @@ internal fun loadProgressiveStream(
                     send(PlayerStreamUpdate.MetadataEnriched(stream.withMetadataFrom(details)))
                 }
             }
-            metadata.await()?.onSuccess { details ->
+            val prefetched = prefetchedMetadata?.takeIf {
+                it.requestScope == stream.requestScope
+            }
+            val details = prefetched?.let { Result.success(it) }
+                ?: metadata?.await()
+                ?: loadMetadata()
+            details?.onSuccess { details ->
                 send(PlayerStreamUpdate.MetadataEnriched(stream.withMetadataFrom(details)))
             }
         },
         onFailure = { failure ->
-            metadata.cancel()
+            metadata?.cancel()
             send(PlayerStreamUpdate.Failed(failure))
         },
     )

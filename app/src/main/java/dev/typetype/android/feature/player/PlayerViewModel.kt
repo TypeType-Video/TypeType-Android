@@ -187,6 +187,8 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
+    suspend fun prefetchMetadata(url: String) = playerStreamLoader.prefetchMetadata(url)
+
     private fun addCurrentToPlaylist(playlistId: String) {
         val url = currentUrl() ?: return
         val stream = _state.value.stream ?: return
