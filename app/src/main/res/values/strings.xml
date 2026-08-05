@@ -218,6 +218,11 @@
     <string name="settings_player_default_speed">Default playback speed</string>
     <string name="settings_player_default_speed_subtitle">Applied when a video starts</string>
     <string name="settings_player_section_subtitles">Subtitles</string>
+    <string name="settings_player_section_danmaku">Bullet comments</string>
+    <string name="settings_player_danmaku_enabled">Show bullet comments</string>
+    <string name="settings_player_danmaku_enabled_subtitle">Available on supported NicoNico videos</string>
+    <string name="settings_player_danmaku_speed">Bullet comment speed</string>
+    <string name="settings_player_danmaku_size">Bullet comment size</string>
     <string name="settings_player_subtitles_enabled">Enable subtitles</string>
     <string name="settings_player_subtitles_enabled_subtitle">Show subtitles by default</string>
     <string name="settings_player_subtitle_language">Subtitle language</string>

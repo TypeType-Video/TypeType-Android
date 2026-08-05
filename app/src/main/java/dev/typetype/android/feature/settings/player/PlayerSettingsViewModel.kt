@@ -39,6 +39,9 @@ class PlayerSettingsViewModel @Inject constructor(
                     autoplayCountdownSeconds = prefs.playerAutoplayCountdownSeconds,
                     skipPlaylistAutoplayScreen = server.skipPlaylistAutoplayScreen,
                     pauseInBackgroundEnabled = prefs.playerPauseInBackground,
+                    danmakuEnabled = prefs.danmakuEnabled,
+                    danmakuSpeed = prefs.danmakuSpeed,
+                    danmakuSize = prefs.danmakuSize,
                     defaultQuality = server.defaultQuality,
                     defaultPlaybackSpeed = server.defaultPlaybackSpeed,
                     defaultService = server.defaultService,
@@ -75,6 +78,12 @@ class PlayerSettingsViewModel @Inject constructor(
                     preferencesRepository.setPlayerLongPressSpeedEnabled(action.enabled)
                 is PlayerSettingsAction.SetPauseInBackground ->
                     preferencesRepository.setPlayerPauseInBackground(action.enabled)
+                is PlayerSettingsAction.SetDanmakuEnabled ->
+                    preferencesRepository.setDanmakuEnabled(action.enabled)
+                is PlayerSettingsAction.SetDanmakuSpeed ->
+                    preferencesRepository.setDanmakuSpeed(action.speed)
+                is PlayerSettingsAction.SetDanmakuSize ->
+                    preferencesRepository.setDanmakuSize(action.size)
                 is PlayerSettingsAction.SetAutoplay ->
                     updateServer { it.copy(autoplay = action.enabled) }
                 is PlayerSettingsAction.SetAutoplayCountdown ->
