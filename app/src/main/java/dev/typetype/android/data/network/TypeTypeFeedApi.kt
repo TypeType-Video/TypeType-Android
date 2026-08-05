@@ -29,6 +29,14 @@ interface TypeTypeFeedApi {
         @Query("cursor") cursor: String? = null,
     ): Response<HomeRecommendationsResponse>
 
+    @GET("recommendations/shorts")
+    suspend fun shortsRecommendations(
+        @Query("service") service: Int = 0,
+        @Query("limit") limit: Int = 30,
+        @Query("intent") intent: String = "auto",
+        @Query("cursor") cursor: String? = null,
+    ): Response<HomeRecommendationsResponse>
+
     @GET("trending")
     suspend fun trending(@Query("service") service: Int = 0): Response<List<VideoItem>>
 
@@ -36,5 +44,13 @@ interface TypeTypeFeedApi {
     suspend fun subscriptionsFeed(
         @Query("limit") limit: Int = 30,
         @Query("cursor") cursor: String? = null,
+    ): Response<SubscriptionFeedResponse>
+
+    @GET("subscriptions/shorts")
+    suspend fun subscriptionShorts(
+        @Query("page") page: Int = 0,
+        @Query("limit") limit: Int = 30,
+        @Query("service") service: Int = 0,
+        @Query("blended") blended: Boolean = true,
     ): Response<SubscriptionFeedResponse>
 }

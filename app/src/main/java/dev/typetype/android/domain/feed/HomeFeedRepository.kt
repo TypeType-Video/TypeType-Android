@@ -16,6 +16,17 @@ data class HomeRecommendationsPage(
     val nextCursor: String?,
 )
 
+sealed interface ShortsContinuation {
+    data class Recommendations(val cursor: String) : ShortsContinuation
+    data class Subscriptions(val page: Int) : ShortsContinuation
+    data class Discovery(val nextPage: String) : ShortsContinuation
+}
+
+data class ShortsPage(
+    val videos: List<Video>,
+    val continuation: ShortsContinuation?,
+)
+
 interface HomeFeedRepository {
     suspend fun loadCachedHomeFeed(): List<Video>
     suspend fun loadCachedSubscriptionsFeed(): List<Video>
@@ -31,4 +42,9 @@ interface HomeFeedRepository {
         limit: Int = 30,
         expectedGeneration: Long? = null,
     ): Result<SubscriptionsPage>
+    suspend fun loadShorts(
+        continuation: ShortsContinuation? = null,
+        service: Int = 0,
+        limit: Int = 30,
+    ): Result<ShortsPage>
 }
