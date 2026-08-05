@@ -18,7 +18,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.CircularProgressIndicator
@@ -53,6 +52,8 @@ import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.core.ui.components.AnimatedError
 import dev.typetype.android.core.ui.components.FullScreenLoader
 import dev.typetype.android.core.ui.components.RequestIdRow
+import dev.typetype.android.core.ui.components.VideoMenuAction
+import dev.typetype.android.core.ui.components.VideoMenuItemState
 import dev.typetype.android.domain.feed.Video
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -69,6 +70,9 @@ fun ShortsScreen(
     embeddedPlaybackEnabled: Boolean = false,
     onActiveVideoChanged: (Video?) -> Unit = {},
     embeddedPlayback: @Composable (Video, onAdvance: () -> Unit) -> Unit = { _, _ -> },
+    menuItemState: (Video) -> VideoMenuItemState = { VideoMenuItemState() },
+    onMenuAction: (VideoMenuAction, Video) -> Unit = { _, _ -> },
+    onShowComments: ((Video) -> Unit)? = null,
 ) {
     when {
         state.isLoading && state.videos.isEmpty() -> FullScreenLoader()
@@ -112,6 +116,11 @@ fun ShortsScreen(
                             !pagerState.isScrollInProgress,
                         onPlayVideo = onPlayVideo,
                         onOpenChannel = onOpenChannel,
+                        menuItemState = menuItemState(state.videos[page]),
+                        onMenuAction = { onMenuAction(it, state.videos[page]) },
+                        onShowComments = onShowComments?.let { callback ->
+                            { callback(state.videos[page]) }
+                        },
                         embeddedPlayback = {
                             embeddedPlayback(state.videos[page]) {
                                 if (page < state.videos.lastIndex) {
@@ -181,6 +190,9 @@ private fun ShortPage(
     isActive: Boolean,
     onPlayVideo: (String) -> Unit,
     onOpenChannel: (String) -> Unit,
+    menuItemState: VideoMenuItemState,
+    onMenuAction: (VideoMenuAction) -> Unit,
+    onShowComments: (() -> Unit)?,
     embeddedPlayback: @Composable () -> Unit,
 ) {
     val branding = rememberVideoBranding(
@@ -206,24 +218,30 @@ private fun ShortPage(
                 ),
             ),
         )
-        FilledIconButton(
-            onClick = { onPlayVideo(video.url) },
-            modifier = Modifier.align(if (isActive) Alignment.CenterEnd else Alignment.Center)
-                .padding(if (isActive) 16.dp else 0.dp)
-                .size(if (isActive) 48.dp else 68.dp),
-        ) {
-            Icon(
-                imageVector = if (isActive) Icons.Filled.Fullscreen else Icons.Filled.PlayArrow,
-                contentDescription = if (isActive) {
-                    stringResource(R.string.shorts_open_player, branding.title)
-                } else {
-                    stringResource(R.string.shorts_play, branding.title)
-                },
-                modifier = Modifier.size(if (isActive) 26.dp else 38.dp),
+        if (isActive) {
+            ShortsActionRail(
+                video = video,
+                state = menuItemState,
+                onOpenPlayer = { onPlayVideo(video.url) },
+                onAction = onMenuAction,
+                onShowComments = onShowComments,
+                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 12.dp),
             )
+        } else {
+            FilledIconButton(
+                onClick = { onPlayVideo(video.url) },
+                modifier = Modifier.align(Alignment.Center).size(68.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.PlayArrow,
+                    contentDescription = stringResource(R.string.shorts_play, branding.title),
+                    modifier = Modifier.size(38.dp),
+                )
+            }
         }
         Column(
-            modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(20.dp),
+            modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth()
+                .padding(start = 20.dp, top = 20.dp, end = 80.dp, bottom = 20.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Text(

@@ -51,6 +51,8 @@ fun ShortsRoute(
         onOpenChannel = onOpenChannel,
         onRefresh = { viewModel.onAction(ShortsAction.Refresh) },
         onLoadMore = { viewModel.onAction(ShortsAction.LoadMore) },
+        menuItemState = menuScope::stateFor,
+        onMenuAction = { action, video -> menuScope.onAction(action, video) },
         embeddedPlaybackEnabled = true,
         onActiveVideoChanged = { video ->
             if (video == null) {
