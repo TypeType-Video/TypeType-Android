@@ -3,6 +3,9 @@ package dev.typetype.android.data.network
 import dev.typetype.android.data.network.dto.RefreshRequest
 import dev.typetype.android.data.network.dto.SessionResponse
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Authenticator
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
@@ -45,12 +48,35 @@ class ScopedTokenAuthenticator(
             .post(body)
             .build()
         return refreshClient.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) return null
-            runCatching {
-                json.decodeFromString(SessionResponse.serializer(), response.body.string()).accessToken
-            }.getOrNull()
+            if (response.code == 401) return null
+            val requestId = response.header("X-Request-ID")
+            val payload = response.body.string()
+            if (!response.isSuccessful) {
+                throw SessionRefreshUnavailableException(
+                    statusCode = response.code,
+                    failureCode = payload.stableErrorCode(),
+                    requestId = requestId,
+                )
+            }
+            try {
+                json.decodeFromString(SessionResponse.serializer(), payload)
+                    .accessToken
+                    .takeIf(String::isNotBlank)
+                    ?: error("The refresh response contained an empty access token")
+            } catch (error: Exception) {
+                throw SessionRefreshUnavailableException(
+                    statusCode = response.code,
+                    failureCode = "auth_refresh_payload_invalid",
+                    requestId = requestId,
+                    cause = error,
+                )
+            }
         }
     }
+
+    private fun String.stableErrorCode(): String? = runCatching {
+        json.parseToJsonElement(this).jsonObject["code"]?.jsonPrimitive?.contentOrNull
+    }.getOrNull()?.takeIf(STABLE_REFRESH_CODE::matches)
 }
 
 private val Response.priorResponseCount: Int
@@ -63,3 +89,5 @@ private val Response.priorResponseCount: Int
         }
         return count
     }
+
+private val STABLE_REFRESH_CODE = Regex("[A-Za-z][A-Za-z0-9._:-]{1,127}")
