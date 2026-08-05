@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.core.ui.components.SectionHeader
 import dev.typetype.android.domain.library.HistoryItem
 
@@ -71,6 +72,12 @@ private fun ContinueWatchingCard(
     onClick: () -> Unit,
     onOpenChannel: (String) -> Unit,
 ) {
+    val branding = rememberVideoBranding(
+        sourceUrl = item.url,
+        title = item.title,
+        thumbnailUrl = item.thumbnailUrl,
+        durationSeconds = item.durationSeconds,
+    )
     Column(
         modifier = Modifier
             .width(224.dp)
@@ -84,7 +91,7 @@ private fun ContinueWatchingCard(
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
             AsyncImage(
-                model = item.thumbnailUrl,
+                model = branding.thumbnailUrl,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
@@ -101,7 +108,7 @@ private fun ContinueWatchingCard(
         }
         Spacer(Modifier.height(8.dp))
         Text(
-            text = item.title,
+            text = branding.title,
             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 2,

@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.domain.playback.PlaybackQueueEntry
 import dev.typetype.android.domain.playback.PlaybackQueueState
 
@@ -181,6 +182,12 @@ private fun PlaybackQueueRow(
     onPlayNext: () -> Unit,
     onRemove: () -> Unit,
 ) {
+    val branding = rememberVideoBranding(
+        sourceUrl = entry.videoUrl,
+        title = entry.title,
+        thumbnailUrl = entry.thumbnailUrl,
+        durationSeconds = entry.durationSeconds,
+    )
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -200,7 +207,7 @@ private fun PlaybackQueueRow(
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
             AsyncImage(
-                model = entry.thumbnailUrl,
+                model = branding.thumbnailUrl,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.matchParentSize(),
@@ -221,7 +228,7 @@ private fun PlaybackQueueRow(
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = entry.title,
+                text = branding.title,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = if (isCurrent) FontWeight.SemiBold else FontWeight.Normal,
                 ),

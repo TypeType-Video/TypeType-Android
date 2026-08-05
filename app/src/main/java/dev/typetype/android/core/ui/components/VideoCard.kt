@@ -39,6 +39,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.feed.VideoAvailability
 import dev.typetype.android.domain.feed.availabilityAt
@@ -58,6 +59,12 @@ fun VideoCard(
     var availabilityVisible by remember { mutableStateOf(false) }
     val availability = video.availabilityAt(System.currentTimeMillis())
     val metadata = video.metadataText()
+    val branding = rememberVideoBranding(
+        sourceUrl = video.url,
+        title = video.title,
+        thumbnailUrl = video.thumbnailUrl,
+        durationSeconds = video.durationSeconds,
+    )
 
     Column(
         modifier = modifier.fillMaxWidth().combinedClickable(
@@ -76,7 +83,7 @@ fun VideoCard(
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
             AsyncImage(
-                model = video.thumbnailUrl,
+                model = branding.thumbnailUrl,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
@@ -121,7 +128,7 @@ fun VideoCard(
             Spacer(Modifier.width(10.dp))
             Column(verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.weight(1f)) {
                 Text(
-                    text = video.title,
+                    text = branding.title,
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                     color = MaterialTheme.colorScheme.onBackground,
                     maxLines = 2,

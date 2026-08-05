@@ -146,9 +146,8 @@ internal fun PlayerSurfaceBox(
     val surfaceKey = rememberPlayerSurfaceKey(stream.id)
     Box(modifier = modifier.background(Color.Black).clipToBounds()) {
         if (audioOnlyState.active) {
-            AudioOnlyPoster(
-                thumbnailUrl = stream.thumbnailUrl,
-                title = stream.title,
+            DeArrowAudioOnlyPoster(
+                stream = stream,
                 modifier = Modifier.fillMaxSize(),
             )
         } else {

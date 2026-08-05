@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.feature.player.AutoplayCountdownState
 
 @Composable
@@ -37,9 +38,15 @@ internal fun AutoplayCountdownOverlay(
     state: AutoplayCountdownState,
     modifier: Modifier = Modifier,
 ) {
+    val branding = rememberVideoBranding(
+        sourceUrl = state.target.videoUrl,
+        title = state.target.title,
+        thumbnailUrl = state.target.thumbnailUrl,
+        durationSeconds = 0,
+    )
     Box(modifier = modifier.background(Color.Black)) {
         AsyncImage(
-            model = state.target.thumbnailUrl,
+            model = branding.thumbnailUrl,
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
@@ -72,7 +79,7 @@ internal fun AutoplayCountdownOverlay(
                 color = Color.White.copy(alpha = 0.75f),
             )
             Text(
-                text = state.target.title,
+                text = branding.title,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.White,

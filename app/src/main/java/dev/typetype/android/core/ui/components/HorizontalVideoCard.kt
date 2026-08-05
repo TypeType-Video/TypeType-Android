@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.feed.VideoAvailability
 import dev.typetype.android.domain.feed.availabilityAt
@@ -51,6 +52,12 @@ fun HorizontalVideoCard(
     var menuVisible by remember { mutableStateOf(false) }
     var availabilityVisible by remember { mutableStateOf(false) }
     val availability = video.availabilityAt(System.currentTimeMillis())
+    val branding = rememberVideoBranding(
+        sourceUrl = video.url,
+        title = video.title,
+        thumbnailUrl = video.thumbnailUrl,
+        durationSeconds = video.durationSeconds,
+    )
     val openVideo = {
         if (availability == VideoAvailability.Playable) onClick() else availabilityVisible = true
     }
@@ -77,7 +84,7 @@ fun HorizontalVideoCard(
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
             AsyncImage(
-                model = video.thumbnailUrl,
+                model = branding.thumbnailUrl,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
@@ -116,7 +123,7 @@ fun HorizontalVideoCard(
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = video.title,
+                    text = branding.title,
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                     color = MaterialTheme.colorScheme.onBackground,
                     maxLines = 2,
