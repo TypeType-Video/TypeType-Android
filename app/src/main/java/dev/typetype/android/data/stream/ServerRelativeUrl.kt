@@ -5,7 +5,12 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 internal fun resolveServerUrl(baseUrl: String, value: String?): String? {
     val source = value?.takeIf { it.isNotBlank() } ?: return null
     val server = baseUrl.toHttpUrlOrNull() ?: return null
-    val resolved = source.toHttpUrlOrNull() ?: server.resolve(source) ?: return null
+    val direct = source.toHttpUrlOrNull()
+    val resolved = direct ?: if (source.startsWith(server.encodedPath)) {
+        server.resolve(source)
+    } else {
+        server.resolve(source.removePrefix("/"))
+    } ?: return null
     return resolved.takeIf { it.hasSameOrigin(server) }?.toString()
 }
 
