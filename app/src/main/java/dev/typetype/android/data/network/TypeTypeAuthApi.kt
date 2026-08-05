@@ -9,6 +9,7 @@ import dev.typetype.android.data.network.dto.OidcStatusResponse
 import dev.typetype.android.data.network.dto.RefreshRequest
 import dev.typetype.android.data.network.dto.ResetPasswordRequest
 import dev.typetype.android.data.network.dto.RegisterRequest
+import dev.typetype.android.data.network.dto.RegisterStatusResponse
 import dev.typetype.android.data.network.dto.SessionResponse
 import dev.typetype.android.data.network.dto.UserProfile
 import retrofit2.Response
@@ -27,6 +28,9 @@ interface TypeTypeAuthApi {
 
     @POST("auth/register")
     suspend fun register(@Body body: RegisterRequest): Response<SessionResponse>
+
+    @GET("auth/register/status")
+    suspend fun registerStatus(): Response<RegisterStatusResponse>
 
     @POST("auth/refresh")
     suspend fun refresh(@Body body: RefreshRequest): Response<SessionResponse>
