@@ -66,6 +66,7 @@ class ImportDataScreenTest {
             TypeTypeTheme {
                 ImportDataScreen(
                     state = state,
+                    youtubeState = YoutubeTakeoutImportState(),
                     onNavigateBack = {},
                     onToggleCategory = {},
                     onExportTypeType = {},
@@ -76,6 +77,12 @@ class ImportDataScreenTest {
                     onChoosePipePipeBackup = {},
                     onRestorePipePipe = {},
                     onResetPipePipeResult = {},
+                    onOpenYoutubeTakeout = {},
+                    onChooseYoutubeTakeout = {},
+                    onRetryYoutubeTakeout = {},
+                    onCancelYoutubeTakeout = {},
+                    onRemoveYoutubeTakeout = {},
+                    onRetryYoutubeRefresh = {},
                 )
             }
         }
