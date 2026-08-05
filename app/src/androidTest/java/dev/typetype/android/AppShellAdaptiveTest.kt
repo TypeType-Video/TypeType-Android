@@ -3,9 +3,13 @@ package dev.typetype.android
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
@@ -51,11 +55,27 @@ class AppShellAdaptiveTest {
         assertNodeCount(APP_NAVIGATION_RAIL_TAG, 0)
     }
 
+    @Test
+    fun shortsTabFollowsTheServerVisibilitySetting() {
+        val showShorts = mutableStateOf(false)
+        setShellSize(width = 400.dp, height = 800.dp, showShorts = showShorts)
+
+        composeRule.onNodeWithText("Shorts").assertDoesNotExist()
+
+        composeRule.runOnIdle { showShorts.value = true }
+
+        composeRule.onNodeWithText("Shorts").assertIsDisplayed()
+    }
+
     private fun setShellWidth(width: Dp) {
         setShellSize(width = width, height = 800.dp)
     }
 
-    private fun setShellSize(width: Dp, height: Dp) {
+    private fun setShellSize(
+        width: Dp,
+        height: Dp,
+        showShorts: MutableState<Boolean> = mutableStateOf(true),
+    ) {
         composeRule.setContent {
             val navController = rememberNavController()
             AppShell(
@@ -66,6 +86,7 @@ class AppShellAdaptiveTest {
                 onOpenChannel = {},
                 onOpenAccounts = {},
                 onClosePlayback = {},
+                showShorts = showShorts.value,
                 modifier = Modifier.requiredWidth(width).requiredHeight(height),
             ) { contentModifier ->
                 NavHost(
