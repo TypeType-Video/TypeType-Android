@@ -53,6 +53,7 @@ import kotlinx.coroutines.flow.collectLatest
 fun LoginRoute(
     onNavigateBack: () -> Unit,
     onNavigateToHome: () -> Unit,
+    onNavigateToRegister: (String) -> Unit,
     onNavigateToResetPassword: (String) -> Unit,
     viewModel: LoginViewModel = hiltViewModel(),
 ) {
@@ -67,6 +68,7 @@ fun LoginRoute(
             when (event) {
                 LoginEvent.NavigateBack -> onNavigateBack()
                 LoginEvent.NavigateToHome -> onNavigateToHome()
+                is LoginEvent.NavigateToRegister -> onNavigateToRegister(event.serverId)
                 is LoginEvent.NavigateToResetPassword ->
                     onNavigateToResetPassword(event.serverId)
                 is LoginEvent.LaunchOidc ->
@@ -235,6 +237,19 @@ fun LoginScreen(
                         color = MaterialTheme.colorScheme.error,
                     )
                     state.errorRequestId?.let { RequestIdRow(requestId = it) }
+                }
+                if (state.registrationAllowed && !state.isReauthentication) {
+                    Spacer(Modifier.height(16.dp))
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        TypeTypeTextLink(
+                            text = stringResource(R.string.register_title),
+                            onClick = { onAction(LoginAction.OnRegisterClick) },
+                            enabled = !state.isSubmitting,
+                        )
+                    }
                 }
                 if (state.guestAllowed) {
                     Spacer(Modifier.height(16.dp))

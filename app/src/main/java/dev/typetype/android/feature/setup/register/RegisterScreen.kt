@@ -201,15 +201,6 @@ private fun RegisterOptions(
     }
     if (state.isRegistrationOpen) {
         RegisterForm(state = state, onAction = onAction)
-    } else if (!state.oidcEnabled) {
-        Text(
-            text = stringResource(
-                if (state.localLoginEnabled) R.string.register_closed
-                else R.string.register_local_disabled,
-            ),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 
@@ -270,6 +261,12 @@ private fun RegisterForm(
 
 @Composable
 private fun registerSubtitle(state: RegisterState): String = when {
+    state.isLoading && state.instanceName.isBlank() -> stringResource(R.string.register_subtitle)
+    state.errorMessage != null && state.instanceName.isBlank() ->
+        stringResource(R.string.register_subtitle)
+    state.errorMessage != null && !state.isRegistrationOpen ->
+        stringResource(R.string.register_instance_subtitle, state.instanceName)
+    !state.localLoginEnabled -> stringResource(R.string.register_local_disabled)
     state.bootstrapAvailable -> stringResource(
         R.string.register_admin_subtitle,
         state.instanceName,
