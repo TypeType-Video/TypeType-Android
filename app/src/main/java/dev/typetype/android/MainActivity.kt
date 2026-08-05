@@ -29,9 +29,6 @@ import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import dev.typetype.android.domain.auth.OidcCallbackRelay
 import dev.typetype.android.domain.auth.OidcRedirect
 import dev.typetype.android.feature.player.components.PIP_ACTION_AUDIO_ONLY
-import dev.typetype.android.feature.player.components.PIP_ACTION_FORWARD
-import dev.typetype.android.feature.player.components.PIP_ACTION_PLAY_PAUSE
-import dev.typetype.android.feature.player.components.PIP_ACTION_REWIND
 import dev.typetype.android.domain.session.ActiveSessionRepository
 import dev.typetype.android.feature.settings.diagnostics.CrashReportRoute
 import dev.typetype.android.services.PlaybackAudioOnlyCommand
@@ -57,10 +54,6 @@ class MainActivity : ComponentActivity() {
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
                 PIP_ACTION_AUDIO_ONLY -> enterAudioOnlyMode()
-                PIP_ACTION_REWIND,
-                PIP_ACTION_PLAY_PAUSE,
-                PIP_ACTION_FORWARD,
-                -> dispatchPipPlayerAction(intent.action)
             }
         }
     }
@@ -133,9 +126,6 @@ class MainActivity : ComponentActivity() {
     private fun registerPipReceiver() {
         val filter = IntentFilter().apply {
             addAction(PIP_ACTION_AUDIO_ONLY)
-            addAction(PIP_ACTION_REWIND)
-            addAction(PIP_ACTION_PLAY_PAUSE)
-            addAction(PIP_ACTION_FORWARD)
         }
         ContextCompat.registerReceiver(
             this,
@@ -186,34 +176,6 @@ class MainActivity : ComponentActivity() {
                     },
                     MoreExecutors.directExecutor(),
                 )
-            },
-            MoreExecutors.directExecutor(),
-        )
-    }
-
-    private fun dispatchPipPlayerAction(action: String?) {
-        val token = SessionToken(
-            applicationContext,
-            ComponentName(applicationContext, "dev.typetype.android.services.PlaybackService"),
-        )
-        val future = MediaController.Builder(applicationContext, token).buildAsync()
-        future.addListener(
-            {
-                val controller = runCatching { future.get() }.getOrNull() ?: return@addListener
-                runCatching {
-                    when (action) {
-                        PIP_ACTION_REWIND -> controller.seekBack()
-                        PIP_ACTION_PLAY_PAUSE -> {
-                            if (controller.isPlaying) {
-                                controller.pause()
-                            } else {
-                                controller.play()
-                            }
-                        }
-                        PIP_ACTION_FORWARD -> controller.seekForward()
-                    }
-                }
-                controller.release()
             },
             MoreExecutors.directExecutor(),
         )

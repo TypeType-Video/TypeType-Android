@@ -30,7 +30,7 @@ internal object PictureInPictureApi26 {
         runCatching { activity.setPictureInPictureParams(params) }
     }
 
-    private fun buildParams(
+    internal fun buildParams(
         activity: Activity,
         aspectRatio: Rational,
         autoEnter: Boolean,
@@ -39,7 +39,7 @@ internal object PictureInPictureApi26 {
     ): PictureInPictureParams {
         val builder = PictureInPictureParams.Builder()
             .setAspectRatio(aspectRatio)
-            .setActions(buildActions(activity, isPlaying))
+            .setActions(buildActions(activity))
         sourceRect?.takeIf { it.width() > 0 && it.height() > 0 }?.let {
             builder.setSourceRectHint(Rect(it))
         }
@@ -59,17 +59,8 @@ internal object PictureInPictureApi26 {
         return builder.build()
     }
 
-    private fun buildActions(activity: Activity, isPlaying: Boolean): List<RemoteAction> {
+    private fun buildActions(activity: Activity): List<RemoteAction> {
         return listOf(
-            buildAction(activity, PIP_ACTION_REWIND, PIP_REQUEST_REWIND, R.drawable.ic_rewind, R.string.player_rewind),
-            buildAction(
-                activity,
-                PIP_ACTION_PLAY_PAUSE,
-                PIP_REQUEST_PLAY_PAUSE,
-                if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play,
-                if (isPlaying) R.string.player_action_pause else R.string.player_action_play,
-            ),
-            buildAction(activity, PIP_ACTION_FORWARD, PIP_REQUEST_FORWARD, R.drawable.ic_forward, R.string.player_forward),
             buildAction(
                 activity,
                 PIP_ACTION_AUDIO_ONLY,
