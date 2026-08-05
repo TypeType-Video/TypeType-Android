@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
+import dev.typetype.android.core.ui.navigation.LibraryLandingRoute
 import dev.typetype.android.core.ui.navigation.HomeRoute
 import dev.typetype.android.core.ui.navigation.LibraryRoute
 import dev.typetype.android.core.ui.navigation.ShortsRoute
@@ -233,7 +234,8 @@ internal fun NavDestination?.matchesRoute(route: Any): Boolean {
         HomeRoute -> destination.hasRoute<HomeRoute>()
         ShortsRoute -> destination.hasRoute<ShortsRoute>()
         SubscriptionsRoute -> destination.hasRoute<SubscriptionsRoute>()
-        LibraryRoute -> destination.hasRoute<LibraryRoute>()
+        LibraryRoute -> destination.hasRoute<LibraryRoute>() ||
+            destination.hasRoute<LibraryLandingRoute>()
         else -> false
     }
 }

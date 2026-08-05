@@ -3,7 +3,6 @@ package dev.typetype.android
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.typetype.android.core.ui.navigation.HomeRoute
 import dev.typetype.android.core.ui.navigation.LoginRoute
 import dev.typetype.android.core.ui.navigation.WelcomeRoute
 import dev.typetype.android.data.network.AccessTokenStore
@@ -24,6 +23,7 @@ import dev.typetype.android.domain.playback.PlaybackResume
 import dev.typetype.android.domain.profile.ProfileRepository
 import dev.typetype.android.domain.server.ServerRepository
 import dev.typetype.android.domain.subscriptions.SubscriptionsRepository
+import dev.typetype.android.domain.usersettings.UserSettings
 import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import dev.typetype.android.feature.player.host.PlayerHostController
 import javax.inject.Inject
@@ -123,21 +123,29 @@ class MainViewModel @Inject constructor(
                     authRepository.validateSession()
                 } ?: SessionStatus.Unknown
             }
+            val isAuthenticated = initial != null && sessionStatus != SessionStatus.Invalid
+            val initialSettings = if (isAuthenticated) {
+                withTimeoutOrNull(USER_SETTINGS_TIMEOUT_MS) {
+                    userSettingsRepository.current().getOrNull()
+                }
+            } else {
+                null
+            }
             val startRoute = when {
                 initial == null -> WelcomeRoute
                 sessionStatus == SessionStatus.Invalid -> {
                     tokenStore.setAccessToken(initial.id, null)
                     LoginRoute(serverId = initial.id)
                 }
-                else -> HomeRoute
+                else -> defaultLandingRoute(initialSettings?.defaultLandingPage.orEmpty())
             }
-            val playbackRestore = if (startRoute == HomeRoute) {
+            val playbackRestore = if (isAuthenticated && initialSettings != null) {
                 withTimeoutOrNull(PLAYBACK_RESTORE_TIMEOUT_MS) {
-                    loadPlaybackRestore()
+                    loadPlaybackRestore(initialSettings)
                 }
             } else null
             _state.update { it.copy(isLoading = false, startRoute = startRoute) }
-            if (startRoute == HomeRoute) {
+            if (isAuthenticated) {
                 val externalUrl = pendingVideoRequest.setReady(true)
                 if (externalUrl == null) {
                     playbackRestore?.let(::applyPlaybackRestore)
@@ -145,7 +153,7 @@ class MainViewModel @Inject constructor(
                     playerHostController.openVideo(externalUrl)
                 }
                 launch { videoActionsRepository.refreshBlocked() }
-                launch { userSettingsRepository.refresh() }
+                if (initialSettings == null) launch { userSettingsRepository.refresh() }
                 launch { profileRepository.refresh() }
                 launch { subscriptionsRepository.refresh() }
                 launch { libraryRepository.resumePendingWrites() }
@@ -156,6 +164,7 @@ class MainViewModel @Inject constructor(
     private companion object {
         const val STARTUP_TIMEOUT_MS = 4_000L
         const val SESSION_VALIDATION_TIMEOUT_MS = 6_000L
+        const val USER_SETTINGS_TIMEOUT_MS = 4_000L
         const val PLAYBACK_RESTORE_TIMEOUT_MS = 4_000L
     }
 
@@ -208,7 +217,8 @@ class MainViewModel @Inject constructor(
 
     private suspend fun restorePlaybackUnlessExternalRequestArrives() {
         val restoreRevision = pendingVideoRequest.currentRevision
-        val playbackRestore = loadPlaybackRestore()
+        val settings = userSettingsRepository.current().getOrNull()
+        val playbackRestore = settings?.let { loadPlaybackRestore(it) }
         val externalUrl = pendingVideoRequest.setReady(true)
         when {
             externalUrl != null -> playerHostController.openVideo(externalUrl)
@@ -218,9 +228,8 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private suspend fun loadPlaybackRestore(): PlaybackRestore? {
+    private suspend fun loadPlaybackRestore(settings: UserSettings): PlaybackRestore? {
         val scope = activeAccountScope.observe().first() ?: return null
-        val settings = userSettingsRepository.current().getOrNull() ?: return null
         if (settings.disableWatchHistory) {
             playbackResumeRepository.clear(scope.serverId, scope.accountId)
             playbackQueueRepository.clear(scope.serverId, scope.accountId)
