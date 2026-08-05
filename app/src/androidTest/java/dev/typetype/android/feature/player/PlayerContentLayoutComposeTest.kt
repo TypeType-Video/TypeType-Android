@@ -44,6 +44,18 @@ class PlayerContentLayoutComposeTest {
         assertNodeCount(PLAYER_TWO_PANE_LAYOUT_TAG, 0)
     }
 
+    @Test
+    fun portraitTabletKeepsDetailsBelowThePlayer() {
+        setLayout(width = 1067.dp, height = 1440.dp)
+
+        val viewport = bounds(VIEWPORT_TAG)
+        val details = bounds(DETAILS_TAG)
+
+        assertTrue(viewport.bottom <= details.top)
+        assertNodeCount(PLAYER_SINGLE_COLUMN_LAYOUT_TAG, 1)
+        assertNodeCount(PLAYER_TWO_PANE_LAYOUT_TAG, 0)
+    }
+
     private fun setLayout(width: Dp, height: Dp) {
         composeRule.setContent {
             MaterialTheme {

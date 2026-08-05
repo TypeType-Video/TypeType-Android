@@ -30,7 +30,9 @@ internal fun playerContentLayoutMode(
     isFullscreen: Boolean,
 ): PlayerContentLayoutMode = when {
     isFullscreen -> PlayerContentLayoutMode.Fullscreen
-    widthDp >= TWO_PANE_MIN_WIDTH_DP && heightDp >= TWO_PANE_MIN_HEIGHT_DP ->
+    widthDp > heightDp &&
+        widthDp >= TWO_PANE_MIN_WIDTH_DP &&
+        heightDp >= TWO_PANE_MIN_HEIGHT_DP ->
         PlayerContentLayoutMode.TwoPane
     else -> PlayerContentLayoutMode.SingleColumn
 }

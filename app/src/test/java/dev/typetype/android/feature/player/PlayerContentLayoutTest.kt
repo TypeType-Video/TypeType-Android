@@ -35,4 +35,12 @@ class PlayerContentLayoutTest {
             playerContentLayoutMode(widthDp = 1280f, heightDp = 800f, isFullscreen = false),
         )
     }
+
+    @Test
+    fun `portrait tablet keeps a single scrolling column`() {
+        assertEquals(
+            PlayerContentLayoutMode.SingleColumn,
+            playerContentLayoutMode(widthDp = 1067f, heightDp = 1440f, isFullscreen = false),
+        )
+    }
 }
