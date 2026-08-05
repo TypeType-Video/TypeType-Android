@@ -17,7 +17,6 @@ import androidx.media3.session.SessionError
 import androidx.media3.session.SessionResult
 import com.google.common.util.concurrent.MoreExecutors
 import dev.typetype.android.domain.stream.Stream
-import dev.typetype.android.domain.stream.StreamPlaybackContract
 import dev.typetype.android.services.MergedStreamMediaKeys
 import dev.typetype.android.services.PlaybackAudioOnlyCommand
 
@@ -80,8 +79,7 @@ internal fun rememberAudioOnlyPlaybackState(
     controller: MediaController,
     stream: Stream,
 ): AudioOnlyPlaybackState {
-    val available = stream.playbackContract == StreamPlaybackContract.ServerSabr &&
-        !stream.isLive &&
+    val available = !stream.isLive && !stream.isLiveContent &&
         controller.isSessionCommandAvailable(PlaybackAudioOnlyCommand.command)
     val state = remember(controller, stream.id, available) {
         AudioOnlyPlaybackState(controller, available)
@@ -100,5 +98,7 @@ internal fun rememberAudioOnlyPlaybackState(
 }
 
 private fun MediaController.currentAudioOnlyMode(): Boolean =
-    currentMediaItem?.requestMetadata?.extras
-        ?.getBoolean(MergedStreamMediaKeys.EXTRA_SABR_AUDIO_ONLY) == true
+    currentMediaItem?.requestMetadata?.extras?.let {
+        it.getBoolean(MergedStreamMediaKeys.EXTRA_AUDIO_ONLY_ACTIVE) ||
+            it.getBoolean(MergedStreamMediaKeys.EXTRA_SABR_AUDIO_ONLY)
+    } == true

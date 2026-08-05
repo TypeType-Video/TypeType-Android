@@ -12,7 +12,7 @@ import java.io.IOException
 
 @OptIn(markerClass = [UnstableApi::class])
 internal object PlaybackAudioOnlyCommand {
-    const val ACTION = "dev.typetype.android.SET_SABR_AUDIO_ONLY"
+    const val ACTION = "dev.typetype.android.SET_AUDIO_ONLY"
     const val EXTRA_ENABLED = "enabled"
     const val EXTRA_FAILURE_CODE = "failure_code"
     const val EXTRA_REQUEST_ID = "request_id"
@@ -40,7 +40,10 @@ internal object PlaybackAudioOnlyCommand {
         val resultCode = when {
             error is AudioOnlyUnavailableFailure ->
                 SessionError.ERROR_NOT_SUPPORTED
-            error is IOException || coded?.statusCode?.let { it >= 500 } == true ->
+            coded?.statusCode in setOf(400, 404, 422) ->
+                SessionError.ERROR_NOT_SUPPORTED
+            error is IOException || coded?.statusCode == 408 || coded?.statusCode == 429 ||
+                coded?.statusCode?.let { it >= 500 } == true ->
                 SessionError.ERROR_IO
             else -> SessionError.ERROR_INVALID_STATE
         }
@@ -52,4 +55,4 @@ internal class AudioOnlyUnavailableFailure :
     IllegalStateException("Audio-only playback is unavailable")
 
 internal class AudioOnlyInactivePlaybackFailure :
-    IllegalStateException("No active SABR playback session")
+    IllegalStateException("No active audio-only playback session")

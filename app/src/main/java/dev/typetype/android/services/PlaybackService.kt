@@ -17,6 +17,7 @@ import androidx.media3.session.MediaSessionService
 import dev.typetype.android.MainActivity
 import dev.typetype.android.R
 import dev.typetype.android.domain.stream.SabrPlaybackRepository
+import dev.typetype.android.domain.stream.AudioOnlyStreamRepository
 import dev.typetype.android.data.network.PlaybackNetworkMonitor
 import dev.typetype.android.domain.playback.PlaybackResumeRepository
 import dev.typetype.android.domain.library.LibraryRepository
@@ -33,6 +34,9 @@ class PlaybackService : MediaSessionService() {
 
     @Inject
     lateinit var sabrPlaybackRepository: SabrPlaybackRepository
+
+    @Inject
+    lateinit var audioOnlyStreamRepository: AudioOnlyStreamRepository
 
     @Inject
     lateinit var sabrPlaybackWindowCache: SabrPlaybackWindowCache
@@ -59,7 +63,7 @@ class PlaybackService : MediaSessionService() {
     lateinit var playbackNetworkMonitor: PlaybackNetworkMonitor
 
     private var mediaSession: MediaSession? = null
-    private var sabrPlaybackBridge: SabrPlaybackServiceBridge? = null
+    private var audioOnlyPlaybackBridge: PlaybackAudioOnlyServiceBridge? = null
     private var playbackResumeRecorder: PlaybackResumeRecorder? = null
     private var activePlaybackReporter: ActivePlaybackReporter? = null
     private var playbackHistoryRecorder: PlaybackHistoryRecorder? = null
@@ -72,7 +76,7 @@ class PlaybackService : MediaSessionService() {
         val recoveryDispatcher = SabrPlaybackRecoveryDispatcher()
         val player = buildPlayer(playbackClock, recoveryDispatcher)
         playbackPlayer = player
-        val playbackBridge = SabrPlaybackServiceBridge(
+        val sabrPlaybackBridge = SabrPlaybackServiceBridge(
             player,
             sabrPlaybackRepository,
             sabrPlaybackWindowCache,
@@ -80,7 +84,12 @@ class PlaybackService : MediaSessionService() {
             recoveryDispatcher,
             playbackNetworkMonitor,
         )
-        sabrPlaybackBridge = playbackBridge
+        val playbackBridge = PlaybackAudioOnlyServiceBridge(
+            player = player,
+            sabr = sabrPlaybackBridge,
+            provider = ProviderAudioOnlyServiceBridge(player, audioOnlyStreamRepository),
+        )
+        audioOnlyPlaybackBridge = playbackBridge
         playbackResumeRecorder = PlaybackResumeRecorder(
             player,
             playbackResumeRepository,
@@ -122,8 +131,8 @@ class PlaybackService : MediaSessionService() {
         mediaSession?.player?.let(playbackQueueCoordinator::detach)
         playbackResumeRecorder?.close()
         playbackResumeRecorder = null
-        sabrPlaybackBridge?.close()
-        sabrPlaybackBridge = null
+        audioOnlyPlaybackBridge?.close()
+        audioOnlyPlaybackBridge = null
         mediaSession?.run {
             player.release()
             release()
