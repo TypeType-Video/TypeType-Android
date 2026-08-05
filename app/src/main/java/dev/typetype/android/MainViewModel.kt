@@ -15,6 +15,7 @@ import dev.typetype.android.domain.diagnostics.CrashReport
 import dev.typetype.android.domain.diagnostics.CrashReportRepository
 import dev.typetype.android.domain.preferences.AppPreferences
 import dev.typetype.android.domain.library.LibraryRepository
+import dev.typetype.android.domain.navigation.PendingVideoRequest
 import dev.typetype.android.domain.preferences.PreferencesRepository
 import dev.typetype.android.domain.playback.PlaybackResumeRepository
 import dev.typetype.android.domain.playback.PlaybackQueueRepository
@@ -104,6 +105,7 @@ class MainViewModel @Inject constructor(
 
     private val eventsChannel = Channel<MainEvent>(Channel.BUFFERED)
     val events = eventsChannel.receiveAsFlow()
+    private val pendingVideoRequest = PendingVideoRequest()
 
     init {
         viewModelScope.launch {
@@ -129,14 +131,19 @@ class MainViewModel @Inject constructor(
                 }
                 else -> HomeRoute
             }
-            if (startRoute == HomeRoute) {
-                val restore = withTimeoutOrNull(PLAYBACK_RESTORE_TIMEOUT_MS) {
+            val playbackRestore = if (startRoute == HomeRoute) {
+                withTimeoutOrNull(PLAYBACK_RESTORE_TIMEOUT_MS) {
                     loadPlaybackRestore()
                 }
-                restore?.let(::applyPlaybackRestore)
-            }
+            } else null
             _state.update { it.copy(isLoading = false, startRoute = startRoute) }
             if (startRoute == HomeRoute) {
+                val externalUrl = pendingVideoRequest.setReady(true)
+                if (externalUrl == null) {
+                    playbackRestore?.let(::applyPlaybackRestore)
+                } else {
+                    playerHostController.openVideo(externalUrl)
+                }
                 launch { videoActionsRepository.refreshBlocked() }
                 launch { userSettingsRepository.refresh() }
                 launch { profileRepository.refresh() }
@@ -153,6 +160,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun signOut() {
+        pendingVideoRequest.clear()
         viewModelScope.launch {
             val server = serverRepository.observeCurrentServer().first()
             if (server == null) {
@@ -171,6 +179,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun onAccountActivated() {
+        pendingVideoRequest.setReady(false)
         playerHostController.hide()
         viewModelScope.launch {
             launch { videoActionsRepository.refreshBlocked() }
@@ -178,8 +187,14 @@ class MainViewModel @Inject constructor(
             launch { profileRepository.refresh() }
             launch { subscriptionsRepository.refresh() }
             launch { libraryRepository.resumePendingWrites() }
-            launch { restorePlayback() }
+            launch {
+                restorePlaybackUnlessExternalRequestArrives()
+            }
         }
+    }
+
+    fun openExternalVideo(url: String) {
+        pendingVideoRequest.submit(url)?.let(playerHostController::openVideo)
     }
 
     fun closePlayback() {
@@ -191,8 +206,16 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private suspend fun restorePlayback() {
-        loadPlaybackRestore()?.let(::applyPlaybackRestore)
+    private suspend fun restorePlaybackUnlessExternalRequestArrives() {
+        val restoreRevision = pendingVideoRequest.currentRevision
+        val playbackRestore = loadPlaybackRestore()
+        val externalUrl = pendingVideoRequest.setReady(true)
+        when {
+            externalUrl != null -> playerHostController.openVideo(externalUrl)
+            pendingVideoRequest.isCurrent(restoreRevision) -> {
+                playbackRestore?.let(::applyPlaybackRestore)
+            }
+        }
     }
 
     private suspend fun loadPlaybackRestore(): PlaybackRestore? {
