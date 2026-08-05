@@ -130,9 +130,16 @@
     <string name="settings_appearance_subtitle">Theme and accent color</string>
     <string name="settings_appearance_accent_color">Accent color</string>
     <string name="settings_content_title">Content</string>
+    <string name="settings_content_startup">Startup</string>
+    <string name="settings_content_landing_page">Default landing page</string>
+    <string name="settings_content_landing_page_subtitle">Choose the page TypeType opens after sign-in</string>
     <string name="settings_content_subtitle">Discovery, DeArrow, and visible surfaces</string>
     <string name="settings_content_youtube">YouTube</string>
     <string name="settings_content_visibility">Visible surfaces</string>
+    <string name="settings_content_hide_everything">Hide everything</string>
+    <string name="settings_content_hide_everything_subtitle">Hide recommendations, comments, danmaku, and Shorts at once</string>
+    <string name="settings_content_hide_everything_confirm_title">Hide every content surface?</string>
+    <string name="settings_content_hide_everything_confirm_message">You can restore every surface with this switch or enable them individually later.</string>
     <string name="settings_content_dearrow">DeArrow titles and thumbnails</string>
     <string name="settings_content_dearrow_subtitle">Use community-written titles and representative thumbnails</string>
     <string name="settings_content_dearrow_titles">Titles</string>

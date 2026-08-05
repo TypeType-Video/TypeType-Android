@@ -50,6 +50,19 @@ class ContentSettingsScreenTest {
     }
 
     @Test
+    fun hideEverythingRequiresConfirmationBeforeUpdatingTheServer() {
+        val action = AtomicReference<ContentSettingsAction>()
+        show(ContentSettingsState(isLoading = false)) { action.set(it) }
+
+        scrollTo("Hide everything")
+        composeRule.onNodeWithText("Hide everything").performClick()
+        composeRule.onNodeWithText("Hide every content surface?").assertIsDisplayed()
+        composeRule.onNodeWithText("Confirm").performClick()
+
+        assertEquals(ContentSettingsAction.SetAllHidden(true), action.get())
+    }
+
+    @Test
     fun updateFailureKeepsTheRequestIdReviewable() {
         show(
             ContentSettingsState(

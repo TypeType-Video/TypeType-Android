@@ -96,6 +96,7 @@ private fun UserSettings.toContentSettingsState(feedback: ContentSettingsFeedbac
     ContentSettingsState(
         isLoading = feedback.isLoading,
         isUpdating = feedback.isUpdating,
+        defaultLandingPage = defaultLandingPage,
         hideHomeRecommendations = hideHomeRecommendations,
         hideContinueWatching = hideContinueWatching,
         hideRelatedVideos = hideRelatedVideos,

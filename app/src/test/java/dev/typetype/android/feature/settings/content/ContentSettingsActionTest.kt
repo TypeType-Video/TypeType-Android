@@ -28,6 +28,28 @@ class ContentSettingsActionTest {
     }
 
     @Test
+    fun `master visibility action updates every related server preference atomically`() {
+        val hidden = UserSettings().updatedBy(ContentSettingsAction.SetAllHidden(true))
+
+        assertTrue(hidden.hideHomeRecommendations)
+        assertTrue(hidden.hideContinueWatching)
+        assertTrue(hidden.hideRelatedVideos)
+        assertTrue(hidden.hideComments)
+        assertTrue(hidden.hideShorts)
+        assertEquals("home", hidden.defaultLandingPage)
+    }
+
+    @Test
+    fun `landing page action preserves unrelated preferences`() {
+        val updated = UserSettings(autoplay = false).updatedBy(
+            ContentSettingsAction.SetDefaultLandingPage("favorites"),
+        )
+
+        assertEquals("favorites", updated.defaultLandingPage)
+        assertFalse(updated.autoplay)
+    }
+
+    @Test
     fun `DeArrow actions preserve the complete frontend preference vocabulary`() {
         val updated = listOf(
             ContentSettingsAction.SetDeArrowEnabled(true),
