@@ -3,20 +3,12 @@ package dev.typetype.android.feature.player
 import android.graphics.Rect
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,7 +23,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.paging.PagingData
 import dev.typetype.android.domain.comments.Comment
 import dev.typetype.android.domain.comments.CommentsRepository
@@ -39,18 +30,11 @@ import dev.typetype.android.domain.library.Playlist
 import dev.typetype.android.domain.playback.PlaybackQueueState
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.usersettings.UserSettings
-import dev.typetype.android.feature.player.components.CommentsBar
 import dev.typetype.android.feature.player.components.AutoplayCountdownOverlay
-import dev.typetype.android.feature.player.components.DescriptionSection
 import dev.typetype.android.feature.player.components.LocalMediaController
 import dev.typetype.android.feature.player.components.PlayerGestureConfig
-import dev.typetype.android.feature.player.queue.PlaybackQueueControls
-import dev.typetype.android.feature.player.sleep.PlaybackSleepTimerControls
 import dev.typetype.android.feature.player.components.PlayerSurfaceBox
-import dev.typetype.android.feature.player.components.RelatedStreamsSection
-import dev.typetype.android.feature.player.components.UploaderCard
 import dev.typetype.android.feature.player.components.rememberPlaybackChapters
-import dev.typetype.android.feature.menu.rememberVideoMenuScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.math.roundToInt
 
@@ -91,7 +75,6 @@ fun LoadedPlayer(
     val codecSupport = remember(context.applicationContext) {
         DevicePlaybackCodecSupport(context.applicationContext)
     }
-    val scrollState = rememberScrollState()
     var commentsVisible by remember { mutableStateOf(false) }
     var downloadPickerVisible by remember { mutableStateOf(false) }
     var playbackBrightnessPercent by rememberSaveable(stream.id) {
@@ -109,7 +92,6 @@ fun LoadedPlayer(
     val sponsorBlockPolicy = rememberSponsorBlockPlaybackPolicy(stream, userSettings)
     val playbackChapters = rememberPlaybackChapters(stream.chapters, sponsorBlockPolicy)
     var pipSourceRect by remember(stream.id) { mutableStateOf<Rect?>(null) }
-    val videoMenuScope = rememberVideoMenuScope(onOpenChannel = onOpenChannel)
     val activity = LocalActivity.current
     val autoplayCountdown = rememberPlayerAutoplayCountdown(
         player = controller,
@@ -186,126 +168,88 @@ fun LoadedPlayer(
                 else Modifier.windowInsetsPadding(WindowInsets.statusBars),
             ),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .then(if (isFullscreen) Modifier else Modifier.verticalScroll(scrollState)),
-        ) {
-            Box(
-                modifier = (if (isFullscreen) {
-                    Modifier
-                        .fillMaxSize()
+        PlayerContentLayout(
+            isFullscreen = isFullscreen,
+            viewport = { viewportModifier ->
+                Box(
+                    modifier = viewportModifier
                         .background(Color.Black)
-                } else {
-                    Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(16f / 9f)
-                        .background(Color.Black)
-                }).onGloballyPositioned { coordinates ->
-                    val bounds = coordinates.boundsInWindow()
-                    val updated = Rect(
-                        bounds.left.roundToInt(),
-                        bounds.top.roundToInt(),
-                        bounds.right.roundToInt(),
-                        bounds.bottom.roundToInt(),
-                    )
-                    if (updated != pipSourceRect) pipSourceRect = updated
-                },
-                contentAlignment = Alignment.Center,
-            ) {
-                if (controller != null) {
-                    PlayerSurfaceBox(
-                        player = controller,
-                        stream = stream,
-                        selectedCodec = selections.selectedCodec,
-                        selectedQuality = selections.selectedQuality,
-                        selectedAudioKey = selections.selectedAudioKey,
-                        selectedSubtitleKey = selections.selectedSubtitleKey,
-                        selectedSpeed = selections.selectedSpeed,
-                        codecSupport = codecSupport,
-                        onSelectCodec = selections::selectCodec,
-                        onSelectQuality = selections::selectQuality,
-                        onSelectAudio = selections::selectAudio,
-                        onSelectSubtitle = selections::selectSubtitle,
-                        onSelectSpeed = selections::selectSpeed,
-                        onNavigateBack = {
-                            if (isFullscreen) onFullscreenChange(false) else onNavigateBack()
+                        .onGloballyPositioned { coordinates ->
+                            val bounds = coordinates.boundsInWindow()
+                            val updated = Rect(
+                                bounds.left.roundToInt(),
+                                bounds.top.roundToInt(),
+                                bounds.right.roundToInt(),
+                                bounds.bottom.roundToInt(),
+                            )
+                            if (updated != pipSourceRect) pipSourceRect = updated
                         },
-                        onRetryPlayback = { onAction(PlayerAction.OnRetry) },
-                        onOpenAccounts = onOpenAccounts,
-                        pipSourceRect = pipSourceRect,
-                        isFullscreen = isFullscreen,
-                        onToggleFullscreen = { onFullscreenChange(!isFullscreen) },
-                        sponsorBlockPolicy = sponsorBlockPolicy,
-                        chapters = playbackChapters,
-                        gestureConfig = gestureConfig,
-                        playbackBrightnessPercent = playbackBrightnessPercent,
-                        onPlaybackBrightnessChange = { playbackBrightnessPercent = it },
-                        loadSubtitleCues = loadSubtitleCues,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                } else {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                }
-                autoplayCountdown?.let {
-                    AutoplayCountdownOverlay(
-                        state = it,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
-            }
-            if (!isFullscreen) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    DescriptionSection(
-                        title = stream.title,
-                        viewCount = stream.viewCount,
-                        likeCount = stream.likeCount,
-                        description = stream.description,
-                        onTimestampClick = { controller?.seekTo(it) },
-                    )
-                    PlaybackQueueControls(playbackQueue)
-                    PlaybackSleepTimerControls()
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-                    PlayerInteractionRow(
-                        isFavorited = isFavorited,
-                        isInWatchLater = isInWatchLater,
-                        shareUrl = videoUrl,
-                        onToggleFavorite = { onAction(PlayerAction.OnToggleFavorite) },
-                        onToggleWatchLater = { onAction(PlayerAction.OnToggleWatchLater) },
-                        onAddToPlaylist = { onAction(PlayerAction.OnOpenPlaylistPicker) },
-                        onDownload = { downloadPickerVisible = true },
-                        downloadInFlight = downloadInFlight,
-                    )
-                    UploaderCard(
-                        name = stream.uploaderName,
-                        avatarUrl = stream.uploaderAvatarUrl,
-                        subscriberCount = stream.uploaderSubscriberCount,
-                        verified = stream.uploaderVerified,
-                        isSubscribed = isSubscribed,
-                        subscriptionInFlight = subscriptionInFlight,
-                        onCardClick = { onOpenChannel(stream.uploaderUrl) },
-                        onSubscribeClick = onToggleSubscription,
-                    )
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-                    if (!userSettings.hideComments) {
-                        CommentsBar(onClick = { commentsVisible = true })
+                    if (controller != null) {
+                        PlayerSurfaceBox(
+                            player = controller,
+                            stream = stream,
+                            selectedCodec = selections.selectedCodec,
+                            selectedQuality = selections.selectedQuality,
+                            selectedAudioKey = selections.selectedAudioKey,
+                            selectedSubtitleKey = selections.selectedSubtitleKey,
+                            selectedSpeed = selections.selectedSpeed,
+                            codecSupport = codecSupport,
+                            onSelectCodec = selections::selectCodec,
+                            onSelectQuality = selections::selectQuality,
+                            onSelectAudio = selections::selectAudio,
+                            onSelectSubtitle = selections::selectSubtitle,
+                            onSelectSpeed = selections::selectSpeed,
+                            onNavigateBack = {
+                                if (isFullscreen) onFullscreenChange(false) else onNavigateBack()
+                            },
+                            onRetryPlayback = { onAction(PlayerAction.OnRetry) },
+                            onOpenAccounts = onOpenAccounts,
+                            pipSourceRect = pipSourceRect,
+                            isFullscreen = isFullscreen,
+                            onToggleFullscreen = { onFullscreenChange(!isFullscreen) },
+                            sponsorBlockPolicy = sponsorBlockPolicy,
+                            chapters = playbackChapters,
+                            gestureConfig = gestureConfig,
+                            playbackBrightnessPercent = playbackBrightnessPercent,
+                            onPlaybackBrightnessChange = { playbackBrightnessPercent = it },
+                            loadSubtitleCues = loadSubtitleCues,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    } else {
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     }
-                    if (!userSettings.hideRelatedVideos) {
-                        RelatedStreamsSection(
-                            videos = stream.relatedStreams,
-                            onPlayVideo = onPlayVideo,
-                            menuScope = videoMenuScope,
-                            onOpenChannel = onOpenChannel,
+                    autoplayCountdown?.let {
+                        AutoplayCountdownOverlay(
+                            state = it,
+                            modifier = Modifier.fillMaxSize(),
                         )
                     }
                 }
-            }
-        }
+            },
+            details = { detailsModifier ->
+                PlayerDetails(
+                    stream = stream,
+                    videoUrl = videoUrl,
+                    player = controller,
+                    userSettings = userSettings,
+                    playbackQueue = playbackQueue,
+                    isFavorited = isFavorited,
+                    isInWatchLater = isInWatchLater,
+                    isSubscribed = isSubscribed,
+                    subscriptionInFlight = subscriptionInFlight,
+                    downloadInFlight = downloadInFlight,
+                    onAction = onAction,
+                    onShowComments = { commentsVisible = true },
+                    onShowDownloads = { downloadPickerVisible = true },
+                    onPlayVideo = onPlayVideo,
+                    onOpenChannel = onOpenChannel,
+                    onToggleSubscription = onToggleSubscription,
+                    modifier = detailsModifier,
+                )
+            },
+        )
     }
 
     PlayerAuxiliarySheets(
