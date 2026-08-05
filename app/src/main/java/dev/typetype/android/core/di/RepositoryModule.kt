@@ -34,6 +34,7 @@ import dev.typetype.android.data.session.RemoteActiveSessionRepository
 import dev.typetype.android.data.setup.SetupRepositoryImpl
 import dev.typetype.android.data.stream.StreamRepositoryImpl
 import dev.typetype.android.data.stream.SabrPlaybackRepositoryImpl
+import dev.typetype.android.data.stream.RemoteAudioOnlyStreamRepository
 import dev.typetype.android.data.stream.RemoteSubtitleRepository
 import dev.typetype.android.data.subscriptions.RemoteSubscriptionsRepository
 import dev.typetype.android.data.support.RemoteSupportRepository
@@ -72,6 +73,7 @@ import dev.typetype.android.domain.session.ActiveSessionRepository
 import dev.typetype.android.domain.setup.SetupRepository
 import dev.typetype.android.domain.stream.StreamRepository
 import dev.typetype.android.domain.stream.SabrPlaybackRepository
+import dev.typetype.android.domain.stream.AudioOnlyStreamRepository
 import dev.typetype.android.domain.stream.SubtitleRepository
 import dev.typetype.android.domain.subscriptions.SubscriptionsRepository
 import dev.typetype.android.domain.support.SupportRepository
@@ -135,6 +137,12 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSabrPlaybackRepository(impl: SabrPlaybackRepositoryImpl): SabrPlaybackRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAudioOnlyStreamRepository(
+        impl: RemoteAudioOnlyStreamRepository,
+    ): AudioOnlyStreamRepository
 
     @Binds
     @Singleton
