@@ -106,6 +106,31 @@ class PlaybackMediaSessionAndroidTest {
         assertEquals(Notification.CATEGORY_TRANSPORT, notification?.category)
     }
 
+    @Test
+    fun baselineH264VideoAdvancesThroughTheSharedServicePlayer() {
+        val video = createSyntheticH264Video(context)
+        try {
+            instrumentation.runOnMainSync {
+                controller.setMediaItem(
+                    MediaItem.Builder()
+                        .setUri(Uri.fromFile(video))
+                        .setMimeType(MimeTypes.VIDEO_MP4)
+                        .build(),
+                )
+                controller.prepare()
+                controller.play()
+            }
+
+            assertTrue(
+                waitForControllerState {
+                    it.playbackState == Player.STATE_READY && it.currentPosition >= 250L
+                },
+            )
+        } finally {
+            video.delete()
+        }
+    }
+
     private fun waitForControllerState(condition: (MediaController) -> Boolean): Boolean {
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10)
         while (System.nanoTime() < deadline) {
