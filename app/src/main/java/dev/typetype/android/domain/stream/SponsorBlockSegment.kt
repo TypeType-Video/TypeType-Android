@@ -7,22 +7,26 @@ data class SponsorBlockSegment(
     val action: SponsorAction,
 )
 
-enum class SponsorCategory {
-    Sponsor,
-    SelfPromo,
-    Interaction,
-    Poi,
-    Intro,
-    Outro,
-    Preview,
-    MusicOffTopic,
-    Filler,
-    Unknown;
+enum class SponsorCategory(val key: String) {
+    Sponsor("sponsor"),
+    SelfPromo("selfpromo"),
+    ExclusiveAccess("exclusive_access"),
+    Interaction("interaction"),
+    Poi("poi_highlight"),
+    Intro("intro"),
+    Outro("outro"),
+    Preview("preview"),
+    MusicOffTopic("music_offtopic"),
+    Filler("filler"),
+    Chapter("chapter"),
+    Unknown(""),
+    ;
 
     companion object {
         fun fromKey(key: String): SponsorCategory = when (key.lowercase()) {
             "sponsor" -> Sponsor
             "selfpromo" -> SelfPromo
+            "exclusive_access" -> ExclusiveAccess
             "interaction" -> Interaction
             "poi_highlight" -> Poi
             "intro" -> Intro
@@ -30,6 +34,7 @@ enum class SponsorCategory {
             "preview" -> Preview
             "music_offtopic" -> MusicOffTopic
             "filler" -> Filler
+            "chapter" -> Chapter
             else -> Unknown
         }
     }
