@@ -89,6 +89,23 @@ class PlayerPlaybackSelectionStateTest {
         assertEquals(AV1_CODEC_KEY, state.selectedCodec)
     }
 
+    @Test
+    fun `server playback speed is applied and bounded`() {
+        val configured = PlayerPlaybackSelectionState(
+            stream = stream(),
+            defaultAudioLanguage = "",
+            subtitlesEnabled = false,
+            defaultSubtitleLanguage = "",
+            preferOriginalLanguage = false,
+            defaultPlaybackSpeed = 1.5,
+        )
+
+        assertEquals(1.5f, configured.selectedSpeed, 0f)
+        assertEquals(4f, normalizeDefaultPlaybackSpeed(9.0), 0f)
+        assertEquals(0.25f, normalizeDefaultPlaybackSpeed(0.1), 0f)
+        assertEquals(1f, normalizeDefaultPlaybackSpeed(Double.NaN), 0f)
+    }
+
     private fun subtitle(
         language: String,
         trackId: String? = null,

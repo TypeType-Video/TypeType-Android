@@ -39,12 +39,14 @@ fun SponsorBlockMarkers(
 internal fun sponsorBlockColorForCategory(category: SponsorCategory): Color = when (category) {
     SponsorCategory.Sponsor -> Color(0xFF00D400)
     SponsorCategory.SelfPromo -> Color(0xFFFFFF00)
-    SponsorCategory.Intro -> Color(0xFF0098FF)
+    SponsorCategory.ExclusiveAccess -> Color(0xFF008A5C)
+    SponsorCategory.Intro -> Color(0xFF00FFFF)
     SponsorCategory.Outro -> Color(0xFF0202ED)
     SponsorCategory.Interaction -> Color(0xFFCC00FF)
     SponsorCategory.Poi -> Color(0xFFFF1684)
     SponsorCategory.Preview -> Color(0xFF008FD6)
     SponsorCategory.MusicOffTopic -> Color(0xFFFF9900)
     SponsorCategory.Filler -> Color(0xFF7300FF)
+    SponsorCategory.Chapter -> Color(0xFFFFD000)
     SponsorCategory.Unknown -> Color(0xFF9E9E9E)
 }

@@ -155,14 +155,7 @@ class PlayerViewModel @Inject constructor(
         viewModelScope.launch {
             userSettingsRepository.observe().collect { settings ->
                 _state.update {
-                    it.copy(
-                        autoplayEnabled = settings.autoplay,
-                        defaultQuality = settings.defaultQuality,
-                        defaultAudioLanguage = settings.defaultAudioLanguage,
-                        subtitlesEnabled = settings.subtitlesEnabled,
-                        defaultSubtitleLanguage = settings.defaultSubtitleLanguage,
-                        preferOriginalLanguage = settings.preferOriginalLanguage,
-                    )
+                    it.copy(userSettings = settings)
                 }
             }
         }

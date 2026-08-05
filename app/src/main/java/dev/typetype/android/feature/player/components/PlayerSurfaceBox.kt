@@ -39,6 +39,7 @@ import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.stream.StreamPlaybackContract
 import dev.typetype.android.feature.player.LoadSubtitleCues
 import dev.typetype.android.feature.player.PlaybackCodecSupport
+import dev.typetype.android.feature.player.SponsorBlockPlaybackPolicy
 import dev.typetype.android.feature.player.key
 import dev.typetype.android.feature.player.state.PlayerGestureState
 import dev.typetype.android.feature.player.state.ResizeMode
@@ -70,7 +71,7 @@ internal fun PlayerSurfaceBox(
     pipSourceRect: Rect? = null,
     isFullscreen: Boolean = false,
     onToggleFullscreen: () -> Unit = {},
-    sponsorBlockSegments: List<SponsorBlockSegment> = emptyList(),
+    sponsorBlockPolicy: SponsorBlockPlaybackPolicy = SponsorBlockPlaybackPolicy(),
     chapters: List<Chapter> = emptyList(),
     gestureConfig: PlayerGestureConfig = PlayerGestureConfig(),
     playbackBrightnessPercent: Int?,
@@ -254,7 +255,7 @@ internal fun PlayerSurfaceBox(
                 isFullscreen = isFullscreen,
                 isPipAvailable = isPipAvailable,
                 chaptersAvailable = chapters.isNotEmpty(),
-                sponsorBlockSegments = sponsorBlockSegments,
+                sponsorBlockSegments = sponsorBlockPolicy.visibleSegments,
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -267,7 +268,7 @@ internal fun PlayerSurfaceBox(
 
         SponsorBlockPlaybackFeedback(
             player = player,
-            segments = sponsorBlockSegments,
+            policy = sponsorBlockPolicy,
             visible = !isInPip,
             modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
         )

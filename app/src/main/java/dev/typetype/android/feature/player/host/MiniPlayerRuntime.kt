@@ -41,6 +41,7 @@ import dev.typetype.android.feature.player.components.MiniPlayerBar
 import dev.typetype.android.feature.player.initialAudioKey
 import dev.typetype.android.feature.player.initialQuality
 import dev.typetype.android.feature.player.initialSubtitleKey
+import dev.typetype.android.feature.player.normalizeDefaultPlaybackSpeed
 import dev.typetype.android.feature.player.sleep.PlaybackSleepTimerViewModel
 import dev.typetype.android.feature.player.sleep.summary
 
@@ -61,17 +62,18 @@ internal fun MiniPlayerRuntime(
         DevicePlaybackCodecSupport(context.applicationContext)
     }
     val stream = state.stream
+    val settings = state.userSettings
 
     LaunchedEffect(
         controller,
         currentItem,
         stream,
         state.playbackBindGeneration,
-        state.defaultQuality,
-        state.defaultAudioLanguage,
-        state.subtitlesEnabled,
-        state.defaultSubtitleLanguage,
-        state.preferOriginalLanguage,
+        settings.defaultQuality,
+        settings.defaultAudioLanguage,
+        settings.subtitlesEnabled,
+        settings.defaultSubtitleLanguage,
+        settings.preferOriginalLanguage,
     ) {
         val player = controller ?: return@LaunchedEffect
         val loaded = stream ?: return@LaunchedEffect
@@ -83,20 +85,21 @@ internal fun MiniPlayerRuntime(
             startMillis = state.resumeAtMillis,
             selectedQuality = loaded.initialQuality(),
             selectedAudioKey = loaded.initialAudioKey(
-                state.defaultAudioLanguage,
-                state.preferOriginalLanguage,
+                settings.defaultAudioLanguage,
+                settings.preferOriginalLanguage,
             ),
             selectedSubtitleKey = loaded.initialSubtitleKey(
-                state.subtitlesEnabled,
-                state.defaultSubtitleLanguage,
+                settings.subtitlesEnabled,
+                settings.defaultSubtitleLanguage,
             ),
-            defaultAudioLanguage = state.defaultAudioLanguage,
-            automaticQualityCap = state.defaultQuality,
-            preferOriginalLanguage = state.preferOriginalLanguage,
+            defaultAudioLanguage = settings.defaultAudioLanguage,
+            automaticQualityCap = settings.defaultQuality,
+            preferOriginalLanguage = settings.preferOriginalLanguage,
             initialPlayWhenReady = state.initialPlayWhenReady,
             codecSupport = codecSupport,
             prepareSabrPlayback = viewModel.sabrPlayback::prepare,
         )
+        player.setPlaybackSpeed(normalizeDefaultPlaybackSpeed(settings.defaultPlaybackSpeed))
     }
 
     val item = currentItem

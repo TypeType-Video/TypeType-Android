@@ -3,6 +3,7 @@ package dev.typetype.android.feature.player
 import dev.typetype.android.domain.library.Playlist
 import dev.typetype.android.domain.playback.PlaybackQueueState
 import dev.typetype.android.domain.stream.Stream
+import dev.typetype.android.domain.usersettings.UserSettings
 import dev.typetype.android.feature.player.components.PlayerGestureConfig
 import dev.typetype.android.feature.player.error.StreamErrorClass
 
@@ -17,13 +18,8 @@ data class PlayerState(
     val isFavorited: Boolean = false,
     val isInWatchLater: Boolean = false,
     val gestureConfig: PlayerGestureConfig = PlayerGestureConfig(),
-    val autoplayEnabled: Boolean = true,
     val autoplayCountdownSeconds: Int = 10,
-    val defaultQuality: String = "1080p",
-    val defaultAudioLanguage: String = "",
-    val subtitlesEnabled: Boolean = false,
-    val defaultSubtitleLanguage: String = "",
-    val preferOriginalLanguage: Boolean = false,
+    val userSettings: UserSettings = UserSettings(),
     val playlistPickerVisible: Boolean = false,
     val playlists: List<Playlist> = emptyList(),
     val playlistActionInFlight: Boolean = false,

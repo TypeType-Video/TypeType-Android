@@ -13,10 +13,11 @@ private const val SKIP_GUARD_MS = 200L
 private const val END_OF_MEDIA_TOLERANCE_MS = 1_000L
 
 @Composable
-fun SponsorBlockSkipper(
+internal fun SponsorBlockSkipper(
     player: Player,
     segments: List<SponsorBlockSegment>,
-    onSegmentSkipped: (SponsorBlockSegment) -> Unit = {},
+    muteInsteadOfSkip: Boolean = false,
+    onSegmentHandled: (SponsorBlockSegment, SponsorBlockAutomaticAction) -> Unit = { _, _ -> },
 ) {
     val skippable = remember(segments) {
         segments.filter { it.action == SponsorAction.Skip && it.endMs > it.startMs }
@@ -24,20 +25,53 @@ fun SponsorBlockSkipper(
     val tracker = remember(player, skippable) { SponsorBlockSkipTracker() }
     if (skippable.isEmpty()) return
 
-    LaunchedEffect(player, skippable) {
-        while (true) {
-            val pos = player.currentPosition
-            val match = tracker.next(
-                positionMs = pos,
-                ready = player.playbackState == Player.STATE_READY,
-                segments = skippable,
-            )
-            if (match != null) {
-                player.seekTo(sponsorBlockSkipTargetMs(match, player.duration))
-                onSegmentSkipped(match)
+    LaunchedEffect(player, skippable, muteInsteadOfSkip) {
+        var mutedSegment: SponsorBlockSegment? = null
+        var volumeBeforeMute: Float? = null
+        try {
+            while (true) {
+                val positionMs = player.currentPosition
+                if (muteInsteadOfSkip) {
+                    val activeSegment = skippable.firstOrNull {
+                        positionMs >= it.startMs && positionMs < it.endMs
+                    }
+                    if (activeSegment != mutedSegment) {
+                        restoreSponsorBlockVolume(player, volumeBeforeMute)
+                        mutedSegment = activeSegment
+                        volumeBeforeMute = activeSegment?.let {
+                            player.volume.also { volume -> player.volume = 0f }
+                        }
+                        activeSegment?.let {
+                            onSegmentHandled(it, SponsorBlockAutomaticAction.Muted)
+                        }
+                    }
+                } else {
+                    val match = tracker.next(
+                        positionMs = positionMs,
+                        ready = player.playbackState == Player.STATE_READY,
+                        segments = skippable,
+                    )
+                    if (match != null) {
+                        player.seekTo(sponsorBlockSkipTargetMs(match, player.duration))
+                        onSegmentHandled(match, SponsorBlockAutomaticAction.Skipped)
+                    }
+                }
+                delay(POLL_INTERVAL_MS)
             }
-            delay(POLL_INTERVAL_MS)
+        } finally {
+            restoreSponsorBlockVolume(player, volumeBeforeMute)
         }
+    }
+}
+
+internal enum class SponsorBlockAutomaticAction {
+    Skipped,
+    Muted,
+}
+
+private fun restoreSponsorBlockVolume(player: Player, volumeBeforeMute: Float?) {
+    if (volumeBeforeMute != null && player.volume == 0f) {
+        player.volume = volumeBeforeMute
     }
 }
 
