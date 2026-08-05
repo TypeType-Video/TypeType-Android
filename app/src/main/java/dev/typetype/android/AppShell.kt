@@ -54,6 +54,7 @@ fun AppShell(
     unreadNotificationsCount: Int = 0,
     avatarUrl: String? = null,
     avatarFallbackLetter: String? = null,
+    showShorts: Boolean = true,
     onPlayVideo: (videoUrl: String) -> Unit,
     onOpenChannel: (channelUrl: String) -> Unit,
     onClosePlayback: () -> Unit,
@@ -61,6 +62,7 @@ fun AppShell(
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
+    val navigationTabs = visibleTopLevelTabs(showShorts)
     val isTopLevel = topLevelTabs.any { currentDestination.matchesRoute(it.route) }
     val showsNavigation = isTopLevel ||
         currentDestination?.hasRoute<ChannelRoute>() == true ||
@@ -94,6 +96,7 @@ fun AppShell(
                         currentDestination = currentDestination,
                         fallbackTabRouteQualifiedName = activeTabRoute,
                         onTabClick = navController::navigateTopLevel,
+                        tabs = navigationTabs,
                     )
                 }
                 Box(modifier = Modifier.weight(1f)) {
@@ -123,6 +126,7 @@ fun AppShell(
                                     currentDestination = currentDestination,
                                     fallbackTabRouteQualifiedName = activeTabRoute,
                                     onTabClick = navController::navigateTopLevel,
+                                    tabs = navigationTabs,
                                 )
                             }
                         },
