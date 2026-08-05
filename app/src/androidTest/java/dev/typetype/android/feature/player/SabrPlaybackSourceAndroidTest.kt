@@ -11,6 +11,7 @@ import dev.typetype.android.domain.stream.sourceKey
 import dev.typetype.android.services.MergedStreamMediaKeys
 import dev.typetype.android.services.requireSabrTransportScope
 import dev.typetype.android.services.sabrPlaybackSeekState
+import dev.typetype.android.services.streamRequestScope
 import dev.typetype.android.services.toSubtitleConfigurations
 import dev.typetype.android.services.withSabrPlayback
 import org.junit.Assert.assertEquals
@@ -211,6 +212,30 @@ class SabrPlaybackSourceAndroidTest {
             .build()
 
         assertEquals(prepared.sabrBinding, item.requireSabrTransportScope(scope))
+    }
+
+    @Test
+    fun playbackMetadataKeepsTheAudioOnlySelectionPolicyWithItsAccountScope() {
+        val scope = StreamRequestScope("server", "account", "https://instance.example/api/")
+        val item = MediaItem.Builder()
+            .setUri("https://instance.example/api/media/video")
+            .setRequestMetadata(
+                PlayableSource("https://instance.example/api/media/video", "video/mp4")
+                    .toRequestMetadata(
+                        scope = scope,
+                        preferOriginalAudio = true,
+                        preferredAudioLocale = "fr",
+                    ),
+            )
+            .build()
+        val extras = requireNotNull(item.requestMetadata.extras)
+
+        assertEquals(scope, extras.streamRequestScope())
+        assertTrue(extras.getBoolean(MergedStreamMediaKeys.EXTRA_AUDIO_ONLY_PREFER_ORIGINAL))
+        assertEquals(
+            "fr",
+            extras.getString(MergedStreamMediaKeys.EXTRA_AUDIO_ONLY_PREFERRED_LOCALE),
+        )
     }
 
     private fun target(

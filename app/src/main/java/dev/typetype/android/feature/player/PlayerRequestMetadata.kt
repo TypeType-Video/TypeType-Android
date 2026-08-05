@@ -11,6 +11,8 @@ internal fun PlayableSource.toRequestMetadata(
     resumePositionMillis: Long = 0L,
     isLiveContent: Boolean = false,
     stream: Stream? = null,
+    preferOriginalAudio: Boolean = false,
+    preferredAudioLocale: String = "",
 ): MediaItem.RequestMetadata {
     val audio = audioUrl?.takeIf { it.isNotBlank() }
     val effectiveScope = sabrTarget?.requestScope ?: scope
@@ -62,6 +64,14 @@ internal fun PlayableSource.toRequestMetadata(
             (sabrSession?.startTimeMs ?: resumePositionMillis).coerceAtLeast(0L),
         )
         putBoolean(MergedStreamMediaKeys.EXTRA_IS_LIVE_CONTENT, isLiveContent)
+        putBoolean(
+            MergedStreamMediaKeys.EXTRA_AUDIO_ONLY_PREFER_ORIGINAL,
+            preferOriginalAudio,
+        )
+        putString(
+            MergedStreamMediaKeys.EXTRA_AUDIO_ONLY_PREFERRED_LOCALE,
+            preferredAudioLocale,
+        )
         stream?.let {
             putString(MergedStreamMediaKeys.EXTRA_VIDEO_TITLE, it.title)
             putString(MergedStreamMediaKeys.EXTRA_VIDEO_THUMBNAIL, it.thumbnailUrl)
