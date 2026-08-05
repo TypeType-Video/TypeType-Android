@@ -9,4 +9,7 @@ data class AppPreferences(
     val playerAutoplayEnabled: Boolean = true,
     val playerAutoplayCountdownSeconds: Int = 10,
     val playerPauseInBackground: Boolean = false,
+    val danmakuEnabled: Boolean = false,
+    val danmakuSpeed: Float = 1f,
+    val danmakuSize: Float = 1f,
 )

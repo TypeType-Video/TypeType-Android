@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import dev.typetype.android.domain.preferences.AccentColor
@@ -33,6 +34,9 @@ class DataStorePreferencesRepository @Inject constructor(
                 prefs[KEY_PLAYER_AUTOPLAY_COUNTDOWN] ?: DEFAULT_AUTOPLAY_COUNTDOWN_SECONDS
             ).coerceIn(0, MAX_AUTOPLAY_COUNTDOWN_SECONDS),
             playerPauseInBackground = prefs[KEY_PLAYER_PAUSE_BACKGROUND] ?: false,
+            danmakuEnabled = prefs[KEY_DANMAKU_ENABLED] ?: false,
+            danmakuSpeed = (prefs[KEY_DANMAKU_SPEED] ?: 1f).coerceIn(0.5f, 2f),
+            danmakuSize = (prefs[KEY_DANMAKU_SIZE] ?: 1f).coerceIn(0.5f, 2f),
         )
     }
 
@@ -73,6 +77,18 @@ class DataStorePreferencesRepository @Inject constructor(
         dataStore.edit { it[KEY_PLAYER_PAUSE_BACKGROUND] = enabled }
     }
 
+    override suspend fun setDanmakuEnabled(enabled: Boolean) {
+        dataStore.edit { it[KEY_DANMAKU_ENABLED] = enabled }
+    }
+
+    override suspend fun setDanmakuSpeed(speed: Float) {
+        dataStore.edit { it[KEY_DANMAKU_SPEED] = speed.coerceIn(0.5f, 2f) }
+    }
+
+    override suspend fun setDanmakuSize(size: Float) {
+        dataStore.edit { it[KEY_DANMAKU_SIZE] = size.coerceIn(0.5f, 2f) }
+    }
+
     private companion object {
         val KEY_ACCENT_COLOR = stringPreferencesKey("accent_color")
         val KEY_PLAYER_DOUBLE_TAP_SEEK = booleanPreferencesKey("player_double_tap_seek")
@@ -82,6 +98,9 @@ class DataStorePreferencesRepository @Inject constructor(
         val KEY_PLAYER_AUTOPLAY = booleanPreferencesKey("player_autoplay")
         val KEY_PLAYER_AUTOPLAY_COUNTDOWN = intPreferencesKey("player_autoplay_countdown_seconds")
         val KEY_PLAYER_PAUSE_BACKGROUND = booleanPreferencesKey("player_pause_background")
+        val KEY_DANMAKU_ENABLED = booleanPreferencesKey("player_danmaku_enabled")
+        val KEY_DANMAKU_SPEED = floatPreferencesKey("player_danmaku_speed")
+        val KEY_DANMAKU_SIZE = floatPreferencesKey("player_danmaku_size")
         const val DEFAULT_AUTOPLAY_COUNTDOWN_SECONDS = 10
         const val MAX_AUTOPLAY_COUNTDOWN_SECONDS = 60
     }

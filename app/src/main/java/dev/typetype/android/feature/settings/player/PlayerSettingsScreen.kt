@@ -244,6 +244,9 @@ fun PlayerSettingsScreen(
                 sponsorBlockSettingsItems(state = state, onAction = onAction)
 
                 item { Spacer(Modifier.size(4.dp)) }
+                danmakuSettingsItems(state = state, onAction = onAction)
+
+                item { Spacer(Modifier.size(4.dp)) }
                 item { SettingsSectionHeader(stringResource(R.string.settings_player_section_gestures)) }
                 item {
                     SwitchRow(
