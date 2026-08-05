@@ -84,7 +84,15 @@ class LoginViewModel @Inject constructor(
                     methods = methods,
                 )
             }
-            startOidcAutomatically()
+            val registration = authRepository.getRegistrationStatus(serverId).getOrNull()
+            registration?.let { status ->
+                _state.update { it.copy(registrationAllowed = status.isOpen) }
+            }
+            if (registration?.bootstrapAvailable == true && expectedAccountId == null) {
+                emit(LoginEvent.NavigateToRegister(serverId))
+            } else {
+                startOidcAutomatically()
+            }
         }
     }
 
@@ -114,6 +122,7 @@ class LoginViewModel @Inject constructor(
                 viewModelScope.launch { authRepository.cancelOidc(serverId) }
             }
             LoginAction.OnContinueAsGuestClick -> performGuest()
+            LoginAction.OnRegisterClick -> emit(LoginEvent.NavigateToRegister(serverId))
             LoginAction.OnResetPasswordClick -> emit(
                 LoginEvent.NavigateToResetPassword(serverId),
             )

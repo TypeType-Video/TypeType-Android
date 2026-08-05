@@ -15,14 +15,13 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.core.ui.navigation.AboutRoute
 import dev.typetype.android.core.ui.navigation.AccountsRoute
+import dev.typetype.android.core.ui.navigation.AddServerRoute
 import dev.typetype.android.core.ui.navigation.BlockedSettingsRoute
 import dev.typetype.android.core.ui.navigation.DiagnosticsRoute
 import dev.typetype.android.core.ui.navigation.PrivacySettingsRoute
 import dev.typetype.android.core.ui.navigation.PublicPlaylistRoute
 import dev.typetype.android.core.ui.navigation.ProfileSettingsRoute
-import dev.typetype.android.core.ui.navigation.ResetPasswordRoute
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
-import dev.typetype.android.core.ui.navigation.AddServerRoute
 import dev.typetype.android.core.ui.navigation.AppearanceRoute
 import dev.typetype.android.core.ui.navigation.ChannelRoute
 import dev.typetype.android.core.ui.navigation.HomeRoute
@@ -49,9 +48,6 @@ import dev.typetype.android.feature.settings.diagnostics.DiagnosticsRoute as Dia
 import dev.typetype.android.feature.settings.player.PlayerSettingsRoute as PlayerSettingsRouteScreen
 import dev.typetype.android.feature.settings.privacy.PrivacySettingsRoute as PrivacySettingsRouteScreen
 import dev.typetype.android.feature.settings.storage.StorageSettingsRoute as StorageSettingsRouteScreen
-import dev.typetype.android.feature.setup.addserver.AddServerRoute as AddServerRouteScreen
-import dev.typetype.android.feature.setup.login.LoginRoute as LoginRouteScreen
-import dev.typetype.android.feature.setup.welcome.WelcomeRoute as WelcomeRouteScreen
 import dev.typetype.android.feature.subscriptions.SubscriptionsRoute as SubscriptionsRouteScreen
 import kotlinx.coroutines.flow.collectLatest
 
@@ -154,37 +150,7 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
                 )
             },
         ) {
-            composable<WelcomeRoute> {
-                WelcomeRouteScreen(
-                    onNavigateToAddServer = { navController.navigate(AddServerRoute) },
-                )
-            }
-            composable<AddServerRoute> {
-                AddServerRouteScreen(
-                    onNavigateBack = { navController.popBackStack() },
-                    onNavigateToLogin = { serverId ->
-                        navController.navigate(
-                            LoginRoute(serverId = serverId),
-                        ) {
-                            popUpTo(WelcomeRoute) { inclusive = false }
-                        }
-                    },
-                )
-            }
-            composable<LoginRoute> {
-                LoginRouteScreen(
-                    onNavigateBack = { navController.popBackStack() },
-                    onNavigateToResetPassword = {
-                        navController.navigate(ResetPasswordRoute(it))
-                    },
-                    onNavigateToHome = {
-                        mainViewModel.onAccountActivated()
-                        navController.navigate(HomeRoute) {
-                            popUpTo(0) { inclusive = true }
-                        }
-                    },
-                )
-            }
+            setupDestinations(navController, mainViewModel)
             composable<HomeRoute> {
                 HomeRouteScreen(
                     viewModel = hiltViewModel<HomeViewModel>(),
