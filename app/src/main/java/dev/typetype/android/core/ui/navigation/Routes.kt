@@ -39,6 +39,9 @@ data object AccountsRoute
 data object AppearanceRoute
 
 @Serializable
+data object ContentSettingsRoute
+
+@Serializable
 data object PlayerSettingsRoute
 
 @Serializable

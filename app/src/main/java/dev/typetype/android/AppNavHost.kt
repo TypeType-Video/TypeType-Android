@@ -28,6 +28,7 @@ import dev.typetype.android.core.ui.navigation.ProfileSettingsRoute
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
 import dev.typetype.android.core.ui.navigation.AppearanceRoute
 import dev.typetype.android.core.ui.navigation.ChannelRoute
+import dev.typetype.android.core.ui.navigation.ContentSettingsRoute
 import dev.typetype.android.core.ui.navigation.HomeRoute
 import dev.typetype.android.core.ui.navigation.LoginRoute
 import dev.typetype.android.core.ui.navigation.NotificationsRoute
@@ -50,6 +51,7 @@ import dev.typetype.android.feature.settings.appearance.AppearanceRoute as Appea
 import dev.typetype.android.feature.settings.blocked.BlockedSettingsRoute as BlockedSettingsRouteScreen
 import dev.typetype.android.feature.settings.diagnostics.DiagnosticsRoute as DiagnosticsRouteScreen
 import dev.typetype.android.feature.settings.player.PlayerSettingsRoute as PlayerSettingsRouteScreen
+import dev.typetype.android.feature.settings.content.ContentSettingsRoute as ContentSettingsRouteScreen
 import dev.typetype.android.feature.settings.privacy.PrivacySettingsRoute as PrivacySettingsRouteScreen
 import dev.typetype.android.feature.settings.storage.StorageSettingsRoute as StorageSettingsRouteScreen
 import dev.typetype.android.feature.subscriptions.SubscriptionsRoute as SubscriptionsRouteScreen
@@ -259,6 +261,11 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
             profileDestinations(navController, currentServerId)
             composable<AppearanceRoute> {
                 AppearanceRouteScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                )
+            }
+            composable<ContentSettingsRoute> {
+                ContentSettingsRouteScreen(
                     onNavigateBack = { navController.popBackStack() },
                 )
             }
