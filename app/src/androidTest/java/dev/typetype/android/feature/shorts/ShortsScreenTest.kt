@@ -12,7 +12,9 @@ import androidx.compose.material3.Text
 import dev.typetype.android.core.ui.components.VideoMenuAction
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import dev.typetype.android.domain.feed.Video
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import kotlinx.coroutines.awaitCancellation
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -86,6 +88,52 @@ class ShortsScreenTest {
     }
 
     @Test
+    fun pagerReportsTheNextShortForMetadataPrefetch() {
+        val nextUrl = AtomicReference<String>()
+
+        show(
+            state = ShortsState(
+                videos = listOf(video("one"), video("two")),
+                isLoading = false,
+            ),
+            onNextVideoChanged = { nextUrl.set(it?.url) },
+        )
+
+        composeRule.waitUntil { nextUrl.get() == "https://video/two" }
+    }
+
+    @Test
+    fun changingPageCancelsThePreviousMetadataPrefetch() {
+        val prefetchStarted = AtomicBoolean()
+        val prefetchCancelled = AtomicBoolean()
+
+        show(
+            state = ShortsState(
+                videos = listOf(video("one"), video("two")),
+                isLoading = false,
+            ),
+            embeddedPlaybackEnabled = true,
+            onNextVideoChanged = { video ->
+                if (video != null) {
+                    prefetchStarted.set(true)
+                    try {
+                        awaitCancellation()
+                    } finally {
+                        prefetchCancelled.set(true)
+                    }
+                }
+            },
+            embeddedPlayback = { _, onAdvance ->
+                Button(onClick = onAdvance) { Text("Advance") }
+            },
+        )
+
+        composeRule.waitUntil { prefetchStarted.get() }
+        composeRule.onNodeWithText("Advance").performClick()
+        composeRule.waitUntil { prefetchCancelled.get() }
+    }
+
+    @Test
     fun activeShortExposesNativeLibraryActions() {
         val selectedAction = AtomicReference<VideoMenuAction>()
 
@@ -122,6 +170,7 @@ class ShortsScreenTest {
         onPlayVideo: (String) -> Unit = {},
         embeddedPlaybackEnabled: Boolean = false,
         onActiveVideoChanged: (Video?) -> Unit = {},
+        onNextVideoChanged: suspend (Video?) -> Unit = {},
         embeddedPlayback: @Composable (Video, () -> Unit) -> Unit = { _, _ -> },
         onMenuAction: (VideoMenuAction, Video) -> Unit = { _, _ -> },
         onShowComments: ((Video) -> Unit)? = null,
@@ -137,6 +186,7 @@ class ShortsScreenTest {
                     onLoadMore = {},
                     embeddedPlaybackEnabled = embeddedPlaybackEnabled,
                     onActiveVideoChanged = onActiveVideoChanged,
+                    onNextVideoChanged = onNextVideoChanged,
                     embeddedPlayback = embeddedPlayback,
                     onMenuAction = onMenuAction,
                     onShowComments = onShowComments,
