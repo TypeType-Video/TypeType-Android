@@ -18,6 +18,7 @@ data class PlayerHostStateSnapshot(
     val resumePositionMillis: Long? = null,
     val initialPlayWhenReady: Boolean = true,
     val requestStamp: Long = 0L,
+    val playbackClearRequestStamp: Long? = null,
 )
 
 @Singleton
@@ -36,6 +37,7 @@ class PlayerHostController @Inject constructor(
                 resumePositionMillis = null,
                 initialPlayWhenReady = true,
                 requestStamp = it.requestStamp + 1,
+                playbackClearRequestStamp = null,
             )
         }
         playbackQueueCoordinator.clear()
@@ -51,6 +53,7 @@ class PlayerHostController @Inject constructor(
                 resumePositionMillis = null,
                 initialPlayWhenReady = true,
                 requestStamp = it.requestStamp + 1,
+                playbackClearRequestStamp = null,
             )
         }
     }
@@ -65,6 +68,7 @@ class PlayerHostController @Inject constructor(
                 resumePositionMillis = positionMillis,
                 initialPlayWhenReady = false,
                 requestStamp = it.requestStamp + 1,
+                playbackClearRequestStamp = null,
             )
         }
         playbackQueueCoordinator.clear()
@@ -81,6 +85,7 @@ class PlayerHostController @Inject constructor(
                 resumePositionMillis = positionMillis,
                 initialPlayWhenReady = false,
                 requestStamp = it.requestStamp + 1,
+                playbackClearRequestStamp = null,
             )
         }
     }
@@ -100,6 +105,7 @@ class PlayerHostController @Inject constructor(
                 resumePositionMillis = null,
                 initialPlayWhenReady = autoplay,
                 requestStamp = it.requestStamp + 1,
+                playbackClearRequestStamp = null,
             )
         }
         playbackQueueCoordinator.clear()
@@ -123,15 +129,27 @@ class PlayerHostController @Inject constructor(
 
     fun hide() {
         _state.update {
+            val requestStamp = it.requestStamp + 1
             it.copy(
                 videoUrl = null,
                 target = PlayerHostTarget.Hidden,
                 resumePositionMillis = null,
                 initialPlayWhenReady = true,
-                requestStamp = it.requestStamp + 1,
+                requestStamp = requestStamp,
+                playbackClearRequestStamp = requestStamp,
             )
         }
         playbackQueueCoordinator.clear()
+    }
+
+    fun acknowledgePlaybackClear(requestStamp: Long) {
+        _state.update {
+            if (it.playbackClearRequestStamp == requestStamp) {
+                it.copy(playbackClearRequestStamp = null)
+            } else {
+                it
+            }
+        }
     }
 
 }

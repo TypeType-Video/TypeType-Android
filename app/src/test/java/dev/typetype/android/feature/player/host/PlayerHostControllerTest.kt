@@ -52,6 +52,30 @@ class PlayerHostControllerTest {
         assertNull(state.resumePositionMillis)
         assertEquals(PlayerHostTarget.Hidden, state.target)
         assertTrue(state.initialPlayWhenReady)
+        assertEquals(state.requestStamp, state.playbackClearRequestStamp)
+    }
+
+    @Test
+    fun `acknowledging a playback clear consumes only the matching request`() {
+        val controller = PlayerHostController(FakePlaybackQueueController())
+        controller.hide()
+        val requestStamp = requireNotNull(controller.state.value.playbackClearRequestStamp)
+
+        controller.acknowledgePlaybackClear(requestStamp - 1)
+        assertEquals(requestStamp, controller.state.value.playbackClearRequestStamp)
+
+        controller.acknowledgePlaybackClear(requestStamp)
+        assertNull(controller.state.value.playbackClearRequestStamp)
+    }
+
+    @Test
+    fun `opening video cancels an unhandled playback clear`() {
+        val controller = PlayerHostController(FakePlaybackQueueController())
+        controller.hide()
+
+        controller.openVideo("video")
+
+        assertNull(controller.state.value.playbackClearRequestStamp)
     }
 
     @Test
