@@ -48,8 +48,15 @@
         <item quantity="other">Syncing %d changes</item>
     </plurals>
     <string name="tab_home">Home</string>
+    <string name="tab_shorts">Shorts</string>
     <string name="tab_subscriptions">Subscriptions</string>
     <string name="tab_library">Library</string>
+    <string name="shorts_load_failed">Couldn\'t load Shorts</string>
+    <string name="shorts_load_more_failed">Couldn\'t load more Shorts</string>
+    <string name="shorts_empty">No Shorts are available yet.</string>
+    <string name="shorts_hidden">Shorts are hidden in Content settings.</string>
+    <string name="shorts_refresh">Refresh Shorts</string>
+    <string name="shorts_play">Play %1$s</string>
     <string name="player_rewind">Rewind</string>
     <string name="player_play_pause">Play / pause</string>
     <plurals name="player_autoplay_up_next">
