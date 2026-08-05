@@ -28,10 +28,11 @@ class PlaybackNetworkMonitor @Inject constructor(
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     private val handler = Handler(Looper.getMainLooper())
     private val lock = Any()
-    private val mutableStates = MutableStateFlow(initialState())
     private var activeNetwork: Network? = connectivityManager.activeNetwork
     private var activeCapabilities = activeNetwork?.let(connectivityManager::getNetworkCapabilities)
     private var blocked = false
+    private val stateTracker = PlaybackNetworkStateTracker(currentRoute())
+    private val mutableStates = MutableStateFlow(stateTracker.state)
 
     internal val states: StateFlow<PlaybackNetworkState> = mutableStates
 
@@ -120,23 +121,17 @@ class PlaybackNetworkMonitor @Inject constructor(
         isBlocked: Boolean,
     ) {
         synchronized(lock) {
-            val previousNetwork = activeNetwork
-            val previousCapabilities = activeCapabilities
-            val previousBlocked = blocked
             activeNetwork = network
             activeCapabilities = capabilities
             blocked = isBlocked
-            val recovered = previousCapabilities.hasRecoveredComparedTo(activeCapabilities)
-            val materiallyChanged =
-                previousNetwork != network || previousBlocked != blocked || recovered
-            publish(materiallyChanged)
+            publish(stateTracker.update(currentRoute()))
         }
     }
 
     private fun signalRouteChange(network: Network) {
         synchronized(lock) {
             if (network != activeNetwork) return
-            publish(materiallyChanged = true)
+            publish(stateTracker.update(currentRoute(), routeSignaled = true))
         }
     }
 
@@ -147,14 +142,9 @@ class PlaybackNetworkMonitor @Inject constructor(
     ) {
         synchronized(lock) {
             if (network != activeNetwork) return
-            val previousCapabilities = activeCapabilities
-            val previousBlocked = blocked
             activeCapabilities = capabilities
             blocked = isBlocked
-            publish(
-                materiallyChanged = previousBlocked != blocked ||
-                    previousCapabilities.hasRecoveredComparedTo(activeCapabilities),
-            )
+            publish(stateTracker.update(currentRoute()))
         }
     }
 
@@ -164,43 +154,35 @@ class PlaybackNetworkMonitor @Inject constructor(
             activeNetwork = null
             activeCapabilities = null
             blocked = false
-            publish(materiallyChanged = true)
+            publish(stateTracker.update(currentRoute()))
         }
     }
 
-    private fun publish(materiallyChanged: Boolean) {
+    private fun publish(next: PlaybackNetworkState?) {
+        if (next == null) return
         val previous = mutableStates.value
-        val available = activeNetwork != null && !blocked
-        if (!materiallyChanged && previous.isAvailable == available) return
-        mutableStates.value = PlaybackNetworkState(
-            isAvailable = available,
-            generation = previous.generation + 1L,
-        )
+        mutableStates.value = next
         val route = when {
-            !previous.isAvailable && available -> "/network/available"
-            previous.isAvailable && !available -> "/network/lost"
+            !previous.isAvailable && next.isAvailable -> "/network/available"
+            previous.isAvailable && !next.isAvailable -> "/network/lost"
             else -> "/network/changed"
         }
         diagnosticsRepository.recordLocalEvent(route)
     }
 
-    private fun initialState(): PlaybackNetworkState =
-        PlaybackNetworkState(
-            isAvailable = connectivityManager.activeNetwork != null,
-            generation = 0L,
+    private fun currentRoute(): PlaybackNetworkRoute =
+        PlaybackNetworkRoute(
+            identity = activeNetwork,
+            isBlocked = blocked,
+            isValidated = activeCapabilities?.hasCapability(
+                NetworkCapabilities.NET_CAPABILITY_VALIDATED,
+            ),
+            isSuspended = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                activeCapabilities?.let {
+                    !it.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED)
+                }
+            } else {
+                null
+            },
         )
-}
-
-private fun NetworkCapabilities?.hasRecoveredComparedTo(
-    current: NetworkCapabilities?,
-): Boolean {
-    if (this == null || current == null) return false
-    val validationRecovered =
-        !hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) &&
-            current.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
-    val suspensionRecovered =
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
-            !hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED) &&
-            current.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED)
-    return validationRecovered || suspensionRecovered
 }
