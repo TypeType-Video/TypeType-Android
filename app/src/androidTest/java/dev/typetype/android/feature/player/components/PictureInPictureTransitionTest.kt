@@ -64,11 +64,7 @@ class PictureInPictureTransitionTest {
             instrumentation.waitForIdleSync()
 
             assertTrue(readOnMainThread { activity.isInPictureInPictureMode })
-            val pausedMainActivities = readOnMainThread {
-                ActivityLifecycleMonitorRegistry.getInstance()
-                    .getActivitiesInStage(Stage.PAUSED)
-                    .filterIsInstance<MainActivity>()
-            }
+            val pausedMainActivities = waitForPausedMainActivities()
             assertEquals(listOf(activity), pausedMainActivities)
         } finally {
             instrumentation.runOnMainSync { activity.finishAndRemoveTask() }
@@ -149,6 +145,21 @@ class PictureInPictureTransitionTest {
             Thread.sleep(50)
         }
         return readOnMainThread { activity.isInPictureInPictureMode }
+    }
+
+    private fun waitForPausedMainActivities(): List<MainActivity> {
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10)
+        var activities = emptyList<MainActivity>()
+        while (System.nanoTime() < deadline) {
+            activities = readOnMainThread {
+                ActivityLifecycleMonitorRegistry.getInstance()
+                    .getActivitiesInStage(Stage.PAUSED)
+                    .filterIsInstance<MainActivity>()
+            }
+            if (activities.isNotEmpty()) return activities
+            Thread.sleep(50)
+        }
+        return activities
     }
 
     private fun waitForController(
