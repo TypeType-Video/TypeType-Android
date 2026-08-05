@@ -1,5 +1,6 @@
 package dev.typetype.android.services
 
+import android.app.ActivityManager
 import android.app.Notification
 import android.app.NotificationManager
 import android.content.ComponentName
@@ -129,6 +130,27 @@ class PlaybackMediaSessionAndroidTest {
         }
     }
 
+    @Test
+    fun playingMediaPromotesTheSharedServiceToForeground() {
+        instrumentation.runOnMainSync {
+            controller.setMediaItem(
+                MediaItem.Builder()
+                    .setUri(Uri.fromFile(mediaFile))
+                    .setMimeType(MimeTypes.AUDIO_WAV)
+                    .build(),
+            )
+            controller.prepare()
+            controller.play()
+        }
+
+        assertTrue(
+            waitForControllerState {
+                it.playWhenReady && it.playbackState == Player.STATE_READY
+            },
+        )
+        assertTrue(waitForForegroundPlaybackService())
+    }
+
     private fun waitForControllerState(condition: (MediaController) -> Boolean): Boolean {
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10)
         while (System.nanoTime() < deadline) {
@@ -156,6 +178,24 @@ class PlaybackMediaSessionAndroidTest {
             Thread.sleep(50)
         }
         return null
+    }
+
+    private fun waitForForegroundPlaybackService(): Boolean {
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10)
+        while (System.nanoTime() < deadline) {
+            if (isPlaybackServiceForeground()) return true
+            Thread.sleep(50)
+        }
+        return isPlaybackServiceForeground()
+    }
+
+    @Suppress("DEPRECATION")
+    private fun isPlaybackServiceForeground(): Boolean {
+        val manager = context.getSystemService(ActivityManager::class.java) ?: return false
+        val serviceName = ComponentName(context, PlaybackService::class.java)
+        return manager.getRunningServices(Int.MAX_VALUE).any {
+            it.service == serviceName && it.foreground
+        }
     }
 }
 
