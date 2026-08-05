@@ -11,7 +11,7 @@ The comparison was refreshed on 2026-08-05 from clean clones:
 
 | Repository | Branch | Revision |
 | --- | --- | --- |
-| TypeType-Android | `dev` | `c39030decb5822832a7105f51bce7dd7602d9468` |
+| TypeType-Android | `dev` | `a29c6b662990e79266aee863e187b34c872589bf` |
 | TypeType frontend | `dev` | `97103f7302c91accdea3322d1f5b8f610607f378` |
 | TypeType-Server | `dev` | `6f31f93c4ecfb0e31c03c777b0d96f5cdc51f7bc` |
 | TypeType-Web-Player | `main` | `f4844c6e65d021c0ad1ab61169f4f51cfcd77694` |
@@ -85,7 +85,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | Sleep timer | Device-owned Media3 state | Implemented | Service timer and device tests |
 | Comments and replies | `/comments`, `/comments/replies` | Implemented | Paging source and native bottom sheet |
 | Related videos and channel actions | Stream metadata and subscriptions | Implemented | Shared video menus and player channel state |
-| Phone, tablet, fullscreen, mini-player, PiP | MediaSession and device capabilities | Partial | Adaptive watch layout is tested. API 29 and API 34 verify H.264 playback continuing in system PiP and pausing through the same service-owned MediaSession. API 34 also verifies notification and foreground-service publication with notification permission denied and granted. Android 16 with real 16 KiB pages passes 15 device tests in enforcing mode, including install, cold launch, H.264, MediaSession, notification, foreground service, background playback, PiP, edge-to-edge, and DownloadManager. API 37 passes the non-codec lifecycle suite; its emulator codec required an image-only SELinux workaround for the three H.264 tests. Signed PiP and rotation retest remain |
+| Phone, tablet, fullscreen, mini-player, PiP | MediaSession and device capabilities | Partial | Adaptive watch layout is tested. API 23 AOSP without Google services passes 139 device tests, including cold launch, H.264 service playback, activity reconnection, background continuation, and old-platform UI states. API 29 and API 34 verify H.264 playback continuing in system PiP and pausing through the same service-owned MediaSession. API 34 also verifies notification and foreground-service publication with notification permission denied and granted. Android 16 with real 16 KiB pages passes 15 device tests in enforcing mode, including install, cold launch, H.264, MediaSession, notification, foreground service, background playback, PiP, edge-to-edge, and DownloadManager. API 37 passes the non-codec lifecycle suite; its emulator codec required an image-only SELinux workaround for the three H.264 tests. Signed PiP and rotation retest remain |
 | Network loss and reconnection | Fresh Server session and bounded retry | Partial | Recovery gates exist; long VOD/live network-transition matrix remains |
 | Danmaku overlay | Comment-derived frontend presentation | Missing | Define accessibility, density, performance, and settings behavior first |
 
