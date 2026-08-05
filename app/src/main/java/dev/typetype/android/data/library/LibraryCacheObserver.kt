@@ -48,6 +48,8 @@ class LibraryCacheObserver @Inject constructor(
                             accountId = scope.accountId,
                             search = query.search.trim(),
                             orderKey = query.order.storageKey,
+                            fromMillis = query.fromMillis,
+                            toMillis = query.toMillis,
                         )
                     },
                 ).flow

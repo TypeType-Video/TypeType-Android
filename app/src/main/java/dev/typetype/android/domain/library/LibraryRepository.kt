@@ -15,8 +15,8 @@ interface LibraryRepository {
     fun observeIsFavorite(videoUrl: String): Flow<Boolean>
     fun observeIsInWatchLater(url: String): Flow<Boolean>
 
-    suspend fun refreshHistory(): Result<Unit>
-    suspend fun loadMoreHistory(): Result<Boolean>
+    suspend fun refreshHistory(query: HistoryQuery = HistoryQuery()): Result<Unit>
+    suspend fun loadMoreHistory(query: HistoryQuery = HistoryQuery()): Result<Boolean>
     suspend fun refreshFavorites(): Result<Unit>
     suspend fun refreshWatchLater(): Result<Unit>
     suspend fun refreshPlaylists(): Result<Unit>

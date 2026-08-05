@@ -30,6 +30,9 @@ import retrofit2.http.Query
 interface TypeTypeLibraryApi {
     @GET("history")
     suspend fun history(
+        @Query("q") search: String? = null,
+        @Query("from") fromMillis: Long? = null,
+        @Query("to") toMillis: Long? = null,
         @Query("limit") limit: Int = 60,
         @Query("offset") offset: Int = 0,
     ): Response<List<HistoryItemDto>>

@@ -59,7 +59,14 @@ class HistoryPagingDaoTest {
             ),
         )
 
-        val source = dao.pagingSource(SERVER_ID, ACCOUNT_ID, "alpha", orderKey = 2)
+        val source = dao.pagingSource(
+            SERVER_ID,
+            ACCOUNT_ID,
+            "alpha",
+            fromMillis = null,
+            toMillis = null,
+            orderKey = 2,
+        )
         val result = source.load(
             PagingSource.LoadParams.Refresh(
                 key = null,
