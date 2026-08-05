@@ -30,8 +30,11 @@ import dev.typetype.android.domain.auth.OidcCallbackRelay
 import dev.typetype.android.domain.auth.OidcRedirect
 import dev.typetype.android.domain.navigation.resolveIncomingVideoUrl
 import dev.typetype.android.domain.navigation.resolveSharedVideoUrl
-import dev.typetype.android.feature.player.components.PIP_ACTION_AUDIO_ONLY
 import dev.typetype.android.domain.session.ActiveSessionRepository
+import dev.typetype.android.feature.player.components.PIP_ACTION_AUDIO_ONLY
+import dev.typetype.android.feature.player.components.PIP_ACTION_PLAY_PAUSE
+import dev.typetype.android.feature.player.components.PictureInPictureActionStateOwner
+import dev.typetype.android.feature.player.components.updatePictureInPicturePlaybackAction
 import dev.typetype.android.feature.settings.diagnostics.CrashReportRoute
 import dev.typetype.android.services.PlaybackAudioOnlyCommand
 import javax.inject.Inject
@@ -41,7 +44,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), PictureInPictureActionStateOwner {
 
     @Inject
     lateinit var activeSessionRepository: ActiveSessionRepository
@@ -51,11 +54,13 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
     private var activityReportingJob: Job? = null
+    private var pipAudioOnlyAvailable = false
 
     private val pipReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
                 PIP_ACTION_AUDIO_ONLY -> enterAudioOnlyMode()
+                PIP_ACTION_PLAY_PAUSE -> togglePipPlayback()
             }
         }
     }
@@ -127,9 +132,14 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
     }
 
+    override fun setPictureInPictureAudioOnlyAvailable(available: Boolean) {
+        pipAudioOnlyAvailable = available
+    }
+
     private fun registerPipReceiver() {
         val filter = IntentFilter().apply {
             addAction(PIP_ACTION_AUDIO_ONLY)
+            addAction(PIP_ACTION_PLAY_PAUSE)
         }
         ContextCompat.registerReceiver(
             this,
@@ -164,6 +174,50 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun enterAudioOnlyMode() {
+        withPlaybackController { controller ->
+            val commandFuture = controller.sendCustomCommand(
+                PlaybackAudioOnlyCommand.command,
+                PlaybackAudioOnlyCommand.arguments(true),
+            )
+            commandFuture.addListener(
+                {
+                    val succeeded = runCatching { commandFuture.get() }
+                        .getOrNull()
+                        ?.resultCode == SessionResult.RESULT_SUCCESS
+                    if (succeeded) {
+                        runOnUiThread {
+                            viewModel.playerHostController.minimize()
+                            if (
+                                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                                isInPictureInPictureMode
+                            ) {
+                                runCatching { moveTaskToBack(false) }
+                            }
+                        }
+                    }
+                    controller.release()
+                },
+                MoreExecutors.directExecutor(),
+            )
+        }
+    }
+
+    private fun togglePipPlayback() {
+        withPlaybackController { controller ->
+            val shouldPlay = !controller.playWhenReady
+            if (shouldPlay) controller.play() else controller.pause()
+            runOnUiThread {
+                updatePictureInPicturePlaybackAction(
+                    this,
+                    shouldPlay,
+                    pipAudioOnlyAvailable,
+                )
+            }
+            controller.release()
+        }
+    }
+
+    private fun withPlaybackController(onConnected: (MediaController) -> Unit) {
         val token = SessionToken(
             applicationContext,
             ComponentName(applicationContext, "dev.typetype.android.services.PlaybackService"),
@@ -173,30 +227,7 @@ class MainActivity : ComponentActivity() {
             {
                 val controller = runCatching { controllerFuture.get() }.getOrNull()
                     ?: return@addListener
-                val commandFuture = controller.sendCustomCommand(
-                    PlaybackAudioOnlyCommand.command,
-                    PlaybackAudioOnlyCommand.arguments(true),
-                )
-                commandFuture.addListener(
-                    {
-                        val succeeded = runCatching { commandFuture.get() }
-                            .getOrNull()
-                            ?.resultCode == SessionResult.RESULT_SUCCESS
-                        if (succeeded) {
-                            runOnUiThread {
-                                viewModel.playerHostController.minimize()
-                                if (
-                                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-                                    isInPictureInPictureMode
-                                ) {
-                                    runCatching { moveTaskToBack(false) }
-                                }
-                            }
-                        }
-                        controller.release()
-                    },
-                    MoreExecutors.directExecutor(),
-                )
+                onConnected(controller)
             },
             MoreExecutors.directExecutor(),
         )

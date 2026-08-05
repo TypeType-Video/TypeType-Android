@@ -166,6 +166,10 @@
             </intent-filter>
         </activity>
 
+        <receiver
+            android:name=".feature.player.components.PictureInPictureActionReceiver"
+            android:exported="false" />
+
         <service
             android:name=".services.PlaybackService"
             android:exported="true"

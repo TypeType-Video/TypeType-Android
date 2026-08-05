@@ -18,7 +18,9 @@ import androidx.core.util.Consumer
 private val DEFAULT_ASPECT_RATIO = Rational(16, 9)
 
 const val PIP_ACTION_AUDIO_ONLY = "dev.typetype.android.PIP_AUDIO_ONLY"
+const val PIP_ACTION_PLAY_PAUSE = "dev.typetype.android.PIP_PLAY_PAUSE"
 internal const val PIP_REQUEST_AUDIO_ONLY = 1010
+internal const val PIP_REQUEST_PLAY_PAUSE = 1011
 
 @Composable
 fun rememberIsInPipMode(): State<Boolean> {
@@ -44,12 +46,19 @@ fun enterPictureInPicture(
     activity: Activity?,
     aspectRatio: Rational = DEFAULT_ASPECT_RATIO,
     isPlaying: Boolean = false,
+    audioOnlyAvailable: Boolean = false,
     sourceRect: Rect? = null,
 ) {
     val host = activity ?: return
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
     if (!supportsPictureInPicture(host)) return
-    PictureInPictureApi26.enter(host, aspectRatio, isPlaying, sourceRect)
+    PictureInPictureApi26.enter(
+        host,
+        aspectRatio,
+        isPlaying,
+        audioOnlyAvailable,
+        sourceRect,
+    )
 }
 
 fun applyAutoEnterPipParams(
@@ -57,12 +66,30 @@ fun applyAutoEnterPipParams(
     autoEnter: Boolean,
     aspectRatio: Rational = DEFAULT_ASPECT_RATIO,
     isPlaying: Boolean = false,
+    audioOnlyAvailable: Boolean = false,
     sourceRect: Rect? = null,
 ) {
     val host = activity ?: return
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
     if (!supportsPictureInPicture(host)) return
-    PictureInPictureApi26.apply(host, aspectRatio, autoEnter, isPlaying, sourceRect)
+    PictureInPictureApi26.apply(
+        host,
+        aspectRatio,
+        autoEnter,
+        isPlaying,
+        audioOnlyAvailable,
+        sourceRect,
+    )
+}
+
+fun updatePictureInPicturePlaybackAction(
+    activity: Activity?,
+    isPlaying: Boolean,
+    audioOnlyAvailable: Boolean,
+) {
+    val host = activity ?: return
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+    PictureInPictureApi26.updatePlaybackAction(host, isPlaying, audioOnlyAvailable)
 }
 
 fun supportsPictureInPicture(activity: Activity?): Boolean {

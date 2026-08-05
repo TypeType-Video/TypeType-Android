@@ -14,8 +14,22 @@ import dev.typetype.android.R
 
 @RequiresApi(Build.VERSION_CODES.O)
 internal object PictureInPictureApi26 {
-    fun enter(activity: Activity, aspectRatio: Rational, isPlaying: Boolean, sourceRect: Rect?) {
-        val params = buildParams(activity, aspectRatio, false, isPlaying, sourceRect)
+    fun enter(
+        activity: Activity,
+        aspectRatio: Rational,
+        isPlaying: Boolean,
+        audioOnlyAvailable: Boolean,
+        sourceRect: Rect?,
+    ) {
+        activity.rememberAudioOnlyAvailability(audioOnlyAvailable)
+        val params = buildParams(
+            activity,
+            aspectRatio,
+            false,
+            isPlaying,
+            audioOnlyAvailable,
+            sourceRect,
+        )
         runCatching { activity.enterPictureInPictureMode(params) }
     }
 
@@ -24,9 +38,29 @@ internal object PictureInPictureApi26 {
         aspectRatio: Rational,
         autoEnter: Boolean,
         isPlaying: Boolean,
+        audioOnlyAvailable: Boolean,
         sourceRect: Rect?,
     ) {
-        val params = buildParams(activity, aspectRatio, autoEnter, isPlaying, sourceRect)
+        activity.rememberAudioOnlyAvailability(audioOnlyAvailable)
+        val params = buildParams(
+            activity,
+            aspectRatio,
+            autoEnter,
+            isPlaying,
+            audioOnlyAvailable,
+            sourceRect,
+        )
+        runCatching { activity.setPictureInPictureParams(params) }
+    }
+
+    fun updatePlaybackAction(
+        activity: Activity,
+        isPlaying: Boolean,
+        audioOnlyAvailable: Boolean,
+    ) {
+        val params = PictureInPictureParams.Builder()
+            .setActions(buildActions(activity, isPlaying, audioOnlyAvailable))
+            .build()
         runCatching { activity.setPictureInPictureParams(params) }
     }
 
@@ -35,11 +69,12 @@ internal object PictureInPictureApi26 {
         aspectRatio: Rational,
         autoEnter: Boolean,
         isPlaying: Boolean,
+        audioOnlyAvailable: Boolean,
         sourceRect: Rect?,
     ): PictureInPictureParams {
         val builder = PictureInPictureParams.Builder()
             .setAspectRatio(aspectRatio)
-            .setActions(buildActions(activity))
+            .setActions(buildActions(activity, isPlaying, audioOnlyAvailable))
         sourceRect?.takeIf { it.width() > 0 && it.height() > 0 }?.let {
             builder.setSourceRectHint(Rect(it))
         }
@@ -59,16 +94,31 @@ internal object PictureInPictureApi26 {
         return builder.build()
     }
 
-    private fun buildActions(activity: Activity): List<RemoteAction> {
-        return listOf(
+    private fun buildActions(
+        activity: Activity,
+        isPlaying: Boolean,
+        audioOnlyAvailable: Boolean,
+    ): List<RemoteAction> = buildList {
+        add(
             buildAction(
                 activity,
-                PIP_ACTION_AUDIO_ONLY,
-                PIP_REQUEST_AUDIO_ONLY,
-                R.drawable.ic_headphones,
-                R.string.player_audio_only,
+                PIP_ACTION_PLAY_PAUSE,
+                PIP_REQUEST_PLAY_PAUSE,
+                if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play,
+                if (isPlaying) R.string.player_action_pause else R.string.player_action_play,
             ),
         )
+        if (audioOnlyAvailable) {
+            add(
+                buildAction(
+                    activity,
+                    PIP_ACTION_AUDIO_ONLY,
+                    PIP_REQUEST_AUDIO_ONLY,
+                    R.drawable.ic_headphones,
+                    R.string.player_audio_only,
+                ),
+            )
+        }
     }
 
     private fun buildAction(
@@ -78,7 +128,8 @@ internal object PictureInPictureApi26 {
         icon: Int,
         title: Int,
     ): RemoteAction {
-        val intent = Intent(action).setPackage(activity.packageName)
+        val intent = Intent(activity, PictureInPictureActionReceiver::class.java)
+            .setAction(action)
         val pending = PendingIntent.getBroadcast(
             activity,
             requestCode,
@@ -87,5 +138,10 @@ internal object PictureInPictureApi26 {
         )
         val label = activity.getString(title)
         return RemoteAction(Icon.createWithResource(activity, icon), label, label, pending)
+    }
+
+    private fun Activity.rememberAudioOnlyAvailability(available: Boolean) {
+        (this as? PictureInPictureActionStateOwner)
+            ?.setPictureInPictureAudioOnlyAvailable(available)
     }
 }

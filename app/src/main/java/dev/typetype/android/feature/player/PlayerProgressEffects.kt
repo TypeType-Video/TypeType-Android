@@ -19,6 +19,7 @@ internal fun PlayerProgressEffects(
     controller: MediaController?,
     activity: Activity?,
     durationMillis: Long,
+    audioOnlyAvailable: Boolean,
     pipSourceRect: Rect?,
     onSaveProgress: (Long) -> Unit,
 ) {
@@ -36,7 +37,7 @@ internal fun PlayerProgressEffects(
         }
     }
 
-    DisposableEffect(controller, pipSourceRect) {
+    DisposableEffect(controller, audioOnlyAvailable, pipSourceRect) {
         val current = controller
         if (current == null) {
             onDispose { }
@@ -47,6 +48,7 @@ internal fun PlayerProgressEffects(
                         activity,
                         autoEnter = isPlaying,
                         isPlaying = isPlaying,
+                        audioOnlyAvailable = audioOnlyAvailable,
                         sourceRect = pipSourceRect,
                     )
                     if (!isPlaying) saveIfEligible(current.currentPosition)
@@ -67,6 +69,7 @@ internal fun PlayerProgressEffects(
                 activity,
                 autoEnter = current.isPlaying,
                 isPlaying = current.isPlaying,
+                audioOnlyAvailable = audioOnlyAvailable,
                 sourceRect = pipSourceRect,
             )
             onDispose {

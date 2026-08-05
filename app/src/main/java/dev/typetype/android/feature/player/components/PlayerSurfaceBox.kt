@@ -10,10 +10,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,7 +26,6 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.ui.compose.state.rememberPresentationState
@@ -256,6 +253,7 @@ internal fun PlayerSurfaceBox(
                     enterPictureInPicture(
                         activity,
                         isPlaying = playbackStatus.isPlaying,
+                        audioOnlyAvailable = audioOnlyState.available,
                         sourceRect = pipSourceRect,
                     )
                 },
@@ -322,9 +320,6 @@ internal fun PlayerSurfaceBox(
             )
         }
 
-        SnackbarHost(
-            hostState = audioOnlySnackbar,
-            modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
-        )
+        PlayerSurfaceSnackbar(audioOnlySnackbar)
     }
 }

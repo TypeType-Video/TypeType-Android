@@ -155,6 +155,7 @@ fun LoadedPlayer(
         controller = controller,
         activity = activity,
         durationMillis = stream.durationSeconds * 1000L,
+        audioOnlyAvailable = !stream.isLive && !stream.isLiveContent,
         pipSourceRect = pipSourceRect,
         onSaveProgress = { onAction(PlayerAction.OnSaveProgress(it)) },
     )
