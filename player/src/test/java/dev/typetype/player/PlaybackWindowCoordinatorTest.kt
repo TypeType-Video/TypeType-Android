@@ -1,6 +1,7 @@
 package dev.typetype.player
 
 import java.io.IOException
+import kotlin.random.Random
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -17,7 +18,7 @@ class PlaybackWindowCoordinatorTest {
     }
 
     @Test
-    fun `repeated seeks retain only the latest deferred position`() {
+    fun `repeated seeks start immediately and only the latest result wins`() {
         val loader = RecordingLoader()
         val dispatcher = RecordingDispatcher()
         val coordinator = PlaybackWindowCoordinator(loader, dispatcher)
@@ -26,17 +27,19 @@ class PlaybackWindowCoordinatorTest {
         coordinator.seek(20_000L)
         coordinator.seek(30_000L)
 
-        assertEquals(listOf(10_000L), loader.seekPositions)
-        assertEquals(listOf(250L, 250L), dispatcher.delays)
+        assertEquals(listOf(10_000L, 20_000L, 30_000L), loader.seekPositions)
+        assertTrue(loader.cancellations.take(2).all { it.cancelled })
 
-        dispatcher.runDelayed()
+        loader.callbacks[1](Result.success(playbackWindow(generation = 2L)))
+        loader.callbacks[0](Result.success(playbackWindow(generation = 1L)))
+        loader.callbacks[2](Result.success(playbackWindow(generation = 3L)))
+        dispatcher.runPosted()
 
-        assertEquals(listOf(10_000L, 30_000L), loader.seekPositions)
-        assertTrue(loader.cancellations.first().cancelled)
+        assertEquals(3L, coordinator.window?.generation)
     }
 
     @Test
-    fun `cancelled seek result cannot replace a deferred seek`() {
+    fun `cancelled seek result cannot replace a newer seek`() {
         val loader = RecordingLoader()
         val dispatcher = RecordingDispatcher()
         val coordinator = PlaybackWindowCoordinator(loader, dispatcher)
@@ -47,13 +50,15 @@ class PlaybackWindowCoordinatorTest {
         dispatcher.runPosted()
 
         coordinator.maybeThrowError()
-        dispatcher.runDelayed()
+        loader.callbacks.last()(Result.success(playbackWindow(generation = 2L)))
+        dispatcher.runPosted()
 
         assertEquals(listOf(10_000L, 20_000L), loader.seekPositions)
+        assertEquals(2L, coordinator.window?.generation)
     }
 
     @Test
-    fun `window loading cannot overtake a deferred seek`() {
+    fun `window loading cannot overtake an active seek`() {
         val loader = RecordingLoader()
         val dispatcher = RecordingDispatcher()
         val coordinator = PlaybackWindowCoordinator(loader, dispatcher)
@@ -62,15 +67,12 @@ class PlaybackWindowCoordinatorTest {
         coordinator.seek(20_000L)
         coordinator.load(15_000L)
 
-        assertEquals(0, loader.loadCount)
-
-        dispatcher.runDelayed()
-
         assertEquals(listOf(10_000L, 20_000L), loader.seekPositions)
+        assertEquals(0, loader.loadCount)
     }
 
     @Test
-    fun `release cancels deferred seek`() {
+    fun `release cancels active seek`() {
         val loader = RecordingLoader()
         val dispatcher = RecordingDispatcher()
         val coordinator = PlaybackWindowCoordinator(loader, dispatcher)
@@ -78,9 +80,8 @@ class PlaybackWindowCoordinatorTest {
         coordinator.seek(10_000L)
         coordinator.seek(20_000L)
         coordinator.release()
-        dispatcher.runDelayed()
-
-        assertEquals(listOf(10_000L), loader.seekPositions)
+        assertEquals(listOf(10_000L, 20_000L), loader.seekPositions)
+        assertTrue(loader.cancellations.all { it.cancelled })
         assertTrue(loader.released)
     }
 
@@ -101,10 +102,29 @@ class PlaybackWindowCoordinatorTest {
         assertEquals(1, source.available)
         assertEquals(1, period.available)
     }
+
+    @Test
+    fun `rapid seek results cannot overtake the final request`() {
+        val loader = RecordingLoader()
+        val dispatcher = RecordingDispatcher()
+        val coordinator = PlaybackWindowCoordinator(loader, dispatcher)
+
+        repeat(5_000) { index -> coordinator.seek(index * 1_000L) }
+        (0 until 5_000).shuffled(Random(15)).forEach { index ->
+            loader.callbacks[index](
+                Result.success(playbackWindow(generation = index.toLong())),
+            )
+        }
+        dispatcher.runPosted()
+
+        assertEquals(5_000, loader.seekPositions.size)
+        assertTrue(loader.cancellations.dropLast(1).all { it.cancelled })
+        assertEquals(4_999L, coordinator.window?.generation)
+    }
 }
 
-private fun playbackWindow() = PlaybackWindow(
-    generation = 0L,
+private fun playbackWindow(generation: Long = 0L) = PlaybackWindow(
+    generation = generation,
     durationUs = 60_000_000L,
     startPositionUs = 10_000_000L,
     endOfStream = false,
@@ -173,31 +193,12 @@ private class RecordingCancellation : PlaybackLoadCancellation {
 
 private class RecordingDispatcher : PlaybackTaskDispatcher {
     private val posted = mutableListOf<Runnable>()
-    private val delayed = mutableListOf<Runnable>()
-    private val recordedDelays = mutableListOf<Long>()
-
-    val delays: List<Long>
-        get() = recordedDelays.toList()
 
     override fun post(task: Runnable) {
         posted += task
     }
 
-    override fun postDelayed(task: Runnable, delayMs: Long) {
-        delayed += task
-        recordedDelays += delayMs
-    }
-
-    override fun remove(task: Runnable) {
-        posted -= task
-        delayed -= task
-    }
-
     fun runPosted() {
         posted.toList().also(posted::removeAll).forEach(Runnable::run)
-    }
-
-    fun runDelayed() {
-        delayed.toList().also(delayed::removeAll).forEach(Runnable::run)
     }
 }
