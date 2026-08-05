@@ -545,6 +545,10 @@
     <string name="login_guest_failed">Couldn\'t start a guest session</string>
     <string name="login_oidc_start_failed">Couldn\'t start single sign-on</string>
     <string name="login_oidc_finish_failed">Couldn\'t finish single sign-on</string>
+    <string name="register_status_failed">Couldn\'t check whether registration is available</string>
+    <string name="register_fields_required">Enter your name, email, and password</string>
+    <string name="register_failed">Couldn\'t create the account</string>
+    <string name="register_rejected">Registration is no longer available on this instance</string>
     <string name="external_link_title">Leaving TypeType</string>
     <string name="external_link_message">This link opens outside the app.</string>
     <string name="external_link_open">Open</string>
