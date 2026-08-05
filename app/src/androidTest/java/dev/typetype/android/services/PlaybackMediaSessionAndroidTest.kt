@@ -1,14 +1,19 @@
 package dev.typetype.android.services
 
+import android.app.Notification
+import android.app.NotificationManager
 import android.content.ComponentName
 import android.content.Context
 import android.net.Uri
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.MimeTypes
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import java.io.File
 import java.io.FileOutputStream
@@ -16,6 +21,7 @@ import java.io.OutputStream
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -74,6 +80,32 @@ class PlaybackMediaSessionAndroidTest {
         assertFalse(readControllerState { it.playWhenReady })
     }
 
+    @Test
+    @SdkSuppress(maxSdkVersion = 32)
+    fun playingMediaPublishesTheSessionNotification() {
+        val title = "TypeType notification smoke"
+        instrumentation.runOnMainSync {
+            controller.setMediaItem(
+                MediaItem.Builder()
+                    .setUri(Uri.fromFile(mediaFile))
+                    .setMimeType(MimeTypes.AUDIO_WAV)
+                    .setMediaMetadata(MediaMetadata.Builder().setTitle(title).build())
+                    .build(),
+            )
+            controller.prepare()
+            controller.play()
+        }
+
+        assertTrue(
+            waitForControllerState {
+                it.playWhenReady && it.playbackState == Player.STATE_READY
+            },
+        )
+        val notification = waitForNotification(title)
+
+        assertEquals(Notification.CATEGORY_TRANSPORT, notification?.category)
+    }
+
     private fun waitForControllerState(condition: (MediaController) -> Boolean): Boolean {
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10)
         while (System.nanoTime() < deadline) {
@@ -87,6 +119,20 @@ class PlaybackMediaSessionAndroidTest {
         val result = AtomicBoolean()
         instrumentation.runOnMainSync { result.set(block(controller)) }
         return result.get()
+    }
+
+    private fun waitForNotification(title: String): Notification? {
+        val manager = context.getSystemService(NotificationManager::class.java) ?: return null
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10)
+        while (System.nanoTime() < deadline) {
+            manager.activeNotifications.firstOrNull { notification ->
+                notification.notification.extras
+                    .getCharSequence(Notification.EXTRA_TITLE)
+                    ?.toString() == title
+            }?.let { return it.notification }
+            Thread.sleep(50)
+        }
+        return null
     }
 }
 
