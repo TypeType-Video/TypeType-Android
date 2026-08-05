@@ -32,6 +32,10 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.components.DropdownRow
+import dev.typetype.android.core.ui.components.ServiceRow
+import dev.typetype.android.core.ui.components.SettingsSectionHeader
+import dev.typetype.android.core.ui.components.SwitchRow
 
 private val QUALITY_OPTIONS = listOf("144p", "240p", "360p", "480p", "720p", "1080p", "1440p", "2160p")
 private val AUTOPLAY_COUNTDOWN_OPTIONS = listOf(0, 5, 10, 15, 30, 60)
@@ -101,7 +105,7 @@ fun PlayerSettingsScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                item { SectionHeader(stringResource(R.string.settings_player_section_playback)) }
+                item { SettingsSectionHeader(stringResource(R.string.settings_player_section_playback)) }
                 item {
                     SwitchRow(
                         title = stringResource(R.string.settings_player_autoplay),
@@ -181,7 +185,7 @@ fun PlayerSettingsScreen(
 
                 if (state.defaultService == 0) {
                     item { Spacer(Modifier.size(4.dp)) }
-                    item { SectionHeader(stringResource(R.string.settings_player_section_subtitles)) }
+                    item { SettingsSectionHeader(stringResource(R.string.settings_player_section_subtitles)) }
                     item {
                         SwitchRow(
                             title = stringResource(R.string.settings_player_subtitles_enabled),
@@ -225,7 +229,7 @@ fun PlayerSettingsScreen(
                 }
 
                 item { Spacer(Modifier.size(4.dp)) }
-                item { SectionHeader(stringResource(R.string.settings_section_default_service)) }
+                item { SettingsSectionHeader(stringResource(R.string.settings_section_default_service)) }
                 items(SERVICES.size, key = { i -> "svc-${SERVICES[i].id}" }) { i ->
                     val svc = SERVICES[i]
                     ServiceRow(
@@ -240,7 +244,7 @@ fun PlayerSettingsScreen(
                 sponsorBlockSettingsItems(state = state, onAction = onAction)
 
                 item { Spacer(Modifier.size(4.dp)) }
-                item { SectionHeader(stringResource(R.string.settings_player_section_gestures)) }
+                item { SettingsSectionHeader(stringResource(R.string.settings_player_section_gestures)) }
                 item {
                     SwitchRow(
                         title = stringResource(R.string.settings_player_double_tap_seek),
