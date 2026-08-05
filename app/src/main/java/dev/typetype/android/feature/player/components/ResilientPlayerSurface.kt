@@ -141,6 +141,7 @@ internal fun ResilientPlayerSurface(
     }
 }
 
+@OptIn(markerClass = [UnstableApi::class])
 internal fun PlayerView.retainContentAcrossPlayerResets() {
     setKeepContentOnPlayerReset(true)
 }
