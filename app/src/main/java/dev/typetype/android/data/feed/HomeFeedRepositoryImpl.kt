@@ -7,6 +7,8 @@ import dev.typetype.android.data.network.requireSuccessfulResponse
 import dev.typetype.android.domain.feed.HomeFeedRepository
 import dev.typetype.android.domain.feed.HomeRecommendationsPage
 import dev.typetype.android.domain.feed.SubscriptionsPage
+import dev.typetype.android.domain.feed.ShortsContinuation
+import dev.typetype.android.domain.feed.ShortsPage
 import dev.typetype.android.domain.feed.Video
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -77,6 +79,43 @@ class HomeFeedRepositoryImpl @Inject constructor(
             expectedGeneration = expectedGeneration,
             verifyOwner = { activeAccountScope.verify(scope) },
         )
+    }
+
+    override suspend fun loadShorts(
+        continuation: ShortsContinuation?,
+        service: Int,
+        limit: Int,
+    ): Result<ShortsPage> = feedResult {
+        val scope = activeAccountScope.require()
+        val api = apiHolder.require(scope)
+        val page = when {
+            scope.accountId.startsWith("guest:") -> loadDiscoveryShorts(
+                api = api,
+                nextPage = (continuation as? ShortsContinuation.Discovery)?.nextPage,
+                service = service,
+                limit = limit,
+            )
+            continuation is ShortsContinuation.Subscriptions -> loadSubscriptionShorts(
+                api = api,
+                page = continuation.page,
+                service = service,
+                limit = limit,
+            )
+            else -> loadRecommendationShorts(
+                api = api,
+                cursor = (continuation as? ShortsContinuation.Recommendations)?.cursor,
+                service = service,
+                limit = limit,
+            ).takeUnless { continuation == null && it.videos.isEmpty() }
+                ?: loadSubscriptionShorts(
+                    api = api,
+                    page = 0,
+                    service = service,
+                    limit = limit,
+                )
+        }
+        activeAccountScope.verify(scope)
+        page.copy(videos = page.videos.normalizedShorts())
     }
 
     private suspend fun loadCachedFeed(feed: String): List<Video> {
