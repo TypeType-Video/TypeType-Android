@@ -2,6 +2,8 @@ package dev.typetype.android.feature.player
 
 import androidx.media3.common.MediaItem
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import dev.typetype.android.domain.stream.AudioOnlyStream
+import dev.typetype.android.domain.stream.AudioOnlyStreamKind
 import dev.typetype.android.domain.stream.SabrPlaybackBinding
 import dev.typetype.android.domain.stream.SabrPlaybackSession
 import dev.typetype.android.domain.stream.SabrPlaybackTarget
@@ -9,10 +11,14 @@ import dev.typetype.android.domain.stream.StreamRequestScope
 import dev.typetype.android.domain.stream.StreamSubtitleSource
 import dev.typetype.android.domain.stream.sourceKey
 import dev.typetype.android.services.MergedStreamMediaKeys
+import dev.typetype.android.services.ProviderAudioOnlyRequest
+import dev.typetype.android.services.isProviderAudioOnly
+import dev.typetype.android.services.providerAudioOnlyRequest
 import dev.typetype.android.services.requireSabrTransportScope
 import dev.typetype.android.services.sabrPlaybackSeekState
 import dev.typetype.android.services.streamRequestScope
 import dev.typetype.android.services.toSubtitleConfigurations
+import dev.typetype.android.services.withProviderAudioOnly
 import dev.typetype.android.services.withSabrPlayback
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -235,6 +241,52 @@ class SabrPlaybackSourceAndroidTest {
         assertEquals(
             "fr",
             extras.getString(MergedStreamMediaKeys.EXTRA_AUDIO_ONLY_PREFERRED_LOCALE),
+        )
+    }
+
+    @Test
+    fun providerAudioOnlySourceKeepsIdentityAndRemovesVideoOnlyConfiguration() {
+        val scope = StreamRequestScope("server", "account", "https://instance.example/api/")
+        val source = PlayableSource(
+            url = "https://instance.example/api/media/video",
+            mimeType = "video/mp4",
+            audioUrl = "https://instance.example/api/media/audio",
+            audioMimeType = "audio/mp4",
+        )
+        val original = MediaItem.Builder()
+            .setUri(source.url)
+            .setMediaId("https://www.youtube.com/watch?v=video")
+            .setRequestMetadata(
+                source.toRequestMetadata(
+                    scope = scope,
+                    preferOriginalAudio = true,
+                    preferredAudioLocale = "es",
+                ),
+            )
+            .setSubtitleConfigurations(listOf(subtitle("en", "English", false)).toSubtitleConfigurations())
+            .build()
+
+        val audioOnly = original.withProviderAudioOnly(
+            AudioOnlyStream(
+                url = "https://instance.example/api/streams/audio-only/source?token=value",
+                kind = AudioOnlyStreamKind.Progressive,
+                mimeType = "audio/mp4",
+                codec = "mp4a.40.2",
+                bitrate = 128_000,
+                contentLength = 4_096,
+                durationMillis = 42_000,
+            ),
+        )
+
+        assertEquals(original.mediaId, audioOnly.mediaId)
+        assertTrue(audioOnly.isProviderAudioOnly())
+        assertTrue(audioOnly.localConfiguration?.subtitleConfigurations.isNullOrEmpty())
+        assertEquals(null, audioOnly.requestMetadata.extras?.getString(
+            MergedStreamMediaKeys.EXTRA_AUDIO_URL,
+        ))
+        assertEquals(
+            ProviderAudioOnlyRequest("https://www.youtube.com/watch?v=video", scope, true, "es"),
+            audioOnly.providerAudioOnlyRequest(),
         )
     }
 
