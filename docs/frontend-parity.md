@@ -11,9 +11,9 @@ The comparison was refreshed on 2026-08-05 from clean clones:
 
 | Repository | Branch | Revision |
 | --- | --- | --- |
-| TypeType-Android | `dev` | `af8c04ebea45626bcb038627ec137206da01f034` |
-| TypeType frontend | `dev` | `a8bdf1fbe78d76c38136188e1a6b621204f93102` |
-| TypeType-Server | `dev` | `2b2aacbbf47a67723cec8c13fcbe599c731bb920` |
+| TypeType-Android | `dev` | `ce7197682bd1a2bd6494da42f24e4be06a89d587` |
+| TypeType frontend | `dev` | `97103f7302c91accdea3322d1f5b8f610607f378` |
+| TypeType-Server | `dev` | `6f31f93c4ecfb0e31c03c777b0d96f5cdc51f7bc` |
 | TypeType-Web-Player | `main` | `f4844c6e65d021c0ad1ab61169f4f51cfcd77694` |
 
 `Implemented` means a user can reach the native feature and the relevant
@@ -51,7 +51,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | Search services, grouped filters, and pagination | `/search`, `/search/filters` | Implemented | Contract, selection, and continuation tests |
 | Public playlist detail and save | `/playlist`, `/saved-playlists` | Implemented | Native detail, pagination, save boundary, and Library cache |
 | Podcast episodes and queue | `/podcasts/episodes` | Implemented | Paged detail and service-owned queue |
-| Shorts recommendations and subscriptions | `/recommendations/shorts`, `/subscriptions/shorts` | Partial | Native vertical pager, shared Media3 host, autoplay intent, favorite, Watch Later, comments, subscriptions, sharing, blocking, channel interleaving, and explicit states have contract and API 29 Compose coverage. A real beta account exercised both feed endpoints, the empty result, settings round trip, and process recreation; bounded next-item metadata prefetch, long real playback, seeks, and network transitions remain unverified |
+| Shorts recommendations and subscriptions | `/recommendations/shorts`, `/subscriptions/shorts` | Partial | Native vertical pager, shared Media3 host, autoplay intent, favorite, Watch Later, comments, subscriptions, sharing, blocking, channel interleaving, explicit states, and bounded next-item metadata prefetch have contract, unit, and API 29 Compose coverage. A real beta account exercised both feed endpoints, the empty result, settings round trip, and process recreation; long real playback, seeks, and network transitions remain unverified |
 | DeArrow titles and thumbnails | `/dearrow`, `/dearrow/thumbnail` | Implemented | Server-synchronized preferences, trusted-candidate resolution, shared card/player presentation, contract and Compose tests, plus a real beta process-recreation check |
 | Block video, channel, and title keyword | `/blocked/*` | Implemented | Native menus/settings and contract tests |
 | Notifications and unread count | `/notifications*` | Implemented | Screen, badge, read-all flow, DTO and Compose tests |
@@ -113,6 +113,10 @@ Android gap, not an invitation to move a Server responsibility into the app.
 - The frontend's navigation and cinema presentation are references for behavior,
   not layouts to copy. Android keeps bottom navigation, a rail on wide windows,
   one MediaSession, system PiP, and platform caption/accessibility behavior.
+- The frontend prepares two upcoming Shorts queries. Android keeps one
+  metadata-only candidate, checks Data Saver, and never prefetches media
+  segments or a SABR session. This bounds mobile and Server work while keeping
+  the next item ready.
 - Extraction, YouTube credentials, SABR policy, PO tokens, DeArrow resolution,
   recommendations, imports, and downloader jobs remain Server-owned.
 
