@@ -10,6 +10,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.error.UserErrorMapper
 import dev.typetype.android.core.ui.navigation.LoginRoute
+import dev.typetype.android.data.auth.SessionAccountMismatchException
 import dev.typetype.android.domain.auth.AuthRepository
 import dev.typetype.android.domain.auth.LoginMethods
 import dev.typetype.android.domain.auth.OidcCallbackRelay
@@ -34,8 +35,11 @@ class LoginViewModel @Inject constructor(
 
     private val route: LoginRoute = savedStateHandle.toRoute<LoginRoute>()
     private val serverId: String = route.serverId
+    private val expectedAccountId: String? = route.accountId
 
-    private val _state = MutableStateFlow(LoginState())
+    private val _state = MutableStateFlow(
+        LoginState(isReauthentication = expectedAccountId != null),
+    )
     val state = _state.asStateFlow()
 
     private val eventsChannel = Channel<LoginEvent>(Channel.BUFFERED)
@@ -134,7 +138,12 @@ class LoginViewModel @Inject constructor(
         }
         viewModelScope.launch {
             authRepository
-                .loginWithCredentials(serverId, current.identifier, current.password)
+                .loginWithCredentials(
+                    serverId = serverId,
+                    identifier = current.identifier,
+                    password = current.password,
+                    expectedAccountId = expectedAccountId,
+                )
                 .fold(
                     onSuccess = {
                         _state.update { it.copy(isSubmitting = false) }
@@ -143,7 +152,11 @@ class LoginViewModel @Inject constructor(
                     onFailure = { throwable ->
                         val details = errorMapper.authenticationDetails(
                             failure = throwable,
-                            fallbackRes = R.string.login_failed,
+                            fallbackRes = if (throwable is SessionAccountMismatchException) {
+                                R.string.login_account_mismatch
+                            } else {
+                                R.string.login_failed
+                            },
                             rejectedRes = R.string.login_credentials_rejected,
                         )
                         _state.update {
@@ -224,7 +237,7 @@ class LoginViewModel @Inject constructor(
             it.copy(isSubmitting = true, errorMessage = null, errorRequestId = null)
         }
         viewModelScope.launch {
-            authRepository.finishOidc(serverId, callbackUrl).fold(
+            authRepository.finishOidc(serverId, callbackUrl, expectedAccountId).fold(
                 onSuccess = {
                     _state.update { it.copy(isSubmitting = false) }
                     emit(LoginEvent.NavigateToHome)
@@ -233,7 +246,11 @@ class LoginViewModel @Inject constructor(
                     oidcCallbackInProgress = false
                     val details = errorMapper.authenticationDetails(
                         throwable,
-                        R.string.login_oidc_finish_failed,
+                        if (throwable is SessionAccountMismatchException) {
+                            R.string.login_account_mismatch
+                        } else {
+                            R.string.login_oidc_finish_failed
+                        },
                     )
                     _state.update {
                         it.copy(
@@ -258,7 +275,7 @@ class LoginViewModel @Inject constructor(
                 isLoadingMethods = false,
                 instanceName = instanceName,
                 localLoginEnabled = methods.localLoginEnabled,
-                guestAllowed = guestAllowed,
+                guestAllowed = guestAllowed && expectedAccountId == null,
                 registrationAllowed = registrationAllowed,
                 oidcEnabled = methods.oidcEnabled,
                 oidcProviderName = methods.oidcProviderName,

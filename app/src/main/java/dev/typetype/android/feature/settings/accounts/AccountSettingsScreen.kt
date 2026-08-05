@@ -36,7 +36,7 @@ import kotlinx.coroutines.flow.collectLatest
 fun AccountSettingsRoute(
     onNavigateBack: () -> Unit,
     onAccountActivated: () -> Unit,
-    onSignIn: (String) -> Unit,
+    onSignIn: (String, String?) -> Unit,
     onAddInstance: () -> Unit,
     viewModel: AccountSettingsViewModel = hiltViewModel(),
 ) {
@@ -45,7 +45,7 @@ fun AccountSettingsRoute(
         viewModel.events.collectLatest { event ->
             when (event) {
                 AccountSettingsEvent.AccountActivated -> onAccountActivated()
-                is AccountSettingsEvent.SignIn -> onSignIn(event.serverId)
+                is AccountSettingsEvent.SignIn -> onSignIn(event.serverId, event.accountId)
                 AccountSettingsEvent.AddInstance -> onAddInstance()
             }
         }
@@ -66,7 +66,7 @@ private fun AccountSettingsScreen(
     onNavigateBack: () -> Unit,
     onSelect: (String, String) -> Unit,
     onForget: (String, String) -> Unit,
-    onSignIn: (String) -> Unit,
+    onSignIn: (String, String?) -> Unit,
     onAddInstance: () -> Unit,
 ) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -90,7 +90,7 @@ private fun AccountSettingsScreen(
                             busyAccountId = state.busyAccountId,
                             onSelect = onSelect,
                             onForget = onForget,
-                            onSignIn = { onSignIn(server.id) },
+                            onSignIn = { accountId -> onSignIn(server.id, accountId) },
                         )
                     }
                 }
