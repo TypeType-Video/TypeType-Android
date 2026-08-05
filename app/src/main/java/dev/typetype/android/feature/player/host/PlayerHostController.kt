@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-enum class PlayerHostTarget { Hidden, Mini, Expanded }
+enum class PlayerHostTarget { Hidden, Mini, Expanded, Embedded }
 
 data class PlayerHostStateSnapshot(
     val videoUrl: String? = null,
@@ -83,6 +83,30 @@ class PlayerHostController @Inject constructor(
                 requestStamp = it.requestStamp + 1,
             )
         }
+    }
+
+    fun openEmbeddedVideo(url: String, autoplay: Boolean) {
+        require(url.isNotBlank())
+        val current = _state.value
+        if (
+            current.videoUrl == url &&
+            current.target == PlayerHostTarget.Embedded &&
+            current.initialPlayWhenReady == autoplay
+        ) return
+        _state.update {
+            it.copy(
+                videoUrl = url,
+                target = PlayerHostTarget.Embedded,
+                resumePositionMillis = null,
+                initialPlayWhenReady = autoplay,
+                requestStamp = it.requestStamp + 1,
+            )
+        }
+        playbackQueueCoordinator.clear()
+    }
+
+    fun closeEmbeddedPlayback() {
+        if (_state.value.target == PlayerHostTarget.Embedded) hide()
     }
 
     fun expand() {
