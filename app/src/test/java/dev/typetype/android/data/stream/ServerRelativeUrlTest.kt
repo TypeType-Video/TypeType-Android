@@ -17,6 +17,28 @@ class ServerRelativeUrlTest {
     }
 
     @Test
+    fun `keeps a root relative media path inside the server API base`() {
+        assertEquals(
+            "https://instance.example/api/streams/audio-only/source?token=value",
+            resolveServerUrl(
+                "https://instance.example/api/",
+                "/streams/audio-only/source?token=value",
+            ),
+        )
+    }
+
+    @Test
+    fun `does not duplicate an API prefix returned by the server`() {
+        assertEquals(
+            "https://instance.example/api/sabr/manifest/video",
+            resolveServerUrl(
+                "https://instance.example/api/",
+                "/api/sabr/manifest/video",
+            ),
+        )
+    }
+
+    @Test
     fun `accepts an absolute URL on the exact server origin`() {
         assertEquals(
             "https://instance.example/media/manifest.mpd",
