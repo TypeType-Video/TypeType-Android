@@ -21,6 +21,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -54,6 +57,16 @@ fun ContentSettingsScreen(
     onNavigateBack: () -> Unit,
 ) {
     val controlsEnabled = !state.isLoading && !state.isUpdating
+    var confirmHideEverything by rememberSaveable { mutableStateOf(false) }
+    if (confirmHideEverything) {
+        HideEverythingConfirmation(
+            onConfirm = {
+                confirmHideEverything = false
+                onAction(ContentSettingsAction.SetAllHidden(true))
+            },
+            onDismiss = { confirmHideEverything = false },
+        )
+    }
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
             modifier = Modifier
@@ -79,6 +92,19 @@ fun ContentSettingsScreen(
                         )
                     }
                 }
+                item { SettingsSectionHeader(stringResource(R.string.settings_content_startup)) }
+                item {
+                    DropdownRow(
+                        title = stringResource(R.string.settings_content_landing_page),
+                        subtitle = stringResource(R.string.settings_content_landing_page_subtitle),
+                        options = landingPageOptions(),
+                        selectedKey = state.defaultLandingPage,
+                        onSelect = {
+                            onAction(ContentSettingsAction.SetDefaultLandingPage(it))
+                        },
+                        enabled = controlsEnabled,
+                    )
+                }
                 item { SettingsSectionHeader(stringResource(R.string.settings_content_youtube)) }
                 item {
                     SwitchRow(
@@ -95,6 +121,21 @@ fun ContentSettingsScreen(
                     deArrowRows(state, controlsEnabled, onAction)
                 }
                 item { SettingsSectionHeader(stringResource(R.string.settings_content_visibility)) }
+                item {
+                    SwitchRow(
+                        title = stringResource(R.string.settings_content_hide_everything),
+                        subtitle = stringResource(R.string.settings_content_hide_everything_subtitle),
+                        checked = state.areAllSurfacesHidden(),
+                        onCheckedChange = { hidden ->
+                            if (hidden) {
+                                confirmHideEverything = true
+                            } else {
+                                onAction(ContentSettingsAction.SetAllHidden(false))
+                            }
+                        },
+                        enabled = controlsEnabled,
+                    )
+                }
                 item {
                     ContentVisibilitySwitch(
                         title = R.string.settings_content_hide_continue,
@@ -149,6 +190,16 @@ fun ContentSettingsScreen(
         }
     }
 }
+
+@Composable
+private fun landingPageOptions() = listOf(
+    "home" to stringResource(R.string.tab_home),
+    "subscriptions" to stringResource(R.string.tab_subscriptions),
+    "history" to stringResource(R.string.library_tab_history),
+    "playlists" to stringResource(R.string.library_tab_playlists),
+    "watch-later" to stringResource(R.string.library_tab_watch_later),
+    "favorites" to stringResource(R.string.library_tab_favorites),
+)
 
 private fun androidx.compose.foundation.lazy.LazyListScope.deArrowRows(
     state: ContentSettingsState,
