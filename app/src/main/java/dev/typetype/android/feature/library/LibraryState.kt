@@ -2,6 +2,7 @@ package dev.typetype.android.feature.library
 
 import dev.typetype.android.domain.library.Playlist
 import dev.typetype.android.domain.library.PlaylistVideo
+import dev.typetype.android.domain.library.LibraryCollection
 import dev.typetype.android.domain.publicplaylist.SavedPublicPlaylist
 
 enum class LibraryTab { History, Favorites, WatchLater, Playlists, SavedPlaylists }
@@ -36,4 +37,12 @@ private fun LibraryState.hasVisibleContent(): Boolean = when (selectedTab) {
     LibraryTab.WatchLater -> watchLater.isNotEmpty()
     LibraryTab.Playlists -> playlists.isNotEmpty()
     LibraryTab.SavedPlaylists -> savedPlaylists.isNotEmpty()
+}
+
+internal fun LibraryTab.syncCollection(): LibraryCollection = when (this) {
+    LibraryTab.History -> LibraryCollection.History
+    LibraryTab.Favorites -> LibraryCollection.Favorites
+    LibraryTab.WatchLater -> LibraryCollection.WatchLater
+    LibraryTab.Playlists -> LibraryCollection.Playlists
+    LibraryTab.SavedPlaylists -> LibraryCollection.SavedPlaylists
 }

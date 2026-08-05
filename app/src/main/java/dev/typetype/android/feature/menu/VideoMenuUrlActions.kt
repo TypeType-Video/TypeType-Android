@@ -46,6 +46,24 @@ fun VideoMenuHandlerViewModel.removeWatchLaterUrl(videoUrl: String) {
     }
 }
 
+fun VideoMenuHandlerViewModel.removeHistoryUrl(videoUrl: String) {
+    viewModelScope.launch {
+        emitResult(
+            libraryRepository.removeFromHistory(videoUrl),
+            R.string.snackbar_unmarked_as_watched,
+        )
+    }
+}
+
+fun VideoMenuHandlerViewModel.clearWatchHistory() {
+    viewModelScope.launch {
+        emitResult(
+            libraryRepository.clearHistory(),
+            R.string.snackbar_history_cleared,
+        )
+    }
+}
+
 fun VideoMenuHandlerViewModel.toggleWatchedUrl(
     videoUrl: String,
     title: String,
