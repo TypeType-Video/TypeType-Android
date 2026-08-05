@@ -13,7 +13,7 @@ import com.google.common.util.concurrent.ListenableFuture
 internal class PlaybackSessionCallback(
     private val applicationPackageName: String,
     private val applicationUid: Int,
-    private val playbackBridge: SabrPlaybackServiceBridge,
+    private val playbackBridge: PlaybackAudioOnlyController,
 ) : MediaSession.Callback {
     override fun onConnect(
         session: MediaSession,
