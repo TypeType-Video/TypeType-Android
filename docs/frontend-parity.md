@@ -11,7 +11,7 @@ The comparison was refreshed on 2026-08-05 from clean clones:
 
 | Repository | Branch | Revision |
 | --- | --- | --- |
-| TypeType-Android | `dev` | `0f3510ca91c7320f86389327ddcda60db80b56ab` |
+| TypeType-Android | `dev` | `cb02ab0b00f4e3e7107732d76d5eb2e8892ed1a9` |
 | TypeType frontend | `dev` | `a8bdf1fbe78d76c38136188e1a6b621204f93102` |
 | TypeType-Server | `dev` | `2b2aacbbf47a67723cec8c13fcbe599c731bb920` |
 | TypeType-Web-Player | `main` | `f4844c6e65d021c0ad1ab61169f4f51cfcd77694` |
@@ -66,7 +66,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | Saved public playlists | `/saved-playlists` | Implemented | Dedicated cached Library tab |
 | TypeType backup export and restore | `/backup/typetype`, `/restore/typetype` | Implemented | Android document picker and multipart contract tests |
 | PipePipe restore | `/restore/pipepipe` | Implemented | ZIP validation, summary, refresh, and contract tests |
-| YouTube Takeout import | Server import jobs | Missing | Add document selection, upload progress, job state, and result summary after the Server contract is available |
+| YouTube Takeout import | `/imports/youtube-takeout*` | Partial | Native multi-archive queue, long-running scoped work, persisted Server jobs, preview/report states, cache refresh, contract tests, Room tests, and API 33 Compose tests pass; the Server does not advertise this capability and interrupted multipart uploads cannot resume, while real beta, process recreation, and old-API verification remain |
 | Server download selection and jobs | `/downloader/jobs*` | Implemented | Native format sheet, WorkManager observation, typed errors |
 | Completed artifact transfer | Signed artifact URL | Partial | DownloadManager reconciliation exists; reboot and signed-release retest remain |
 
