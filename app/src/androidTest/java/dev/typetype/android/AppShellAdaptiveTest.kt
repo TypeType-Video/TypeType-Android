@@ -58,7 +58,7 @@ class AppShellAdaptiveTest {
     @Test
     fun shortsTabFollowsTheServerVisibilitySetting() {
         val showShorts = mutableStateOf(false)
-        setShellSize(width = 400.dp, height = 800.dp, showShorts = showShorts)
+        setShellSize(width = 300.dp, height = 500.dp, showShorts = showShorts)
 
         composeRule.onNodeWithText("Shorts").assertDoesNotExist()
 

@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,16 +31,19 @@ import coil3.gif.repeatCount
 import coil3.request.ImageRequest
 import dev.typetype.android.R
 
+internal val LocalAnimatedStatePlayback = staticCompositionLocalOf { true }
+
 @Composable
 fun AnimatedLoader(
     modifier: Modifier = Modifier,
     size: Dp = 96.dp,
 ) {
     val ctx = LocalPlatformContext.current
+    val repeatCount = if (LocalAnimatedStatePlayback.current) Int.MAX_VALUE else 0
     AsyncImage(
         model = ImageRequest.Builder(ctx)
             .data(R.raw.loader)
-            .repeatCount(Int.MAX_VALUE)
+            .repeatCount(repeatCount)
             .build(),
         contentDescription = stringResource(R.string.state_loading),
         modifier = modifier.size(size),
@@ -71,6 +75,7 @@ fun StreamErrorState(
     onBack: (() -> Unit)? = null,
 ) {
     val ctx = LocalPlatformContext.current
+    val repeatCount = if (LocalAnimatedStatePlayback.current) Int.MAX_VALUE else 0
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -87,7 +92,7 @@ fun StreamErrorState(
             AsyncImage(
                 model = ImageRequest.Builder(ctx)
                     .data(illustrationRes)
-                    .repeatCount(Int.MAX_VALUE)
+                    .repeatCount(repeatCount)
                     .build(),
                 contentDescription = null,
                 modifier = Modifier

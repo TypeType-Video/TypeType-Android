@@ -1,14 +1,16 @@
 package dev.typetype.android.feature.shorts
 
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
+import dev.typetype.android.core.ui.components.LocalAnimatedStatePlayback
 import dev.typetype.android.core.ui.components.VideoMenuAction
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import dev.typetype.android.domain.feed.Video
@@ -177,21 +179,23 @@ class ShortsScreenTest {
         onToggleSubscription: (Video) -> Unit = {},
     ) {
         composeRule.setContent {
-            TypeTypeTheme {
-                ShortsScreen(
-                    state = state,
-                    onPlayVideo = onPlayVideo,
-                    onOpenChannel = {},
-                    onRefresh = {},
-                    onLoadMore = {},
-                    embeddedPlaybackEnabled = embeddedPlaybackEnabled,
-                    onActiveVideoChanged = onActiveVideoChanged,
-                    onNextVideoChanged = onNextVideoChanged,
-                    embeddedPlayback = embeddedPlayback,
-                    onMenuAction = onMenuAction,
-                    onShowComments = onShowComments,
-                    onToggleSubscription = onToggleSubscription,
-                )
+            CompositionLocalProvider(LocalAnimatedStatePlayback provides false) {
+                TypeTypeTheme {
+                    ShortsScreen(
+                        state = state,
+                        onPlayVideo = onPlayVideo,
+                        onOpenChannel = {},
+                        onRefresh = {},
+                        onLoadMore = {},
+                        embeddedPlaybackEnabled = embeddedPlaybackEnabled,
+                        onActiveVideoChanged = onActiveVideoChanged,
+                        onNextVideoChanged = onNextVideoChanged,
+                        embeddedPlayback = embeddedPlayback,
+                        onMenuAction = onMenuAction,
+                        onShowComments = onShowComments,
+                        onToggleSubscription = onToggleSubscription,
+                    )
+                }
             }
         }
     }
