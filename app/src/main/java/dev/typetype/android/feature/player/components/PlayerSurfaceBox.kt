@@ -142,7 +142,7 @@ internal fun PlayerSurfaceBox(
         audioOnlyState.consumeFailure()
     }
 
-    val presentationState = rememberPresentationState(player)
+    val presentationState = rememberPresentationState(player, keepContentOnReset = true)
     val surfaceKey = rememberPlayerSurfaceKey(stream.id)
     Box(modifier = modifier.background(Color.Black).clipToBounds()) {
         if (audioOnlyState.active) {
