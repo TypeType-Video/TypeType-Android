@@ -45,6 +45,24 @@ class ChannelPagingTest {
     }
 
     @Test
+    fun consecutivePagesKeepEveryVideoUntilTheServerEndsPagination() {
+        val initial = ChannelState(channel = channel(video("one")), nextPage = "page-two")
+
+        val second = initial.startPageLoad().appendPage(
+            ChannelPage(channel(video("two"), video("three")), nextPage = "page-three"),
+            requestedCursor = "page-two",
+        )
+        val third = second.startPageLoad().appendPage(
+            ChannelPage(channel(video("three"), video("four")), nextPage = null),
+            requestedCursor = "page-three",
+        )
+
+        assertEquals(listOf("one", "two", "three", "four"), third.channel?.videos?.map { it.id })
+        assertNull(third.nextPage)
+        assertEquals(false, third.isLoadingMore)
+    }
+
+    @Test
     fun failedPageKeepsContentAndMakesRetryAvailable() {
         val state = ChannelState(channel = channel(video("one")), nextPage = "current")
 
