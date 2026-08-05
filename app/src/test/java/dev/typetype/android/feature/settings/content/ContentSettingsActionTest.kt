@@ -1,0 +1,45 @@
+package dev.typetype.android.feature.settings.content
+
+import dev.typetype.android.domain.usersettings.UserSettings
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class ContentSettingsActionTest {
+    @Test
+    fun `visibility actions only update their server preference`() {
+        val original = UserSettings()
+        val updated = listOf(
+            ContentSettingsAction.SetHideHomeRecommendations(true),
+            ContentSettingsAction.SetHideContinueWatching(true),
+            ContentSettingsAction.SetHideRelatedVideos(true),
+            ContentSettingsAction.SetHideComments(true),
+            ContentSettingsAction.SetHideShorts(true),
+        ).fold(original) { settings, action -> settings.updatedBy(action) }
+
+        assertTrue(updated.hideHomeRecommendations)
+        assertTrue(updated.hideContinueWatching)
+        assertTrue(updated.hideRelatedVideos)
+        assertTrue(updated.hideComments)
+        assertTrue(updated.hideShorts)
+        assertFalse(updated.deArrowEnabled)
+        assertEquals(original.defaultQuality, updated.defaultQuality)
+    }
+
+    @Test
+    fun `DeArrow actions preserve the complete frontend preference vocabulary`() {
+        val updated = listOf(
+            ContentSettingsAction.SetDeArrowEnabled(true),
+            ContentSettingsAction.SetDeArrowTitleMode("original"),
+            ContentSettingsAction.SetDeArrowThumbnailMode("random"),
+            ContentSettingsAction.SetDeArrowTrustMode("locked"),
+        ).fold(UserSettings()) { settings, action -> settings.updatedBy(action) }
+
+        assertTrue(updated.deArrowEnabled)
+        assertEquals("original", updated.deArrowTitleMode)
+        assertEquals("random", updated.deArrowThumbnailMode)
+        assertEquals("locked", updated.deArrowTrustMode)
+        assertFalse(updated.hideHomeRecommendations)
+    }
+}
