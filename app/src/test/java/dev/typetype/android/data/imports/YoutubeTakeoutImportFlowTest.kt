@@ -3,6 +3,8 @@ package dev.typetype.android.data.imports
 import dev.typetype.android.data.network.dto.YoutubeTakeoutImportStatsDto
 import dev.typetype.android.data.network.dto.YoutubeTakeoutIssueSummaryDto
 import dev.typetype.android.data.network.dto.YoutubeTakeoutJobStatusDto
+import java.io.FileNotFoundException
+import java.io.IOException
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -53,6 +55,31 @@ class YoutubeTakeoutImportFlowTest {
         assertEquals(
             YoutubeTakeoutFailureCodes.JobNotFound,
             YoutubeTakeoutFailureCodes.fromHttp(404, serverCode = null),
+        )
+    }
+
+    @Test
+    fun unavailableDocumentIsNotReportedAsANetworkFailure() {
+        val unavailable = IOException(
+            "request body failed",
+            FileNotFoundException("IMPORT_FILE_UNAVAILABLE"),
+        )
+
+        assertEquals(YoutubeTakeoutFailureCodes.Permission, YoutubeTakeoutFailureCodes.fromThrowable(unavailable))
+    }
+
+    @Test
+    fun oversizedStreamingDocumentIsReportedWithoutRetry() {
+        val oversized = IOException("upload failed", IllegalStateException("IMPORT_FILE_TOO_LARGE"))
+
+        assertEquals(YoutubeTakeoutFailureCodes.TooLarge, YoutubeTakeoutFailureCodes.fromThrowable(oversized))
+    }
+
+    @Test
+    fun transportIoRemainsRetryableNetworkFailure() {
+        assertEquals(
+            YoutubeTakeoutFailureCodes.Network,
+            YoutubeTakeoutFailureCodes.fromThrowable(IOException("connection reset")),
         )
     }
 
