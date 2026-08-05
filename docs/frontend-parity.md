@@ -30,7 +30,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | Guest access | `/auth/guest` | Implemented | Capability-driven login screen |
 | External-browser OIDC | `/auth/oidc/start`, `/status`, `/callback` | Implemented | OIDC contract, callback parser, encrypted transaction device test |
 | Password reset | `/auth/reset-password` | Implemented | Native reset screen and typed errors |
-| Registration and first-admin bootstrap | `/auth/register/status`, `/auth/register` | Missing | Add a capability-driven registration route and real Server contract test |
+| Registration and first-admin bootstrap | `/auth/register/status`, `/auth/register` | Partial | Native local/OIDC route, bootstrap redirect, Android contract tests, Server route tests, and API 33 Compose tests pass; process recreation and signed-release retest remain |
 | Reauthentication of the selected account | `/auth/login`, `/auth/oidc/callback` | Implemented | Account identity is checked before replacing credentials |
 | Multiple instances and accounts | Account-scoped authenticated API | Implemented | Room scope, cookies, tokens, workers, cache, and navigation are isolated |
 | Profile identity | `/profile`, `/profile/account` | Implemented | Native profile settings and identity Compose test |
