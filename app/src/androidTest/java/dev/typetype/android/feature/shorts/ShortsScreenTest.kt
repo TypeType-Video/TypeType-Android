@@ -99,6 +99,24 @@ class ShortsScreenTest {
         assertEquals(VideoMenuAction.ToggleFavorite, selectedAction.get())
     }
 
+    @Test
+    fun activeShortExposesCommentsAndSubscription() {
+        val commentsVideo = AtomicReference<Video>()
+        val subscribedVideo = AtomicReference<Video>()
+
+        show(
+            state = ShortsState(videos = listOf(video("one")), isLoading = false),
+            embeddedPlaybackEnabled = true,
+            onShowComments = commentsVideo::set,
+            onToggleSubscription = subscribedVideo::set,
+        )
+
+        composeRule.onNodeWithContentDescription("Comments").performClick()
+        composeRule.onNodeWithText("Subscribe").performClick()
+        assertEquals("one", commentsVideo.get().id)
+        assertEquals("one", subscribedVideo.get().id)
+    }
+
     private fun show(
         state: ShortsState,
         onPlayVideo: (String) -> Unit = {},
@@ -106,6 +124,8 @@ class ShortsScreenTest {
         onActiveVideoChanged: (Video?) -> Unit = {},
         embeddedPlayback: @Composable (Video, () -> Unit) -> Unit = { _, _ -> },
         onMenuAction: (VideoMenuAction, Video) -> Unit = { _, _ -> },
+        onShowComments: ((Video) -> Unit)? = null,
+        onToggleSubscription: (Video) -> Unit = {},
     ) {
         composeRule.setContent {
             TypeTypeTheme {
@@ -119,6 +139,8 @@ class ShortsScreenTest {
                     onActiveVideoChanged = onActiveVideoChanged,
                     embeddedPlayback = embeddedPlayback,
                     onMenuAction = onMenuAction,
+                    onShowComments = onShowComments,
+                    onToggleSubscription = onToggleSubscription,
                 )
             }
         }
