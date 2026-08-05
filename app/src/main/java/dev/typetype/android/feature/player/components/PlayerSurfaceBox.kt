@@ -97,7 +97,10 @@ internal fun PlayerSurfaceBox(
     val audioOnlySnackbar = remember { SnackbarHostState() }
     val audioOnlyUnavailable = stringResource(R.string.player_audio_only_unavailable)
     val audioOnlyNetworkFailure = stringResource(R.string.error_network_unavailable)
-    val playbackStatus = rememberPlayerPlaybackStatus(player)
+    val playbackStatus = rememberPlayerPlaybackStatus(
+        player,
+        onRetryPlayback.takeIf { stream.playbackContract == StreamPlaybackContract.ServerSabr },
+    )
     val isInPip by rememberIsInPipMode()
     val isPipAvailable = remember(activity) { supportsPictureInPicture(activity) }
     val externalSubtitle = stream.subtitles.firstOrNull {
