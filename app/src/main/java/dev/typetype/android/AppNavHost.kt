@@ -13,6 +13,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.typetype.android.core.ui.branding.DeArrowBrandingEnvironment
+import dev.typetype.android.core.ui.branding.DeArrowBrandingViewModel
+import dev.typetype.android.core.ui.branding.LocalDeArrowBranding
+import dev.typetype.android.core.ui.components.resolveProfileAvatarUrl
 import dev.typetype.android.core.ui.navigation.AboutRoute
 import dev.typetype.android.core.ui.navigation.AccountsRoute
 import dev.typetype.android.core.ui.navigation.AddServerRoute
@@ -34,7 +38,7 @@ import dev.typetype.android.core.ui.navigation.SettingsRoute
 import dev.typetype.android.core.ui.navigation.StorageSettingsRoute
 import dev.typetype.android.core.ui.navigation.SubscriptionsRoute
 import dev.typetype.android.core.ui.navigation.WelcomeRoute
-import dev.typetype.android.core.ui.components.resolveProfileAvatarUrl
+import dev.typetype.android.domain.branding.DeArrowPreferences
 import dev.typetype.android.feature.home.HomeRoute as HomeRouteScreen
 import dev.typetype.android.feature.home.HomeViewModel
 import dev.typetype.android.feature.library.playlist.PlaylistRoute as PlaylistRouteScreen
@@ -59,6 +63,19 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
     val currentServerId by mainViewModel.currentServerId.collectAsStateWithLifecycle()
     val currentProfile by mainViewModel.currentProfile.collectAsStateWithLifecycle()
     val notificationBadge by rememberNotificationBadge()
+    val deArrowViewModel = hiltViewModel<DeArrowBrandingViewModel>()
+    val deArrowSettings by deArrowViewModel.settings.collectAsStateWithLifecycle()
+    val deArrowEnvironment = remember(deArrowSettings, deArrowViewModel) {
+        DeArrowBrandingEnvironment(
+            enabled = deArrowSettings.deArrowEnabled,
+            preferences = DeArrowPreferences(
+                titleMode = deArrowSettings.deArrowTitleMode,
+                thumbnailMode = deArrowSettings.deArrowThumbnailMode,
+                trustMode = deArrowSettings.deArrowTrustMode,
+            ),
+            loader = deArrowViewModel::load,
+        )
+    }
     val onPlayVideo: (String) -> Unit = { videoUrl ->
         playerHostController.openVideo(videoUrl)
     }
@@ -104,7 +121,10 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
     }
     val avatarFallback = currentProfile?.publicUsername?.firstOrNull()?.toString()
 
-    CompositionLocalProvider(LocalServerBaseUrl provides serverBaseUrl) {
+    CompositionLocalProvider(
+        LocalServerBaseUrl provides serverBaseUrl,
+        LocalDeArrowBranding provides deArrowEnvironment,
+    ) {
     AppShell(
         navController = navController,
         playerHostController = playerHostController,
