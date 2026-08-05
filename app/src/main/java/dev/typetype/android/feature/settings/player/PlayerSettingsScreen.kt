@@ -35,6 +35,7 @@ import dev.typetype.android.R
 
 private val QUALITY_OPTIONS = listOf("144p", "240p", "360p", "480p", "720p", "1080p", "1440p", "2160p")
 private val AUTOPLAY_COUNTDOWN_OPTIONS = listOf(0, 5, 10, 15, 30, 60)
+private val PLAYBACK_SPEED_OPTIONS = listOf(0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 4.0)
 
 private data class ServiceOption(
     val id: Int,
@@ -157,6 +158,19 @@ fun PlayerSettingsScreen(
                     )
                 }
                 item {
+                    DropdownRow(
+                        title = stringResource(R.string.settings_player_default_speed),
+                        subtitle = stringResource(R.string.settings_player_default_speed_subtitle),
+                        options = PLAYBACK_SPEED_OPTIONS.map { speed ->
+                            speed.toString() to "${speed}x"
+                        },
+                        selectedKey = state.defaultPlaybackSpeed.toString(),
+                        onSelect = {
+                            onAction(PlayerSettingsAction.SetDefaultPlaybackSpeed(it.toDouble()))
+                        },
+                    )
+                }
+                item {
                     SwitchRow(
                         title = stringResource(R.string.settings_player_pause_in_background),
                         subtitle = null,
@@ -222,6 +236,8 @@ fun PlayerSettingsScreen(
                         onClick = { onAction(PlayerSettingsAction.SetDefaultService(svc.id)) },
                     )
                 }
+
+                sponsorBlockSettingsItems(state = state, onAction = onAction)
 
                 item { Spacer(Modifier.size(4.dp)) }
                 item { SectionHeader(stringResource(R.string.settings_player_section_gestures)) }
