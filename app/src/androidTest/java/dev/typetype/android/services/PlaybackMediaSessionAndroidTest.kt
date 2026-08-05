@@ -13,7 +13,6 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import java.io.File
 import java.io.FileOutputStream
@@ -81,7 +80,6 @@ class PlaybackMediaSessionAndroidTest {
     }
 
     @Test
-    @SdkSuppress(maxSdkVersion = 32)
     fun playingMediaPublishesTheSessionNotification() {
         val title = "TypeType notification smoke"
         instrumentation.runOnMainSync {
