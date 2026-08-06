@@ -72,7 +72,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | PipePipe restore | `/restore/pipepipe` | Implemented | ZIP validation, summary, refresh, and contract tests |
 | YouTube Takeout import | `/imports/youtube-takeout*` | Partial | Native multi-archive queue, long-running scoped work, persisted Server jobs, preview/report states, cache refresh, contract tests, and Room tests pass. The queued job survives a real database close and reopen on API 23 and API 37, and the native import states pass on both versions. The Server does not advertise this capability and interrupted multipart uploads cannot resume, so a real beta import remains blocked by the contract rather than hidden behind a client fallback |
 | Server download selection and jobs | `/downloader/jobs*` | Implemented | Native format sheet, WorkManager observation, typed errors |
-| Completed artifact transfer | Signed artifact URL | Partial | API 29, API 34, and an Android 16 runtime with 16 KiB pages complete and reconcile a real local DownloadManager transfer; reboot and signed-release retest remain |
+| Completed artifact transfer | Signed artifact URL | Partial | API 29, API 34, and an Android 16 runtime with 16 KiB pages complete and reconcile a real local DownloadManager transfer. API 23 also recovers the completed system download after a full Android reboot. Signed-release and reinstall-boundary retests remain |
 
 ## Watch and playback
 
