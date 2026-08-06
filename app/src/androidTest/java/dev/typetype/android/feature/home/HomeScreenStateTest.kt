@@ -5,8 +5,11 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.runtime.CompositionLocalProvider
+import dev.typetype.android.core.ui.components.LocalAnimatedStatePlayback
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.library.HistoryItem
@@ -19,6 +22,26 @@ import org.junit.Test
 class HomeScreenStateTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun initialLoadHasAnAccessibleState() {
+        show(HomeState(isLoading = true))
+
+        composeRule.onNodeWithContentDescription("Loading").assertIsDisplayed()
+    }
+
+    @Test
+    fun fatalErrorKeepsTheRequestIdReviewable() {
+        show(
+            HomeState(
+                errorMessage = "The home feed is unavailable",
+                errorRequestId = "request-home",
+            ),
+        )
+
+        composeRule.onNodeWithText("The home feed is unavailable").assertIsDisplayed()
+        composeRule.onNodeWithText("Request request-home").assertIsDisplayed()
+    }
 
     @Test
     fun cachedContentStaysVisibleDuringRefresh() {
@@ -70,15 +93,17 @@ class HomeScreenStateTest {
         onPlayVideo: (String) -> Unit = {},
     ) {
         composeRule.setContent {
-            TypeTypeTheme {
-                HomeContent(
-                    state = state,
-                    menuScope = emptyMenuScope(),
-                    onPlayVideo = onPlayVideo,
-                    onOpenChannel = {},
-                    onRetry = {},
-                    onLoadMore = {},
-                )
+            CompositionLocalProvider(LocalAnimatedStatePlayback provides false) {
+                TypeTypeTheme {
+                    HomeContent(
+                        state = state,
+                        menuScope = emptyMenuScope(),
+                        onPlayVideo = onPlayVideo,
+                        onOpenChannel = {},
+                        onRetry = {},
+                        onLoadMore = {},
+                    )
+                }
             }
         }
     }

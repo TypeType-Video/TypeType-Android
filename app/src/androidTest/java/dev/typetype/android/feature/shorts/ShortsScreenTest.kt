@@ -26,6 +26,13 @@ class ShortsScreenTest {
     val composeRule = createComposeRule()
 
     @Test
+    fun initialLoadHasAnAccessibleState() {
+        show(ShortsState(isLoading = true))
+
+        composeRule.onNodeWithContentDescription("Loading").assertIsDisplayed()
+    }
+
+    @Test
     fun pagerShowsAPlayableShort() {
         val playedUrl = AtomicReference<String>()
         val video = video("one")
