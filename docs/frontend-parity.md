@@ -29,7 +29,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | F-Droid or release installation and first launch | None before setup | Partial | Debug cold launch is covered on API 23 through 37; signed upgrade, signature, checksum, and F-Droid artifact parity remain release gates |
 | Instance discovery and compatibility | `/health`, `/instance` | Implemented | Setup repository and discovery contract tests |
 | Local password login | `/auth/login`, `/auth/me`, `/auth/refresh` | Implemented | Scoped authenticator and account validation tests |
-| Session renewal and reconnect | `/auth/refresh`, `/auth/me` | Implemented | A refresh 401 invalidates the account; transient refresh failures preserve credentials and surface an unknown session until the Server recovers |
+| Session renewal and reconnect | `/auth/refresh`, `/auth/me` | Implemented | A rejected refresh opens identity-bound reauthentication without deleting local account data, while transient failures preserve the session and cached content; a real expired session passed process restart on API 23, and the recovery surfaces pass on API 23 and API 37 |
 | Guest access | `/auth/guest` | Implemented | Capability-driven login screen |
 | External-browser OIDC | `/auth/oidc/start`, `/status`, `/callback` | Implemented | Real Keycloak journeys pass on API 23 AOSP without Google services and API 37, including browser fallback, callback, force-stop restoration, and cancellation cleanup |
 | Password reset | `/auth/reset-password` | Implemented | Native reset screen and typed errors |
