@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.session.MediaController
+import dev.typetype.android.feature.player.PlayerFullscreenEffect
 import dev.typetype.android.feature.player.PlayerRoute as PlayerRouteScreen
 import dev.typetype.android.feature.player.components.rememberIsInPipMode
 
@@ -51,6 +52,8 @@ fun PlayerHost(
     val density = LocalDensity.current
     val isInPip by rememberIsInPipMode()
     val activity = LocalActivity.current
+
+    PlayerFullscreenEffect(activity, isFullscreen, onFullscreenChange)
 
     val navigationBarsBottom = WindowInsets.navigationBars.asPaddingValues()
         .calculateBottomPadding()

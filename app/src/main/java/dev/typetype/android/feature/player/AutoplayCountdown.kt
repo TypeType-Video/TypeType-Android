@@ -36,6 +36,7 @@ internal data class AutoplayCountdownState(
 @Composable
 internal fun rememberAutoplayCountdown(
     player: Player?,
+    currentVideoUrl: String,
     enabled: Boolean,
     countdownSeconds: Int,
     target: AutoplayCountdownTarget?,
@@ -43,10 +44,12 @@ internal fun rememberAutoplayCountdown(
 ): AutoplayCountdownState? {
     val boundedSeconds = countdownSeconds.coerceIn(0, MAX_AUTOPLAY_COUNTDOWN_SECONDS)
     val latestPlayTarget by rememberUpdatedState(onPlayTarget)
-    var activeTarget by remember { mutableStateOf<AutoplayCountdownTarget?>(null) }
-    var remainingMillis by remember { mutableLongStateOf(0L) }
-    var paused by remember { mutableStateOf(false) }
-    var handledTargetUrl by remember { mutableStateOf<String?>(null) }
+    var activeTarget by remember(currentVideoUrl) {
+        mutableStateOf<AutoplayCountdownTarget?>(null)
+    }
+    var remainingMillis by remember(currentVideoUrl) { mutableLongStateOf(0L) }
+    var paused by remember(currentVideoUrl) { mutableStateOf(false) }
+    var handledTargetUrl by remember(currentVideoUrl) { mutableStateOf<String?>(null) }
 
     fun playNow() {
         val next = activeTarget ?: return
@@ -55,7 +58,7 @@ internal fun rememberAutoplayCountdown(
         latestPlayTarget(next)
     }
 
-    DisposableEffect(player, enabled, boundedSeconds, target?.videoUrl) {
+    DisposableEffect(player, currentVideoUrl, enabled, boundedSeconds, target?.videoUrl) {
         fun handlePlaybackState(playbackState: Int) {
             if (playbackState != Player.STATE_ENDED) {
                 handledTargetUrl = null
@@ -65,6 +68,8 @@ internal fun rememberAutoplayCountdown(
                     playbackState = playbackState,
                     playWhenReady = player?.playWhenReady == true,
                     enabled = enabled,
+                    currentMediaId = player?.currentMediaItem?.mediaId,
+                    currentVideoUrl = currentVideoUrl,
                     targetUrl = target?.videoUrl,
                 )
             ) {
@@ -158,10 +163,13 @@ internal fun shouldStartAutoplayCountdown(
     playbackState: Int,
     playWhenReady: Boolean,
     enabled: Boolean,
+    currentMediaId: String?,
+    currentVideoUrl: String,
     targetUrl: String?,
 ): Boolean = playbackState == Player.STATE_ENDED &&
     playWhenReady &&
     enabled &&
+    currentMediaId == currentVideoUrl &&
     !targetUrl.isNullOrBlank()
 
 private const val COUNTDOWN_TICK_MILLIS = 100L

@@ -11,6 +11,7 @@ import kotlin.math.ceil
 internal fun rememberPlayerAutoplayCountdown(
     player: Player?,
     stream: Stream,
+    currentVideoUrl: String,
     playbackQueue: PlaybackQueueState,
     enabled: Boolean,
     countdownSeconds: Int,
@@ -30,6 +31,7 @@ internal fun rememberPlayerAutoplayCountdown(
     val target = selectAutoplayTarget(playbackQueue, stream.relatedStreams.firstOrNull())
     return rememberAutoplayCountdown(
         player = player,
+        currentVideoUrl = currentVideoUrl,
         enabled = enabled,
         countdownSeconds = countdownSeconds,
         target = target,
