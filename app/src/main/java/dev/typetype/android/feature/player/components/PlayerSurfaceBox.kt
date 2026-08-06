@@ -188,12 +188,7 @@ internal fun PlayerSurfaceBox(
         }
 
         if (presentationState.coverSurface && !audioOnlyState.active) {
-            Box(
-                modifier = Modifier.fillMaxSize().background(Color.Black),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-            }
+            PlayerLoadingPoster(stream = stream, modifier = Modifier.fillMaxSize())
         }
 
         AnimatedVisibility(
