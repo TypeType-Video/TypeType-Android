@@ -11,7 +11,7 @@ The comparison was refreshed on 2026-08-06 from clean clones:
 
 | Repository | Branch | Revision |
 | --- | --- | --- |
-| TypeType-Android | `dev` | `7462f57873f4e7d001739a5ce752e321f779ebcb` |
+| TypeType-Android | `dev` | `8ec3837c25d5e69fd44f32b90410ff21f6f6a122` |
 | TypeType frontend | `dev` | `97103f7302c91accdea3322d1f5b8f610607f378` |
 | TypeType-Server | `dev` | `6f31f93c4ecfb0e31c03c777b0d96f5cdc51f7bc` |
 | TypeType-Web-Player | `dev` | `f2fe3e6976cd9beec603f324adf37edee923ee20` |
@@ -109,7 +109,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | Diagnostics review, export, and clear | Implemented | Bounded redacted local store and sanitizer tests |
 | Native bug report | Implemented | Preview and explicit submission path; pinned Server retest remains |
 | Loading, cached refresh, empty, partial, and fatal states | Implemented | Home, Shorts, Notifications, Subscriptions, Search, Channel, Podcast, public-playlist detail, Library, and local-playlist detail exercise accessible loading, fatal errors with request IDs, explicit empty states, and cached refresh where applicable on API 23, 29, and 37 |
-| Font scale, TalkBack, RTL, keyboard, D-pad, foldable | Partial | The top-level shell passes 200% text, RTL ordering, compact and wide navigation, landscape, and D-pad focus traversal on API 23, 29, and 37. Targeted player accessibility tests also pass; TalkBack, foldable postures, and the full route matrix still require coverage |
+| Font scale, TalkBack, RTL, keyboard, D-pad, foldable | Partial | The top-level shell passes 200% text, RTL ordering, compact and wide navigation, landscape, and D-pad focus traversal on API 23, 29, and 37. The full settings destination list remains reachable at 200% text, every interactive settings control exposes spoken text, and keyboard activation works in RTL on the same matrix. Targeted player accessibility tests also pass; TalkBack, foldable postures, and the full route matrix still require coverage |
 
 ## Deliberate platform differences
 
