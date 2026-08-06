@@ -43,4 +43,35 @@ class PlaybackSessionCallbackTest {
             ),
         )
     }
+
+    @Test
+    fun manualAudioOnlyChoiceBlocksTheDefaultForTheCurrentMedia() {
+        val policy = AudioOnlyDefaultPolicy()
+
+        assertTrue(policy.shouldApplyDefault("first"))
+        policy.recordManualChoice("first")
+
+        assertFalse(policy.shouldApplyDefault("first"))
+    }
+
+    @Test
+    fun replacingTheCurrentMediaClearsTheManualAudioOnlyChoice() {
+        val policy = AudioOnlyDefaultPolicy()
+        policy.recordManualChoice("first")
+
+        policy.mediaChanged("second")
+
+        assertTrue(policy.shouldApplyDefault("second"))
+        assertTrue(policy.shouldApplyDefault("first"))
+    }
+
+    @Test
+    fun refreshingTheSameMediaKeepsTheManualAudioOnlyChoice() {
+        val policy = AudioOnlyDefaultPolicy()
+        policy.recordManualChoice("first")
+
+        policy.mediaChanged("first")
+
+        assertFalse(policy.shouldApplyDefault("first"))
+    }
 }

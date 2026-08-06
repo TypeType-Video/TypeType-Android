@@ -153,6 +153,16 @@ fun PlayerSettingsScreen(
                     )
                 }
                 item {
+                    SwitchRow(
+                        title = stringResource(R.string.settings_player_audio_only),
+                        subtitle = stringResource(R.string.settings_player_audio_only_subtitle),
+                        checked = state.audioOnlyPlayback,
+                        onCheckedChange = {
+                            onAction(PlayerSettingsAction.SetAudioOnlyPlayback(it))
+                        },
+                    )
+                }
+                item {
                     DropdownRow(
                         title = stringResource(R.string.settings_player_default_quality),
                         subtitle = stringResource(R.string.settings_player_default_quality_subtitle),

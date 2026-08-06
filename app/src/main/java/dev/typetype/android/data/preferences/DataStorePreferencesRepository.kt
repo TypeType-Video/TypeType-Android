@@ -33,6 +33,7 @@ class DataStorePreferencesRepository @Inject constructor(
             playerAutoplayCountdownSeconds = (
                 prefs[KEY_PLAYER_AUTOPLAY_COUNTDOWN] ?: DEFAULT_AUTOPLAY_COUNTDOWN_SECONDS
             ).coerceIn(0, MAX_AUTOPLAY_COUNTDOWN_SECONDS),
+            playerAudioOnlyPlayback = prefs[KEY_PLAYER_AUDIO_ONLY_PLAYBACK] ?: false,
             playerPauseInBackground = prefs[KEY_PLAYER_PAUSE_BACKGROUND] ?: false,
             danmakuEnabled = prefs[KEY_DANMAKU_ENABLED] ?: false,
             danmakuSpeed = (prefs[KEY_DANMAKU_SPEED] ?: 1f).coerceIn(0.5f, 2f),
@@ -73,6 +74,10 @@ class DataStorePreferencesRepository @Inject constructor(
         }
     }
 
+    override suspend fun setPlayerAudioOnlyPlayback(enabled: Boolean) {
+        dataStore.edit { it[KEY_PLAYER_AUDIO_ONLY_PLAYBACK] = enabled }
+    }
+
     override suspend fun setPlayerPauseInBackground(enabled: Boolean) {
         dataStore.edit { it[KEY_PLAYER_PAUSE_BACKGROUND] = enabled }
     }
@@ -97,6 +102,7 @@ class DataStorePreferencesRepository @Inject constructor(
         val KEY_PLAYER_LONG_PRESS_SPEED = booleanPreferencesKey("player_long_press_speed")
         val KEY_PLAYER_AUTOPLAY = booleanPreferencesKey("player_autoplay")
         val KEY_PLAYER_AUTOPLAY_COUNTDOWN = intPreferencesKey("player_autoplay_countdown_seconds")
+        val KEY_PLAYER_AUDIO_ONLY_PLAYBACK = booleanPreferencesKey("player_audio_only_playback")
         val KEY_PLAYER_PAUSE_BACKGROUND = booleanPreferencesKey("player_pause_background")
         val KEY_DANMAKU_ENABLED = booleanPreferencesKey("player_danmaku_enabled")
         val KEY_DANMAKU_SPEED = floatPreferencesKey("player_danmaku_speed")

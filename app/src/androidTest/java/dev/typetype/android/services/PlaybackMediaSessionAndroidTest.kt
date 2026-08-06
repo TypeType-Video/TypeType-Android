@@ -81,6 +81,15 @@ class PlaybackMediaSessionAndroidTest {
     }
 
     @Test
+    fun applicationControllerReceivesTheAudioOnlyCommand() {
+        assertTrue(
+            readControllerState {
+                it.isSessionCommandAvailable(PlaybackAudioOnlyCommand.command)
+            },
+        )
+    }
+
+    @Test
     fun playingMediaPublishesTheSessionNotification() {
         val title = "TypeType notification smoke"
         instrumentation.runOnMainSync {

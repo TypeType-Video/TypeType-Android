@@ -567,6 +567,8 @@
     </plurals>
     <string name="settings_player_skip_playlist_autoplay_screen">Skip countdown in playlists</string>
     <string name="settings_player_skip_playlist_autoplay_screen_subtitle">Start the next playlist item immediately</string>
+    <string name="settings_player_audio_only">Audio-only playback</string>
+    <string name="settings_player_audio_only_subtitle">Start videos with the server-provided audio stream when available</string>
     <string name="settings_player_pause_in_background">Pause when leaving the app</string>
     <string name="player_sponsorblock_skipped">Skipped automatically</string>
     <string name="player_sponsorblock_muted">Muted automatically</string>

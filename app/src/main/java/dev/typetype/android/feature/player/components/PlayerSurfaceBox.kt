@@ -53,6 +53,7 @@ private const val AUTO_HIDE_DELAY_MS = 3_500L
 internal fun PlayerSurfaceBox(
     player: MediaController,
     stream: Stream,
+    audioOnlyDefault: AudioOnlyPlaybackDefault,
     selectedCodec: String,
     selectedQuality: String,
     selectedAudioKey: String?,
@@ -92,7 +93,7 @@ internal fun PlayerSurfaceBox(
     var controlsVisible by remember { mutableStateOf(true) }
     var optionsVisible by remember { mutableStateOf(false) }
     var chaptersVisible by remember { mutableStateOf(false) }
-    val audioOnlyState = rememberAudioOnlyPlaybackState(player, stream)
+    val audioOnlyState = rememberAudioOnlyPlaybackState(player, stream, audioOnlyDefault)
     val audioOnlySnackbar = remember { SnackbarHostState() }
     val audioOnlyUnavailable = stringResource(R.string.player_audio_only_unavailable)
     val audioOnlyNetworkFailure = stringResource(R.string.error_network_unavailable)

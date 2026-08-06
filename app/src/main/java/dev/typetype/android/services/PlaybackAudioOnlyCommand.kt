@@ -14,13 +14,15 @@ import java.io.IOException
 internal object PlaybackAudioOnlyCommand {
     const val ACTION = "dev.typetype.android.SET_AUDIO_ONLY"
     const val EXTRA_ENABLED = "enabled"
+    const val EXTRA_DEFAULT_REQUEST = "default_request"
     const val EXTRA_FAILURE_CODE = "failure_code"
     const val EXTRA_REQUEST_ID = "request_id"
 
     val command = SessionCommand(ACTION, Bundle.EMPTY)
 
-    fun arguments(enabled: Boolean) = Bundle().apply {
+    fun arguments(enabled: Boolean, defaultRequest: Boolean = false) = Bundle().apply {
         putBoolean(EXTRA_ENABLED, enabled)
+        putBoolean(EXTRA_DEFAULT_REQUEST, defaultRequest)
     }
 
     fun resultFuture(): SettableFuture<SessionResult> = SettableFuture.create()

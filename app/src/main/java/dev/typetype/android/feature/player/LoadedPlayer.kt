@@ -31,6 +31,7 @@ import dev.typetype.android.domain.playback.PlaybackQueueState
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.usersettings.UserSettings
 import dev.typetype.android.feature.player.components.AutoplayCountdownOverlay
+import dev.typetype.android.feature.player.components.AudioOnlyPlaybackDefault
 import dev.typetype.android.feature.player.components.LocalMediaController
 import dev.typetype.android.feature.player.components.PlayerGestureConfig
 import dev.typetype.android.feature.player.components.PlayerSurfaceBox
@@ -49,6 +50,7 @@ fun LoadedPlayer(
     isInWatchLater: Boolean,
     gestureConfig: PlayerGestureConfig,
     autoplayCountdownSeconds: Int,
+    audioOnlyPlaybackDefault: Boolean?,
     userSettings: UserSettings,
     playlists: List<Playlist>,
     playlistPickerVisible: Boolean,
@@ -193,6 +195,7 @@ fun LoadedPlayer(
                         PlayerSurfaceBox(
                             player = controller,
                             stream = stream,
+                            audioOnlyDefault = AudioOnlyPlaybackDefault(videoUrl, audioOnlyPlaybackDefault),
                             selectedCodec = selections.selectedCodec,
                             selectedQuality = selections.selectedQuality,
                             selectedAudioKey = selections.selectedAudioKey,

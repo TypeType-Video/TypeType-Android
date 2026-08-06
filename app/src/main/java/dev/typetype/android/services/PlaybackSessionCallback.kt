@@ -14,6 +14,7 @@ internal class PlaybackSessionCallback(
     private val applicationPackageName: String,
     private val applicationUid: Int,
     private val playbackBridge: PlaybackAudioOnlyController,
+    private val audioOnlyDefaultPolicy: AudioOnlyDefaultPolicy,
 ) : MediaSession.Callback {
     override fun onConnect(
         session: MediaSession,
@@ -71,13 +72,23 @@ internal class PlaybackSessionCallback(
                 SessionResult(SessionError.ERROR_NOT_SUPPORTED),
             )
         }
+        val defaultRequest = args.getBoolean(PlaybackAudioOnlyCommand.EXTRA_DEFAULT_REQUEST)
+        val mediaId = session.player.currentMediaItem?.mediaId
+        if (defaultRequest && !audioOnlyDefaultPolicy.shouldApplyDefault(mediaId)) {
+            return Futures.immediateFuture(PlaybackAudioOnlyCommand.success())
+        }
         val result = PlaybackAudioOnlyCommand.resultFuture()
         playbackBridge.setAudioOnly(
             enabled = args.getBoolean(PlaybackAudioOnlyCommand.EXTRA_ENABLED),
         ) { outcome ->
             result.set(
                 outcome.fold(
-                    onSuccess = { PlaybackAudioOnlyCommand.success() },
+                    onSuccess = {
+                        if (!defaultRequest) {
+                            audioOnlyDefaultPolicy.recordManualChoice(mediaId)
+                        }
+                        PlaybackAudioOnlyCommand.success()
+                    },
                     onFailure = PlaybackAudioOnlyCommand::failure,
                 ),
             )

@@ -11,6 +11,7 @@ interface PreferencesRepository {
     suspend fun setPlayerLongPressSpeedEnabled(enabled: Boolean)
     suspend fun setPlayerAutoplayEnabled(enabled: Boolean)
     suspend fun setPlayerAutoplayCountdownSeconds(seconds: Int)
+    suspend fun setPlayerAudioOnlyPlayback(enabled: Boolean)
     suspend fun setPlayerPauseInBackground(enabled: Boolean)
     suspend fun setDanmakuEnabled(enabled: Boolean)
     suspend fun setDanmakuSpeed(speed: Float)
