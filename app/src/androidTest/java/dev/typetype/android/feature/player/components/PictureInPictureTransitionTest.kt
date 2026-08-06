@@ -46,9 +46,7 @@ class PictureInPictureTransitionTest {
                 PackageManager.FEATURE_PICTURE_IN_PICTURE,
             ),
         )
-        val activity = instrumentation.startActivitySync(
-            Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-        ) as MainActivity
+        val activity = startMainActivity()
 
         try {
             val entered = AtomicBoolean()
@@ -86,9 +84,7 @@ class PictureInPictureTransitionTest {
             SessionToken(context, ComponentName(context, PlaybackService::class.java)),
         ).buildAsync().get(10, TimeUnit.SECONDS)
         val video = createSyntheticH264Video(context)
-        val activity = instrumentation.startActivitySync(
-            Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-        ) as MainActivity
+        val activity = startMainActivity()
 
         try {
             instrumentation.runOnMainSync {
@@ -157,6 +153,29 @@ class PictureInPictureTransitionTest {
             Thread.sleep(50)
         }
         return readOnMainThread { activity.isInPictureInPictureMode }
+    }
+
+    private fun startMainActivity(): MainActivity {
+        val activity = instrumentation.startActivitySync(
+            Intent(instrumentation.targetContext, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        ) as MainActivity
+        assertTrue(waitForActivityResumed(activity))
+        return activity
+    }
+
+    private fun waitForActivityResumed(activity: MainActivity): Boolean {
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10)
+        while (System.nanoTime() < deadline) {
+            val resumed = readOnMainThread {
+                ActivityLifecycleMonitorRegistry.getInstance()
+                    .getActivitiesInStage(Stage.RESUMED)
+                    .contains(activity)
+            }
+            if (resumed) return true
+            Thread.sleep(50)
+        }
+        return false
     }
 
     private fun waitForActivityDestroyed(activity: MainActivity): Boolean {
