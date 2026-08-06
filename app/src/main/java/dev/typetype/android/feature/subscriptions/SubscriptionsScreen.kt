@@ -118,7 +118,7 @@ fun SubscriptionsScreen(
 }
 
 @Composable
-private fun SubscriptionsContent(
+internal fun SubscriptionsContent(
     state: SubscriptionsState,
     visibleVideos: List<dev.typetype.android.domain.feed.Video>,
     onPlayVideo: (videoUrl: String) -> Unit,

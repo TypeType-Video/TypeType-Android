@@ -5,6 +5,8 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.runtime.CompositionLocalProvider
+import dev.typetype.android.core.ui.components.LocalAnimatedStatePlayback
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.notifications.NotificationItem
@@ -18,6 +20,27 @@ import org.junit.Test
 class NotificationsScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun initialLoadHasAnAccessibleState() {
+        setScreen(NotificationsState(isLoading = true))
+
+        composeRule.onNodeWithContentDescription("Loading").assertIsDisplayed()
+    }
+
+    @Test
+    fun fatalErrorKeepsTheRequestIdReviewable() {
+        setScreen(
+            NotificationsState(
+                isLoading = false,
+                errorMessage = "Notifications are unavailable",
+                errorRequestId = "request-notifications",
+            ),
+        )
+
+        composeRule.onNodeWithText("Notifications are unavailable").assertIsDisplayed()
+        composeRule.onNodeWithText("Request request-notifications").assertIsDisplayed()
+    }
 
     @Test
     fun emptyStateExplainsThatThereAreNoNotifications() {
@@ -62,13 +85,15 @@ class NotificationsScreenTest {
         onAction: (NotificationsAction) -> Unit = {},
     ) {
         composeRule.setContent {
-            TypeTypeTheme {
-                NotificationsScreen(
-                    state = state,
-                    onNavigateBack = {},
-                    onPlayVideo = onPlayVideo,
-                    onAction = onAction,
-                )
+            CompositionLocalProvider(LocalAnimatedStatePlayback provides false) {
+                TypeTypeTheme {
+                    NotificationsScreen(
+                        state = state,
+                        onNavigateBack = {},
+                        onPlayVideo = onPlayVideo,
+                        onAction = onAction,
+                    )
+                }
             }
         }
     }
