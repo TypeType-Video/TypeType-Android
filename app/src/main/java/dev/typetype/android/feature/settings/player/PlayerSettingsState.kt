@@ -1,6 +1,7 @@
 package dev.typetype.android.feature.settings.player
 
 import dev.typetype.android.domain.usersettings.DEFAULT_SPONSOR_BLOCK_CATEGORY_ACTIONS
+import dev.typetype.android.domain.usersettings.CaptionStyles
 import dev.typetype.android.domain.usersettings.SponsorBlockMode
 
 data class PlayerSettingsState(
@@ -22,6 +23,7 @@ data class PlayerSettingsState(
     val defaultSubtitleLanguage: String = "",
     val defaultAudioLanguage: String = "",
     val preferOriginalLanguage: Boolean = false,
+    val captionStyles: CaptionStyles = CaptionStyles(),
     val sponsorBlockMode: SponsorBlockMode = SponsorBlockMode.AutoSkip,
     val sponsorBlockCategoryActions: Map<String, SponsorBlockMode> =
         DEFAULT_SPONSOR_BLOCK_CATEGORY_ACTIONS,

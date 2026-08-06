@@ -49,6 +49,7 @@ class PlayerSettingsViewModel @Inject constructor(
                     defaultSubtitleLanguage = server.defaultSubtitleLanguage,
                     defaultAudioLanguage = server.defaultAudioLanguage,
                     preferOriginalLanguage = server.preferOriginalLanguage,
+                    captionStyles = server.captionStyles,
                     sponsorBlockMode = server.sponsorBlockMode,
                     sponsorBlockCategoryActions = server.sponsorBlockCategoryActions,
                     sponsorBlockMinimumDuration = server.sponsorBlockMinimumDuration,
@@ -104,6 +105,8 @@ class PlayerSettingsViewModel @Inject constructor(
                     updateServer { it.copy(defaultAudioLanguage = action.language) }
                 is PlayerSettingsAction.SetPreferOriginalLanguage ->
                     updateServer { it.copy(preferOriginalLanguage = action.enabled) }
+                is PlayerSettingsAction.SetCaptionStyles ->
+                    updateServer { it.copy(captionStyles = action.styles) }
                 is PlayerSettingsAction.SetSponsorBlockMode -> updateServer {
                     it.withSponsorBlockMode(action.mode)
                 }

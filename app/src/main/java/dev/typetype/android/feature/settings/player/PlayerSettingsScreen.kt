@@ -226,6 +226,7 @@ fun PlayerSettingsScreen(
                             onCheckedChange = { onAction(PlayerSettingsAction.SetPreferOriginalLanguage(it)) },
                         )
                     }
+                    captionStyleSettingsItems(state = state, onAction = onAction)
                 }
 
                 item { Spacer(Modifier.size(4.dp)) }
