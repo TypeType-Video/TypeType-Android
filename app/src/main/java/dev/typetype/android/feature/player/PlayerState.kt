@@ -19,6 +19,7 @@ data class PlayerState(
     val isInWatchLater: Boolean = false,
     val gestureConfig: PlayerGestureConfig = PlayerGestureConfig(),
     val autoplayCountdownSeconds: Int = 10,
+    val audioOnlyPlaybackDefault: Boolean? = null,
     val userSettings: UserSettings = UserSettings(),
     val playlistPickerVisible: Boolean = false,
     val playlists: List<Playlist> = emptyList(),

@@ -8,6 +8,7 @@ data class AppPreferences(
     val playerLongPressSpeedEnabled: Boolean = true,
     val playerAutoplayEnabled: Boolean = true,
     val playerAutoplayCountdownSeconds: Int = 10,
+    val playerAudioOnlyPlayback: Boolean = false,
     val playerPauseInBackground: Boolean = false,
     val danmakuEnabled: Boolean = false,
     val danmakuSpeed: Float = 1f,

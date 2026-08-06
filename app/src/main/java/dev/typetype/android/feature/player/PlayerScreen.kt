@@ -159,6 +159,7 @@ fun PlayerScreen(
                     isInWatchLater = state.isInWatchLater,
                     gestureConfig = state.gestureConfig,
                     autoplayCountdownSeconds = state.autoplayCountdownSeconds,
+                    audioOnlyPlaybackDefault = state.audioOnlyPlaybackDefault,
                     userSettings = state.userSettings,
                     playlists = state.playlists,
                     playlistPickerVisible = state.playlistPickerVisible,

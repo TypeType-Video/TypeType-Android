@@ -4,6 +4,7 @@ import android.os.Handler
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,13 +20,19 @@ import com.google.common.util.concurrent.MoreExecutors
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.services.MergedStreamMediaKeys
 import dev.typetype.android.services.PlaybackAudioOnlyCommand
+import kotlinx.coroutines.delay
 
 @Stable
 @OptIn(markerClass = [UnstableApi::class])
 internal class AudioOnlyPlaybackState(
     private val controller: MediaController,
-    val available: Boolean,
+    private val playbackEligible: Boolean,
+    private val defaultGate: AudioOnlyDefaultGate,
 ) {
+    var available by mutableStateOf(
+        playbackEligible && controller.isSessionCommandAvailable(PlaybackAudioOnlyCommand.command),
+    )
+        private set
     var active by mutableStateOf(controller.currentAudioOnlyMode())
         private set
     var changing by mutableStateOf(false)
@@ -33,13 +40,13 @@ internal class AudioOnlyPlaybackState(
     var failure by mutableStateOf<AudioOnlyPlaybackFailure?>(null)
         private set
 
-    fun setEnabled(enabled: Boolean) {
+    fun setEnabled(enabled: Boolean, defaultRequest: Boolean = false) {
         if (!available || changing || active == enabled) return
         changing = true
         failure = null
         val future = controller.sendCustomCommand(
             PlaybackAudioOnlyCommand.command,
-            PlaybackAudioOnlyCommand.arguments(enabled),
+            PlaybackAudioOnlyCommand.arguments(enabled, defaultRequest),
         )
         future.addListener(
             {
@@ -61,7 +68,19 @@ internal class AudioOnlyPlaybackState(
     }
 
     fun synchronize() {
+        available = playbackEligible &&
+            controller.isSessionCommandAvailable(PlaybackAudioOnlyCommand.command)
         active = controller.currentAudioOnlyMode()
+        if (
+            defaultGate.shouldEnable(
+                mediaId = controller.currentMediaItem?.mediaId,
+                available = available,
+                active = active,
+                ready = controller.playbackState == Player.STATE_READY,
+            )
+        ) {
+            setEnabled(true, defaultRequest = true)
+        }
     }
 
     fun consumeFailure() {
@@ -74,25 +93,58 @@ internal enum class AudioOnlyPlaybackFailure {
     Unavailable,
 }
 
+internal data class AudioOnlyPlaybackDefault(
+    val mediaId: String,
+    val enabled: Boolean?,
+)
+
+internal class AudioOnlyDefaultGate(
+    private val default: AudioOnlyPlaybackDefault,
+) {
+    private var resolved = false
+
+    fun shouldEnable(
+        mediaId: String?,
+        available: Boolean,
+        active: Boolean,
+        ready: Boolean,
+    ): Boolean {
+        val enabled = default.enabled ?: return false
+        if (resolved || !available || !ready || mediaId != default.mediaId) return false
+        resolved = true
+        return enabled && !active
+    }
+}
+
 @Composable
 internal fun rememberAudioOnlyPlaybackState(
     controller: MediaController,
     stream: Stream,
+    default: AudioOnlyPlaybackDefault,
 ): AudioOnlyPlaybackState {
-    val available = !stream.isLive && !stream.isLiveContent &&
-        controller.isSessionCommandAvailable(PlaybackAudioOnlyCommand.command)
-    val state = remember(controller, stream.id, available) {
-        AudioOnlyPlaybackState(controller, available)
+    val playbackEligible = !stream.isLive && !stream.isLiveContent
+    val state = remember(controller, stream.id, playbackEligible, default.mediaId, default.enabled) {
+        AudioOnlyPlaybackState(controller, playbackEligible, AudioOnlyDefaultGate(default))
     }
     DisposableEffect(controller, state) {
         val listener = object : Player.Listener {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 state.synchronize()
             }
+
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                state.synchronize()
+            }
         }
         controller.addListener(listener)
         state.synchronize()
         onDispose { controller.removeListener(listener) }
+    }
+    LaunchedEffect(controller, state) {
+        repeat(DEFAULT_SYNCHRONIZATION_ATTEMPTS) {
+            state.synchronize()
+            delay(DEFAULT_SYNCHRONIZATION_INTERVAL_MS)
+        }
     }
     return state
 }
@@ -102,3 +154,6 @@ private fun MediaController.currentAudioOnlyMode(): Boolean =
         it.getBoolean(MergedStreamMediaKeys.EXTRA_AUDIO_ONLY_ACTIVE) ||
             it.getBoolean(MergedStreamMediaKeys.EXTRA_SABR_AUDIO_ONLY)
     } == true
+
+private const val DEFAULT_SYNCHRONIZATION_ATTEMPTS = 50
+private const val DEFAULT_SYNCHRONIZATION_INTERVAL_MS = 100L

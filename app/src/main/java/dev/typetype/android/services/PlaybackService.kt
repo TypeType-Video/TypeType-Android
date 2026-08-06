@@ -89,6 +89,8 @@ class PlaybackService : MediaSessionService() {
             sabr = sabrPlaybackBridge,
             provider = ProviderAudioOnlyServiceBridge(player, audioOnlyStreamRepository),
         )
+        val audioOnlyDefaultPolicy = AudioOnlyDefaultPolicy()
+        player.addListener(audioOnlyDefaultPolicy)
         audioOnlyPlaybackBridge = playbackBridge
         playbackResumeRecorder = PlaybackResumeRecorder(
             player,
@@ -107,6 +109,7 @@ class PlaybackService : MediaSessionService() {
                     packageName,
                     applicationInfo.uid,
                     playbackBridge,
+                    audioOnlyDefaultPolicy,
                 ),
             )
             .build()

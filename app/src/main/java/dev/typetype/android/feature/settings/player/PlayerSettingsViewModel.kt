@@ -38,6 +38,7 @@ class PlayerSettingsViewModel @Inject constructor(
                     autoplayEnabled = server.autoplay,
                     autoplayCountdownSeconds = prefs.playerAutoplayCountdownSeconds,
                     skipPlaylistAutoplayScreen = server.skipPlaylistAutoplayScreen,
+                    audioOnlyPlayback = prefs.playerAudioOnlyPlayback,
                     pauseInBackgroundEnabled = prefs.playerPauseInBackground,
                     danmakuEnabled = prefs.danmakuEnabled,
                     danmakuSpeed = prefs.danmakuSpeed,
@@ -91,6 +92,8 @@ class PlayerSettingsViewModel @Inject constructor(
                     preferencesRepository.setPlayerAutoplayCountdownSeconds(action.seconds)
                 is PlayerSettingsAction.SetSkipPlaylistAutoplayScreen ->
                     updateServer { it.copy(skipPlaylistAutoplayScreen = action.enabled) }
+                is PlayerSettingsAction.SetAudioOnlyPlayback ->
+                    preferencesRepository.setPlayerAudioOnlyPlayback(action.enabled)
                 is PlayerSettingsAction.SetDefaultQuality ->
                     updateServer { it.copy(defaultQuality = action.quality) }
                 is PlayerSettingsAction.SetDefaultPlaybackSpeed ->

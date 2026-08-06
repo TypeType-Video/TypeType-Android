@@ -145,6 +145,7 @@ class PlayerViewModel @Inject constructor(
                             longPressSpeedEnabled = prefs.playerLongPressSpeedEnabled,
                         ),
                         autoplayCountdownSeconds = prefs.playerAutoplayCountdownSeconds,
+                        audioOnlyPlaybackDefault = prefs.playerAudioOnlyPlayback,
                     )
                 }
             }

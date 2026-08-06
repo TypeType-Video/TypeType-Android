@@ -12,6 +12,7 @@ data class PlayerSettingsState(
     val autoplayEnabled: Boolean = true,
     val autoplayCountdownSeconds: Int = 10,
     val skipPlaylistAutoplayScreen: Boolean = false,
+    val audioOnlyPlayback: Boolean = false,
     val pauseInBackgroundEnabled: Boolean = false,
     val danmakuEnabled: Boolean = false,
     val danmakuSpeed: Float = 1f,

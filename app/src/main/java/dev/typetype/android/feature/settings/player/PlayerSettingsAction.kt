@@ -11,6 +11,7 @@ sealed interface PlayerSettingsAction {
     data class SetAutoplay(val enabled: Boolean) : PlayerSettingsAction
     data class SetAutoplayCountdown(val seconds: Int) : PlayerSettingsAction
     data class SetSkipPlaylistAutoplayScreen(val enabled: Boolean) : PlayerSettingsAction
+    data class SetAudioOnlyPlayback(val enabled: Boolean) : PlayerSettingsAction
     data class SetPauseInBackground(val enabled: Boolean) : PlayerSettingsAction
     data class SetDanmakuEnabled(val enabled: Boolean) : PlayerSettingsAction
     data class SetDanmakuSpeed(val speed: Float) : PlayerSettingsAction
