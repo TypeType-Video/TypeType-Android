@@ -13,6 +13,8 @@ class PlayerProgressEffectsTest {
                 playbackState = Player.STATE_ENDED,
                 playWhenReady = true,
                 enabled = true,
+                currentMediaId = CURRENT_VIDEO,
+                currentVideoUrl = CURRENT_VIDEO,
                 targetUrl = "https://example.com/watch?v=next",
             ),
         )
@@ -25,6 +27,8 @@ class PlayerProgressEffectsTest {
                 playbackState = Player.STATE_ENDED,
                 playWhenReady = false,
                 enabled = true,
+                currentMediaId = CURRENT_VIDEO,
+                currentVideoUrl = CURRENT_VIDEO,
                 targetUrl = "https://example.com/watch?v=next",
             ),
         )
@@ -37,6 +41,8 @@ class PlayerProgressEffectsTest {
                 playbackState = Player.STATE_READY,
                 playWhenReady = true,
                 enabled = true,
+                currentMediaId = CURRENT_VIDEO,
+                currentVideoUrl = CURRENT_VIDEO,
                 targetUrl = "https://example.com/watch?v=next",
             ),
         )
@@ -49,6 +55,8 @@ class PlayerProgressEffectsTest {
                 playbackState = Player.STATE_ENDED,
                 playWhenReady = true,
                 enabled = false,
+                currentMediaId = CURRENT_VIDEO,
+                currentVideoUrl = CURRENT_VIDEO,
                 targetUrl = "https://example.com/watch?v=next",
             ),
         )
@@ -57,8 +65,28 @@ class PlayerProgressEffectsTest {
                 playbackState = Player.STATE_ENDED,
                 playWhenReady = true,
                 enabled = true,
+                currentMediaId = CURRENT_VIDEO,
+                currentVideoUrl = CURRENT_VIDEO,
                 targetUrl = null,
             ),
         )
+    }
+
+    @Test
+    fun `new video ignores the previous ended media item`() {
+        assertFalse(
+            shouldStartAutoplayCountdown(
+                playbackState = Player.STATE_ENDED,
+                playWhenReady = true,
+                enabled = true,
+                currentMediaId = CURRENT_VIDEO,
+                currentVideoUrl = "https://example.com/watch?v=new",
+                targetUrl = "https://example.com/watch?v=next",
+            ),
+        )
+    }
+
+    private companion object {
+        const val CURRENT_VIDEO = "https://example.com/watch?v=current"
     }
 }

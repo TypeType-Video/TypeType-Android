@@ -100,6 +100,7 @@ fun LoadedPlayer(
     val autoplayCountdown = rememberPlayerAutoplayCountdown(
         player = controller,
         stream = stream,
+        currentVideoUrl = videoUrl,
         playbackQueue = playbackQueue,
         enabled = userSettings.autoplay,
         countdownSeconds = autoplayCountdownSeconds,
@@ -161,8 +162,6 @@ fun LoadedPlayer(
         pipSourceRect = pipSourceRect,
         onSaveProgress = { onAction(PlayerAction.OnSaveProgress(it)) },
     )
-
-    PlayerFullscreenEffect(activity, isFullscreen, onFullscreenChange)
 
     Box(
         modifier = Modifier
