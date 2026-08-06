@@ -643,7 +643,7 @@
     <string name="login_password_placeholder">Password</string>
     <string name="login_continue_guest">Continue as guest</string>
     <string name="login_instance_not_found">Instance not found</string>
-    <string name="login_browser_required">Single sign-on needs a browser with secure Auth Tab support.</string>
+    <string name="login_browser_required">Single sign-on needs an external browser.</string>
     <string name="login_fields_required">Enter your email or username and password</string>
     <string name="login_failed">Couldn\'t sign in</string>
     <string name="login_credentials_rejected">Check your email or username and password</string>
