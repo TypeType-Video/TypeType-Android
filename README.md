@@ -26,6 +26,8 @@ TypeType Android is a native client for
 platform. It provides browsing, account synchronization, downloads, and native
 playback on Android phones and tablets.
 
+The Android app is currently in beta and receives frequent updates.
+
 The app communicates exclusively with the TypeType instance selected during
 setup. Extraction, playback sessions, recommendations, synchronization, and
 server-side downloads remain server responsibilities.
