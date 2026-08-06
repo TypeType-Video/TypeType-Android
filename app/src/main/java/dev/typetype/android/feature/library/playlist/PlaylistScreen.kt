@@ -78,7 +78,7 @@ fun PlaylistRoute(
 }
 
 @Composable
-private fun PlaylistScreen(
+internal fun PlaylistScreen(
     playlistId: String,
     title: String,
     videos: List<PlaylistVideo>,
@@ -115,25 +115,6 @@ private fun PlaylistScreen(
         LibrarySortMode.TitleZA -> filtered.sortedByDescending { it.title.lowercase() }
         else -> filtered.sortedBy { it.position }
     }
-
-    val menuVm: VideoMenuHandlerViewModel = hiltViewModel()
-    val watchedUrls by menuVm.watchedUrls.collectAsStateWithLifecycle()
-    val snackbarHost = LocalAppSnackbarHost.current
-    LaunchedEffect(menuVm, snackbarHost) {
-        if (snackbarHost == null) return@LaunchedEffect
-        menuVm.events.collect { event ->
-            when (event) {
-                is VideoMenuEvent.Snackbar -> snackbarHost.showSnackbar(
-                    event.message,
-                    duration = SnackbarDuration.Short,
-                )
-            }
-        }
-    }
-    val context = LocalContext.current
-    val shareChooserTitle = stringResource(R.string.video_menu_share_chooser)
-    val serverBaseUrl = dev.typetype.android.core.ui.share.LocalServerBaseUrl.current
-    var pendingMenu by remember { mutableStateOf<PlaylistVideo?>(null) }
 
     Column(modifier = Modifier.fillMaxSize()) {
         PlaylistDetailTopBar(
@@ -199,6 +180,24 @@ private fun PlaylistScreen(
             return
         }
 
+        val menuVm: VideoMenuHandlerViewModel = hiltViewModel()
+        val watchedUrls by menuVm.watchedUrls.collectAsStateWithLifecycle()
+        val snackbarHost = LocalAppSnackbarHost.current
+        LaunchedEffect(menuVm, snackbarHost) {
+            if (snackbarHost == null) return@LaunchedEffect
+            menuVm.events.collect { event ->
+                when (event) {
+                    is VideoMenuEvent.Snackbar -> snackbarHost.showSnackbar(
+                        event.message,
+                        duration = SnackbarDuration.Short,
+                    )
+                }
+            }
+        }
+        val context = LocalContext.current
+        val shareChooserTitle = stringResource(R.string.video_menu_share_chooser)
+        val serverBaseUrl = dev.typetype.android.core.ui.share.LocalServerBaseUrl.current
+        var pendingMenu by remember { mutableStateOf<PlaylistVideo?>(null) }
         val urlsMissingInfo = visible
             .filter { it.channelAvatarUrl.isBlank() || it.channelName.isBlank() }
             .map { it.url }
@@ -220,51 +219,55 @@ private fun PlaylistScreen(
                 )
             }
         }
-    }
 
-    pendingMenu?.let { video ->
-        val orderedVideos = videos.sortedBy { it.position }
-        val videoIndex = orderedVideos.indexOfFirst { it.url == video.url }
-        val canReorder = filter.isBlank() && sort == LibrarySortMode.DefaultOrder && !isReordering
-        PlaylistVideoActionsSheet(
-            removeLabel = stringResource(R.string.playlist_action_remove_from_playlist, title),
-            isWatched = video.url in watchedUrls,
-            canMoveUp = canReorder && videoIndex > 0,
-            canMoveDown = canReorder && videoIndex in 0 until orderedVideos.lastIndex,
-            onMoveUp = if (filter.isBlank() && sort == LibrarySortMode.DefaultOrder) {
-                { onMoveVideo(video.url, -1) }
-            } else {
-                null
-            },
-            onMoveDown = if (filter.isBlank() && sort == LibrarySortMode.DefaultOrder) {
-                { onMoveVideo(video.url, 1) }
-            } else {
-                null
-            },
-            onPlayNext = { menuVm.playNext(video.toPlaybackQueueEntry()) },
-            onAddToQueue = { menuVm.addToQueue(video.toPlaybackQueueEntry()) },
-            onRemoveFromList = { menuVm.removeFromPlaylist(playlistId, title, video.url) },
-            onToggleWatched = {
-                menuVm.toggleWatchedUrl(
-                    videoUrl = video.url,
-                    title = video.title,
-                    thumbnail = video.thumbnailUrl,
-                    duration = video.durationSeconds,
-                    isCurrentlyWatched = video.url in watchedUrls,
-                )
-            },
-            onShare = {
-                val intent = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(
-                        Intent.EXTRA_TEXT,
-                        dev.typetype.android.core.ui.share.buildShareUrl(serverBaseUrl, video.url),
+        pendingMenu?.let { video ->
+            val orderedVideos = videos.sortedBy { it.position }
+            val videoIndex = orderedVideos.indexOfFirst { it.url == video.url }
+            val canReorder =
+                filter.isBlank() && sort == LibrarySortMode.DefaultOrder && !isReordering
+            PlaylistVideoActionsSheet(
+                removeLabel = stringResource(R.string.playlist_action_remove_from_playlist, title),
+                isWatched = video.url in watchedUrls,
+                canMoveUp = canReorder && videoIndex > 0,
+                canMoveDown = canReorder && videoIndex in 0 until orderedVideos.lastIndex,
+                onMoveUp = if (canReorder) {
+                    { onMoveVideo(video.url, -1) }
+                } else {
+                    null
+                },
+                onMoveDown = if (canReorder) {
+                    { onMoveVideo(video.url, 1) }
+                } else {
+                    null
+                },
+                onPlayNext = { menuVm.playNext(video.toPlaybackQueueEntry()) },
+                onAddToQueue = { menuVm.addToQueue(video.toPlaybackQueueEntry()) },
+                onRemoveFromList = { menuVm.removeFromPlaylist(playlistId, title, video.url) },
+                onToggleWatched = {
+                    menuVm.toggleWatchedUrl(
+                        videoUrl = video.url,
+                        title = video.title,
+                        thumbnail = video.thumbnailUrl,
+                        duration = video.durationSeconds,
+                        isCurrentlyWatched = video.url in watchedUrls,
                     )
-                }
-                context.startActivity(Intent.createChooser(intent, shareChooserTitle))
-            },
-            onBlockVideo = { menuVm.blockVideoUrl(video.url) },
-            onDismiss = { pendingMenu = null },
-        )
+                },
+                onShare = {
+                    val intent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(
+                            Intent.EXTRA_TEXT,
+                            dev.typetype.android.core.ui.share.buildShareUrl(
+                                serverBaseUrl,
+                                video.url,
+                            ),
+                        )
+                    }
+                    context.startActivity(Intent.createChooser(intent, shareChooserTitle))
+                },
+                onBlockVideo = { menuVm.blockVideoUrl(video.url) },
+                onDismiss = { pendingMenu = null },
+            )
+        }
     }
 }
