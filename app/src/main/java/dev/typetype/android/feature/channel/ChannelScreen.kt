@@ -29,6 +29,7 @@ import dev.typetype.android.core.ui.components.FullScreenLoader
 import dev.typetype.android.core.ui.components.LazyPaginationFooter
 import dev.typetype.android.core.ui.components.RequestIdRow
 import dev.typetype.android.core.ui.components.VideoCard
+import dev.typetype.android.feature.menu.VideoMenuScope
 import dev.typetype.android.feature.menu.rememberVideoMenuScope
 import dev.typetype.android.feature.search.SearchPlaylistCard
 
@@ -92,8 +93,28 @@ private fun ChannelContent(
     onOpenPlaylist: (playlistUrl: String) -> Unit,
     onAction: (ChannelAction) -> Unit,
 ) {
+    ChannelContentGrid(
+        state = state,
+        onNavigateBack = onNavigateBack,
+        onPlayVideo = onPlayVideo,
+        onOpenPodcast = onOpenPodcast,
+        onOpenPlaylist = onOpenPlaylist,
+        onAction = onAction,
+        menuScope = rememberVideoMenuScope(onOpenChannel = {}),
+    )
+}
+
+@Composable
+internal fun ChannelContentGrid(
+    state: ChannelState,
+    onNavigateBack: () -> Unit,
+    onPlayVideo: (videoUrl: String) -> Unit,
+    onOpenPodcast: (podcastUrl: String) -> Unit,
+    onOpenPlaylist: (playlistUrl: String) -> Unit,
+    onAction: (ChannelAction) -> Unit,
+    menuScope: VideoMenuScope,
+) {
     val channel = requireNotNull(state.channel)
-    val menuScope = rememberVideoMenuScope(onOpenChannel = {})
     val visibleVideos = channel.videos.filterNot(menuScope::isHidden)
 
     LazyVerticalGrid(
