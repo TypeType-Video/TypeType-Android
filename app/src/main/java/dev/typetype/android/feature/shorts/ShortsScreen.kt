@@ -90,13 +90,9 @@ fun ShortsScreen(
                     .collect { nearEnd -> if (nearEnd && state.hasMore) currentLoadMore() }
             }
             LaunchedEffect(pagerState, state.videos) {
-                snapshotFlow {
-                    if (pagerState.isScrollInProgress) {
-                        null
-                    } else {
-                        state.videos.getOrNull(pagerState.settledPage)
-                    }
-                }.distinctUntilChanged().collect(currentActiveVideoChanged)
+                snapshotFlow { state.videos.getOrNull(pagerState.settledPage) }
+                    .distinctUntilChanged()
+                    .collect(currentActiveVideoChanged)
             }
             LaunchedEffect(pagerState, state.videos) {
                 snapshotFlow {
@@ -116,8 +112,7 @@ fun ShortsScreen(
                     ShortPage(
                         video = state.videos[page],
                         isActive = embeddedPlaybackEnabled &&
-                            page == pagerState.settledPage &&
-                            !pagerState.isScrollInProgress,
+                            page == pagerState.settledPage,
                         onPlayVideo = onPlayVideo,
                         onOpenChannel = onOpenChannel,
                         menuItemState = menuItemState(state.videos[page]),
