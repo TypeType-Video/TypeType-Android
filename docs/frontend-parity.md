@@ -83,7 +83,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | Live and DVR playback | Shared SABR live window | Partial | A real beta live ran for more than 13 minutes on API 29 through forward and backward DVR seeks, background and foreground transitions, and a 60-second outage. A separate 150-second pause exhausted multiple SABR sessions; Android rebuilt the native playback binding, recovered without a process restart, and remained stable for three minutes. Active-live and post-live Server contracts, window conversion, and Media3 timeline tests pass; a real live-to-replay transition remains |
 | Audio-only playback | SABR audio target | Implemented | Service command and audio-only contract/coordinator tests |
 | Quality, codec, audio, subtitle, and speed selection | Stream and playback contracts | Implemented | Native sheet state and selection tests |
-| Server-proxied YouTube subtitles | `/subtitles/youtube/{videoId}` | Implemented | TTML endpoint mapping, overlay, cue loader, manual, automatic, translated-track, seek, and bounded-failure device tests pass on API 23, 29, and 37. A real beta TED video reached the native track selector and preserved playback when the Server returned the typed 429 unavailable state; visual caption success remains blocked by the current beta egress |
+| Server-proxied YouTube subtitles | `/subtitles/youtube/{videoId}` | Implemented | TTML endpoint mapping, overlay, cue loader, manual, automatic, translated-track, seek, and bounded-failure device tests pass on API 23, 29, and 37. The Media3 overlay preserves cue geometry and applies the synchronized caption appearance in portrait, fullscreen, Shorts, and PiP. A real beta TED video reached the native track selector and preserved playback when the Server returned the typed 429 unavailable state; visual caption success from that endpoint remains blocked by the current beta egress |
 | SponsorBlock actions and chapters | Stream segment metadata and settings | Implemented | Category policy, skip/mute/manual notice, chapter and Compose tests |
 | Queue, autoplay, shuffle, and repeat | Stable video identities | Implemented | One service-owned queue and persistence tests |
 | Sleep timer | Device-owned Media3 state | Implemented | Service timer and device tests |
@@ -102,7 +102,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | Frontend behavior | Android state | Evidence or next requirement |
 | --- | --- | --- |
 | Appearance, theme, and accent | Implemented | Device-scoped native settings |
-| Player defaults and caption style | Implemented | Server settings patches and Android caption integration |
+| Player defaults and caption style | Implemented | All nine frontend-compatible caption fields are synchronized through Server settings, exposed through native controls, resolved to the same defaults, bounded before rendering, and applied to the shared Media3 subtitle path. Unit and device tests pass on API 23 without Google services, API 29, and API 37; API 29 visual checks cover both the settings and a rendered positioned cue |
 | SponsorBlock preferences | Implemented | Server-synchronized controls and policy tests |
 | Content visibility and history privacy | Implemented | Server-synchronized controls and write gates |
 | DeArrow preferences | Implemented | Native content controls cover title, thumbnail, and trust modes; a real beta search displayed the Server title and representative frame |
