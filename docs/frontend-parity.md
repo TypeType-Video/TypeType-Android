@@ -33,12 +33,12 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | Guest access | `/auth/guest` | Implemented | Capability-driven login screen |
 | External-browser OIDC | `/auth/oidc/start`, `/status`, `/callback` | Implemented | Real Keycloak journeys pass on API 23 AOSP without Google services and API 37, including browser fallback, callback, force-stop restoration, and cancellation cleanup |
 | Password reset | `/auth/reset-password` | Implemented | Native reset screen and typed errors |
-| Registration and first-admin bootstrap | `/auth/register/status`, `/auth/register` | Partial | Native local/OIDC route, bootstrap redirect, Android contract tests, Server route tests, and API 33 Compose tests pass; process recreation and signed-release retest remain |
+| Registration and first-admin bootstrap | `/auth/register/status`, `/auth/register` | Implemented | Native local/OIDC route, bootstrap redirect, Android contract tests, Server route tests, and API 33 Compose tests pass. A real beta API 29 process kill restored the registration route and its non-secret name and email draft while clearing the password |
 | Reauthentication of the selected account | `/auth/login`, `/auth/oidc/callback` | Implemented | Account identity is checked before replacing credentials |
 | Multiple instances and accounts | Account-scoped authenticated API | Implemented | Room scope, cookies, tokens, workers, cache, and navigation are isolated |
 | Profile identity | `/profile`, `/profile/account` | Implemented | Native profile settings and identity Compose test |
 | Emoji, custom, and reset avatar | `/profile/avatar/*` | Implemented | Picker, GIF decoder, upload DTO, and repository tests; authenticated beta accounts exercised WebP and animated GIF uploads, profile refresh, force-stop recreation, and reset on API 29, with successful upload, identity refresh, and delete responses; signed-release retest remains |
-| YouTube session status and pairing | `/youtube-session/*` | Partial | Native capability, status, authenticated remote browser, disconnect, expiry, and unavailable states have contract, unit, and API 33 Compose coverage; process recreation and signed-release retest remain |
+| YouTube session status and pairing | `/youtube-session/*` | Implemented | Native capability, status, authenticated remote browser, disconnect, expiry, and unavailable states have contract, unit, and API 33 Compose coverage. A real beta API 29 process kill restored the route and reloaded the current Server status |
 
 ## Discovery and browsing
 
