@@ -1,16 +1,11 @@
 package dev.typetype.android.feature.player.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsIgnoringVisibility
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -18,20 +13,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.Player
 import androidx.media3.common.text.Cue
 import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.extractor.text.CuesWithTiming
+import androidx.media3.ui.SubtitleView
 import dev.typetype.android.R
 import dev.typetype.android.domain.stream.StreamSubtitleSource
+import dev.typetype.android.domain.usersettings.CaptionStyles
 import dev.typetype.android.feature.player.LoadSubtitleCues
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -46,6 +43,7 @@ fun PlayerSubtitleOverlay(
     modifier: Modifier = Modifier,
     externalSource: StreamSubtitleSource? = null,
     loadExternalCues: LoadSubtitleCues = { Result.success(emptyList()) },
+    captionStyles: CaptionStyles = CaptionStyles(),
 ) {
     var nativeCues by remember(player) { mutableStateOf(emptyList<Cue>()) }
     var externalCues by remember(externalSource?.url) {
@@ -98,24 +96,29 @@ fun PlayerSubtitleOverlay(
         temporarilyUnavailable.takeIf { externalLoadFailed }.orEmpty()
     }
     if (text.isBlank()) return
-
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.BottomCenter,
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
-            color = Color.White,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .windowInsetsPadding(WindowInsets.navigationBarsIgnoringVisibility)
-                .padding(horizontal = 24.dp)
-                .padding(bottom = if (controlsVisible) 132.dp else 34.dp)
-                .background(Color.Black.copy(alpha = 0.72f), RoundedCornerShape(4.dp))
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-        )
+    val displayedCues = cues.ifEmpty {
+        listOf(Cue.Builder().setText(text).build())
     }
+
+    AndroidView(
+        factory = { context ->
+            SubtitleView(context).apply {
+                setBottomPaddingFraction(0f)
+                applyCaptionStyle(captionStyles)
+                setCues(displayedCues)
+            }
+        },
+        update = { subtitleView ->
+            subtitleView.applyCaptionStyle(captionStyles)
+            subtitleView.setCues(displayedCues)
+        },
+        modifier = modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.navigationBarsIgnoringVisibility)
+            .padding(horizontal = 24.dp)
+            .padding(bottom = if (controlsVisible) 132.dp else 34.dp)
+            .semantics { this.text = AnnotatedString(text) },
+    )
 }
 
 private fun List<Cue>.subtitleText(): String =

@@ -179,6 +179,7 @@ private fun ShortsPlayerSurface(
             surfaceKey = stream.id,
             resizeMode = ResizeMode.Crop,
             showNativeSubtitles = false,
+            captionStyles = state.userSettings.captionStyles,
             modifier = Modifier.fillMaxSize(),
         )
         PlayerSubtitleOverlay(
@@ -187,6 +188,7 @@ private fun ShortsPlayerSurface(
             subtitlesVisible = selections.selectedSubtitleKey != null,
             externalSource = externalSubtitle,
             loadExternalCues = loadSubtitleCues,
+            captionStyles = state.userSettings.captionStyles,
             modifier = Modifier.fillMaxSize(),
         )
         AnimatedVisibility(

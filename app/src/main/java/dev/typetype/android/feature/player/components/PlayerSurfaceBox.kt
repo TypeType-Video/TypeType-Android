@@ -34,6 +34,7 @@ import dev.typetype.android.domain.stream.Chapter
 import dev.typetype.android.domain.stream.SponsorBlockSegment
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.stream.StreamPlaybackContract
+import dev.typetype.android.domain.usersettings.CaptionStyles
 import dev.typetype.android.feature.player.LoadSubtitleCues
 import dev.typetype.android.feature.player.PlaybackCodecSupport
 import dev.typetype.android.feature.player.PlayerDanmakuAction
@@ -76,6 +77,7 @@ internal fun PlayerSurfaceBox(
     playbackBrightnessPercent: Int?,
     onPlaybackBrightnessChange: (Int) -> Unit,
     loadSubtitleCues: LoadSubtitleCues,
+    captionStyles: CaptionStyles = CaptionStyles(),
     danmakuState: PlayerDanmakuState = PlayerDanmakuState(),
     onDanmakuAction: (PlayerDanmakuAction) -> Unit = {},
 ) {
@@ -161,6 +163,7 @@ internal fun PlayerSurfaceBox(
                 resizeMode = gestureState.resizeMode.value,
                 showNativeSubtitles = isInPip && externalSubtitle == null &&
                     selectedSubtitleKey != null,
+                captionStyles = captionStyles,
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -178,6 +181,7 @@ internal fun PlayerSurfaceBox(
                 subtitlesVisible = selectedSubtitleKey != null,
                 externalSource = externalSubtitle,
                 loadExternalCues = loadSubtitleCues,
+                captionStyles = captionStyles,
                 modifier = Modifier.fillMaxSize(),
             )
         }
