@@ -11,7 +11,7 @@ The comparison was refreshed on 2026-08-06 from clean clones:
 
 | Repository | Branch | Revision |
 | --- | --- | --- |
-| TypeType-Android | `dev` | `7d25d61183f27d31e0686eadff68fbd8ce2a09c1` |
+| TypeType-Android | `dev` | `7462f57873f4e7d001739a5ce752e321f779ebcb` |
 | TypeType frontend | `dev` | `97103f7302c91accdea3322d1f5b8f610607f378` |
 | TypeType-Server | `dev` | `6f31f93c4ecfb0e31c03c777b0d96f5cdc51f7bc` |
 | TypeType-Web-Player | `dev` | `f2fe3e6976cd9beec603f324adf37edee923ee20` |
@@ -66,7 +66,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | --- | --- | --- | --- |
 | History with paging, search, date filters, and deletion | `/history` | Implemented | Server-side query and date bounds, native today/week/month/day filters, per-item removal, confirmed clear-all, scoped Room refresh, contract and Compose tests on API 23, 29, and 37, plus a real beta surface check |
 | Favorites and watch later | `/favorites`, `/watch-later` | Implemented | Durable desired-state outbox and cached tabs |
-| Playlist create, rename, delete, reorder | `/playlists*` | Implemented | Native dialogs, rollback, and summary/detail separation |
+| Playlist create, rename, delete, reorder | `/playlists*` | Implemented | Native dialogs, rollback, summary/detail separation, cached-refresh retention, and loading, fatal-error, and empty states pass on API 23, 29, and 37 |
 | Saved public playlists | `/saved-playlists` | Implemented | Dedicated cached Library tab |
 | TypeType backup export and restore | `/backup/typetype`, `/restore/typetype` | Implemented | Android document picker and multipart contract tests |
 | PipePipe restore | `/restore/pipepipe` | Implemented | ZIP validation, summary, refresh, and contract tests |
@@ -108,7 +108,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | DeArrow preferences | Implemented | Native content controls cover title, thumbnail, and trust modes; a real beta search displayed the Server title and representative frame |
 | Diagnostics review, export, and clear | Implemented | Bounded redacted local store and sanitizer tests |
 | Native bug report | Implemented | Preview and explicit submission path; pinned Server retest remains |
-| Loading, cached refresh, empty, partial, and fatal states | Partial | Home, Shorts, Notifications, Subscriptions, Search, Channel, Podcast, and public-playlist detail exercise accessible loading, fatal errors with request IDs, explicit empty states, and cached refresh where applicable on API 23, 29, and 37; Library and local-playlist detail remain |
+| Loading, cached refresh, empty, partial, and fatal states | Implemented | Home, Shorts, Notifications, Subscriptions, Search, Channel, Podcast, public-playlist detail, Library, and local-playlist detail exercise accessible loading, fatal errors with request IDs, explicit empty states, and cached refresh where applicable on API 23, 29, and 37 |
 | Font scale, TalkBack, RTL, keyboard, D-pad, foldable | Partial | The top-level shell passes 200% text, RTL ordering, compact and wide navigation, landscape, and D-pad focus traversal on API 23, 29, and 37. Targeted player accessibility tests also pass; TalkBack, foldable postures, and the full route matrix still require coverage |
 
 ## Deliberate platform differences
