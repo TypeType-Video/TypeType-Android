@@ -24,6 +24,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
+private const val PAGE_TRANSITION_TIMEOUT_MILLIS = 5_000L
+
 class ShortsScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
@@ -95,7 +97,9 @@ class ShortsScreenTest {
             "Open Short one in the full player",
         ).assertIsDisplayed()
         composeRule.onNodeWithText("Advance").performClick()
-        composeRule.waitUntil { activeUrl.get() == "https://video/two" }
+        composeRule.waitUntil(timeoutMillis = PAGE_TRANSITION_TIMEOUT_MILLIS) {
+            activeUrl.get() == "https://video/two"
+        }
         composeRule.onNodeWithText("Embedded Short two").assertIsDisplayed()
     }
 
@@ -133,18 +137,20 @@ class ShortsScreenTest {
     }
 
     @Test
-    fun pagerReportsTheNextShortForMetadataPrefetch() {
-        val nextUrl = AtomicReference<String>()
+    fun pagerReportsTwoUpcomingShortsForMetadataPrefetch() {
+        val upcomingUrls = AtomicReference<List<String>>()
 
         show(
             state = ShortsState(
-                videos = listOf(video("one"), video("two")),
+                videos = listOf(video("one"), video("two"), video("three")),
                 isLoading = false,
             ),
-            onNextVideoChanged = { nextUrl.set(it?.url) },
+            onUpcomingVideosChanged = { videos -> upcomingUrls.set(videos.map(Video::url)) },
         )
 
-        composeRule.waitUntil { nextUrl.get() == "https://video/two" }
+        composeRule.waitUntil {
+            upcomingUrls.get() == listOf("https://video/two", "https://video/three")
+        }
     }
 
     @Test
@@ -158,8 +164,8 @@ class ShortsScreenTest {
                 isLoading = false,
             ),
             embeddedPlaybackEnabled = true,
-            onNextVideoChanged = { video ->
-                if (video != null) {
+            onUpcomingVideosChanged = { videos ->
+                if (videos.isNotEmpty()) {
                     prefetchStarted.set(true)
                     try {
                         awaitCancellation()
@@ -215,7 +221,7 @@ class ShortsScreenTest {
         onPlayVideo: (String) -> Unit = {},
         embeddedPlaybackEnabled: Boolean = false,
         onActiveVideoChanged: (Video?) -> Unit = {},
-        onNextVideoChanged: suspend (Video?) -> Unit = {},
+        onUpcomingVideosChanged: suspend (List<Video>) -> Unit = {},
         embeddedPlayback: @Composable (Video, () -> Unit) -> Unit = { _, _ -> },
         onMenuAction: (VideoMenuAction, Video) -> Unit = { _, _ -> },
         onShowComments: ((Video) -> Unit)? = null,
@@ -232,7 +238,7 @@ class ShortsScreenTest {
                         onLoadMore = {},
                         embeddedPlaybackEnabled = embeddedPlaybackEnabled,
                         onActiveVideoChanged = onActiveVideoChanged,
-                        onNextVideoChanged = onNextVideoChanged,
+                        onUpcomingVideosChanged = onUpcomingVideosChanged,
                         embeddedPlayback = embeddedPlayback,
                         onMenuAction = onMenuAction,
                         onShowComments = onShowComments,
