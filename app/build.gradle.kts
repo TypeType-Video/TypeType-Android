@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.androidApplication)
+    alias(libs.plugins.baselineprofile)
     alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.compose.compiler)
@@ -101,6 +102,7 @@ android {
 
 dependencies {
     implementation(project(":player"))
+    baselineProfile(project(":baseline-profile"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.lifecycle.runtime)
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -160,6 +162,7 @@ dependencies {
 
     implementation(libs.androidx.paging)
     implementation(libs.androidx.paging.compose)
+    implementation(libs.androidx.profileinstaller)
 
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.exoplayer.hls)

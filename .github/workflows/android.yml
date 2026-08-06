@@ -70,6 +70,7 @@ jobs:
         timeout-minutes: 25
         run: |
           ./gradlew --build-cache --stacktrace \
+            :baseline-profile:assemble \
             :player:testDebugUnitTest \
             :app:testDebugUnitTest \
             :player:lintDebug \
@@ -156,6 +157,7 @@ jobs:
         timeout-minutes: 25
         run: |
           ./gradlew --build-cache --stacktrace \
+            :baseline-profile:assemble \
             :player:testDebugUnitTest \
             :app:testDebugUnitTest \
             :player:lintDebug \

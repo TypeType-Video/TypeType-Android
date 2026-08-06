@@ -23,4 +23,5 @@ dependencyResolutionManagement {
 rootProject.name = "TypeType-Android"
 
 include(":app")
+include(":baseline-profile")
 include(":player")
