@@ -156,12 +156,29 @@ class PictureInPictureTransitionTest {
     }
 
     private fun startMainActivity(): MainActivity {
+        finishExistingMainActivities()
         val activity = instrumentation.startActivitySync(
             Intent(instrumentation.targetContext, MainActivity::class.java)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
         ) as MainActivity
         assertTrue(waitForActivityResumed(activity))
         return activity
+    }
+
+    private fun finishExistingMainActivities() {
+        val activities = readOnMainThread {
+            Stage.entries
+                .flatMap { stage ->
+                    ActivityLifecycleMonitorRegistry.getInstance()
+                        .getActivitiesInStage(stage)
+                }
+                .filterIsInstance<MainActivity>()
+                .distinct()
+        }
+        instrumentation.runOnMainSync {
+            activities.forEach(MainActivity::finishAndRemoveTask)
+        }
+        instrumentation.waitForIdleSync()
     }
 
     private fun waitForActivityResumed(activity: MainActivity): Boolean {
