@@ -33,6 +33,7 @@ import dev.typetype.android.core.ui.components.FullScreenLoader
 import dev.typetype.android.core.ui.components.LazyPaginationFooter
 import dev.typetype.android.core.ui.components.VideoCard
 import dev.typetype.android.domain.feed.Video
+import dev.typetype.android.feature.menu.VideoMenuScope
 import dev.typetype.android.feature.menu.rememberVideoMenuScope
 
 @Composable
@@ -104,8 +105,26 @@ private fun PodcastContent(
     onOpenChannel: (String) -> Unit,
     onLoadMore: () -> Unit,
 ) {
+    PodcastContentGrid(
+        state = state,
+        onPlayVideo = onPlayVideo,
+        onPlayQueue = onPlayQueue,
+        onOpenChannel = onOpenChannel,
+        onLoadMore = onLoadMore,
+        menuScope = rememberVideoMenuScope(onOpenChannel),
+    )
+}
+
+@Composable
+internal fun PodcastContentGrid(
+    state: PodcastState,
+    onPlayVideo: (String) -> Unit,
+    onPlayQueue: (String, List<Video>, Boolean) -> Unit,
+    onOpenChannel: (String) -> Unit,
+    onLoadMore: () -> Unit,
+    menuScope: VideoMenuScope,
+) {
     val podcast = requireNotNull(state.podcast)
-    val menuScope = rememberVideoMenuScope(onOpenChannel)
     val episodes = state.episodes.filterNot(menuScope::isHidden)
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 300.dp),
