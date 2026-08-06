@@ -3,8 +3,6 @@ package dev.typetype.android
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.typetype.android.core.ui.navigation.LoginRoute
-import dev.typetype.android.core.ui.navigation.WelcomeRoute
 import dev.typetype.android.data.network.AccessTokenStore
 import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.domain.actions.VideoActionsRepository
@@ -116,6 +114,13 @@ class MainViewModel @Inject constructor(
             if (pendingCrashReport != null) {
                 _state.update { it.copy(pendingCrashReport = pendingCrashReport) }
             }
+            val selectedAccountId = if (initial == null) {
+                null
+            } else {
+                withTimeoutOrNull(STARTUP_TIMEOUT_MS) {
+                    activeAccountScope.observe().first()?.accountId
+                }
+            }
             val sessionStatus = if (initial == null) {
                 SessionStatus.Invalid
             } else {
@@ -131,14 +136,15 @@ class MainViewModel @Inject constructor(
             } else {
                 null
             }
-            val startRoute = when {
-                initial == null -> WelcomeRoute
-                sessionStatus == SessionStatus.Invalid -> {
-                    tokenStore.setAccessToken(initial.id, null)
-                    LoginRoute(serverId = initial.id)
-                }
-                else -> defaultLandingRoute(initialSettings?.defaultLandingPage.orEmpty())
+            if (initial != null && sessionStatus == SessionStatus.Invalid) {
+                tokenStore.setAccessToken(initial.id, null)
             }
+            val startRoute = startupRoute(
+                serverId = initial?.id,
+                accountId = selectedAccountId,
+                sessionStatus = sessionStatus,
+                defaultLandingPage = initialSettings?.defaultLandingPage.orEmpty(),
+            )
             val playbackRestore = if (isAuthenticated && initialSettings != null) {
                 withTimeoutOrNull(PLAYBACK_RESTORE_TIMEOUT_MS) {
                     loadPlaybackRestore(initialSettings)
