@@ -11,7 +11,7 @@ The comparison was refreshed on 2026-08-06 from clean clones:
 
 | Repository | Branch | Revision |
 | --- | --- | --- |
-| TypeType-Android | `dev` | `b0e7a60dcb9c2e00e66989237208a17041e71dcc` |
+| TypeType-Android | `dev` | `7d25d61183f27d31e0686eadff68fbd8ce2a09c1` |
 | TypeType frontend | `dev` | `97103f7302c91accdea3322d1f5b8f610607f378` |
 | TypeType-Server | `dev` | `6f31f93c4ecfb0e31c03c777b0d96f5cdc51f7bc` |
 | TypeType-Web-Player | `dev` | `f2fe3e6976cd9beec603f324adf37edee923ee20` |
@@ -49,11 +49,11 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | Trending fallback | `/trending` | Implemented | Home distinguishes fallback from recommendations |
 | Subscription feed | `/subscriptions/feed` | Implemented | Progressive client, accessible loading, cached refresh, fatal error, empty state, retry status, and load harness pass on API 23, 29, and 37 |
 | Subscribed channel directory | `/subscriptions` | Implemented | Native channels grid and provider tests |
-| Channel videos, live, playlists, podcasts | `/channel/page`, `/channel/playlists`, `/podcasts` | Implemented | Continuation contracts and paging tests |
-| Search suggestions and history | `/suggestions`, `/search-history` | Implemented | Account-scoped remote history |
-| Search services, grouped filters, and pagination | `/search`, `/search/filters` | Implemented | Contract, selection, and continuation tests |
-| Public playlist detail and save | `/playlist`, `/saved-playlists` | Implemented | Native detail, pagination, save boundary, and Library cache |
-| Podcast episodes and queue | `/podcasts/episodes` | Implemented | Paged detail and service-owned queue |
+| Channel videos, live, playlists, podcasts | `/channel/page`, `/channel/playlists`, `/podcasts` | Implemented | Continuation contracts, paging, loading, fatal error, empty, and cached-refresh states pass on API 23, 29, and 37 |
+| Search suggestions and history | `/suggestions`, `/search-history` | Implemented | Account-scoped remote history and the native pre-search state pass on API 23, 29, and 37 |
+| Search services, grouped filters, and pagination | `/search`, `/search/filters` | Implemented | Contract, selection, continuation, accessible loading, fatal error, and empty-result states pass on API 23, 29, and 37 |
+| Public playlist detail and save | `/playlist`, `/saved-playlists` | Implemented | Native detail, pagination, save boundary, Library cache, and loading, fatal-error, and empty states pass on API 23, 29, and 37 |
+| Podcast episodes and queue | `/podcasts/episodes` | Implemented | Paged detail, service-owned queue, and loading, fatal-error, and empty states pass on API 23, 29, and 37 |
 | Shorts recommendations and subscriptions | `/recommendations/shorts`, `/subscriptions/shorts` | Partial | Native vertical pager, shared Media3 host, autoplay intent, favorite, Watch Later, comments, subscriptions, sharing, blocking, channel interleaving, explicit states, and bounded next-item metadata prefetch have contract, unit, and API 29 Compose coverage. The actual pager and shared PlaybackService pass a 623-second standalone run across nine items, repeated seeks, an activity lifecycle transition, and two network changes on API 29; the smoke path also passes on API 23 without Google services. Member and guest beta accounts currently receive empty feed responses, so real Server-backed Shorts playback cannot yet be claimed |
 | DeArrow titles and thumbnails | `/dearrow`, `/dearrow/thumbnail` | Implemented | Server-synchronized preferences, trusted-candidate resolution, shared card/player presentation, contract and Compose tests, plus a real beta process-recreation check |
 | Block video, channel, and title keyword | `/blocked/*` | Implemented | Native menus/settings and contract tests |
@@ -108,7 +108,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | DeArrow preferences | Implemented | Native content controls cover title, thumbnail, and trust modes; a real beta search displayed the Server title and representative frame |
 | Diagnostics review, export, and clear | Implemented | Bounded redacted local store and sanitizer tests |
 | Native bug report | Implemented | Preview and explicit submission path; pinned Server retest remains |
-| Loading, cached refresh, empty, partial, and fatal states | Partial | Home, Shorts, Notifications, and Subscriptions exercise accessible loading, fatal errors with request IDs, explicit empty states, and cached refresh where applicable on API 23, 29, and 37; the remaining route matrix still requires coverage |
+| Loading, cached refresh, empty, partial, and fatal states | Partial | Home, Shorts, Notifications, Subscriptions, Search, Channel, Podcast, and public-playlist detail exercise accessible loading, fatal errors with request IDs, explicit empty states, and cached refresh where applicable on API 23, 29, and 37; Library and local-playlist detail remain |
 | Font scale, TalkBack, RTL, keyboard, D-pad, foldable | Partial | The top-level shell passes 200% text, RTL ordering, compact and wide navigation, landscape, and D-pad focus traversal on API 23, 29, and 37. Targeted player accessibility tests also pass; TalkBack, foldable postures, and the full route matrix still require coverage |
 
 ## Deliberate platform differences
