@@ -1,5 +1,6 @@
 package dev.typetype.android.feature.settings.player
 
+import dev.typetype.android.domain.usersettings.CaptionStyles
 import dev.typetype.android.domain.usersettings.SponsorBlockMode
 
 sealed interface PlayerSettingsAction {
@@ -21,6 +22,7 @@ sealed interface PlayerSettingsAction {
     data class SetSubtitleLanguage(val language: String) : PlayerSettingsAction
     data class SetAudioLanguage(val language: String) : PlayerSettingsAction
     data class SetPreferOriginalLanguage(val enabled: Boolean) : PlayerSettingsAction
+    data class SetCaptionStyles(val styles: CaptionStyles) : PlayerSettingsAction
     data class SetSponsorBlockMode(val mode: SponsorBlockMode) : PlayerSettingsAction
     data class SetSponsorBlockCategory(
         val category: String,
