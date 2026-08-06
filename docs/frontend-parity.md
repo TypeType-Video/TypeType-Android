@@ -26,7 +26,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 
 | Frontend behavior | Server contract | Android state | Evidence or next requirement |
 | --- | --- | --- | --- |
-| F-Droid or release installation and first launch | None before setup | Partial | Debug cold launch is covered on API 23 through 37. The Release build embeds strict-stable Baseline and Startup profiles generated on API 37, plus ProfileInstaller for non-Play installs. Signed upgrade, signature, checksum, and F-Droid artifact parity remain release gates |
+| F-Droid or release installation and first launch | None before setup | Partial | Debug cold launch is covered on API 23 through 37. The Release build embeds strict-stable Baseline and Startup profiles generated on API 37, plus ProfileInstaller for non-Play installs. For v1.2.3, the GitHub and F-Droid APKs are byte-identical, the published checksum verifies, and the APK certificate matches the signer declared by the F-Droid index. The same signed upgrade, install, and parity checks remain mandatory for the final release from the current source |
 | Instance discovery and compatibility | `/health`, `/instance` | Implemented | Setup repository and discovery contract tests |
 | Local password login | `/auth/login`, `/auth/me`, `/auth/refresh` | Implemented | Scoped authenticator and account validation tests |
 | Session renewal and reconnect | `/auth/refresh`, `/auth/me` | Implemented | A rejected refresh opens identity-bound reauthentication without deleting local account data, while transient failures preserve the session and cached content; a real expired session passed process restart on API 23, and the recovery surfaces pass on API 23 and API 37 |
