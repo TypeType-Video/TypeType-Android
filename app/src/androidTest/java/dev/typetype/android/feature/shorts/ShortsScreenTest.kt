@@ -10,11 +10,14 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipe
 import dev.typetype.android.core.ui.components.LocalAnimatedStatePlayback
 import dev.typetype.android.core.ui.components.VideoMenuAction
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import dev.typetype.android.domain.feed.Video
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.awaitCancellation
 import org.junit.Assert.assertEquals
@@ -94,6 +97,39 @@ class ShortsScreenTest {
         composeRule.onNodeWithText("Advance").performClick()
         composeRule.waitUntil { activeUrl.get() == "https://video/two" }
         composeRule.onNodeWithText("Embedded Short two").assertIsDisplayed()
+    }
+
+    @Test
+    fun cancelledSwipeKeepsTheSettledShortActive() {
+        val activeUrl = AtomicReference<String>()
+        val inactiveEvents = AtomicInteger()
+
+        show(
+            state = ShortsState(
+                videos = listOf(video("one"), video("two")),
+                isLoading = false,
+            ),
+            embeddedPlaybackEnabled = true,
+            onActiveVideoChanged = {
+                activeUrl.set(it?.url)
+                if (it == null) inactiveEvents.incrementAndGet()
+            },
+            embeddedPlayback = { video, _ -> Text("Embedded ${video.title}") },
+        )
+
+        composeRule.waitUntil { activeUrl.get() == "https://video/one" }
+        composeRule.onNodeWithTag(SHORTS_PAGER_TAG).performTouchInput {
+            swipe(
+                start = center,
+                end = center.copy(y = center.y - 80f),
+                durationMillis = 300,
+            )
+        }
+        composeRule.waitForIdle()
+
+        assertEquals("https://video/one", activeUrl.get())
+        assertEquals(0, inactiveEvents.get())
+        composeRule.onNodeWithText("Embedded Short one").assertIsDisplayed()
     }
 
     @Test
