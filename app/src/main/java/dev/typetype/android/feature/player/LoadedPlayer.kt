@@ -218,6 +218,7 @@ fun LoadedPlayer(
                             playbackBrightnessPercent = playbackBrightnessPercent,
                             onPlaybackBrightnessChange = { playbackBrightnessPercent = it },
                             loadSubtitleCues = loadSubtitleCues,
+                            captionStyles = userSettings.captionStyles,
                             danmakuState = danmakuState,
                             onDanmakuAction = onDanmakuAction,
                             modifier = Modifier.fillMaxSize(),

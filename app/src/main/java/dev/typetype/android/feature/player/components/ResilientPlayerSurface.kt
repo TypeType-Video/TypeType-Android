@@ -33,6 +33,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import dev.typetype.android.R
+import dev.typetype.android.domain.usersettings.CaptionStyles
 import dev.typetype.android.feature.player.state.ResizeMode
 import kotlin.math.max
 
@@ -43,6 +44,7 @@ internal fun ResilientPlayerSurface(
     surfaceKey: String,
     resizeMode: ResizeMode,
     showNativeSubtitles: Boolean,
+    captionStyles: CaptionStyles = CaptionStyles(),
     modifier: Modifier = Modifier,
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -74,6 +76,7 @@ internal fun ResilientPlayerSurface(
                         this.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
                         subtitleView?.visibility =
                             if (showNativeSubtitles) View.VISIBLE else View.GONE
+                        subtitleView?.applyCaptionStyle(captionStyles)
                         this.player = player
                         view = this
                         onResume()
@@ -83,6 +86,7 @@ internal fun ResilientPlayerSurface(
                     playerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
                     playerView.subtitleView?.visibility =
                         if (showNativeSubtitles) View.VISIBLE else View.GONE
+                    playerView.subtitleView?.applyCaptionStyle(captionStyles)
                     if (playerView.player !== player) {
                         playerView.player = player
                     }
