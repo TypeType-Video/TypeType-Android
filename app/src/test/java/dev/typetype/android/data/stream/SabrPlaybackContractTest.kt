@@ -8,6 +8,7 @@ import dev.typetype.android.data.network.dto.SabrPlaybackWindowTrackDto
 import dev.typetype.android.domain.stream.SabrPlaybackTarget
 import dev.typetype.android.domain.stream.StreamRequestScope
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -102,6 +103,36 @@ class SabrPlaybackContractTest {
     }
 
     @Test
+    fun postLiveWindowBecomesABoundedReplay() {
+        val live = liveWindow(active = false)
+        val durationMs = LIVE_HEAD_MS + 5_000L
+        val session = SabrPlaybackWindowResponseDto(
+            sessionId = SESSION_ID,
+            generation = 0,
+            ready = true,
+            durationMs = durationMs,
+            endOfStream = true,
+            audio = liveTrack(140, "audio"),
+            video = liveTrack(137, "video"),
+            startTimeMs = LIVE_HEAD_MS - 10_000L,
+            live = live,
+        ).requireWindowResponse(
+            baseUrl = BASE_URL,
+            target = target(isLive = true),
+            control = control(
+                startTimeMs = LIVE_HEAD_MS - 10_000L,
+                live = live,
+            ),
+        )
+
+        val postLive = requireNotNull(session.live)
+        assertFalse(postLive.active)
+        assertTrue(postLive.postLiveDvr)
+        assertTrue(session.endOfStream)
+        assertEquals(durationMs, session.durationMs)
+    }
+
+    @Test
     fun activeLiveTargetRejectsMissingLiveMetadata() {
         val failure = runCatching {
             control().requireControlResponse(target(isLive = true))
@@ -171,14 +202,14 @@ class SabrPlaybackContractTest {
         },
     )
 
-    private fun liveWindow() = SabrLivePlaybackDto(
-        active = true,
-        postLiveDvr = false,
+    private fun liveWindow(active: Boolean = true) = SabrLivePlaybackDto(
+        active = active,
+        postLiveDvr = !active,
         headSequence = 103,
         headTimeMs = LIVE_HEAD_MS,
         seekableStartMs = LIVE_HEAD_MS - 43_200_000L,
         seekableEndMs = LIVE_HEAD_MS,
-        atLiveEdge = true,
+        atLiveEdge = active,
         targetLatencyMs = 20_000L,
     )
 

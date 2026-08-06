@@ -5,6 +5,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Timeline
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -136,6 +137,39 @@ class PlaybackWindowTest {
         assertEquals(live.seekableStartPositionUs / 1_000L, window.positionInFirstPeriodMs)
         assertEquals(20_000L, requireNotNull(window.liveConfiguration).targetOffsetMs)
         assertEquals(live.headPositionUs + 5_000_000L, period.durationUs)
+    }
+
+    @Test
+    fun postLiveDvrPublishesAStaticSeekableTimeline() {
+        val live = PlaybackLiveWindow(
+            active = false,
+            postLiveDvr = true,
+            headPositionUs = 120_000_000L,
+            seekableStartPositionUs = 0L,
+            seekableEndPositionUs = 120_000_000L,
+            atLiveEdge = false,
+            targetLatencyUs = 20_000_000L,
+        )
+        val playbackWindow = PlaybackWindow(
+            generation = 1L,
+            durationUs = 120_000_000L,
+            startPositionUs = 90_000_000L,
+            endOfStream = true,
+            audio = track(PlaybackTrackKind.Audio, "140", 30_000_000L),
+            video = track(PlaybackTrackKind.Video, "137", 30_000_000L),
+            live = live,
+        )
+
+        val timeline = playbackWindow.toTimeline(
+            MediaItem.Builder().setMediaId("post-live").build(),
+        )
+        val window = timeline.getWindow(0, Timeline.Window())
+
+        assertFalse(window.isLive)
+        assertFalse(window.isDynamic)
+        assertTrue(window.isSeekable)
+        assertNull(window.liveConfiguration)
+        assertEquals(120_000L, window.durationMs)
     }
 
     private fun track(
