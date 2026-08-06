@@ -74,7 +74,6 @@ fun LibraryScreen(
     var selectedHistoryDateMillis by rememberSaveable { mutableStateOf<Long?>(null) }
     val historyDateSelection = HistoryDateSelection.valueOf(historyDateSelectionName)
     val historyRange = historyDateRange(historyDateSelection, selectedHistoryDateMillis)
-    val (menuVm, watchedUrls) = rememberLibraryMenuHandler()
     LaunchedEffect(state.selectedTab, filter, sort, historyRange) {
         if (state.selectedTab == LibraryTab.History) {
             onHistoryQueryChange(filter, sort, historyRange)
@@ -110,6 +109,18 @@ fun LibraryScreen(
             onSortChange = { sort = it },
         )
 
+        val menuHandler = when (state.selectedTab) {
+            LibraryTab.History,
+            LibraryTab.Favorites,
+            LibraryTab.WatchLater,
+            -> rememberLibraryMenuHandler()
+            LibraryTab.Playlists,
+            LibraryTab.SavedPlaylists,
+            -> null
+        }
+        val menuVm = menuHandler?.first
+        val watchedUrls = menuHandler?.second.orEmpty()
+
         if (state.selectedTab == LibraryTab.History) {
             HistoryDateFilterBar(
                 selection = historyDateSelection,
@@ -119,68 +130,78 @@ fun LibraryScreen(
                     historyDateSelectionName = selection.name
                     selectedHistoryDateMillis = dateMillis
                 },
-                onClearHistory = menuVm::clearWatchHistory,
+                onClearHistory = requireNotNull(menuVm)::clearWatchHistory,
             )
         }
 
         when (state.selectedTab) {
-            LibraryTab.History -> HistoryTab(
-                pagingData = historyPagingData,
-                filter = filter,
-                isRefreshing = state.isLoading,
-                isLoadingMore = state.isLoadingMoreHistory,
-                hasMore = state.historyHasMore,
-                onPlayVideo = onPlayVideo,
-                onOpenChannel = onOpenChannel,
-                onPlayNext = { menuVm.playNext(it.toPlaybackQueueEntry()) },
-                onAddToQueue = { menuVm.addToQueue(it.toPlaybackQueueEntry()) },
-                onRemove = { menuVm.removeHistoryUrl(it.url) },
-                onLoadMore = { onAction(LibraryAction.OnLoadMoreHistory) },
-            )
-            LibraryTab.Favorites -> PlaylistContextTab(
-                items = sortPlaylistVideos(filterPlaylistVideos(state.favorites, filter), sort),
-                filter = filter,
-                emptyDefault = stringResource(R.string.library_empty_favorites),
-                watchedUrls = watchedUrls,
-                onPlayVideo = onPlayVideo,
-                onOpenChannel = onOpenChannel,
-                onPlayNext = { menuVm.playNext(it.toPlaybackQueueEntry()) },
-                onAddToQueue = { menuVm.addToQueue(it.toPlaybackQueueEntry()) },
-                buildRemoveLabel = { stringResource(R.string.playlist_action_remove_from_favorites) },
-                onRemove = { video -> menuVm.removeFavoriteUrl(video.url) },
-                onToggleWatched = { video, isWatched ->
-                    menuVm.toggleWatchedUrl(
-                        videoUrl = video.url,
-                        title = video.title,
-                        thumbnail = video.thumbnailUrl,
-                        duration = video.durationSeconds,
-                        isCurrentlyWatched = isWatched,
-                    )
-                },
-                onBlockVideo = { video -> menuVm.blockVideoUrl(video.url) },
-            )
-            LibraryTab.WatchLater -> PlaylistContextTab(
-                items = sortPlaylistVideos(filterPlaylistVideos(state.watchLater, filter), sort),
-                filter = filter,
-                emptyDefault = stringResource(R.string.library_empty_watch_later),
-                watchedUrls = watchedUrls,
-                onPlayVideo = onPlayVideo,
-                onOpenChannel = onOpenChannel,
-                onPlayNext = { menuVm.playNext(it.toPlaybackQueueEntry()) },
-                onAddToQueue = { menuVm.addToQueue(it.toPlaybackQueueEntry()) },
-                buildRemoveLabel = { stringResource(R.string.playlist_action_remove_from_watch_later) },
-                onRemove = { video -> menuVm.removeWatchLaterUrl(video.url) },
-                onToggleWatched = { video, isWatched ->
-                    menuVm.toggleWatchedUrl(
-                        videoUrl = video.url,
-                        title = video.title,
-                        thumbnail = video.thumbnailUrl,
-                        duration = video.durationSeconds,
-                        isCurrentlyWatched = isWatched,
-                    )
-                },
-                onBlockVideo = { video -> menuVm.blockVideoUrl(video.url) },
-            )
+            LibraryTab.History -> requireNotNull(menuVm).let { handler ->
+                HistoryTab(
+                    pagingData = historyPagingData,
+                    filter = filter,
+                    isRefreshing = state.isLoading,
+                    isLoadingMore = state.isLoadingMoreHistory,
+                    hasMore = state.historyHasMore,
+                    onPlayVideo = onPlayVideo,
+                    onOpenChannel = onOpenChannel,
+                    onPlayNext = { handler.playNext(it.toPlaybackQueueEntry()) },
+                    onAddToQueue = { handler.addToQueue(it.toPlaybackQueueEntry()) },
+                    onRemove = { handler.removeHistoryUrl(it.url) },
+                    onLoadMore = { onAction(LibraryAction.OnLoadMoreHistory) },
+                )
+            }
+            LibraryTab.Favorites -> requireNotNull(menuVm).let { handler ->
+                PlaylistContextTab(
+                    items = sortPlaylistVideos(filterPlaylistVideos(state.favorites, filter), sort),
+                    filter = filter,
+                    emptyDefault = stringResource(R.string.library_empty_favorites),
+                    watchedUrls = watchedUrls,
+                    onPlayVideo = onPlayVideo,
+                    onOpenChannel = onOpenChannel,
+                    onPlayNext = { handler.playNext(it.toPlaybackQueueEntry()) },
+                    onAddToQueue = { handler.addToQueue(it.toPlaybackQueueEntry()) },
+                    buildRemoveLabel = {
+                        stringResource(R.string.playlist_action_remove_from_favorites)
+                    },
+                    onRemove = { video -> handler.removeFavoriteUrl(video.url) },
+                    onToggleWatched = { video, isWatched ->
+                        handler.toggleWatchedUrl(
+                            videoUrl = video.url,
+                            title = video.title,
+                            thumbnail = video.thumbnailUrl,
+                            duration = video.durationSeconds,
+                            isCurrentlyWatched = isWatched,
+                        )
+                    },
+                    onBlockVideo = { video -> handler.blockVideoUrl(video.url) },
+                )
+            }
+            LibraryTab.WatchLater -> requireNotNull(menuVm).let { handler ->
+                PlaylistContextTab(
+                    items = sortPlaylistVideos(filterPlaylistVideos(state.watchLater, filter), sort),
+                    filter = filter,
+                    emptyDefault = stringResource(R.string.library_empty_watch_later),
+                    watchedUrls = watchedUrls,
+                    onPlayVideo = onPlayVideo,
+                    onOpenChannel = onOpenChannel,
+                    onPlayNext = { handler.playNext(it.toPlaybackQueueEntry()) },
+                    onAddToQueue = { handler.addToQueue(it.toPlaybackQueueEntry()) },
+                    buildRemoveLabel = {
+                        stringResource(R.string.playlist_action_remove_from_watch_later)
+                    },
+                    onRemove = { video -> handler.removeWatchLaterUrl(video.url) },
+                    onToggleWatched = { video, isWatched ->
+                        handler.toggleWatchedUrl(
+                            videoUrl = video.url,
+                            title = video.title,
+                            thumbnail = video.thumbnailUrl,
+                            duration = video.durationSeconds,
+                            isCurrentlyWatched = isWatched,
+                        )
+                    },
+                    onBlockVideo = { video -> handler.blockVideoUrl(video.url) },
+                )
+            }
             LibraryTab.Playlists -> PlaylistsTab(
                 playlists = sortPlaylists(filterPlaylists(state.playlists, filter), sort),
                 filter = filter,
