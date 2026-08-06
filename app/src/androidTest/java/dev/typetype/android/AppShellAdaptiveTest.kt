@@ -4,13 +4,28 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -25,6 +40,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.junit.Rule
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AppShellAdaptiveTest {
@@ -67,6 +83,40 @@ class AppShellAdaptiveTest {
         composeRule.onNodeWithText("Shorts").assertIsDisplayed()
     }
 
+    @Test
+    fun compactNavigationRemainsVisibleAtTwoHundredPercentText() {
+        setShellSize(width = 320.dp, height = 800.dp, fontScale = 2f)
+
+        listOf("Home", "Shorts", "Subscriptions", "Library").forEach {
+            composeRule.onNodeWithText(it).assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun rightToLeftLayoutMirrorsTheTopLevelTabs() {
+        setShellSize(
+            width = 400.dp,
+            height = 800.dp,
+            layoutDirection = LayoutDirection.Rtl,
+        )
+
+        val home = composeRule.onNodeWithText("Home").bounds()
+        val library = composeRule.onNodeWithText("Library").bounds()
+        assertTrue(home.left > library.left)
+    }
+
+    @Test
+    fun directionalKeysMoveFocusAcrossTopLevelTabs() {
+        setShellSize(width = 400.dp, height = 800.dp, keyboardInput = true)
+        val home = composeRule.onNodeWithText("Home")
+
+        home.performSemanticsAction(SemanticsActions.RequestFocus)
+        home.assertIsFocused()
+        home.performKeyInput { pressKey(Key.DirectionRight) }
+
+        composeRule.onNodeWithText("Shorts").assertIsFocused()
+    }
+
     private fun setShellWidth(width: Dp) {
         setShellSize(width = width, height = 800.dp)
     }
@@ -75,30 +125,46 @@ class AppShellAdaptiveTest {
         width: Dp,
         height: Dp,
         showShorts: MutableState<Boolean> = mutableStateOf(true),
+        fontScale: Float = 1f,
+        layoutDirection: LayoutDirection = LayoutDirection.Ltr,
+        keyboardInput: Boolean = false,
     ) {
         composeRule.setContent {
-            val navController = rememberNavController()
-            AppShell(
-                navController = navController,
-                playerHostController = PlayerHostController(FakePlaybackQueueController()),
-                onOpenSettings = {},
-                onPlayVideo = {},
-                onOpenChannel = {},
-                onOpenAccounts = {},
-                onClosePlayback = {},
-                showShorts = showShorts.value,
-                modifier = Modifier.requiredWidth(width).requiredHeight(height),
-            ) { contentModifier ->
-                NavHost(
+            val systemDensity = LocalDensity.current
+            val inputModeManager = LocalInputModeManager.current
+            LaunchedEffect(keyboardInput) {
+                if (keyboardInput) inputModeManager.requestInputMode(InputMode.Keyboard)
+            }
+            CompositionLocalProvider(
+                LocalDensity provides Density(systemDensity.density, fontScale),
+                LocalLayoutDirection provides layoutDirection,
+            ) {
+                val navController = rememberNavController()
+                AppShell(
                     navController = navController,
-                    startDestination = HomeRoute,
-                    modifier = contentModifier,
-                ) {
-                    composable<HomeRoute> { }
+                    playerHostController = PlayerHostController(FakePlaybackQueueController()),
+                    onOpenSettings = {},
+                    onPlayVideo = {},
+                    onOpenChannel = {},
+                    onOpenAccounts = {},
+                    onClosePlayback = {},
+                    showShorts = showShorts.value,
+                    modifier = Modifier.requiredWidth(width).requiredHeight(height),
+                ) { contentModifier ->
+                    NavHost(
+                        navController = navController,
+                        startDestination = HomeRoute,
+                        modifier = contentModifier,
+                    ) {
+                        composable<HomeRoute> { }
+                    }
                 }
             }
         }
     }
+
+    private fun androidx.compose.ui.test.SemanticsNodeInteraction.bounds(): Rect =
+        fetchSemanticsNode().boundsInRoot
 
     private fun assertNodeCount(tag: String, expected: Int) {
         val count = composeRule.onAllNodesWithTag(tag).fetchSemanticsNodes().size
