@@ -33,6 +33,7 @@ import dev.typetype.android.core.ui.components.FullScreenLoader
 import dev.typetype.android.core.ui.components.LazyPaginationFooter
 import dev.typetype.android.core.ui.components.VideoCard
 import dev.typetype.android.domain.feed.Video
+import dev.typetype.android.feature.menu.VideoMenuScope
 import dev.typetype.android.feature.menu.rememberVideoMenuScope
 
 @Composable
@@ -106,8 +107,28 @@ private fun PublicPlaylistContent(
     onLoadMore: () -> Unit,
     onToggleSaved: () -> Unit,
 ) {
+    PublicPlaylistContentGrid(
+        state = state,
+        onPlayVideo = onPlayVideo,
+        onPlayQueue = onPlayQueue,
+        onOpenChannel = onOpenChannel,
+        onLoadMore = onLoadMore,
+        onToggleSaved = onToggleSaved,
+        menuScope = rememberVideoMenuScope(onOpenChannel),
+    )
+}
+
+@Composable
+internal fun PublicPlaylistContentGrid(
+    state: PublicPlaylistState,
+    onPlayVideo: (String) -> Unit,
+    onPlayQueue: (String, List<Video>, Boolean) -> Unit,
+    onOpenChannel: (String) -> Unit,
+    onLoadMore: () -> Unit,
+    onToggleSaved: () -> Unit,
+    menuScope: VideoMenuScope,
+) {
     val playlist = requireNotNull(state.playlist)
-    val menuScope = rememberVideoMenuScope(onOpenChannel)
     val videos = state.videos.filterNot(menuScope::isHidden)
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 300.dp),
