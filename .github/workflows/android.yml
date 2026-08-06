@@ -210,13 +210,7 @@ jobs:
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           name: ${{ env.RELEASE_TAG }}
-          body: |
-            TypeType for Android ${{ env.RELEASE_VERSION }}.
-
-            The attached APK is built from the tagged source, signed by the
-            release workflow, checked for 16 KiB page alignment, and verified
-            against the Gradle application version.
-          generate_release_notes: true
+          body_path: release-notes/${{ env.RELEASE_TAG }}.md
           files: |
             artifacts/*.apk
             artifacts/*.sha256
