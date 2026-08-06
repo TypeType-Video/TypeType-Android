@@ -15,6 +15,7 @@ import dev.typetype.android.domain.auth.LoginMethods
 import dev.typetype.android.domain.auth.OidcCallbackRelay
 import dev.typetype.android.domain.auth.RegistrationStatus
 import dev.typetype.android.domain.server.ServerRepository
+import dev.typetype.android.feature.setup.auth.cancelOidcAfterBrowserReturn
 import javax.inject.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -241,10 +242,13 @@ class RegisterViewModel @Inject constructor(
 
     private fun cancelOidc() {
         if (oidcCallbackInProgress || oidcCallbackRelay.hasPendingCallback) return
-        _state.update {
-            it.copy(isSubmitting = false, errorMessage = null, errorRequestId = null)
+        _state.update { it.copy(isSubmitting = false) }
+        viewModelScope.launch {
+            cancelOidcAfterBrowserReturn(
+                hasCallback = { oidcCallbackInProgress || oidcCallbackRelay.hasPendingCallback },
+                cancel = { authRepository.cancelOidc(serverId) },
+            )
         }
-        viewModelScope.launch { authRepository.cancelOidc(serverId) }
     }
 
     private fun applyRegistrationStatus(status: RegistrationStatus) {

@@ -15,6 +15,7 @@ import dev.typetype.android.domain.auth.AuthRepository
 import dev.typetype.android.domain.auth.LoginMethods
 import dev.typetype.android.domain.auth.OidcCallbackRelay
 import dev.typetype.android.domain.server.ServerRepository
+import dev.typetype.android.feature.setup.auth.cancelOidcAfterBrowserReturn
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -124,9 +125,14 @@ class LoginViewModel @Inject constructor(
             LoginAction.OnOidcCancelled -> {
                 if (oidcCallbackInProgress || oidcCallbackRelay.hasPendingCallback) return
                 _state.update {
-                    it.copy(isSubmitting = false, errorMessage = null, errorRequestId = null)
+                    it.copy(isSubmitting = false)
                 }
-                viewModelScope.launch { authRepository.cancelOidc(serverId) }
+                viewModelScope.launch {
+                    cancelOidcAfterBrowserReturn(
+                        hasCallback = { oidcCallbackInProgress || oidcCallbackRelay.hasPendingCallback },
+                        cancel = { authRepository.cancelOidc(serverId) },
+                    )
+                }
             }
             LoginAction.OnContinueAsGuestClick -> performGuest()
             LoginAction.OnRegisterClick -> emit(LoginEvent.NavigateToRegister(serverId))
