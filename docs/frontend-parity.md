@@ -31,7 +31,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | Local password login | `/auth/login`, `/auth/me`, `/auth/refresh` | Implemented | Scoped authenticator and account validation tests |
 | Session renewal and reconnect | `/auth/refresh`, `/auth/me` | Implemented | A refresh 401 invalidates the account; transient refresh failures preserve credentials and surface an unknown session until the Server recovers |
 | Guest access | `/auth/guest` | Implemented | Capability-driven login screen |
-| External-browser OIDC | `/auth/oidc/start`, `/status`, `/callback` | Implemented | OIDC contract, callback parser, encrypted transaction device test |
+| External-browser OIDC | `/auth/oidc/start`, `/status`, `/callback` | Implemented | Real Keycloak journeys pass on API 23 AOSP without Google services and API 37, including browser fallback, callback, force-stop restoration, and cancellation cleanup |
 | Password reset | `/auth/reset-password` | Implemented | Native reset screen and typed errors |
 | Registration and first-admin bootstrap | `/auth/register/status`, `/auth/register` | Partial | Native local/OIDC route, bootstrap redirect, Android contract tests, Server route tests, and API 33 Compose tests pass; process recreation and signed-release retest remain |
 | Reauthentication of the selected account | `/auth/login`, `/auth/oidc/callback` | Implemented | Account identity is checked before replacing credentials |
