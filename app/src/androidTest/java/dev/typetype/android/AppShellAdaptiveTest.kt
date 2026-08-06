@@ -85,7 +85,7 @@ class AppShellAdaptiveTest {
 
     @Test
     fun compactNavigationRemainsVisibleAtTwoHundredPercentText() {
-        setShellSize(width = 320.dp, height = 800.dp, fontScale = 2f)
+        setShellSize(width = 320.dp, height = 500.dp, fontScale = 2f)
 
         listOf("Home", "Shorts", "Subscriptions", "Library").forEach {
             composeRule.onNodeWithText(it).assertIsDisplayed()

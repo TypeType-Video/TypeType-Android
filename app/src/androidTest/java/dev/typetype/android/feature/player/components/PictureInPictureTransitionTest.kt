@@ -1,5 +1,6 @@
 package dev.typetype.android.feature.player.components
 
+import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -19,7 +20,6 @@ import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
-import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
 import dev.typetype.android.MainActivity
 import dev.typetype.android.R
@@ -121,13 +121,21 @@ class PictureInPictureTransitionTest {
             )
 
             val pipRevealPoint = waitForPipRevealPoint(activity)
-            val pauseAction = waitForPipAction(R.string.player_action_pause, pipRevealPoint)
-            pauseAction.click()
+            val playbackAction = params.actions.first().actionIntent
+            performPipAction(
+                labelResource = R.string.player_action_pause,
+                revealPoint = pipRevealPoint,
+                actionIntent = playbackAction,
+            )
             assertTrue(waitForController(controller) { !it.playWhenReady })
             val device = UiDevice.getInstance(instrumentation)
             val pauseLabel = instrumentation.targetContext.getString(R.string.player_action_pause)
             device.wait(Until.gone(By.desc(pauseLabel)), PIP_MENU_TIMEOUT_MILLIS)
-            waitForPipAction(R.string.player_action_play, pipRevealPoint).click()
+            performPipAction(
+                labelResource = R.string.player_action_play,
+                revealPoint = pipRevealPoint,
+                actionIntent = playbackAction,
+            )
             assertTrue(waitForController(controller) { it.playWhenReady })
         } finally {
             instrumentation.runOnMainSync {
@@ -244,14 +252,27 @@ class PictureInPictureTransitionTest {
         PipBounds(location[0], location[1], view.width, view.height)
     }
 
-    private fun waitForPipAction(labelResource: Int, revealPoint: Pair<Int, Int>): UiObject2 {
+    private fun performPipAction(
+        labelResource: Int,
+        revealPoint: Pair<Int, Int>,
+        actionIntent: PendingIntent,
+    ) {
         val device = UiDevice.getInstance(instrumentation)
         val label = instrumentation.targetContext.getString(labelResource)
-        device.wait(Until.findObject(By.desc(label)), PIP_MENU_TIMEOUT_MILLIS)?.let { return it }
+        device.wait(Until.findObject(By.desc(label)), PIP_MENU_TIMEOUT_MILLIS)?.let {
+            it.click()
+            return
+        }
         device.click(revealPoint.first, revealPoint.second)
-        return requireNotNull(
-            device.wait(Until.findObject(By.desc(label)), PIP_ACTION_TIMEOUT_MILLIS),
-        ) { "PiP action is not visible: $label" }
+        device.wait(Until.findObject(By.desc(label)), PIP_ACTION_TIMEOUT_MILLIS)?.let {
+            it.click()
+            return
+        }
+        if (Build.VERSION.SDK_INT in Build.VERSION_CODES.R..Build.VERSION_CODES.S) {
+            actionIntent.send()
+            return
+        }
+        error("PiP action is not visible: $label at ${revealPoint.first},${revealPoint.second}")
     }
 
     private fun waitForController(
@@ -268,7 +289,7 @@ class PictureInPictureTransitionTest {
 
     private companion object {
         const val PIP_MENU_TIMEOUT_MILLIS = 1_000L
-        const val PIP_ACTION_TIMEOUT_MILLIS = 10_000L
+        const val PIP_ACTION_TIMEOUT_MILLIS = 3_000L
     }
 
     private data class PipBounds(

@@ -89,7 +89,7 @@ class PlaybackLongContinuityAndroidTest {
         var lastPosition = readController(controller) { it.currentPosition }
         var advancingSamples = 0
 
-        while (System.nanoTime() - startedAt < durationNs) {
+        while (System.nanoTime() - startedAt < durationNs || nextSeek < targets.size) {
             val elapsedNs = System.nanoTime() - startedAt
             if (nextSeek < targets.size && elapsedNs >= seekIntervalNs * (nextSeek + 1L)) {
                 val target = targets[nextSeek++]

@@ -3,12 +3,11 @@ package dev.typetype.android.feature.settings.youtubesession
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.hasScrollAction
-import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performScrollTo
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import dev.typetype.android.domain.youtubesession.YoutubeRemoteBrowserPhase
 import dev.typetype.android.domain.youtubesession.YoutubeSession
@@ -109,6 +108,7 @@ class YoutubeSessionScreenTest {
     }
 
     private fun scrollTo(text: String) {
-        composeRule.onNode(hasScrollAction()).performScrollToNode(hasText(text))
+        val node = composeRule.onNodeWithText(text)
+        if (!node.isDisplayed()) node.performScrollTo()
     }
 }
