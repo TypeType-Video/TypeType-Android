@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.content.ComponentName
 import android.content.Context
 import android.net.Uri
+import android.view.KeyEvent
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.MimeTypes
@@ -15,6 +16,7 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.UiDevice
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStream
@@ -78,6 +80,28 @@ class PlaybackMediaSessionAndroidTest {
 
         assertTrue(waitForControllerState { !it.playWhenReady })
         assertFalse(readControllerState { it.playWhenReady })
+    }
+
+    @Test
+    fun hardwareMediaKeysControlTheSharedServicePlayer() {
+        instrumentation.runOnMainSync {
+            controller.setMediaItem(
+                MediaItem.Builder()
+                    .setUri(Uri.fromFile(mediaFile))
+                    .setMimeType(MimeTypes.AUDIO_WAV)
+                    .build(),
+            )
+            controller.prepare()
+            controller.play()
+        }
+        assertTrue(waitForControllerState { it.playWhenReady })
+
+        val device = UiDevice.getInstance(instrumentation)
+        assertTrue(device.pressKeyCode(KeyEvent.KEYCODE_MEDIA_PAUSE))
+        assertTrue(waitForControllerState { !it.playWhenReady })
+
+        assertTrue(device.pressKeyCode(KeyEvent.KEYCODE_MEDIA_PLAY))
+        assertTrue(waitForControllerState { it.playWhenReady })
     }
 
     @Test
