@@ -109,7 +109,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 | Diagnostics review, export, and clear | Implemented | Bounded redacted local store and sanitizer tests |
 | Native bug report | Implemented | Preview and explicit submission path; pinned Server retest remains |
 | Loading, cached refresh, empty, partial, and fatal states | Partial | Home cached-refresh and empty states pass on API 23 and API 37; the semantic state audit is not complete for every route |
-| Font scale, TalkBack, RTL, keyboard, D-pad, foldable | Partial | Targeted tests exist; full route matrix is still required |
+| Font scale, TalkBack, RTL, keyboard, D-pad, foldable | Partial | The top-level shell passes 200% text, RTL ordering, compact and wide navigation, landscape, and D-pad focus traversal on API 23, 29, and 37. Targeted player accessibility tests also pass; TalkBack, foldable postures, and the full route matrix still require coverage |
 
 ## Deliberate platform differences
 
