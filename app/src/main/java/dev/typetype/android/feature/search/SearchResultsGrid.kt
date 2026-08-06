@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.LazyPaginationFooter
 import dev.typetype.android.core.ui.components.VideoCard
+import dev.typetype.android.feature.menu.VideoMenuScope
 import dev.typetype.android.feature.menu.rememberVideoMenuScope
 
 @Composable
@@ -35,7 +36,27 @@ fun SearchResultsGrid(
     onSearchSuggestion: (String) -> Unit,
     onLoadMore: () -> Unit,
 ) {
-    val menuScope = rememberVideoMenuScope(onOpenChannel)
+    SearchResultsContent(
+        state = state,
+        onPlayVideo = onPlayVideo,
+        onOpenChannel = onOpenChannel,
+        onOpenPlaylist = onOpenPlaylist,
+        onSearchSuggestion = onSearchSuggestion,
+        onLoadMore = onLoadMore,
+        menuScope = rememberVideoMenuScope(onOpenChannel),
+    )
+}
+
+@Composable
+internal fun SearchResultsContent(
+    state: SearchState,
+    onPlayVideo: (String) -> Unit,
+    onOpenChannel: (String) -> Unit,
+    onOpenPlaylist: (String) -> Unit,
+    onSearchSuggestion: (String) -> Unit,
+    onLoadMore: () -> Unit,
+    menuScope: VideoMenuScope,
+) {
     val videos = state.results.filterNot(menuScope::isHidden)
     val channels = state.channels.filterNot { it.url in menuScope.blockedChannelUrls }
     val hasResults = videos.isNotEmpty() || channels.isNotEmpty() || state.playlists.isNotEmpty()
