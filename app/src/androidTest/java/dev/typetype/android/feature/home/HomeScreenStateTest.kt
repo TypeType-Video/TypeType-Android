@@ -60,6 +60,13 @@ class HomeScreenStateTest {
     }
 
     @Test
+    fun videoCardsExposeAStableActionLabel() {
+        show(HomeState(videos = listOf(video())))
+
+        composeRule.onNodeWithContentDescription("Open Recommended title").assertIsDisplayed()
+    }
+
+    @Test
     fun continueWatchingExposesProgressAndOpensTheStableVideoUrl() {
         val opened = AtomicReference<String>()
         show(

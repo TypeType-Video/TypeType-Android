@@ -2,7 +2,7 @@ package dev.typetype.android.feature.settings.appearance
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -139,7 +140,14 @@ private fun AccentSwatchCell(
     isSelected: Boolean,
     onClick: () -> Unit,
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        modifier = Modifier.selectable(
+            selected = isSelected,
+            role = Role.RadioButton,
+            onClick = onClick,
+        ),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         Box(
             modifier = Modifier
                 .size(56.dp)
@@ -149,8 +157,7 @@ private fun AccentSwatchCell(
                     width = if (isSelected) 3.dp else 0.dp,
                     color = MaterialTheme.colorScheme.onBackground,
                     shape = CircleShape,
-                )
-                .clickable(onClick = onClick),
+                ),
             contentAlignment = Alignment.Center,
         ) {
             if (isSelected) {
