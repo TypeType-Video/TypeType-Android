@@ -11,7 +11,7 @@ The comparison was refreshed on 2026-08-06 from clean clones:
 
 | Repository | Branch | Revision |
 | --- | --- | --- |
-| TypeType-Android | `dev` | `fe8d8a8c315cc54efdcda9d5e2b4ebea8816d01c` |
+| TypeType-Android | `dev` | `e0ce7b9a81563be30c89d131f7264844e8628301` |
 | TypeType frontend | `dev` | `97103f7302c91accdea3322d1f5b8f610607f378` |
 | TypeType-Server | `dev` | `6f31f93c4ecfb0e31c03c777b0d96f5cdc51f7bc` |
 | TypeType-Web-Player | `dev` | `f2fe3e6976cd9beec603f324adf37edee923ee20` |
@@ -26,7 +26,7 @@ Android gap, not an invitation to move a Server responsibility into the app.
 
 | Frontend behavior | Server contract | Android state | Evidence or next requirement |
 | --- | --- | --- | --- |
-| F-Droid or release installation and first launch | None before setup | Partial | Debug cold launch is covered on API 23 through 37; signed upgrade, signature, checksum, and F-Droid artifact parity remain release gates |
+| F-Droid or release installation and first launch | None before setup | Partial | Debug cold launch is covered on API 23 through 37. The Release build embeds strict-stable Baseline and Startup profiles generated on API 37, plus ProfileInstaller for non-Play installs. Signed upgrade, signature, checksum, and F-Droid artifact parity remain release gates |
 | Instance discovery and compatibility | `/health`, `/instance` | Implemented | Setup repository and discovery contract tests |
 | Local password login | `/auth/login`, `/auth/me`, `/auth/refresh` | Implemented | Scoped authenticator and account validation tests |
 | Session renewal and reconnect | `/auth/refresh`, `/auth/me` | Implemented | A rejected refresh opens identity-bound reauthentication without deleting local account data, while transient failures preserve the session and cached content; a real expired session passed process restart on API 23, and the recovery surfaces pass on API 23 and API 37 |
@@ -135,3 +135,5 @@ failure states, process recreation, and applicable API lanes are exercised. The
 final release still requires API 23 through 37 evidence, long random VOD and
 live playback with seek and network changes, signed upgrade/install checks,
 checksum and signature verification, and issue-by-issue reproduction results.
+The profile integration is verified inside the unsigned Release APK; startup
+latency improvements remain unclaimed until a physical-device benchmark runs.
