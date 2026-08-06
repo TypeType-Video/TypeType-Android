@@ -23,6 +23,13 @@ class SearchScreenStateTest {
     }
 
     @Test
+    fun searchFieldExposesItsPurposeWhenEmpty() {
+        show(SearchState())
+
+        composeRule.onNodeWithContentDescription("Search videos…").assertIsDisplayed()
+    }
+
+    @Test
     fun fatalErrorKeepsTheRequestIdReviewable() {
         show(
             SearchState(

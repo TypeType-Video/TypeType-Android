@@ -2,6 +2,7 @@ package dev.typetype.android.core.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
@@ -57,7 +59,12 @@ fun SwitchRow(
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.surface)
-            .clickable(enabled = enabled) { onCheckedChange(!checked) }
+            .toggleable(
+                value = checked,
+                enabled = enabled,
+                role = Role.Switch,
+                onValueChange = onCheckedChange,
+            )
             .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -75,7 +82,7 @@ fun SwitchRow(
                 )
             }
         }
-        Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
+        Switch(checked = checked, onCheckedChange = null, enabled = enabled)
     }
 }
 

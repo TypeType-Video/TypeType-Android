@@ -32,6 +32,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import dev.typetype.android.R
@@ -55,6 +57,7 @@ fun LibraryFilterBar(
     selectedSort: LibrarySortMode? = null,
     onSortChange: (LibrarySortMode) -> Unit = {},
 ) {
+    val filterDescription = stringResource(R.string.library_filter_placeholder)
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -79,7 +82,7 @@ fun LibraryFilterBar(
                 Box(modifier = Modifier.weight(1f)) {
                     if (query.isEmpty()) {
                         Text(
-                            text = stringResource(R.string.library_filter_placeholder),
+                            text = filterDescription,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -93,7 +96,9 @@ fun LibraryFilterBar(
                             color = MaterialTheme.colorScheme.onSurface,
                         ),
                         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .semantics { contentDescription = filterDescription },
                     )
                 }
                 if (query.isNotEmpty()) {

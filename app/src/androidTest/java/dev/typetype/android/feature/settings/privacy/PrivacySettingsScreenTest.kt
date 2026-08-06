@@ -5,6 +5,8 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -32,6 +34,15 @@ class PrivacySettingsScreenTest {
             .performClick()
 
         assertEquals(false, requested.get())
+    }
+
+    @Test
+    fun trackingToggleExposesItsLabelAndActionAsOneControl() {
+        show(PrivacyState(watchHistoryTrackingControlEnabled = true))
+
+        composeRule.onNode(
+            isToggleable() and hasText("Watch history tracking"),
+        ).assertHasClickAction()
     }
 
     @Test

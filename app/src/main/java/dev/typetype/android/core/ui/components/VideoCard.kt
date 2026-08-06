@@ -34,6 +34,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -65,15 +67,19 @@ fun VideoCard(
         thumbnailUrl = video.thumbnailUrl,
         durationSeconds = video.durationSeconds,
     )
+    val openDescription = stringResource(R.string.video_open_accessibility, branding.title)
 
     Column(
-        modifier = modifier.fillMaxWidth().combinedClickable(
-            onClick = {
-                if (availability == VideoAvailability.Playable) onClick() else availabilityVisible = true
-            },
-            onLongClick = if (onMenuAction != null) ({ menuVisible = true }) else null,
-            role = Role.Button,
-        ),
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics { contentDescription = openDescription }
+            .combinedClickable(
+                onClick = {
+                    if (availability == VideoAvailability.Playable) onClick() else availabilityVisible = true
+                },
+                onLongClick = if (onMenuAction != null) ({ menuVisible = true }) else null,
+                role = Role.Button,
+            ),
     ) {
         Box(
             modifier = Modifier

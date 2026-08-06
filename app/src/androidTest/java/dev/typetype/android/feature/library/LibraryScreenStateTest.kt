@@ -6,6 +6,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.paging.PagingData
+import dev.typetype.android.core.ui.components.LibraryFilterBar
 import dev.typetype.android.core.ui.components.LocalAnimatedStatePlayback
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import dev.typetype.android.domain.library.HistoryItem
@@ -24,6 +25,17 @@ class LibraryScreenStateTest {
         show(LibraryState(isLoading = true))
 
         composeRule.onNodeWithContentDescription("Loading").assertIsDisplayed()
+    }
+
+    @Test
+    fun filterFieldExposesItsPurposeWhenEmpty() {
+        composeRule.setContent {
+            TypeTypeTheme {
+                LibraryFilterBar(query = "", onQueryChange = {})
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Filter videos…").assertIsDisplayed()
     }
 
     @Test

@@ -1,6 +1,7 @@
 package dev.typetype.android.feature.settings.content
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
@@ -40,6 +41,15 @@ class ContentSettingsScreenTest {
         composeRule.onNodeWithText("DeArrow titles and thumbnails").performClick()
 
         assertEquals(ContentSettingsAction.SetDeArrowEnabled(true), action.get())
+    }
+
+    @Test
+    fun toggleExposesItsLabelAndActionAsOneControl() {
+        show(ContentSettingsState(isLoading = false))
+
+        composeRule.onNode(
+            isToggleable() and hasText("DeArrow titles and thumbnails"),
+        ).assertHasClickAction()
     }
 
     @Test

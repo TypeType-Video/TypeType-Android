@@ -734,6 +734,7 @@
     <string name="video_menu_share_chooser">Share via</string>
     <string name="video_more_actions">Video actions</string>
     <string name="video_open_channel_accessibility">Open %1$s channel</string>
+    <string name="video_open_accessibility">Open %1$s</string>
     <string name="state_loading">Loading</string>
     <string name="state_retry">Retry</string>
     <string name="state_open_accounts">Open accounts</string>

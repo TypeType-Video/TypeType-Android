@@ -165,6 +165,7 @@ private fun SearchTopBar(
     onNavigateBack: () -> Unit,
     focusRequester: FocusRequester,
 ) {
+    val searchDescription = stringResource(R.string.search_placeholder)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -193,7 +194,7 @@ private fun SearchTopBar(
                 Box(modifier = Modifier.weight(1f)) {
                     if (query.isEmpty()) {
                         Text(
-                            text = stringResource(R.string.search_placeholder),
+                            text = searchDescription,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -210,7 +211,8 @@ private fun SearchTopBar(
                         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .focusRequester(focusRequester),
+                            .focusRequester(focusRequester)
+                            .semantics { contentDescription = searchDescription },
                     )
                 }
                 AnimatedVisibility(visible = query.isNotEmpty(), enter = fadeIn(), exit = fadeOut()) {
