@@ -22,6 +22,9 @@ import dev.typetype.android.feature.player.components.CommentsSheet
 import dev.typetype.android.feature.player.components.LocalMediaController
 import dev.typetype.android.feature.player.host.PlayerHostController
 import dev.typetype.android.feature.player.host.PlayerHostTarget
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 @Composable
 fun ShortsRoute(
@@ -99,9 +102,11 @@ fun ShortsRoute(
                 playerHostController.openEmbeddedVideo(video.url, state.autoplayEnabled)
             }
         },
-        onNextVideoChanged = { video ->
-            if (video != null && context.allowsShortsMetadataPrefetch()) {
-                playerViewModel.prefetchMetadata(video.url)
+        onUpcomingVideosChanged = { videos ->
+            if (context.allowsShortsMetadataPrefetch()) coroutineScope {
+                videos.map { video ->
+                    async { playerViewModel.prefetchMetadata(video.url) }
+                }.awaitAll()
             }
         },
         embeddedPlayback = { video, onAdvance ->

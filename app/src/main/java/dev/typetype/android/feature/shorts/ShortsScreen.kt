@@ -59,7 +59,7 @@ fun ShortsScreen(
     onLoadMore: () -> Unit,
     embeddedPlaybackEnabled: Boolean = false,
     onActiveVideoChanged: (Video?) -> Unit = {},
-    onNextVideoChanged: suspend (Video?) -> Unit = {},
+    onUpcomingVideosChanged: suspend (List<Video>) -> Unit = {},
     embeddedPlayback: @Composable (Video, onAdvance: () -> Unit) -> Unit = { _, _ -> },
     menuItemState: (Video) -> VideoMenuItemState = { VideoMenuItemState() },
     onMenuAction: (VideoMenuAction, Video) -> Unit = { _, _ -> },
@@ -82,7 +82,7 @@ fun ShortsScreen(
             val scope = rememberCoroutineScope()
             val currentLoadMore by rememberUpdatedState(onLoadMore)
             val currentActiveVideoChanged by rememberUpdatedState(onActiveVideoChanged)
-            val currentNextVideoChanged by rememberUpdatedState(onNextVideoChanged)
+            val currentUpcomingVideosChanged by rememberUpdatedState(onUpcomingVideosChanged)
             LaunchedEffect(pagerState, state.videos.size, state.hasMore) {
                 snapshotFlow { pagerState.settledPage }
                     .map { it >= state.videos.lastIndex - 3 }
@@ -96,12 +96,8 @@ fun ShortsScreen(
             }
             LaunchedEffect(pagerState, state.videos) {
                 snapshotFlow {
-                    if (pagerState.isScrollInProgress) {
-                        null
-                    } else {
-                        state.videos.getOrNull(pagerState.settledPage + 1)
-                    }
-                }.distinctUntilChanged().collectLatest(currentNextVideoChanged)
+                    state.videos.drop(pagerState.settledPage + 1).take(SHORTS_PREFETCH_COUNT)
+                }.distinctUntilChanged().collectLatest(currentUpcomingVideosChanged)
             }
             Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
                 VerticalPager(
@@ -113,6 +109,9 @@ fun ShortsScreen(
                         video = state.videos[page],
                         isActive = embeddedPlaybackEnabled &&
                             page == pagerState.settledPage,
+                        showEmbeddedPlayback = embeddedPlaybackEnabled &&
+                            page == pagerState.settledPage &&
+                            !pagerState.isScrollInProgress,
                         onPlayVideo = onPlayVideo,
                         onOpenChannel = onOpenChannel,
                         menuItemState = menuItemState(state.videos[page]),
@@ -190,6 +189,7 @@ private fun ShortsInlineError(
 private fun ShortPage(
     video: Video,
     isActive: Boolean,
+    showEmbeddedPlayback: Boolean,
     onPlayVideo: (String) -> Unit,
     onOpenChannel: (String) -> Unit,
     menuItemState: VideoMenuItemState,
@@ -213,7 +213,7 @@ private fun ShortPage(
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
         )
-        if (isActive) embeddedPlayback()
+        if (showEmbeddedPlayback) embeddedPlayback()
         Box(
             modifier = Modifier.fillMaxSize().background(
                 Brush.verticalGradient(
@@ -270,3 +270,4 @@ private fun ShortsMessage(messageRes: Int) {
 }
 
 internal const val SHORTS_PAGER_TAG = "shorts-pager"
+private const val SHORTS_PREFETCH_COUNT = 2
