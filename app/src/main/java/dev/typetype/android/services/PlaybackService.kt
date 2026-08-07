@@ -20,6 +20,7 @@ import dev.typetype.android.domain.stream.SabrPlaybackRepository
 import dev.typetype.android.domain.stream.AudioOnlyStreamRepository
 import dev.typetype.android.data.network.PlaybackNetworkMonitor
 import dev.typetype.android.domain.playback.PlaybackResumeRepository
+import dev.typetype.android.domain.preferences.PreferencesRepository
 import dev.typetype.android.domain.library.LibraryRepository
 import dev.typetype.android.domain.session.ActiveSessionRepository
 import dev.typetype.android.domain.usersettings.UserSettingsRepository
@@ -62,12 +63,16 @@ class PlaybackService : MediaSessionService() {
     @Inject
     lateinit var playbackNetworkMonitor: PlaybackNetworkMonitor
 
+    @Inject
+    lateinit var preferencesRepository: PreferencesRepository
+
     private var mediaSession: MediaSession? = null
     private var audioOnlyPlaybackBridge: PlaybackAudioOnlyServiceBridge? = null
     private var playbackResumeRecorder: PlaybackResumeRecorder? = null
     private var activePlaybackReporter: ActivePlaybackReporter? = null
     private var playbackHistoryRecorder: PlaybackHistoryRecorder? = null
     private var playbackPlayer: ExoPlayer? = null
+    private lateinit var taskRemovalPolicy: PlaybackTaskRemovalPolicy
 
     override fun onCreate() {
         super.onCreate()
@@ -76,6 +81,7 @@ class PlaybackService : MediaSessionService() {
         val recoveryDispatcher = SabrPlaybackRecoveryDispatcher()
         val player = buildPlayer(playbackClock, recoveryDispatcher)
         playbackPlayer = player
+        taskRemovalPolicy = PlaybackTaskRemovalPolicy(preferencesRepository.observe())
         val sabrPlaybackBridge = SabrPlaybackServiceBridge(
             player,
             sabrPlaybackRepository,
@@ -120,12 +126,25 @@ class PlaybackService : MediaSessionService() {
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         val session = mediaSession ?: return
-        if (!session.player.playWhenReady || session.player.mediaItemCount == 0) {
-            stopSelf()
+        when (
+            taskRemovalPolicy.action(
+                playWhenReady = session.player.playWhenReady,
+                mediaItemCount = session.player.mediaItemCount,
+            )
+        ) {
+            PlaybackTaskRemovalAction.KeepPlaying -> Unit
+            PlaybackTaskRemovalAction.PauseAndStop -> {
+                session.player.pause()
+                stopSelf()
+            }
+            PlaybackTaskRemovalAction.Stop -> stopSelf()
         }
     }
 
     override fun onDestroy() {
+        if (::taskRemovalPolicy.isInitialized) {
+            taskRemovalPolicy.close()
+        }
         activePlaybackReporter?.close()
         activePlaybackReporter = null
         playbackHistoryRecorder?.close()
