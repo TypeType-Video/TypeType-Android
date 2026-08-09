@@ -55,6 +55,19 @@ class SubscriptionsScreenStateTest {
         composeRule.onNodeWithText("Subscription video").assertIsDisplayed()
     }
 
+    @Test
+    fun cachedContentStaysVisibleWhenRefreshFails() {
+        show(
+            SubscriptionsState(
+                videos = listOf(video()),
+                errorMessage = "Subscriptions are temporarily unavailable",
+                errorRequestId = "request-refresh",
+            ),
+        )
+
+        composeRule.onNodeWithText("Subscription video").assertIsDisplayed()
+    }
+
     private fun show(state: SubscriptionsState) {
         composeRule.setContent {
             CompositionLocalProvider(LocalAnimatedStatePlayback provides false) {

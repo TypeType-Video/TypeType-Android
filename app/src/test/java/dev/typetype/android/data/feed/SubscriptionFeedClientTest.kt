@@ -15,6 +15,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -114,6 +115,45 @@ class SubscriptionFeedClientTest {
         assertNull(page.nextCursor)
         assertFalse(page.hasMore)
         assertEquals("Video", page.videos.single().title)
+    }
+
+    @Test
+    fun preparationIsBoundedAndPreservesServerEvidence() {
+        repeat(2) {
+            server.enqueue(
+                jsonResponse(202, """{"code":"subscription_feed_preparing","retryAfterMs":100}""")
+                    .setHeader("X-Request-ID", "request-preparing"),
+            )
+        }
+
+        val failure = assertThrows(SubscriptionFeedContractException::class.java) {
+            runBlocking {
+                SubscriptionFeedClient(pause = {}, maxPreparationResponses = 2)
+                    .load(api, null, 12, null, verifyOwner = {})
+            }
+        }
+
+        assertEquals(PREPARATION_TIMEOUT_CODE, failure.failureCode)
+        assertEquals("request-preparing", failure.requestId)
+        assertEquals(202, failure.statusCode)
+        assertEquals(2, server.requestCount)
+    }
+
+    @Test
+    fun malformedReadyResponsePreservesServerEvidence() {
+        server.enqueue(
+            jsonResponse(200, """{"videos":[],"refreshing":false}""")
+                .setHeader("X-Request-ID", "request-contract"),
+        )
+
+        val failure = assertThrows(SubscriptionFeedContractException::class.java) {
+            runBlocking { SubscriptionFeedClient().load(api, null, 12, null, verifyOwner = {}) }
+        }
+
+        assertEquals("subscription_feed_contract_mismatch", failure.failureCode)
+        assertEquals("request-contract", failure.requestId)
+        assertEquals(200, failure.statusCode)
+        assertTrue(failure.message.orEmpty().contains("generation"))
     }
 
     private fun readyResponse(generation: Long, nextpage: String?): MockResponse {
