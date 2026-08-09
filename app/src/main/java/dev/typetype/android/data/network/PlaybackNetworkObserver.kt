@@ -1,5 +1,7 @@
 package dev.typetype.android.data.network
 
+import kotlinx.coroutines.flow.StateFlow
+
 data class PlaybackNetworkState(
     val isAvailable: Boolean,
     val generation: Long,
@@ -12,6 +14,10 @@ interface PlaybackNetworkObserver {
         generation: Long,
         timeoutMs: Long,
     ): Boolean
+}
+
+interface NetworkAvailabilityObserver {
+    val states: StateFlow<PlaybackNetworkState>
 }
 
 internal object AlwaysAvailablePlaybackNetworkObserver : PlaybackNetworkObserver {

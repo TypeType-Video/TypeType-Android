@@ -23,7 +23,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 class PlaybackNetworkMonitor @Inject constructor(
     @ApplicationContext context: Context,
     private val diagnosticsRepository: LocalDiagnosticsRepository,
-) : PlaybackNetworkObserver {
+) : PlaybackNetworkObserver, NetworkAvailabilityObserver {
     private val connectivityManager =
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     private val handler = Handler(Looper.getMainLooper())
@@ -34,7 +34,7 @@ class PlaybackNetworkMonitor @Inject constructor(
     private val stateTracker = PlaybackNetworkStateTracker(currentRoute())
     private val mutableStates = MutableStateFlow(stateTracker.state)
 
-    internal val states: StateFlow<PlaybackNetworkState> = mutableStates
+    override val states: StateFlow<PlaybackNetworkState> = mutableStates
 
     override fun snapshot(): PlaybackNetworkState = mutableStates.value
 
