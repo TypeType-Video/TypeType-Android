@@ -36,4 +36,28 @@ class SubscriptionsFeedStatusBarTest {
 
         assertTrue(refreshed.get())
     }
+
+    @Test
+    fun cachedFailureCanBeRetriedImmediately() {
+        val retried = AtomicBoolean(false)
+        composeRule.setContent {
+            TypeTypeTheme {
+                SubscriptionsFeedStatusBar(
+                    isRefreshing = false,
+                    isServerRefreshing = false,
+                    hasPendingRefresh = false,
+                    errorMessage = "Subscriptions are temporarily unavailable",
+                    requestId = "request-refresh",
+                    hasContent = true,
+                    onRetry = { retried.set(true) },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Subscriptions are temporarily unavailable").assertIsDisplayed()
+        composeRule.onNodeWithText("Request request-refresh").assertIsDisplayed()
+        composeRule.onNodeWithText("Retry").assertIsDisplayed().performClick()
+
+        assertTrue(retried.get())
+    }
 }
