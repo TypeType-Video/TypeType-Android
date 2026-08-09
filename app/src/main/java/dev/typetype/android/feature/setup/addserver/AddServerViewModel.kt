@@ -7,6 +7,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.error.UserErrorMapper
+import dev.typetype.android.data.setup.LocalNetworkTargetResolver
 import dev.typetype.android.domain.server.Server
 import dev.typetype.android.domain.setup.SetupRepository
 import java.util.UUID
@@ -23,6 +24,7 @@ class AddServerViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val errorMapper: UserErrorMapper,
     private val setupRepository: SetupRepository,
+    private val localNetworkTargetResolver: LocalNetworkTargetResolver,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AddServerState())
@@ -39,15 +41,19 @@ class AddServerViewModel @Inject constructor(
                     errorMessage = null,
                     errorRequestId = null,
                     localNetworkPermissionDenied = false,
+                    localNetworkPermissionPermanentlyDenied = false,
                     resolvedName = null,
                     resolvedTagline = null,
                     resolvedVersion = null,
                 )
             }
-            AddServerAction.OnConnectClick -> connect()
-            AddServerAction.OnLocalNetworkPermissionDenied -> _state.update {
+            is AddServerAction.OnConnectRequested -> checkLocalNetworkAccess(action.permissionRequired)
+            AddServerAction.OnLocalNetworkPermissionGranted -> connect(allowLocalCleartext = true)
+            is AddServerAction.OnLocalNetworkPermissionDenied -> _state.update {
                 it.copy(
+                    isConnecting = false,
                     localNetworkPermissionDenied = true,
+                    localNetworkPermissionPermanentlyDenied = action.permanently,
                     errorMessage = null,
                     errorRequestId = null,
                 )
@@ -56,7 +62,37 @@ class AddServerViewModel @Inject constructor(
         }
     }
 
-    private fun connect() {
+    private fun checkLocalNetworkAccess(permissionRequired: Boolean) {
+        if (_state.value.isConnecting) return
+        val typedUrl = _state.value.url
+        _state.update {
+            it.copy(
+                isConnecting = true,
+                errorMessage = null,
+                errorRequestId = null,
+                localNetworkPermissionDenied = false,
+            )
+        }
+        viewModelScope.launch {
+            val localTarget = localNetworkTargetResolver.requiresPermission(typedUrl)
+            if (localTarget && permissionRequired) {
+                val permanentlyDenied = _state.value.localNetworkPermissionPermanentlyDenied
+                _state.update {
+                    it.copy(
+                        isConnecting = false,
+                        localNetworkPermissionDenied = permanentlyDenied,
+                    )
+                }
+                if (!permanentlyDenied) {
+                    eventsChannel.send(AddServerEvent.RequestLocalNetworkPermission)
+                }
+            } else {
+                connect(allowLocalCleartext = localTarget)
+            }
+        }
+    }
+
+    private fun connect(allowLocalCleartext: Boolean) {
         val typedUrl = _state.value.url
         if (typedUrl.isBlank()) {
             _state.update {
@@ -73,10 +109,11 @@ class AddServerViewModel @Inject constructor(
                 errorMessage = null,
                 errorRequestId = null,
                 localNetworkPermissionDenied = false,
+                localNetworkPermissionPermanentlyDenied = false,
             )
         }
         viewModelScope.launch {
-            setupRepository.probeServer(typedUrl).fold(
+            setupRepository.probeServer(typedUrl, allowLocalCleartext).fold(
                 onSuccess = { probe ->
                     val server = Server(
                         id = UUID.randomUUID().toString(),

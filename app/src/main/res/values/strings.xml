@@ -653,6 +653,7 @@
     <string name="setup_enter_server_url">Enter an instance address</string>
     <string name="setup_server_unreachable">Couldn\'t reach this instance</string>
     <string name="setup_local_network_permission_denied">Allow local network access to connect to this self-hosted instance.</string>
+    <string name="setup_open_app_settings">Open app settings</string>
     <string name="setup_cleartext_warning">HTTP does not encrypt your password or account data. Use it only on a trusted local network.</string>
     <string name="setup_server_version">v%1$s</string>
     <string name="login_title">Sign in</string>

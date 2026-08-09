@@ -17,8 +17,11 @@ class SetupRepositoryImpl @Inject constructor(
     private val serverRepository: ServerRepository,
 ) : SetupRepository {
 
-    override suspend fun probeServer(rawUrl: String): Result<ProbeResult> = runCatching {
-        val candidates = ServerAddress.candidateBaseUrls(rawUrl)
+    override suspend fun probeServer(
+        rawUrl: String,
+        allowLocalCleartext: Boolean,
+    ): Result<ProbeResult> = runCatching {
+        val candidates = ServerAddress.candidateBaseUrls(rawUrl, allowLocalCleartext)
         val attempts = candidates.map { tryCandidate(it) }
         val resolved = attempts.filterIsInstance<Attempt.Resolved>().firstOrNull()?.value
             ?: throw probeFailure(attempts)
