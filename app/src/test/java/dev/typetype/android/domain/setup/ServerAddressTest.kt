@@ -30,6 +30,25 @@ class ServerAddressTest {
         )
     }
 
+    @Test
+    fun keepsBracketedIpv6AndPort() {
+        assertEquals(
+            listOf("http://[fd12:3456::1]:8080/", "http://[fd12:3456::1]:8080/api/"),
+            ServerAddress.candidateBaseUrls("http://[fd12:3456::1]:8080"),
+        )
+    }
+
+    @Test
+    fun allowsCleartextDomainAfterPrivateDnsResolution() {
+        assertEquals(
+            listOf("http://video.home.arpa:8080/", "http://video.home.arpa:8080/api/"),
+            ServerAddress.candidateBaseUrls(
+                "http://video.home.arpa:8080",
+                allowLocalCleartext = true,
+            ),
+        )
+    }
+
     @Test(expected = IllegalArgumentException::class)
     fun rejectsPublicCleartextInstance() {
         ServerAddress.candidateBaseUrls("http://video.example")
