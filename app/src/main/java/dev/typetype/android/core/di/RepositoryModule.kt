@@ -20,6 +20,8 @@ import dev.typetype.android.data.imports.RemoteImportRepository
 import dev.typetype.android.data.imports.RoomYoutubeTakeoutImportRepository
 import dev.typetype.android.data.library.RoomVideoMetaRepository
 import dev.typetype.android.data.notifications.RemoteNotificationsRepository
+import dev.typetype.android.data.network.NetworkAvailabilityObserver
+import dev.typetype.android.data.network.PlaybackNetworkMonitor
 import dev.typetype.android.data.preferences.DataStorePreferencesRepository
 import dev.typetype.android.data.podcast.RemotePodcastRepository
 import dev.typetype.android.data.playback.RoomPlaybackResumeRepository
@@ -91,6 +93,12 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindPlaybackQueueController(impl: PlaybackQueueCoordinator): PlaybackQueueController
+
+    @Binds
+    @Singleton
+    abstract fun bindNetworkAvailabilityObserver(
+        impl: PlaybackNetworkMonitor,
+    ): NetworkAvailabilityObserver
 
     @Binds
     @Singleton

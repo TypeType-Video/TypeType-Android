@@ -11,6 +11,7 @@ import retrofit2.Response
 
 internal class SubscriptionFeedClient(
     private val pause: suspend (Long) -> Unit = { delay(it) },
+    private val maxPreparationResponses: Int = MAX_PREPARATION_RESPONSES,
 ) {
     suspend fun load(
         api: TypeTypeFeedApi,
@@ -20,6 +21,8 @@ internal class SubscriptionFeedClient(
         verifyOwner: suspend () -> Unit,
     ): SubscriptionsPage {
         require(limit in 1..100) { "Subscription feed page size is outside the server contract" }
+        require(maxPreparationResponses > 0) { "Preparation response limit must be positive" }
+        var preparationResponses = 0
         while (true) {
             verifyOwner()
             val response = api.subscriptionsFeed(limit = limit, cursor = cursor)
@@ -27,6 +30,13 @@ internal class SubscriptionFeedClient(
             when (response.code()) {
                 200 -> return response.readyPage(expectedGeneration)
                 202 -> {
+                    preparationResponses += 1
+                    if (preparationResponses >= maxPreparationResponses) {
+                        throw response.contractFailure(
+                            "Subscription feed preparation did not complete",
+                            PREPARATION_TIMEOUT_CODE,
+                        )
+                    }
                     pause(response.preparationDelay())
                     verifyOwner()
                 }
@@ -49,7 +59,7 @@ private fun Response<SubscriptionFeedResponse>.readyPage(
     val refreshing = body.refreshing
         ?: throw contractFailure("Subscription feed omitted its refresh state")
     if (expectedGeneration != null && generation != expectedGeneration) {
-        throw SubscriptionFeedContractException(
+        throw contractFailure(
             message = "Subscription feed changed generation during pagination",
             failureCode = GENERATION_MISMATCH_CODE,
         )
@@ -73,21 +83,30 @@ private fun Response<SubscriptionFeedResponse>.preparationDelay(): Long {
         ?: throw contractFailure("Subscription feed preparation omitted its retry delay")
 }
 
-private fun contractFailure(message: String): SubscriptionFeedContractException =
-    SubscriptionFeedContractException(message, CONTRACT_MISMATCH_CODE)
+private fun Response<*>.contractFailure(
+    message: String,
+    failureCode: String = CONTRACT_MISMATCH_CODE,
+): SubscriptionFeedContractException = SubscriptionFeedContractException(
+    message = message,
+    failureCode = failureCode,
+    requestId = headers()["X-Request-ID"],
+    statusCode = code(),
+)
 
 internal class SubscriptionFeedContractException(
     message: String,
     override val failureCode: String,
+    override val requestId: String? = null,
+    override val statusCode: Int? = null,
 ) : IllegalStateException(message), CodedFailure {
-    override val requestId: String? = null
-    override val statusCode: Int? = null
 }
 
 internal const val INVALID_CURSOR_CODE = "subscription_feed_invalid_cursor"
 internal const val STALE_GENERATION_CODE = "subscription_feed_stale_generation"
 internal const val GENERATION_MISMATCH_CODE = "subscription_feed_generation_mismatch"
+internal const val PREPARATION_TIMEOUT_CODE = "subscription_feed_preparation_timeout"
 private const val CONTRACT_MISMATCH_CODE = "subscription_feed_contract_mismatch"
 private const val PREPARING_CODE = "subscription_feed_preparing"
 private const val MIN_RETRY_DELAY_MS = 100L
 private const val MAX_RETRY_DELAY_MS = 5_000L
+private const val MAX_PREPARATION_RESPONSES = 120

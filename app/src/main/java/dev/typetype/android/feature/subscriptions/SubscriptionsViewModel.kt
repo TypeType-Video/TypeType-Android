@@ -4,19 +4,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.typetype.android.R
-import dev.typetype.android.core.error.CodedFailure
 import dev.typetype.android.core.ui.error.UserErrorMapper
 import dev.typetype.android.data.account.ActiveAccountScope
-import dev.typetype.android.data.feed.GENERATION_MISMATCH_CODE
-import dev.typetype.android.data.feed.INVALID_CURSOR_CODE
-import dev.typetype.android.data.feed.STALE_GENERATION_CODE
+import dev.typetype.android.data.network.NetworkAvailabilityObserver
 import dev.typetype.android.domain.feed.HomeFeedRepository
 import dev.typetype.android.domain.feed.SubscriptionsPage
 import dev.typetype.android.domain.library.VideoMetaRepository
 import dev.typetype.android.domain.library.cacheVideos
 import dev.typetype.android.domain.subscriptions.SubscriptionsRepository
 import javax.inject.Inject
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,9 +22,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-private const val PAGE_SIZE = 12
-private const val SERVER_REFRESH_POLL_MS = 1_000L
-
 @HiltViewModel
 class SubscriptionsViewModel @Inject constructor(
     private val feedRepository: HomeFeedRepository,
@@ -37,6 +30,7 @@ class SubscriptionsViewModel @Inject constructor(
     private val subscriptionsRepository: SubscriptionsRepository,
     private val channelsProvider: SubscriptionChannelsProvider,
     private val activeAccountScope: ActiveAccountScope,
+    private val networkAvailabilityObserver: NetworkAvailabilityObserver,
 ) : ViewModel() {
 
     private val _state = kotlinx.coroutines.flow.MutableStateFlow(SubscriptionsState(isLoading = true))
@@ -47,11 +41,13 @@ class SubscriptionsViewModel @Inject constructor(
     private var nextCursor: String? = null
     private var generation: Long? = null
     private var persistCurrentGeneration = true
+    private val networkRecovery = SubscriptionsRecovery()
 
     init {
         observeSyncState()
         observeChannels()
         observeAccountChanges()
+        observeNetworkRecovery()
         refresh()
     }
 
@@ -101,6 +97,7 @@ class SubscriptionsViewModel @Inject constructor(
                 nextCursor = null
                 generation = null
                 persistCurrentGeneration = true
+                networkRecovery.clear()
                 _state.value = SubscriptionsState(isLoading = true)
                 refresh()
             }
@@ -119,6 +116,7 @@ class SubscriptionsViewModel @Inject constructor(
     }
 
     private fun refresh() {
+        networkRecovery.clear()
         requestJob?.cancel()
         refreshMonitorJob?.cancel()
         requestJob = viewModelScope.launch { loadFirstPage() }
@@ -129,7 +127,7 @@ class SubscriptionsViewModel @Inject constructor(
         nextCursor = null
         generation = null
         if (_state.value.videos.isEmpty()) {
-            val cached = cachedVideos()
+            val cached = feedRepository.loadCachedSubscriptionsFeedOrEmpty()
             if (cached.isNotEmpty()) _state.update { it.copy(videos = cached) }
         }
         val hadCachedContent = _state.value.videos.isNotEmpty()
@@ -144,7 +142,7 @@ class SubscriptionsViewModel @Inject constructor(
                 loadMoreError = false,
             )
         }
-        feedRepository.loadSubscriptionsFeed(cursor = null, limit = PAGE_SIZE).fold(
+        feedRepository.loadSubscriptionsFeed(cursor = null, limit = SUBSCRIPTIONS_PAGE_SIZE).fold(
             onSuccess = { page -> acceptFirstPage(page, hadCachedContent) },
             onFailure = ::showRefreshFailure,
         )
@@ -152,6 +150,7 @@ class SubscriptionsViewModel @Inject constructor(
 
     private suspend fun acceptFirstPage(page: SubscriptionsPage, hadCachedContent: Boolean) {
         generation = page.generation
+        networkRecovery.clear()
         nextCursor = page.nextCursor
         persistCurrentGeneration = !page.refreshing || !hadCachedContent
         val isPersisting = persistCurrentGeneration
@@ -179,6 +178,7 @@ class SubscriptionsViewModel @Inject constructor(
         val expectedGeneration = generation ?: return
         val current = _state.value
         if (current.isLoading || current.isLoadingMore || !current.hasMore) return
+        networkRecovery.clear()
         requestJob = viewModelScope.launch {
             _state.update {
                 it.copy(
@@ -190,15 +190,16 @@ class SubscriptionsViewModel @Inject constructor(
             }
             feedRepository.loadSubscriptionsFeed(
                 cursor = cursor,
-                limit = PAGE_SIZE,
+                limit = SUBSCRIPTIONS_PAGE_SIZE,
                 expectedGeneration = expectedGeneration,
             ).fold(
                 onSuccess = { page -> acceptContinuation(page) },
                 onFailure = { failure ->
-                    if (failure.requiresPaginationRestart()) {
+                    if (failure.requiresSubscriptionsPaginationRestart()) {
                         refreshMonitorJob?.cancel()
                         offerRefresh()
                     } else {
+                        networkRecovery.schedule(failure, SubscriptionsRecoveryRequest.Pagination)
                         val details = errorMapper.details(failure, R.string.subscriptions_failed)
                         _state.update {
                             it.copy(
@@ -215,6 +216,7 @@ class SubscriptionsViewModel @Inject constructor(
     }
 
     private suspend fun acceptContinuation(page: SubscriptionsPage) {
+        networkRecovery.clear()
         nextCursor = page.nextCursor
         val isPersisting = persistCurrentGeneration
         _state.update {
@@ -241,7 +243,10 @@ class SubscriptionsViewModel @Inject constructor(
             var expectedGeneration = observedGeneration
             while (isActive) {
                 delay(SERVER_REFRESH_POLL_MS)
-                val result = feedRepository.loadSubscriptionsFeed(cursor = null, limit = PAGE_SIZE)
+                val result = feedRepository.loadSubscriptionsFeed(
+                    cursor = null,
+                    limit = SUBSCRIPTIONS_PAGE_SIZE,
+                )
                 val page = result.getOrElse { failure ->
                     showRefreshFailure(failure)
                     return@launch
@@ -276,26 +281,24 @@ class SubscriptionsViewModel @Inject constructor(
         }
     }
 
-    private suspend fun cachedVideos() = try {
-        feedRepository.loadCachedSubscriptionsFeed()
-    } catch (cancelled: CancellationException) {
-        throw cancelled
-    } catch (_: Throwable) {
-        emptyList()
-    }
-
     private suspend fun persistPage(page: SubscriptionsPage, append: Boolean) {
         try {
             videoMetaRepository.cacheVideos(page.videos)
             feedRepository.cacheSubscriptionsFeed(page.videos, append)
-        } catch (cancelled: CancellationException) {
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
             throw cancelled
         } catch (failure: Throwable) {
-            showRefreshFailure(failure)
+            showRefreshFailure(failure, recoverAfterNetworkChange = false)
         }
     }
 
-    private fun showRefreshFailure(failure: Throwable) {
+    private fun showRefreshFailure(
+        failure: Throwable,
+        recoverAfterNetworkChange: Boolean = true,
+    ) {
+        if (recoverAfterNetworkChange) {
+            networkRecovery.schedule(failure, SubscriptionsRecoveryRequest.Refresh)
+        }
         val details = errorMapper.details(failure, R.string.subscriptions_failed)
         _state.update {
             it.copy(
@@ -307,11 +310,16 @@ class SubscriptionsViewModel @Inject constructor(
             )
         }
     }
-}
 
-private fun Throwable.requiresPaginationRestart(): Boolean =
-    (this as? CodedFailure)?.failureCode in setOf(
-        INVALID_CURSOR_CODE,
-        STALE_GENERATION_CODE,
-        GENERATION_MISMATCH_CODE,
-    )
+    private fun observeNetworkRecovery() {
+        viewModelScope.launch {
+            networkAvailabilityObserver.states.drop(1).collect { network ->
+                when (networkRecovery.takeWhenAvailable(network.isAvailable)) {
+                    SubscriptionsRecoveryRequest.Refresh -> refresh()
+                    SubscriptionsRecoveryRequest.Pagination -> loadMore()
+                    null -> Unit
+                }
+            }
+        }
+    }
+}
