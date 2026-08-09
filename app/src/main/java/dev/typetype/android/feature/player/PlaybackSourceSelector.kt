@@ -64,22 +64,40 @@ internal fun List<StreamAudioSource>.pickAudio(
     defaultAudioLanguage: String,
     preferOriginalLanguage: Boolean,
     codecSupport: PlaybackCodecSupport,
+    preferredDefaultAudioTrackId: String? = null,
+    originalAudioTrackId: String? = null,
 ): StreamAudioSource? {
     val playable = filter {
         it.url.isNotBlank() && codecSupport.audio(it) != DecoderSupport.Unsupported
     }
     val selected = selectedAudioKey?.let { key -> playable.firstOrNull { it.key == key } }
     if (selected != null) return selected
-    val original = if (preferOriginalLanguage) playable.firstOrNull { it.isOriginal } else null
-    if (original != null) return original
-    val localized = defaultAudioLanguage.takeIf { it.isNotBlank() }?.let { target ->
-        playable.firstOrNull { audio ->
-            audio.audioLocale?.equals(target, ignoreCase = true) == true ||
-                audio.audioLocale?.startsWith("$target-", ignoreCase = true) == true
-        }
+    val preferredDefault = playable.findTrack(preferredDefaultAudioTrackId)
+    val original = playable.findTrack(originalAudioTrackId)
+        ?: playable.firstOrNull { it.isOriginal }
+    val localized = playable.findLanguage(defaultAudioLanguage)
+    return if (preferOriginalLanguage) {
+        original ?: preferredDefault ?: localized ?: playable.firstOrNull()
+    } else {
+        localized ?: preferredDefault ?: original ?: playable.firstOrNull()
     }
-    return localized ?: playable.maxByOrNull { it.bitrate ?: 0 }
 }
+
+private fun List<StreamAudioSource>.findTrack(trackId: String?): StreamAudioSource? =
+    trackId?.takeIf { it.isNotBlank() }?.let { id ->
+        firstOrNull { it.audioTrackId == id }
+    }
+
+private fun List<StreamAudioSource>.findLanguage(language: String): StreamAudioSource? {
+    val target = language.normalizedLanguageTag()
+    if (target.isBlank()) return null
+    return firstOrNull { source ->
+        val candidate = source.audioLocale.orEmpty().normalizedLanguageTag()
+        candidate == target || candidate.substringBefore('-') == target.substringBefore('-')
+    }
+}
+
+private fun String.normalizedLanguageTag(): String = trim().lowercase().replace('_', '-')
 
 private data class VideoCandidate(
     val source: StreamVideoSource,

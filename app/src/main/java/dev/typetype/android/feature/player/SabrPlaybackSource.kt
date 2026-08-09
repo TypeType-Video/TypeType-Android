@@ -77,6 +77,8 @@ private fun Stream.sabrSelection(
         defaultAudioLanguage = defaultAudioLanguage,
         preferOriginalLanguage = preferOriginalLanguage,
         codecSupport = codecSupport,
+        preferredDefaultAudioTrackId = preferredDefaultAudioTrackId,
+        originalAudioTrackId = originalAudioTrackId,
     ) ?: return null
     return SabrPlaybackSelection(
         video = video,
