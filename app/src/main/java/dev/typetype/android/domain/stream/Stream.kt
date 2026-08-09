@@ -30,6 +30,8 @@ data class Stream(
     val muxedVideoStreams: List<StreamVideoSource> = emptyList(),
     val videoOnlyStreams: List<StreamVideoSource> = emptyList(),
     val audioStreams: List<StreamAudioSource> = emptyList(),
+    val originalAudioTrackId: String? = null,
+    val preferredDefaultAudioTrackId: String? = null,
     val subtitles: List<StreamSubtitleSource> = emptyList(),
     val startPositionMillis: Long,
     val sponsorBlockSegments: List<SponsorBlockSegment> = emptyList(),

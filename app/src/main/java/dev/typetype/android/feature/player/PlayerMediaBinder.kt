@@ -227,6 +227,8 @@ private fun pickMergedSource(
         defaultAudioLanguage = defaultAudioLanguage,
         preferOriginalLanguage = preferOriginalLanguage,
         codecSupport = codecSupport,
+        preferredDefaultAudioTrackId = stream.preferredDefaultAudioTrackId,
+        originalAudioTrackId = stream.originalAudioTrackId,
     ) ?: return null
     return PlayableSource(
         url = video.url,

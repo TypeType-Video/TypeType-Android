@@ -26,6 +26,8 @@ internal fun Stream.pickExplicitProviderSource(
         defaultAudioLanguage = defaultAudioLanguage,
         preferOriginalLanguage = preferOriginalLanguage,
         codecSupport = codecSupport,
+        preferredDefaultAudioTrackId = preferredDefaultAudioTrackId,
+        originalAudioTrackId = originalAudioTrackId,
     ) ?: return null
     return PlayableSource(
         url = video.url,

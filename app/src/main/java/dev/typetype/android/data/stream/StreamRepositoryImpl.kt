@@ -151,6 +151,8 @@ class StreamRepositoryImpl @Inject constructor(
                 .orEmpty()
                 .filter { it.deliveryMethod != SABR_DELIVERY_METHOD }
                 .map { it.toDomainAudioSource(baseUrl) },
+            originalAudioTrackId = originalAudioTrackId,
+            preferredDefaultAudioTrackId = preferredDefaultAudioTrackId,
             subtitles = subtitles.mapNotNull { it.toYoutubeSubtitleSource(baseUrl, id) },
             startPositionMillis = startPosition * 1000L,
             sponsorBlockSegments = sponsorBlockSegments.mapNotNull {
