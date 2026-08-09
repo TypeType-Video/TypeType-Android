@@ -3,7 +3,10 @@ package dev.typetype.android.domain.setup
 import java.net.URI
 
 object ServerAddress {
-    fun candidateBaseUrls(rawValue: String): List<String> {
+    fun candidateBaseUrls(
+        rawValue: String,
+        allowLocalCleartext: Boolean = false,
+    ): List<String> {
         val value = rawValue.trim().trimEnd('/')
         require(value.isNotEmpty()) { "Enter an instance address" }
         val explicitScheme = SCHEME_PATTERN.containsMatchIn(value)
@@ -14,9 +17,9 @@ object ServerAddress {
         require(parsed.rawQuery == null && parsed.rawFragment == null) {
             "Remove the query or fragment from the instance address"
         }
-        val host = parsed.host?.lowercase()
+        val host = parsed.host?.trim('[', ']')?.lowercase()
         require(!host.isNullOrBlank()) { "Enter a valid instance address" }
-        require(scheme != "http" || isLocalHost(host)) {
+        require(scheme != "http" || isLocalHost(host) || allowLocalCleartext) {
             "Plain HTTP is allowed only for an instance on your local network"
         }
         val path = parsed.rawPath.orEmpty().trimEnd('/')
@@ -29,9 +32,14 @@ object ServerAddress {
     }
 
     fun requiresLocalNetworkAccess(rawValue: String): Boolean {
-        val host = parseHost(rawValue) ?: return false
+        val host = host(rawValue) ?: return false
         return isLocalHost(host)
     }
+
+    internal fun host(rawValue: String): String? = parseHost(rawValue)
+
+    internal fun isAddressLiteral(host: String): Boolean =
+        isIpv4Literal(host) || ':' in host
 
     fun usesCleartextHttp(rawValue: String): Boolean {
         val value = rawValue.trim()
@@ -71,6 +79,11 @@ object ServerAddress {
             octets[0] == 192 && octets[1] == 168 -> true
             else -> false
         }
+    }
+
+    private fun isIpv4Literal(host: String): Boolean {
+        val octets = host.split('.').mapNotNull(String::toIntOrNull)
+        return octets.size == 4 && octets.all { it in 0..255 }
     }
 
     private fun isLocalIpv6(host: String): Boolean = ':' in host && (

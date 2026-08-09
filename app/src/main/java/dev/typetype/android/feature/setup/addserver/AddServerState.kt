@@ -6,6 +6,7 @@ data class AddServerState(
     val errorMessage: String? = null,
     val errorRequestId: String? = null,
     val localNetworkPermissionDenied: Boolean = false,
+    val localNetworkPermissionPermanentlyDenied: Boolean = false,
     val resolvedName: String? = null,
     val resolvedTagline: String? = null,
     val resolvedVersion: String? = null,
