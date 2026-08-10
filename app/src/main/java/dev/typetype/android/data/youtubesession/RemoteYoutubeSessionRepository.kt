@@ -51,7 +51,9 @@ class RemoteYoutubeSessionRepository @Inject constructor(
         val response = withContext(Dispatchers.IO) {
             apiHolder.require(scope).cancelYoutubeRemoteBrowser(sessionId)
         }
-        response.requireSuccessfulResponse()
+        if (!isRemoteBrowserCancellationComplete(response.code())) {
+            response.requireSuccessfulResponse()
+        }
         activeAccountScope.verify(scope)
     }
 
@@ -64,6 +66,9 @@ class RemoteYoutubeSessionRepository @Inject constructor(
         activeAccountScope.verify(scope)
     }
 }
+
+internal fun isRemoteBrowserCancellationComplete(statusCode: Int): Boolean =
+    statusCode in 200..299 || statusCode == 404
 
 internal fun YoutubeSessionStatusResponse.toDomain(): YoutubeSession = YoutubeSession(
     status = when (status) {
