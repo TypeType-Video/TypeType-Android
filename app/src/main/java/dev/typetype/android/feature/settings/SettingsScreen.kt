@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.RssFeed
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Icon
@@ -59,6 +60,8 @@ fun SettingsScreen(
     importsAvailable: Boolean = false,
     onOpenYoutubeSession: () -> Unit = {},
     youtubeSessionAvailable: Boolean = false,
+    onOpenRssFeeds: () -> Unit = {},
+    rssAvailable: Boolean = false,
     onOpenAccounts: () -> Unit = {},
     onOpenAppearance: () -> Unit,
     onOpenContent: () -> Unit = {},
@@ -83,6 +86,16 @@ fun SettingsScreen(
                     R.string.youtube_session_settings_subtitle,
                     Icons.Filled.Link,
                     onOpenYoutubeSession,
+                ),
+            )
+        }
+        if (rssAvailable) {
+            add(
+                SettingsEntry(
+                    R.string.rss_settings_title,
+                    R.string.rss_settings_subtitle,
+                    Icons.Filled.RssFeed,
+                    onOpenRssFeeds,
                 ),
             )
         }

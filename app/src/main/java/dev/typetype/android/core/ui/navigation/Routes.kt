@@ -63,6 +63,9 @@ data object ImportDataRoute
 data object YoutubeSessionRoute
 
 @Serializable
+data object RssFeedsRoute
+
+@Serializable
 data object PrivacySettingsRoute
 
 @Serializable
