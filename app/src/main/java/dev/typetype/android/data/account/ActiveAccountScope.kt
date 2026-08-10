@@ -16,12 +16,18 @@ data class AccountScope(
     val accountId: String,
 )
 
+interface AccountScopeProvider {
+    fun observe(): Flow<AccountScope?>
+    suspend fun require(): AccountScope
+    suspend fun verify(expected: AccountScope)
+}
+
 @Singleton
 @OptIn(ExperimentalCoroutinesApi::class)
 class ActiveAccountScope @Inject constructor(
     serverRepository: ServerRepository,
     accountScopeStore: AccountScopeStore,
-) {
+) : AccountScopeProvider {
     private val activeScope = serverRepository.observeCurrentServer()
         .flatMapLatest { server ->
             if (server == null) {
@@ -34,12 +40,12 @@ class ActiveAccountScope @Inject constructor(
         }
         .distinctUntilChanged()
 
-    fun observe(): Flow<AccountScope?> = activeScope
+    override fun observe(): Flow<AccountScope?> = activeScope
 
-    suspend fun require(): AccountScope =
+    override suspend fun require(): AccountScope =
         requireNotNull(activeScope.first()) { "No account is currently selected" }
 
-    suspend fun verify(expected: AccountScope) {
+    override suspend fun verify(expected: AccountScope) {
         check(require() == expected) { "The active account changed during the request" }
     }
 }

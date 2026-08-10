@@ -6,6 +6,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dev.typetype.android.data.actions.VideoActionsRepositoryImpl
 import dev.typetype.android.data.account.RoomAccountRepository
+import dev.typetype.android.data.account.AccountScopeProvider
+import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.auth.AuthRepositoryImpl
 import dev.typetype.android.data.branding.RemoteDeArrowRepository
 import dev.typetype.android.data.channel.ChannelRepositoryImpl
@@ -29,6 +31,9 @@ import dev.typetype.android.data.playback.RoomPlaybackQueueRepository
 import dev.typetype.android.data.profile.RemoteProfileRepository
 import dev.typetype.android.data.publicplaylist.RemotePublicPlaylistRepository
 import dev.typetype.android.data.publicplaylist.OfflineSavedPublicPlaylistRepository
+import dev.typetype.android.data.rss.RemoteRssRepository
+import dev.typetype.android.data.rss.RssDataSource
+import dev.typetype.android.data.rss.RssNetworkSource
 import dev.typetype.android.data.search.SearchRepositoryImpl
 import dev.typetype.android.data.searchhistory.RemoteSearchHistoryStore
 import dev.typetype.android.data.server.RoomServerRepository
@@ -69,6 +74,7 @@ import dev.typetype.android.domain.playback.PlaybackQueueController
 import dev.typetype.android.domain.profile.ProfileRepository
 import dev.typetype.android.domain.publicplaylist.PublicPlaylistRepository
 import dev.typetype.android.domain.publicplaylist.SavedPublicPlaylistRepository
+import dev.typetype.android.domain.rss.RssRepository
 import dev.typetype.android.domain.search.SearchRepository
 import dev.typetype.android.domain.searchhistory.SearchHistoryRepository
 import dev.typetype.android.domain.server.ServerRepository
@@ -105,6 +111,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindAccountRepository(impl: RoomAccountRepository): AccountRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAccountScopeProvider(impl: ActiveAccountScope): AccountScopeProvider
 
     @Binds
     @Singleton
@@ -233,6 +243,14 @@ abstract class RepositoryModule {
     abstract fun bindSavedPublicPlaylistRepository(
         impl: OfflineSavedPublicPlaylistRepository,
     ): SavedPublicPlaylistRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindRssRepository(impl: RemoteRssRepository): RssRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindRssDataSource(impl: RssNetworkSource): RssDataSource
 
     @Binds
     @Singleton
