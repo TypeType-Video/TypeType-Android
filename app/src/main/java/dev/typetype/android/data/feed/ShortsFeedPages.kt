@@ -6,6 +6,7 @@ import dev.typetype.android.data.network.requireSuccessfulResponse
 import dev.typetype.android.domain.feed.ShortsContinuation
 import dev.typetype.android.domain.feed.ShortsPage
 import dev.typetype.android.domain.feed.Video
+import dev.typetype.android.domain.feed.shortIdentity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -68,7 +69,7 @@ internal suspend fun loadDiscoveryShorts(
 
 internal fun List<Video>.normalizedShorts(): List<Video> = asSequence()
     .filter(Video::isLikelyShort)
-    .distinctBy(Video::id)
+    .distinctBy(Video::shortIdentity)
     .groupBy { it.uploaderUrl.ifBlank { "__${it.id}" } }
     .values
     .map { channel -> ArrayDeque(channel) }

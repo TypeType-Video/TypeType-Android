@@ -44,6 +44,7 @@ import dev.typetype.android.core.ui.components.RequestIdRow
 import dev.typetype.android.core.ui.components.VideoMenuAction
 import dev.typetype.android.core.ui.components.VideoMenuItemState
 import dev.typetype.android.domain.feed.Video
+import dev.typetype.android.domain.feed.shortIdentity
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -102,16 +103,13 @@ fun ShortsScreen(
             Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
                 VerticalPager(
                     state = pagerState,
-                    key = { state.videos[it].id },
+                    key = { state.videos[it].shortIdentity() },
                     modifier = Modifier.fillMaxSize().testTag(SHORTS_PAGER_TAG),
                 ) { page ->
                     ShortPage(
                         video = state.videos[page],
                         isActive = embeddedPlaybackEnabled &&
                             page == pagerState.settledPage,
-                        showEmbeddedPlayback = embeddedPlaybackEnabled &&
-                            page == pagerState.settledPage &&
-                            !pagerState.isScrollInProgress,
                         onPlayVideo = onPlayVideo,
                         onOpenChannel = onOpenChannel,
                         menuItemState = menuItemState(state.videos[page]),
@@ -189,7 +187,6 @@ private fun ShortsInlineError(
 private fun ShortPage(
     video: Video,
     isActive: Boolean,
-    showEmbeddedPlayback: Boolean,
     onPlayVideo: (String) -> Unit,
     onOpenChannel: (String) -> Unit,
     menuItemState: VideoMenuItemState,
@@ -213,7 +210,7 @@ private fun ShortPage(
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
         )
-        if (showEmbeddedPlayback) embeddedPlayback()
+        if (isActive) embeddedPlayback()
         Box(
             modifier = Modifier.fillMaxSize().background(
                 Brush.verticalGradient(

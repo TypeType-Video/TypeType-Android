@@ -21,6 +21,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -238,10 +239,16 @@ private fun ShortsPlayerSurface(
 
 @Composable
 private fun ShortsEndedEffect(player: Player?, onAdvance: () -> Unit) {
-    DisposableEffect(player, onAdvance) {
+    val currentOnAdvance by rememberUpdatedState(onAdvance)
+    DisposableEffect(player) {
+        var advancedMediaId: String? = null
         val listener = object : Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
-                if (playbackState == Player.STATE_ENDED) onAdvance()
+                if (playbackState != Player.STATE_ENDED) return
+                val mediaId = player?.currentMediaItem?.mediaId ?: return
+                if (mediaId == advancedMediaId) return
+                advancedMediaId = mediaId
+                currentOnAdvance()
             }
         }
         player?.addListener(listener)
