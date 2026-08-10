@@ -94,6 +94,12 @@ internal fun UserSettings.patchFrom(previous: UserSettings): JsonObject = buildJ
     }
     if (hideComments != previous.hideComments) put("hideComments", hideComments)
     if (hideShorts != previous.hideShorts) put("hideShorts", hideShorts)
+    if (
+        supportsHideSubscriptionLiveStreams &&
+        hideSubscriptionLiveStreams != previous.hideSubscriptionLiveStreams
+    ) {
+        put("hideSubscriptionLiveStreams", hideSubscriptionLiveStreams)
+    }
     if (disableWatchHistory != previous.disableWatchHistory) {
         put("disableWatchHistory", disableWatchHistory)
     }

@@ -166,6 +166,8 @@
     <string name="settings_content_hide_comments_subtitle">Stop loading comments and bullet comments</string>
     <string name="settings_content_hide_shorts">Hide Shorts</string>
     <string name="settings_content_hide_shorts_subtitle">Remove the Shorts surface</string>
+    <string name="settings_content_hide_subscription_lives">Hide subscription live streams</string>
+    <string name="settings_content_hide_subscription_lives_subtitle">Remove live and upcoming streams from subscriptions</string>
     <string name="settings_content_update_failure_title">Content settings</string>
     <string name="settings_content_update_failed">Couldn\'t update content settings</string>
     <string name="accent_red">Red</string>

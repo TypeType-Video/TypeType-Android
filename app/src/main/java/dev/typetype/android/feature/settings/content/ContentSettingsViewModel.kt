@@ -102,6 +102,8 @@ private fun UserSettings.toContentSettingsState(feedback: ContentSettingsFeedbac
         hideRelatedVideos = hideRelatedVideos,
         hideComments = hideComments,
         hideShorts = hideShorts,
+        hideSubscriptionLiveStreams = hideSubscriptionLiveStreams,
+        supportsHideSubscriptionLiveStreams = supportsHideSubscriptionLiveStreams,
         deArrowEnabled = deArrowEnabled,
         deArrowTitleMode = deArrowTitleMode,
         deArrowThumbnailMode = deArrowThumbnailMode,

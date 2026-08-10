@@ -76,6 +76,37 @@ class UserSettingsPatchTest {
     }
 
     @Test
+    fun `old server settings keep subscription live control unsupported`() {
+        val settings = JSON.decodeFromString<UserSettingsDto>("{}").toDomain()
+
+        assertTrue(!settings.supportsHideSubscriptionLiveStreams)
+        assertTrue(!settings.hideSubscriptionLiveStreams)
+    }
+
+    @Test
+    fun `new server settings expose and patch only subscription live visibility`() {
+        val previous = JSON.decodeFromString<UserSettingsDto>(
+            """{"hideSubscriptionLiveStreams":false}""",
+        ).toDomain()
+        val changed = previous.copy(hideSubscriptionLiveStreams = true)
+
+        assertTrue(previous.supportsHideSubscriptionLiveStreams)
+        assertEquals(setOf("hideSubscriptionLiveStreams"), changed.patchFrom(previous).keys)
+        assertTrue(
+            requireNotNull(changed.patchFrom(previous)["hideSubscriptionLiveStreams"])
+                .jsonPrimitive.boolean,
+        )
+    }
+
+    @Test
+    fun `unsupported subscription live field is never sent to an old server`() {
+        val previous = UserSettings()
+        val changed = previous.copy(hideSubscriptionLiveStreams = true)
+
+        assertTrue(changed.patchFrom(previous).isEmpty())
+    }
+
+    @Test
     fun `complete server settings response maps without dropping preferences`() {
         val dto = JSON.decodeFromString<UserSettingsDto>(COMPLETE_SETTINGS_JSON)
 

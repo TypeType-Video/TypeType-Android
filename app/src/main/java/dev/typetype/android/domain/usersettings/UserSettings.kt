@@ -30,6 +30,8 @@ data class UserSettings(
     val hideRelatedVideos: Boolean = false,
     val hideComments: Boolean = false,
     val hideShorts: Boolean = false,
+    val hideSubscriptionLiveStreams: Boolean = false,
+    val supportsHideSubscriptionLiveStreams: Boolean = false,
     val disableWatchHistory: Boolean = false,
     val deArrowEnabled: Boolean = false,
     val deArrowTitleMode: String = "dearrow",

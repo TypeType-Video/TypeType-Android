@@ -86,6 +86,26 @@ class ContentSettingsScreenTest {
         composeRule.onNodeWithText("Request request-123").assertIsDisplayed()
     }
 
+    @Test
+    fun subscriptionLiveControlIsHiddenForAnOldServer() {
+        show(ContentSettingsState(isLoading = false))
+
+        composeRule.onNodeWithText("Hide subscription live streams").assertDoesNotExist()
+    }
+
+    @Test
+    fun subscriptionLiveControlIsShownWhenTheServerReturnsTheField() {
+        show(
+            ContentSettingsState(
+                isLoading = false,
+                supportsHideSubscriptionLiveStreams = true,
+            ),
+        )
+
+        scrollTo("Hide subscription live streams")
+        composeRule.onNodeWithText("Hide subscription live streams").assertIsDisplayed()
+    }
+
     private fun show(
         state: ContentSettingsState,
         onAction: (ContentSettingsAction) -> Unit = {},
