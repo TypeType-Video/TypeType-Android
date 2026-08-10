@@ -62,6 +62,23 @@ class SettingsScreenAccessibilityTest {
     }
 
     @Test
+    fun unsupportedServerFeaturesStayHidden() {
+        composeRule.setContent {
+            TypeTypeTheme {
+                SettingsScreen(
+                    onNavigateBack = {},
+                    onOpenAppearance = {},
+                    onSignOut = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText(resource(R.string.youtube_session_settings_title))
+            .assertDoesNotExist()
+        composeRule.onNodeWithText(resource(R.string.rss_settings_title)).assertDoesNotExist()
+    }
+
+    @Test
     fun keyboardCanActivateASettingsDestinationInRightToLeftLayout() {
         val opened = AtomicBoolean()
         showSettings(
@@ -102,6 +119,8 @@ class SettingsScreenAccessibilityTest {
                         importsAvailable = true,
                         onOpenYoutubeSession = {},
                         youtubeSessionAvailable = true,
+                        onOpenRssFeeds = {},
+                        rssAvailable = true,
                         onOpenAccounts = { onOpenAccounts(true) },
                         onOpenAppearance = {},
                         onOpenContent = {},
@@ -123,6 +142,7 @@ class SettingsScreenAccessibilityTest {
         R.string.settings_profile_title,
         R.string.settings_import_title,
         R.string.youtube_session_settings_title,
+        R.string.rss_settings_title,
         R.string.settings_appearance_title,
         R.string.settings_content_title,
         R.string.settings_player_title,
