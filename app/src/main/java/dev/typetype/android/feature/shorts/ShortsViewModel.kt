@@ -7,6 +7,8 @@ import dev.typetype.android.R
 import dev.typetype.android.core.ui.error.UserErrorMapper
 import dev.typetype.android.domain.feed.HomeFeedRepository
 import dev.typetype.android.domain.feed.ShortsContinuation
+import dev.typetype.android.domain.feed.Video
+import dev.typetype.android.domain.feed.shortIdentity
 import dev.typetype.android.domain.library.VideoMetaRepository
 import dev.typetype.android.domain.library.cacheVideos
 import dev.typetype.android.domain.usersettings.UserSettingsRepository
@@ -34,6 +36,7 @@ class ShortsViewModel @Inject constructor(
     private var continuation: ShortsContinuation? = null
     private var service = 0
     private var loadJob: Job? = null
+    private var loadMoreJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -44,6 +47,7 @@ class ShortsViewModel @Inject constructor(
                     service = configuration.service
                     if (configuration.hidden) {
                         loadJob?.cancel()
+                        loadMoreJob?.cancel()
                         continuation = null
                         _state.value = ShortsState(
                             isLoading = false,
@@ -68,6 +72,7 @@ class ShortsViewModel @Inject constructor(
 
     private fun refresh() {
         loadJob?.cancel()
+        loadMoreJob?.cancel()
         continuation = null
         _state.update {
             it.copy(
@@ -107,26 +112,44 @@ class ShortsViewModel @Inject constructor(
     }
 
     private fun loadMore() {
-        val next = continuation ?: return
-        if (_state.value.isLoading || _state.value.isLoadingMore) return
-        loadJob = viewModelScope.launch {
-            _state.update { it.copy(isLoadingMore = true, loadMoreError = false) }
-            feedRepository.loadShorts(next, service, SHORTS_PAGE_SIZE).fold(
-                onSuccess = { page ->
-                    continuation = page.continuation
-                    _state.update {
-                        it.copy(
-                            videos = (it.videos + page.videos).distinctBy { video -> video.id },
-                            isLoadingMore = false,
-                            hasMore = page.continuation != null,
-                        )
-                    }
-                    videoMetaRepository.cacheVideos(page.videos)
-                },
-                onFailure = {
-                    _state.update { it.copy(isLoadingMore = false, loadMoreError = true) }
-                },
-            )
+        val firstContinuation = continuation ?: return
+        val current = _state.value
+        if (current.isLoading || current.isLoadingMore || loadMoreJob?.isActive == true) return
+        _state.update { it.copy(isLoadingMore = true, loadMoreError = false) }
+        loadMoreJob = viewModelScope.launch {
+            val known = _state.value.videos.mapTo(mutableSetOf()) { it.shortIdentity() }
+            val additions = mutableListOf<Video>()
+            var requested = firstContinuation
+            var next: ShortsContinuation? = firstContinuation
+            var failure: Throwable? = null
+            var attempts = 0
+            while (attempts < MAX_EMPTY_PAGE_SKIPS && additions.isEmpty()) {
+                requested = next ?: break
+                feedRepository.loadShorts(requested, service, SHORTS_PAGE_SIZE).fold(
+                    onSuccess = { page ->
+                        val merged = mergeShortsPage(known, requested, page)
+                        additions += merged.additions
+                        next = merged.continuation
+                    },
+                    onFailure = { error -> failure = error },
+                )
+                if (failure != null) break
+                attempts++
+            }
+            if (attempts == MAX_EMPTY_PAGE_SKIPS && additions.isEmpty()) next = null
+            failure?.let {
+                _state.update { it.copy(isLoadingMore = false, loadMoreError = true) }
+                return@launch
+            }
+            continuation = next
+            _state.update {
+                it.copy(
+                    videos = it.videos + additions,
+                    isLoadingMore = false,
+                    hasMore = next != null,
+                )
+            }
+            videoMetaRepository.cacheVideos(additions)
         }
     }
 }
@@ -136,3 +159,5 @@ private data class ShortsConfiguration(
     val hidden: Boolean,
     val autoplay: Boolean,
 )
+
+private const val MAX_EMPTY_PAGE_SKIPS = 3
