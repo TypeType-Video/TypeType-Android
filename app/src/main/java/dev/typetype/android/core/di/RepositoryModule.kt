@@ -32,6 +32,7 @@ import dev.typetype.android.data.publicplaylist.OfflineSavedPublicPlaylistReposi
 import dev.typetype.android.data.search.SearchRepositoryImpl
 import dev.typetype.android.data.searchhistory.RemoteSearchHistoryStore
 import dev.typetype.android.data.server.RoomServerRepository
+import dev.typetype.android.data.server.RemoteServerCapabilitiesRepository
 import dev.typetype.android.data.session.RemoteActiveSessionRepository
 import dev.typetype.android.data.setup.SetupRepositoryImpl
 import dev.typetype.android.data.stream.StreamRepositoryImpl
@@ -71,6 +72,7 @@ import dev.typetype.android.domain.publicplaylist.SavedPublicPlaylistRepository
 import dev.typetype.android.domain.search.SearchRepository
 import dev.typetype.android.domain.searchhistory.SearchHistoryRepository
 import dev.typetype.android.domain.server.ServerRepository
+import dev.typetype.android.domain.server.ServerCapabilitiesRepository
 import dev.typetype.android.domain.session.ActiveSessionRepository
 import dev.typetype.android.domain.setup.SetupRepository
 import dev.typetype.android.domain.stream.StreamRepository
@@ -107,6 +109,12 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindServerRepository(impl: RoomServerRepository): ServerRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindServerCapabilitiesRepository(
+        impl: RemoteServerCapabilitiesRepository,
+    ): ServerCapabilitiesRepository
 
     @Binds
     @Singleton
