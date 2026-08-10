@@ -1,6 +1,7 @@
 package dev.typetype.android.domain.setup
 
 import dev.typetype.android.domain.server.Server
+import dev.typetype.android.domain.server.RssCapability
 
 interface SetupRepository {
     suspend fun probeServer(
@@ -27,7 +28,9 @@ data class ProbeResult(
     val oidcEnabled: Boolean,
     val oidcProviderName: String?,
     val oidcAutoRedirect: Boolean,
+    val youtubeRemoteLoginSupported: Boolean,
     val youtubeRemoteLoginEnabled: Boolean,
     val youtubeRemoteLoginReady: Boolean,
     val youtubeRemoteLoginUnavailableReason: String?,
+    val rss: RssCapability,
 )

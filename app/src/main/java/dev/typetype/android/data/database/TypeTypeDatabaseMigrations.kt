@@ -138,6 +138,26 @@ object TypeTypeDatabaseMigrations {
         }
     }
 
+    val MIGRATION_21_22 = object : Migration(21, 22) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE `servers` " +
+                    "ADD COLUMN `youtubeRemoteLoginSupported` INTEGER NOT NULL DEFAULT 0",
+            )
+            db.execSQL("ALTER TABLE `servers` ADD COLUMN `rssEnabled` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL(
+                "ALTER TABLE `servers` ADD COLUMN `rssMaxFeedsPerUser` INTEGER NOT NULL DEFAULT 0",
+            )
+            db.execSQL("ALTER TABLE `servers` ADD COLUMN `rssMaxItems` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL(
+                "ALTER TABLE `servers` ADD COLUMN `rssMinimumPollMinutes` INTEGER NOT NULL DEFAULT 0",
+            )
+            db.execSQL(
+                "ALTER TABLE `servers` ADD COLUMN `rssRateLimitPerMinute` INTEGER NOT NULL DEFAULT 0",
+            )
+        }
+    }
+
     val ALL = arrayOf(
         MIGRATION_7_8,
         MIGRATION_11_12,
@@ -149,5 +169,6 @@ object TypeTypeDatabaseMigrations {
         MIGRATION_18_19,
         MIGRATION_19_20,
         MIGRATION_20_21,
+        MIGRATION_21_22,
     )
 }

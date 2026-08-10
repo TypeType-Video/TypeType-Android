@@ -26,9 +26,19 @@ data class InstanceResponse(
     val oidcEnabled: Boolean = false,
     val oidcProviderName: String? = null,
     val oidcAutoRedirect: Boolean = false,
-    val youtubeRemoteLoginEnabled: Boolean = false,
-    val youtubeRemoteLoginReady: Boolean = false,
+    val youtubeRemoteLoginEnabled: Boolean? = null,
+    val youtubeRemoteLoginReady: Boolean? = null,
     val youtubeRemoteLoginUnavailableReason: String? = null,
+    val rss: RssInstanceCapabilityDto? = null,
+)
+
+@Serializable
+data class RssInstanceCapabilityDto(
+    val enabled: Boolean = false,
+    val maxFeedsPerUser: Int = 0,
+    val maxItems: Int = 0,
+    val minimumPollMinutes: Int = 0,
+    val rateLimitPerMinute: Int = 0,
 )
 
 @Serializable

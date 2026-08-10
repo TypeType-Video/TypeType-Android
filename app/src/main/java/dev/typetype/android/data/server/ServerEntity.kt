@@ -25,9 +25,15 @@ data class ServerEntity(
     @ColumnInfo(defaultValue = "0") val oidcEnabled: Boolean = false,
     val oidcProviderName: String? = null,
     @ColumnInfo(defaultValue = "0") val oidcAutoRedirect: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val youtubeRemoteLoginSupported: Boolean = false,
     @ColumnInfo(defaultValue = "0") val youtubeRemoteLoginEnabled: Boolean = false,
     @ColumnInfo(defaultValue = "0") val youtubeRemoteLoginReady: Boolean = false,
     val youtubeRemoteLoginUnavailableReason: String? = null,
+    @ColumnInfo(defaultValue = "0") val rssEnabled: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val rssMaxFeedsPerUser: Int = 0,
+    @ColumnInfo(defaultValue = "0") val rssMaxItems: Int = 0,
+    @ColumnInfo(defaultValue = "0") val rssMinimumPollMinutes: Int = 0,
+    @ColumnInfo(defaultValue = "0") val rssRateLimitPerMinute: Int = 0,
 ) {
     fun toDomain(): Server = Server(
         id = id,
@@ -48,9 +54,17 @@ data class ServerEntity(
         oidcEnabled = oidcEnabled,
         oidcProviderName = oidcProviderName,
         oidcAutoRedirect = oidcAutoRedirect,
+        youtubeRemoteLoginSupported = youtubeRemoteLoginSupported,
         youtubeRemoteLoginEnabled = youtubeRemoteLoginEnabled,
         youtubeRemoteLoginReady = youtubeRemoteLoginReady,
         youtubeRemoteLoginUnavailableReason = youtubeRemoteLoginUnavailableReason,
+        rss = dev.typetype.android.domain.server.RssCapability(
+            enabled = rssEnabled,
+            maxFeedsPerUser = rssMaxFeedsPerUser,
+            maxItems = rssMaxItems,
+            minimumPollMinutes = rssMinimumPollMinutes,
+            rateLimitPerMinute = rssRateLimitPerMinute,
+        ),
     )
 
     companion object {
@@ -73,9 +87,15 @@ data class ServerEntity(
             oidcEnabled = server.oidcEnabled,
             oidcProviderName = server.oidcProviderName,
             oidcAutoRedirect = server.oidcAutoRedirect,
+            youtubeRemoteLoginSupported = server.youtubeRemoteLoginSupported,
             youtubeRemoteLoginEnabled = server.youtubeRemoteLoginEnabled,
             youtubeRemoteLoginReady = server.youtubeRemoteLoginReady,
             youtubeRemoteLoginUnavailableReason = server.youtubeRemoteLoginUnavailableReason,
+            rssEnabled = server.rss.enabled,
+            rssMaxFeedsPerUser = server.rss.maxFeedsPerUser,
+            rssMaxItems = server.rss.maxItems,
+            rssMinimumPollMinutes = server.rss.minimumPollMinutes,
+            rssRateLimitPerMinute = server.rss.rateLimitPerMinute,
         )
     }
 }

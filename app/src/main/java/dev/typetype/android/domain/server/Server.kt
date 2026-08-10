@@ -19,7 +19,9 @@ data class Server(
     val oidcEnabled: Boolean = false,
     val oidcProviderName: String? = null,
     val oidcAutoRedirect: Boolean = false,
+    val youtubeRemoteLoginSupported: Boolean = false,
     val youtubeRemoteLoginEnabled: Boolean = false,
     val youtubeRemoteLoginReady: Boolean = false,
     val youtubeRemoteLoginUnavailableReason: String? = null,
+    val rss: RssCapability = RssCapability(),
 )
