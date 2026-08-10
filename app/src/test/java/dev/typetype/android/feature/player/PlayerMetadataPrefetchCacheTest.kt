@@ -10,12 +10,12 @@ class PlayerMetadataPrefetchCacheTest {
     private val cache = PlayerMetadataPrefetchCache()
 
     @Test
-    fun `metadata is consumed once by its exact video URL`() {
+    fun `metadata remains available for revisiting its exact video URL`() {
         cache.put("https://video/next", stream("next"))
 
-        assertNull(cache.take("https://video/other"))
-        assertEquals("next", cache.take("https://video/next")?.id)
-        assertNull(cache.take("https://video/next"))
+        assertNull(cache.get("https://video/other"))
+        assertEquals("next", cache.get("https://video/next")?.id)
+        assertEquals("next", cache.get("https://video/next")?.id)
     }
 
     @Test
@@ -23,8 +23,8 @@ class PlayerMetadataPrefetchCacheTest {
         cache.put("https://video/one", stream("one"))
         cache.put("https://video/two", stream("two"))
 
-        assertEquals("one", cache.take("https://video/one")?.id)
-        assertEquals("two", cache.take("https://video/two")?.id)
+        assertEquals("one", cache.get("https://video/one")?.id)
+        assertEquals("two", cache.get("https://video/two")?.id)
     }
 
     @Test
@@ -33,10 +33,10 @@ class PlayerMetadataPrefetchCacheTest {
             cache.put("https://video/$it", stream(it))
         }
 
-        assertNull(cache.take("https://video/one"))
-        assertEquals("two", cache.take("https://video/two")?.id)
-        assertEquals("three", cache.take("https://video/three")?.id)
-        assertEquals("four", cache.take("https://video/four")?.id)
+        assertNull(cache.get("https://video/one"))
+        assertEquals("two", cache.get("https://video/two")?.id)
+        assertEquals("three", cache.get("https://video/three")?.id)
+        assertEquals("four", cache.get("https://video/four")?.id)
     }
 
     private fun stream(id: String) = Stream(

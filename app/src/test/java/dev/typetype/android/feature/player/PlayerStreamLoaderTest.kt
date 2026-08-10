@@ -82,7 +82,7 @@ class PlayerStreamLoaderTest {
     @Test
     fun `channel metadata enriches subscribers after playback is ready`() = runBlocking {
         val updates = loadProgressiveStream(
-            loadPlayback = { Result.success(stream("Bootstrap")) },
+            loadPlayback = { Result.success(stream("Bootstrap", uploaderUrl = "channel")) },
             loadMetadata = { null },
             loadChannelMetadata = {
                 Result.success(it.copy(uploaderSubscriberCount = 1_530_000L))
@@ -94,6 +94,31 @@ class PlayerStreamLoaderTest {
         val enriched = updates[1] as PlayerStreamUpdate.MetadataEnriched
         assertEquals(-1L, ready.loaded.stream.uploaderSubscriberCount)
         assertEquals(1_530_000L, enriched.stream.uploaderSubscriberCount)
+    }
+
+    @Test
+    fun `complete stream metadata avoids redundant channel lookup`() = runBlocking {
+        val channelRequests = AtomicInteger()
+        val updates = loadProgressiveStream(
+            loadPlayback = { Result.success(stream("Bootstrap", uploaderUrl = "channel")) },
+            loadMetadata = {
+                Result.success(
+                    stream(
+                        title = "Detailed",
+                        uploaderUrl = "channel",
+                        subscriberCount = 42L,
+                    ),
+                )
+            },
+            loadChannelMetadata = {
+                channelRequests.incrementAndGet()
+                Result.success(it)
+            },
+            loadProgress = { 0L },
+        ).take(2).toList()
+
+        assertEquals("Detailed", (updates[1] as PlayerStreamUpdate.MetadataEnriched).stream.title)
+        assertEquals(0, channelRequests.get())
     }
 
     @Test
@@ -132,14 +157,19 @@ class PlayerStreamLoaderTest {
         assertEquals(1, metadataRequests.get())
     }
 
-    private fun stream(title: String, accountId: String = "account") = Stream(
+    private fun stream(
+        title: String,
+        accountId: String = "account",
+        uploaderUrl: String = "",
+        subscriberCount: Long = -1L,
+    ) = Stream(
         playbackContract = StreamPlaybackContract.ServerSabr,
         id = "video",
         title = title,
         uploaderName = "Channel",
         uploaderAvatarUrl = "",
-        uploaderUrl = "",
-        uploaderSubscriberCount = -1L,
+        uploaderUrl = uploaderUrl,
+        uploaderSubscriberCount = subscriberCount,
         uploaderVerified = false,
         thumbnailUrl = "",
         description = "",
