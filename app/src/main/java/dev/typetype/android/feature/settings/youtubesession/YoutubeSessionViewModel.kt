@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.error.UserErrorMapper
+import dev.typetype.android.data.account.AccountScope
+import dev.typetype.android.data.account.AccountScopeProvider
 import dev.typetype.android.domain.server.Server
 import dev.typetype.android.domain.server.ServerCapabilitiesRepository
 import dev.typetype.android.domain.server.ServerRepository
@@ -19,6 +21,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onEach
@@ -31,33 +34,42 @@ class YoutubeSessionViewModel @Inject constructor(
     private val remoteBrowserConnector: YoutubeRemoteBrowserConnector,
     private val serverRepository: ServerRepository,
     private val capabilitiesRepository: ServerCapabilitiesRepository,
+    private val accountScopeProvider: AccountScopeProvider,
     private val errorMapper: UserErrorMapper,
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(YoutubeSessionState())
     val state = mutableState.asStateFlow()
 
     private var serverId: String? = null
+    private var activeScope: AccountScope? = null
     private var connection: YoutubeRemoteBrowserConnection? = null
     private var frameJob: Job? = null
     private var transportJob: Job? = null
 
     init {
         viewModelScope.launch {
-            serverRepository.observeCurrentServer()
-                .distinctUntilChangedBy { server ->
+            combine(
+                serverRepository.observeCurrentServer(),
+                accountScopeProvider.observe(),
+            ) { server, scope ->
+                YoutubeSessionContext(server, scope?.takeIf { it.serverId == server?.id })
+            }
+                .distinctUntilChangedBy { context ->
                     listOf(
-                        server?.id,
-                        server?.youtubeRemoteLoginEnabled,
-                        server?.youtubeRemoteLoginReady,
-                        server?.youtubeRemoteLoginUnavailableReason,
+                        context.server?.id,
+                        context.server?.youtubeRemoteLoginSupported,
+                        context.server?.youtubeRemoteLoginEnabled,
+                        context.server?.youtubeRemoteLoginReady,
+                        context.server?.youtubeRemoteLoginUnavailableReason,
+                        context.scope,
                     )
                 }
-                .collect { server -> useServer(server) }
+                .collect(::useContext)
         }
     }
 
     fun refreshStatus() {
-        if (mutableState.value.isStatusLoading) return
+        if (mutableState.value.isStatusLoading || activeScope == null) return
         mutableState.update {
             it.copy(availability = YoutubeSessionAvailability.Checking, isStatusLoading = true)
         }
@@ -66,21 +78,29 @@ class YoutubeSessionViewModel @Inject constructor(
 
     fun startRemoteBrowser() {
         if (!mutableState.value.canStart) return
+        val operationScope = activeScope ?: return
         viewModelScope.launch {
             clearFailure()
             mutableState.update { it.copy(isStarting = true, notice = null) }
             val session = youtubeSessionRepository.startRemoteBrowser().getOrElse { failure ->
+                if (activeScope != operationScope) return@launch
                 showFailure(failure, R.string.youtube_session_start_failed)
                 mutableState.update { it.copy(isStarting = false) }
                 return@launch
             }
+            if (activeScope != operationScope) return@launch
             val nextConnection = remoteBrowserConnector.connect(session).getOrElse { failure ->
+                if (activeScope != operationScope) return@launch
                 youtubeSessionRepository.cancelRemoteBrowser(session.sessionId)
                 showFailure(failure, R.string.youtube_session_start_failed)
                 mutableState.update { it.copy(isStarting = false) }
                 return@launch
             }
-            attachConnection(session.sessionId, session.expiresAt, nextConnection)
+            if (activeScope != operationScope) {
+                nextConnection.close()
+                return@launch
+            }
+            attachConnection(session.sessionId, session.expiresAt, operationScope, nextConnection)
             mutableState.update { it.copy(isStarting = false) }
         }
     }
@@ -90,15 +110,18 @@ class YoutubeSessionViewModel @Inject constructor(
     fun cancelRemoteBrowser() {
         val remoteSessionId = mutableState.value.remoteSessionId ?: return
         if (mutableState.value.isCancelling) return
+        val operationScope = activeScope ?: return
         connection?.send(YoutubeRemoteBrowserInput.Cancel)
         closeConnection(clearSession = false)
         viewModelScope.launch {
             mutableState.update { it.copy(isCancelling = true) }
             youtubeSessionRepository.cancelRemoteBrowser(remoteSessionId)
                 .onSuccess {
+                    if (activeScope != operationScope) return@onSuccess
                     clearRemoteSession(YoutubeSessionNotice.SignInCancelled)
                 }
                 .onFailure { failure ->
+                    if (activeScope != operationScope) return@onFailure
                     clearRemoteSession()
                     showFailure(failure, R.string.youtube_session_cancel_failed)
                 }
@@ -107,11 +130,13 @@ class YoutubeSessionViewModel @Inject constructor(
 
     fun disconnect() {
         if (!mutableState.value.canDisconnect) return
+        val operationScope = activeScope ?: return
         viewModelScope.launch {
             clearFailure()
             mutableState.update { it.copy(isDisconnecting = true, notice = null) }
             youtubeSessionRepository.disconnect()
                 .onSuccess {
+                    if (activeScope != operationScope) return@onSuccess
                     mutableState.update {
                         it.copy(
                             isDisconnecting = false,
@@ -123,6 +148,7 @@ class YoutubeSessionViewModel @Inject constructor(
                     }
                 }
                 .onFailure { failure ->
+                    if (activeScope != operationScope) return@onFailure
                     mutableState.update { it.copy(isDisconnecting = false) }
                     showFailure(failure, R.string.youtube_session_disconnect_failed)
                 }
@@ -143,12 +169,15 @@ class YoutubeSessionViewModel @Inject constructor(
         super.onCleared()
     }
 
-    private suspend fun useServer(server: Server?) {
-        if (serverId != server?.id) {
+    private suspend fun useContext(context: YoutubeSessionContext) {
+        val server = context.server
+        if (serverId != server?.id || activeScope != context.scope) {
             closeConnection(clearSession = true)
+            mutableState.value = mutableState.value.clearedForAccountChange()
             serverId = server?.id
+            activeScope = context.scope
         }
-        if (server == null) {
+        if (server == null || context.scope == null) {
             mutableState.update {
                 it.copy(availability = YoutubeSessionAvailability.Checking, isStatusLoading = false)
             }
@@ -161,27 +190,29 @@ class YoutubeSessionViewModel @Inject constructor(
     }
 
     private suspend fun refreshCapabilitiesAndStatus(cached: Server? = null) {
-        val expectedServerId = serverId ?: return
+        val expectedScope = activeScope ?: return
+        val expectedServerId = expectedScope.serverId
         val fallback = cached ?: serverRepository.getServer(expectedServerId) ?: return
         val server = capabilitiesRepository.refresh(expectedServerId).getOrDefault(fallback)
-        if (serverId != expectedServerId) return
+        if (activeScope != expectedScope) return
         mutableState.update {
             it.copy(
-                availability = server.availability,
+                availability = server.youtubeSessionAvailability(),
                 unavailableReason = server.youtubeRemoteLoginUnavailableReason,
             )
         }
         if (server.youtubeRemoteLoginEnabled && server.youtubeRemoteLoginReady) {
-            loadStatus()
+            loadStatus(expectedScope)
         } else {
             mutableState.update { it.copy(isStatusLoading = false, session = null) }
         }
     }
 
-    private suspend fun loadStatus() {
+    private suspend fun loadStatus(expectedScope: AccountScope) {
         mutableState.update { it.copy(isStatusLoading = true) }
         youtubeSessionRepository.getStatus()
             .onSuccess { session ->
+                if (activeScope != expectedScope) return@onSuccess
                 mutableState.update {
                     it.copy(
                         session = session,
@@ -192,6 +223,7 @@ class YoutubeSessionViewModel @Inject constructor(
                 }
             }
             .onFailure { failure ->
+                if (activeScope != expectedScope) return@onFailure
                 mutableState.update { it.copy(isStatusLoading = false) }
                 showFailure(failure, R.string.youtube_session_status_failed)
             }
@@ -200,6 +232,7 @@ class YoutubeSessionViewModel @Inject constructor(
     private fun attachConnection(
         sessionId: String,
         expiresAt: Long,
+        operationScope: AccountScope,
         nextConnection: YoutubeRemoteBrowserConnection,
     ) {
         closeConnection(clearSession = true)
@@ -215,20 +248,22 @@ class YoutubeSessionViewModel @Inject constructor(
         }
         frameJob = viewModelScope.launch {
             nextConnection.frames.collect { bytes ->
-                if (connection === nextConnection) mutableState.update { it.copy(frameBytes = bytes) }
+                if (connection === nextConnection && activeScope == operationScope) {
+                    mutableState.update { it.copy(frameBytes = bytes) }
+                }
             }
         }
         transportJob = viewModelScope.launch {
             val terminal = nextConnection.state
                 .onEach(::showRemoteState)
                 .first { it.phase in TERMINAL_PHASES }
-            if (connection !== nextConnection) return@launch
+            if (connection !== nextConnection || activeScope != operationScope) return@launch
             if (terminal.phase == YoutubeRemoteBrowserPhase.Connected) {
                 nextConnection.close()
                 connection = null
                 frameJob?.cancel()
                 clearRemoteSession(YoutubeSessionNotice.Connected)
-                loadStatus()
+                loadStatus(operationScope)
             }
         }
     }
@@ -274,15 +309,6 @@ class YoutubeSessionViewModel @Inject constructor(
         mutableState.update { it.copy(errorMessage = null, errorRequestId = null) }
     }
 
-    private val Server?.availability: YoutubeSessionAvailability
-        get() = when {
-            this == null -> YoutubeSessionAvailability.Checking
-            !youtubeRemoteLoginSupported -> YoutubeSessionAvailability.Disabled
-            !youtubeRemoteLoginEnabled -> YoutubeSessionAvailability.Disabled
-            !youtubeRemoteLoginReady -> YoutubeSessionAvailability.Unavailable
-            else -> YoutubeSessionAvailability.Available
-        }
-
     private companion object {
         val TERMINAL_PHASES = setOf(
             YoutubeRemoteBrowserPhase.Connected,
@@ -291,3 +317,8 @@ class YoutubeSessionViewModel @Inject constructor(
         )
     }
 }
+
+private data class YoutubeSessionContext(
+    val server: Server?,
+    val scope: AccountScope?,
+)

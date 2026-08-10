@@ -31,6 +31,24 @@ class YoutubeSessionScreenTest {
     }
 
     @Test
+    fun unavailableTokenServiceShowsTheServerReason() {
+        show(
+            YoutubeSessionState(
+                availability = YoutubeSessionAvailability.Unavailable,
+                unavailableReason = "token_unreachable",
+            ),
+        )
+
+        composeRule.onNodeWithText("Remote YouTube sign-in is enabled, but the instance is not ready.")
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(
+            "The instance cannot currently reach its remote sign-in service. Try again later.",
+        )
+            .assertIsDisplayed()
+        composeRule.onNodeWithText("Connect with YouTube").assertIsNotEnabled()
+    }
+
+    @Test
     fun availableInstanceCanStartSignIn() {
         val started = AtomicBoolean(false)
         show(
