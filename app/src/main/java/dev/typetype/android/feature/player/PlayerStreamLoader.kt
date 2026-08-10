@@ -32,13 +32,14 @@ class PlayerStreamLoader @Inject constructor(
     private val channelRepository: ChannelRepository,
 ) {
     private val metadataPrefetchCache = PlayerMetadataPrefetchCache()
+    private val channelMetadataCache = PlayerChannelMetadataCache()
 
     fun load(url: String): Flow<PlayerStreamUpdate> = loadProgressiveStream(
         loadPlayback = { streamRepository.loadPlaybackStream(url) },
         loadMetadata = { streamRepository.loadPlaybackMetadata(url) },
         loadChannelMetadata = { stream -> loadChannelMetadata(stream) },
         loadProgress = { libraryRepository.fetchProgressMillis(url).getOrNull() ?: 0L },
-        prefetchedMetadata = metadataPrefetchCache.take(url),
+        prefetchedMetadata = metadataPrefetchCache.get(url),
     )
 
     suspend fun prefetchMetadata(url: String) {
@@ -48,15 +49,22 @@ class PlayerStreamLoader @Inject constructor(
 
     private suspend fun loadChannelMetadata(stream: Stream): Result<Stream>? {
         if (stream.uploaderSubscriberCount >= 0L || stream.uploaderUrl.isBlank()) return null
-        return channelRepository.loadChannel(ChannelQuery(stream.uploaderUrl)).map { page ->
-            val channel = page.channel
-            stream.copy(
-                uploaderName = channel.name,
-                uploaderAvatarUrl = channel.avatarUrl,
-                uploaderSubscriberCount = channel.subscriberCount,
-                uploaderVerified = channel.verified,
-            )
+        channelMetadataCache.get(stream.requestScope, stream.uploaderUrl)?.let { metadata ->
+            return Result.success(stream.withChannelMetadata(metadata))
         }
+        return channelRepository.loadChannel(ChannelQuery(stream.uploaderUrl))
+            .map { page ->
+                PlayerChannelMetadata(
+                    name = page.channel.name,
+                    avatarUrl = page.channel.avatarUrl,
+                    subscriberCount = page.channel.subscriberCount,
+                    verified = page.channel.verified,
+                )
+            }
+            .onSuccess { metadata ->
+                channelMetadataCache.put(stream.requestScope, stream.uploaderUrl, metadata)
+            }
+            .map(stream::withChannelMetadata)
     }
 
     suspend fun cacheMetadata(videoUrl: String, stream: Stream) {
@@ -74,6 +82,13 @@ class PlayerStreamLoader @Inject constructor(
 
     suspend fun record(url: String, stream: Stream) = cacheMetadata(url, stream)
 }
+
+private fun Stream.withChannelMetadata(metadata: PlayerChannelMetadata): Stream = copy(
+    uploaderName = metadata.name,
+    uploaderAvatarUrl = metadata.avatarUrl,
+    uploaderSubscriberCount = metadata.subscriberCount,
+    uploaderVerified = metadata.verified,
+)
 
 internal fun loadProgressiveStream(
     loadPlayback: suspend () -> Result<Stream>,
@@ -96,18 +111,26 @@ internal fun loadProgressiveStream(
             )
             send(PlayerStreamUpdate.PlaybackReady(loaded))
             launch {
-                loadChannelMetadata(stream)?.onSuccess { details ->
-                    send(PlayerStreamUpdate.MetadataEnriched(stream.withMetadataFrom(details)))
+                val prefetched = prefetchedMetadata?.takeIf {
+                    it.requestScope == stream.requestScope
                 }
-            }
-            val prefetched = prefetchedMetadata?.takeIf {
-                it.requestScope == stream.requestScope
-            }
-            val details = prefetched?.let { Result.success(it) }
-                ?: metadata?.await()
-                ?: loadMetadata()
-            details?.onSuccess { details ->
-                send(PlayerStreamUpdate.MetadataEnriched(stream.withMetadataFrom(details)))
+                val details = prefetched?.let { Result.success(it) }
+                    ?: metadata?.await()
+                    ?: loadMetadata()
+                var enriched = stream
+                details?.onSuccess { metadataStream ->
+                    enriched = stream.withMetadataFrom(metadataStream)
+                    send(PlayerStreamUpdate.MetadataEnriched(enriched))
+                }
+                if (enriched.needsChannelMetadata()) {
+                    loadChannelMetadata(enriched)?.onSuccess { channelStream ->
+                        send(
+                            PlayerStreamUpdate.MetadataEnriched(
+                                enriched.withMetadataFrom(channelStream),
+                            ),
+                        )
+                    }
+                }
             }
         },
         onFailure = { failure ->
@@ -116,6 +139,9 @@ internal fun loadProgressiveStream(
         },
     )
 }
+
+private fun Stream.needsChannelMetadata(): Boolean =
+    uploaderSubscriberCount < 0L && uploaderUrl.isNotBlank()
 
 private fun computeResumeMillis(
     savedMillis: Long,

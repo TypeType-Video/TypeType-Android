@@ -14,7 +14,7 @@ internal class PlayerMetadataPrefetchCache {
     }
 
     @Synchronized
-    fun take(url: String): Stream? = entries.remove(url)
+    fun get(url: String): Stream? = entries[url]
 
     private companion object {
         const val MAX_ENTRIES = 3
