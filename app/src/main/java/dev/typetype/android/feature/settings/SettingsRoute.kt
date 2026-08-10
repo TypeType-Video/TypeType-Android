@@ -7,7 +7,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun SettingsRoute(
-    accountFeaturesAvailable: Boolean,
     onNavigateBack: () -> Unit,
     onOpenProfile: () -> Unit,
     onOpenImport: () -> Unit,
@@ -31,11 +30,11 @@ fun SettingsRoute(
         onOpenAccounts = onOpenAccounts,
         onOpenProfile = onOpenProfile,
         onOpenImport = onOpenImport,
-        importsAvailable = accountFeaturesAvailable,
+        importsAvailable = state.accountFeaturesAvailable,
         onOpenYoutubeSession = onOpenYoutubeSession,
-        youtubeSessionAvailable = accountFeaturesAvailable && state.youtubeSessionAvailable,
+        youtubeSessionAvailable = state.accountFeaturesAvailable && state.youtubeSessionAvailable,
         onOpenRssFeeds = onOpenRssFeeds,
-        rssAvailable = accountFeaturesAvailable && state.rssAvailable,
+        rssAvailable = state.accountFeaturesAvailable && state.rssAvailable,
         onOpenAppearance = onOpenAppearance,
         onOpenContent = onOpenContent,
         onOpenPlayer = onOpenPlayer,

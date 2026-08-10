@@ -24,12 +24,10 @@ import dev.typetype.android.feature.settings.youtubesession.YoutubeSessionRoute 
 
 internal fun NavGraphBuilder.settingsDestinations(
     navController: NavHostController,
-    accountFeaturesAvailable: Boolean,
     onSignOut: () -> Unit,
 ) {
     composable<SettingsRoute> {
         SettingsRouteScreen(
-            accountFeaturesAvailable = accountFeaturesAvailable,
             onNavigateBack = { navController.popBackStack() },
             onOpenAccounts = { navController.navigate(AccountsRoute) },
             onOpenProfile = { navController.navigate(ProfileSettingsRoute) },

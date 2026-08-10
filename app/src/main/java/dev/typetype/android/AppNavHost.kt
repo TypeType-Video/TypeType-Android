@@ -251,7 +251,6 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
             )
             settingsDestinations(
                 navController = navController,
-                accountFeaturesAvailable = currentProfile?.id?.startsWith("guest:") == false,
                 onSignOut = mainViewModel::signOut,
             )
             composable<AccountsRoute> {
