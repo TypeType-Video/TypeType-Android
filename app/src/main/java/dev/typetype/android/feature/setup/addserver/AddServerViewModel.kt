@@ -134,9 +134,11 @@ class AddServerViewModel @Inject constructor(
                         oidcEnabled = probe.oidcEnabled,
                         oidcProviderName = probe.oidcProviderName,
                         oidcAutoRedirect = probe.oidcAutoRedirect,
+                        youtubeRemoteLoginSupported = probe.youtubeRemoteLoginSupported,
                         youtubeRemoteLoginEnabled = probe.youtubeRemoteLoginEnabled,
                         youtubeRemoteLoginReady = probe.youtubeRemoteLoginReady,
                         youtubeRemoteLoginUnavailableReason = probe.youtubeRemoteLoginUnavailableReason,
+                        rss = probe.rss,
                     )
                     setupRepository.persistServer(server)
                     _state.update {

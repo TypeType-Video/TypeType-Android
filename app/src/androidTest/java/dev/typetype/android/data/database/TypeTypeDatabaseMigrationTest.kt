@@ -259,7 +259,7 @@ class TypeTypeDatabaseMigrationTest {
     private companion object {
         const val DATABASE_NAME = "migration-test.db"
         const val FIRST_RETAINED_VERSION = 1
-        const val CURRENT_VERSION = 21
+        const val CURRENT_VERSION = 22
         const val DRAFT_VERSION_10_SERVERS =
             "CREATE TABLE `servers` (" +
                 "`id` TEXT NOT NULL, `baseUrl` TEXT NOT NULL, `displayName` TEXT NOT NULL, " +

@@ -3,6 +3,7 @@ package dev.typetype.android.data.setup
 import dev.typetype.android.data.network.RetrofitFactory
 import dev.typetype.android.domain.server.Server
 import dev.typetype.android.domain.server.ServerRepository
+import dev.typetype.android.domain.server.RssCapability
 import dev.typetype.android.domain.setup.ProbeResult
 import dev.typetype.android.domain.setup.ServerAddress
 import dev.typetype.android.domain.setup.SetupRepository
@@ -45,9 +46,21 @@ class SetupRepositoryImpl @Inject constructor(
             oidcEnabled = resolved.instance.oidcEnabled,
             oidcProviderName = resolved.instance.oidcProviderName,
             oidcAutoRedirect = resolved.instance.oidcAutoRedirect,
-            youtubeRemoteLoginEnabled = resolved.instance.youtubeRemoteLoginEnabled,
-            youtubeRemoteLoginReady = resolved.instance.youtubeRemoteLoginReady,
+            youtubeRemoteLoginSupported = resolved.instance.youtubeRemoteLoginEnabled != null ||
+                resolved.instance.youtubeRemoteLoginReady != null ||
+                resolved.instance.youtubeRemoteLoginUnavailableReason != null,
+            youtubeRemoteLoginEnabled = resolved.instance.youtubeRemoteLoginEnabled == true,
+            youtubeRemoteLoginReady = resolved.instance.youtubeRemoteLoginReady == true,
             youtubeRemoteLoginUnavailableReason = resolved.instance.youtubeRemoteLoginUnavailableReason,
+            rss = resolved.instance.rss?.let {
+                RssCapability(
+                    enabled = it.enabled,
+                    maxFeedsPerUser = it.maxFeedsPerUser,
+                    maxItems = it.maxItems,
+                    minimumPollMinutes = it.minimumPollMinutes,
+                    rateLimitPerMinute = it.rateLimitPerMinute,
+                )
+            } ?: RssCapability(),
         )
     }
 
