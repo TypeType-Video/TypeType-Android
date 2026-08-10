@@ -15,6 +15,7 @@ sealed interface ContentSettingsAction {
     data class SetHideRelatedVideos(val hidden: Boolean) : Update
     data class SetHideComments(val hidden: Boolean) : Update
     data class SetHideShorts(val hidden: Boolean) : Update
+    data class SetHideSubscriptionLiveStreams(val hidden: Boolean) : Update
     data class SetDeArrowEnabled(val enabled: Boolean) : Update
     data class SetDeArrowTitleMode(val mode: String) : Update
     data class SetDeArrowThumbnailMode(val mode: String) : Update
@@ -30,6 +31,11 @@ internal fun UserSettings.updatedBy(action: ContentSettingsAction.Update): UserS
             hideRelatedVideos = action.hidden,
             hideComments = action.hidden,
             hideShorts = action.hidden,
+            hideSubscriptionLiveStreams = if (supportsHideSubscriptionLiveStreams) {
+                action.hidden
+            } else {
+                hideSubscriptionLiveStreams
+            },
         )
         is ContentSettingsAction.SetHideHomeRecommendations ->
             copy(hideHomeRecommendations = action.hidden)
@@ -38,6 +44,8 @@ internal fun UserSettings.updatedBy(action: ContentSettingsAction.Update): UserS
         is ContentSettingsAction.SetHideRelatedVideos -> copy(hideRelatedVideos = action.hidden)
         is ContentSettingsAction.SetHideComments -> copy(hideComments = action.hidden)
         is ContentSettingsAction.SetHideShorts -> copy(hideShorts = action.hidden)
+        is ContentSettingsAction.SetHideSubscriptionLiveStreams ->
+            copy(hideSubscriptionLiveStreams = action.hidden)
         is ContentSettingsAction.SetDeArrowEnabled -> copy(deArrowEnabled = action.enabled)
         is ContentSettingsAction.SetDeArrowTitleMode -> copy(deArrowTitleMode = action.mode)
         is ContentSettingsAction.SetDeArrowThumbnailMode -> copy(deArrowThumbnailMode = action.mode)

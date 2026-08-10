@@ -72,6 +72,8 @@ internal fun UserSettingsDto.toDomain(): UserSettings = UserSettings(
     hideRelatedVideos = hideRelatedVideos,
     hideComments = hideComments,
     hideShorts = hideShorts,
+    hideSubscriptionLiveStreams = hideSubscriptionLiveStreams == true,
+    supportsHideSubscriptionLiveStreams = hideSubscriptionLiveStreams != null,
     disableWatchHistory = disableWatchHistory,
     deArrowEnabled = deArrowEnabled,
     deArrowTitleMode = deArrowTitleMode,

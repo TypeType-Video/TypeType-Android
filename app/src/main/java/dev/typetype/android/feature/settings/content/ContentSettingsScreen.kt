@@ -186,6 +186,18 @@ fun ContentSettingsScreen(
                         onAction = onAction,
                     )
                 }
+                if (state.supportsHideSubscriptionLiveStreams) {
+                    item {
+                        ContentVisibilitySwitch(
+                            title = R.string.settings_content_hide_subscription_lives,
+                            subtitle = R.string.settings_content_hide_subscription_lives_subtitle,
+                            checked = state.hideSubscriptionLiveStreams,
+                            enabled = controlsEnabled,
+                            action = ContentSettingsAction::SetHideSubscriptionLiveStreams,
+                            onAction = onAction,
+                        )
+                    }
+                }
             }
         }
     }
