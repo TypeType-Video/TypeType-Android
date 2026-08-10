@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.error.UserErrorMapper
 import dev.typetype.android.domain.server.Server
+import dev.typetype.android.domain.server.ServerCapabilitiesRepository
 import dev.typetype.android.domain.server.ServerRepository
 import dev.typetype.android.domain.youtubesession.YoutubeRemoteBrowserConnection
 import dev.typetype.android.domain.youtubesession.YoutubeRemoteBrowserConnector
@@ -29,6 +30,7 @@ class YoutubeSessionViewModel @Inject constructor(
     private val youtubeSessionRepository: YoutubeSessionRepository,
     private val remoteBrowserConnector: YoutubeRemoteBrowserConnector,
     private val serverRepository: ServerRepository,
+    private val capabilitiesRepository: ServerCapabilitiesRepository,
     private val errorMapper: UserErrorMapper,
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(YoutubeSessionState())
@@ -56,7 +58,10 @@ class YoutubeSessionViewModel @Inject constructor(
 
     fun refreshStatus() {
         if (mutableState.value.isStatusLoading) return
-        viewModelScope.launch { loadStatus() }
+        mutableState.update {
+            it.copy(availability = YoutubeSessionAvailability.Checking, isStatusLoading = true)
+        }
+        viewModelScope.launch { refreshCapabilitiesAndStatus() }
     }
 
     fun startRemoteBrowser() {
@@ -143,13 +148,34 @@ class YoutubeSessionViewModel @Inject constructor(
             closeConnection(clearSession = true)
             serverId = server?.id
         }
+        if (server == null) {
+            mutableState.update {
+                it.copy(availability = YoutubeSessionAvailability.Checking, isStatusLoading = false)
+            }
+            return
+        }
+        mutableState.update {
+            it.copy(availability = YoutubeSessionAvailability.Checking, isStatusLoading = true)
+        }
+        refreshCapabilitiesAndStatus(server)
+    }
+
+    private suspend fun refreshCapabilitiesAndStatus(cached: Server? = null) {
+        val expectedServerId = serverId ?: return
+        val fallback = cached ?: serverRepository.getServer(expectedServerId) ?: return
+        val server = capabilitiesRepository.refresh(expectedServerId).getOrDefault(fallback)
+        if (serverId != expectedServerId) return
         mutableState.update {
             it.copy(
                 availability = server.availability,
-                unavailableReason = server?.youtubeRemoteLoginUnavailableReason,
+                unavailableReason = server.youtubeRemoteLoginUnavailableReason,
             )
         }
-        if (server != null) loadStatus()
+        if (server.youtubeRemoteLoginEnabled && server.youtubeRemoteLoginReady) {
+            loadStatus()
+        } else {
+            mutableState.update { it.copy(isStatusLoading = false, session = null) }
+        }
     }
 
     private suspend fun loadStatus() {
@@ -251,6 +277,7 @@ class YoutubeSessionViewModel @Inject constructor(
     private val Server?.availability: YoutubeSessionAvailability
         get() = when {
             this == null -> YoutubeSessionAvailability.Checking
+            !youtubeRemoteLoginSupported -> YoutubeSessionAvailability.Disabled
             !youtubeRemoteLoginEnabled -> YoutubeSessionAvailability.Disabled
             !youtubeRemoteLoginReady -> YoutubeSessionAvailability.Unavailable
             else -> YoutubeSessionAvailability.Available
