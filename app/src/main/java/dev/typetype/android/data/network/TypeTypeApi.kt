@@ -11,6 +11,7 @@ interface TypeTypeApi :
     TypeTypeNotificationsApi,
     TypeTypeVersionApi,
     TypeTypeImportApi,
+    TypeTypeRssApi,
     TypeTypeYoutubeSessionApi,
     TypeTypeLibraryApi,
     TypeTypeMediaApi
