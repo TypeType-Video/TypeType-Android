@@ -64,3 +64,17 @@ internal fun RssFeed.toEditorState() = RssFeedEditorState(
     includeLive = includeLive,
     includeUpcoming = includeUpcoming,
 )
+
+internal fun RssFeedsState.clearedForAccountChange() = copy(
+    feeds = emptyList(),
+    subscriptions = emptyList(),
+    isLoading = true,
+    hasLoadedFeeds = false,
+    isMutating = false,
+    editor = null,
+    regeneratingFeedId = null,
+    deletingFeedId = null,
+    secret = null,
+    errorMessage = null,
+    errorRequestId = null,
+)

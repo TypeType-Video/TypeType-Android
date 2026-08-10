@@ -4,6 +4,7 @@ import dev.typetype.android.R
 import dev.typetype.android.domain.rss.RssFeed
 import dev.typetype.android.domain.rss.RssFeedScope
 import dev.typetype.android.domain.server.RssCapability
+import dev.typetype.android.domain.subscriptions.SubscriptionSummary
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -33,7 +34,41 @@ class RssFeedsStateTest {
         assertEquals(R.string.rss_error_channels, tooMany.validationError())
     }
 
+    @Test
+    fun accountChangeClearsPrivateAndEditableState() {
+        val state = RssFeedsState(
+            feeds = listOf(feed()),
+            subscriptions = listOf(subscription()),
+            hasLoadedFeeds = true,
+            editor = RssFeedEditorState(name = "Private"),
+            regeneratingFeedId = "feed",
+            deletingFeedId = "feed",
+            secret = RssFeedSecretState("Private", "https://example.test/private"),
+            errorMessage = "Old account error",
+            errorRequestId = "old-request",
+        )
+
+        val cleared = state.clearedForAccountChange()
+
+        assertTrue(cleared.feeds.isEmpty())
+        assertTrue(cleared.subscriptions.isEmpty())
+        assertFalse(cleared.hasLoadedFeeds)
+        assertNull(cleared.editor)
+        assertNull(cleared.regeneratingFeedId)
+        assertNull(cleared.deletingFeedId)
+        assertNull(cleared.secret)
+        assertNull(cleared.errorMessage)
+        assertNull(cleared.errorRequestId)
+    }
+
     private fun validEditor() = RssFeedEditorState(name = "Feed", serviceIds = setOf(0))
+
+    private fun subscription() = SubscriptionSummary(
+        channelUrl = "https://youtube.com/@example",
+        name = "Example",
+        avatarUrl = "",
+        subscribedAtMillis = 1,
+    )
 
     private fun feed() = RssFeed(
         id = "feed",
