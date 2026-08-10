@@ -17,19 +17,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -49,7 +46,6 @@ internal fun ChannelHeader(
     channel: Channel,
     isSubscribed: Boolean,
     subscribeInFlight: Boolean,
-    onNavigateBack: () -> Unit,
     onToggleSubscribe: () -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -69,7 +65,6 @@ internal fun ChannelHeader(
                     )
                 }
             }
-            FloatingBack(onNavigateBack = onNavigateBack)
         }
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
@@ -124,27 +119,6 @@ private fun ChannelName(channel: Channel) {
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(14.dp),
-            )
-        }
-    }
-}
-
-@Composable
-internal fun FloatingBack(onNavigateBack: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .padding(8.dp)
-            .size(36.dp)
-            .clip(CircleShape)
-            .background(Color.Black.copy(alpha = 0.55f)),
-        contentAlignment = Alignment.Center,
-    ) {
-        IconButton(onClick = onNavigateBack, modifier = Modifier.fillMaxSize()) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(R.string.settings_back),
-                tint = Color.White,
-                modifier = Modifier.size(20.dp),
             )
         }
     }

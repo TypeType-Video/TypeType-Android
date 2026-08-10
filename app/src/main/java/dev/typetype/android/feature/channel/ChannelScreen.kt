@@ -13,9 +13,13 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -61,19 +65,32 @@ fun ChannelScreen(
     onOpenPlaylist: (playlistUrl: String) -> Unit,
     onAction: (ChannelAction) -> Unit,
 ) {
-    when {
-        state.isLoading && state.channel == null -> FullScreenLoader()
-        state.errorMessage != null && state.channel == null -> {
-            Box(modifier = Modifier.fillMaxSize()) {
-                FloatingBack(onNavigateBack = onNavigateBack)
-                AnimatedError(
-                    message = state.errorMessage,
-                    requestId = state.errorRequestId,
-                    onRetry = { onAction(ChannelAction.OnRefresh) },
+    if (state.channel == null) {
+        Scaffold(
+            topBar = {
+                ChannelTopBar(
+                    state = state,
+                    searchExpanded = false,
+                    onSearchExpandedChange = {},
+                    onNavigateBack = onNavigateBack,
+                    onAction = onAction,
                 )
+            },
+        ) { padding ->
+            Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+                if (state.isLoading) {
+                    FullScreenLoader()
+                } else if (state.errorMessage != null) {
+                    AnimatedError(
+                        message = state.errorMessage,
+                        requestId = state.errorRequestId,
+                        onRetry = { onAction(ChannelAction.OnRefresh) },
+                    )
+                }
             }
         }
-        state.channel != null -> ChannelContent(
+    } else {
+        ChannelContent(
             state = state,
             onNavigateBack = onNavigateBack,
             onPlayVideo = onPlayVideo,
@@ -93,33 +110,46 @@ private fun ChannelContent(
     onOpenPlaylist: (playlistUrl: String) -> Unit,
     onAction: (ChannelAction) -> Unit,
 ) {
-    ChannelContentGrid(
-        state = state,
-        onNavigateBack = onNavigateBack,
-        onPlayVideo = onPlayVideo,
-        onOpenPodcast = onOpenPodcast,
-        onOpenPlaylist = onOpenPlaylist,
-        onAction = onAction,
-        menuScope = rememberVideoMenuScope(onOpenChannel = {}),
-    )
+    var searchExpanded by rememberSaveable { mutableStateOf(false) }
+    Scaffold(
+        topBar = {
+            ChannelTopBar(
+                state = state,
+                searchExpanded = searchExpanded,
+                onSearchExpandedChange = { searchExpanded = it },
+                onNavigateBack = onNavigateBack,
+                onAction = onAction,
+            )
+        },
+    ) { padding ->
+        ChannelContentGrid(
+            state = state,
+            onPlayVideo = onPlayVideo,
+            onOpenPodcast = onOpenPodcast,
+            onOpenPlaylist = onOpenPlaylist,
+            onAction = onAction,
+            menuScope = rememberVideoMenuScope(onOpenChannel = {}),
+            modifier = Modifier.padding(padding),
+        )
+    }
 }
 
 @Composable
 internal fun ChannelContentGrid(
     state: ChannelState,
-    onNavigateBack: () -> Unit,
     onPlayVideo: (videoUrl: String) -> Unit,
     onOpenPodcast: (podcastUrl: String) -> Unit,
     onOpenPlaylist: (playlistUrl: String) -> Unit,
     onAction: (ChannelAction) -> Unit,
     menuScope: VideoMenuScope,
+    modifier: Modifier = Modifier,
 ) {
     val channel = requireNotNull(state.channel)
     val visibleVideos = channel.videos.filterNot(menuScope::isHidden)
 
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 320.dp),
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
     ) {
         item(span = { GridItemSpan(maxLineSpan) }, key = "channel-header") {
@@ -127,7 +157,6 @@ internal fun ChannelContentGrid(
                 channel = channel,
                 isSubscribed = state.isSubscribed,
                 subscribeInFlight = state.subscribeInFlight,
-                onNavigateBack = onNavigateBack,
                 onToggleSubscribe = { onAction(ChannelAction.OnToggleSubscribe) },
             )
         }

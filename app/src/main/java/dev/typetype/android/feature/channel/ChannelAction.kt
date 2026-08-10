@@ -8,6 +8,8 @@ sealed interface ChannelAction {
     data object OnLoadMorePlaylists : ChannelAction
     data object OnToggleSubscribe : ChannelAction
     data object OnSubmitSearch : ChannelAction
+    data object OnDismissSearch : ChannelAction
+    data object OnClearSearchInput : ChannelAction
     data object OnClearSearch : ChannelAction
     data class OnSearchInputChanged(val value: String) : ChannelAction
     data class OnSelectSort(val sort: ChannelSort) : ChannelAction
