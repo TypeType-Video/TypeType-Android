@@ -1,5 +1,6 @@
 package dev.typetype.android.feature.settings.youtubesession
 
+import dev.typetype.android.domain.server.Server
 import dev.typetype.android.domain.youtubesession.YoutubeRemoteBrowserPhase
 import dev.typetype.android.domain.youtubesession.YoutubeSession
 import dev.typetype.android.domain.youtubesession.YoutubeSessionStatus
@@ -45,5 +46,15 @@ data class YoutubeSessionState(
         get() = session?.status?.isStored == true && !isDisconnecting
 }
 
+internal fun YoutubeSessionState.clearedForAccountChange() = YoutubeSessionState()
+
 private val YoutubeSessionStatus.isStored: Boolean
     get() = this == YoutubeSessionStatus.Connected || this == YoutubeSessionStatus.NeedsReconnect
+
+internal fun Server?.youtubeSessionAvailability(): YoutubeSessionAvailability = when {
+    this == null -> YoutubeSessionAvailability.Checking
+    !youtubeRemoteLoginSupported -> YoutubeSessionAvailability.Disabled
+    youtubeRemoteLoginReady -> YoutubeSessionAvailability.Available
+    youtubeRemoteLoginUnavailableReason == "disabled" -> YoutubeSessionAvailability.Disabled
+    else -> YoutubeSessionAvailability.Unavailable
+}
