@@ -216,13 +216,11 @@ private fun YoutubeSessionStart(state: YoutubeSessionState, onStart: () -> Unit)
             YoutubeSessionAvailability.Disabled -> Text(stringResource(R.string.youtube_session_disabled))
             YoutubeSessionAvailability.Unavailable -> {
                 Text(stringResource(R.string.youtube_session_unavailable))
-                state.unavailableReason?.let {
-                    Text(
-                        text = stringResource(R.string.youtube_session_unavailable_reason, it),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+                Text(
+                    text = stringResource(youtubeRemoteLoginReason(state.unavailableReason)),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
             YoutubeSessionAvailability.Available -> Unit
         }
@@ -279,3 +277,9 @@ private fun YoutubeSessionNotice.message(): String = stringResource(
 )
 
 private val TABLET_BREAKPOINT = 720.dp
+
+internal fun youtubeRemoteLoginReason(reason: String?): Int = when (reason) {
+    "not_configured" -> R.string.youtube_session_reason_not_configured
+    "token_unreachable" -> R.string.youtube_session_reason_token_unreachable
+    else -> R.string.youtube_session_reason_unknown
+}

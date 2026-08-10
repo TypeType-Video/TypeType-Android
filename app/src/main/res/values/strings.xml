@@ -953,7 +953,9 @@
     <string name="youtube_session_never">Never</string>
     <string name="youtube_session_disabled">Remote YouTube sign-in is disabled on this instance.</string>
     <string name="youtube_session_unavailable">Remote YouTube sign-in is enabled, but the instance is not ready.</string>
-    <string name="youtube_session_unavailable_reason">Instance status: %1$s</string>
+    <string name="youtube_session_reason_not_configured">The instance administrator has not finished configuring remote sign-in.</string>
+    <string name="youtube_session_reason_token_unreachable">The instance cannot currently reach its remote sign-in service. Try again later.</string>
+    <string name="youtube_session_reason_unknown">Remote sign-in is temporarily unavailable. Try again later.</string>
     <string name="youtube_session_browser_accessibility">YouTube sign-in remote browser</string>
     <string name="youtube_session_browser_focus">Focus remote browser</string>
     <string name="youtube_session_browser_waiting">The YouTube sign-in window will appear here.</string>
