@@ -898,6 +898,8 @@
     <string name="channel_search_action">Search</string>
     <string name="channel_search_results_for">Results for “%1$s”</string>
     <string name="channel_search_back_to_all">All videos</string>
+    <string name="channel_section">Channel section</string>
+    <string name="channel_video_order">Video order</string>
     <string name="channel_live_section">Live</string>
     <string name="channel_no_live">No live streams available</string>
     <string name="channel_playlists_section">Playlists</string>

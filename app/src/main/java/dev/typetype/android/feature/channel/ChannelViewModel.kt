@@ -64,6 +64,12 @@ class ChannelViewModel @Inject constructor(
             ChannelAction.OnLoadMorePlaylists -> loadMorePlaylists()
             ChannelAction.OnToggleSubscribe -> toggleSubscribe()
             ChannelAction.OnSubmitSearch -> submitSearch()
+            ChannelAction.OnDismissSearch -> {
+                _state.update { it.copy(searchInput = it.appliedSearch) }
+            }
+            ChannelAction.OnClearSearchInput -> {
+                _state.update { it.copy(searchInput = "") }
+            }
             ChannelAction.OnClearSearch -> clearSearch()
             is ChannelAction.OnSearchInputChanged -> {
                 _state.update { it.copy(searchInput = action.value) }
