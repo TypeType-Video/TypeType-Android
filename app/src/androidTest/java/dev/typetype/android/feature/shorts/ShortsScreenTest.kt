@@ -4,6 +4,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -107,6 +108,7 @@ class ShortsScreenTest {
     fun cancelledSwipeKeepsTheSettledShortActive() {
         val activeUrl = AtomicReference<String>()
         val inactiveEvents = AtomicInteger()
+        val playbackDisposals = AtomicInteger()
 
         show(
             state = ShortsState(
@@ -118,7 +120,12 @@ class ShortsScreenTest {
                 activeUrl.set(it?.url)
                 if (it == null) inactiveEvents.incrementAndGet()
             },
-            embeddedPlayback = { video, _ -> Text("Embedded ${video.title}") },
+            embeddedPlayback = { video, _ ->
+                DisposableEffect(video.id) {
+                    onDispose { playbackDisposals.incrementAndGet() }
+                }
+                Text("Embedded ${video.title}")
+            },
         )
 
         composeRule.waitUntil { activeUrl.get() == "https://video/one" }
@@ -133,6 +140,7 @@ class ShortsScreenTest {
 
         assertEquals("https://video/one", activeUrl.get())
         assertEquals(0, inactiveEvents.get())
+        assertEquals(0, playbackDisposals.get())
         composeRule.onNodeWithText("Embedded Short one").assertIsDisplayed()
     }
 

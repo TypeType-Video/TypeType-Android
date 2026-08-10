@@ -3,11 +3,14 @@ package dev.typetype.android.feature.shorts
 import android.content.ComponentName
 import android.net.Uri
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeUp
 import androidx.lifecycle.Lifecycle
 import androidx.media3.common.MediaItem
@@ -20,6 +23,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.typetype.android.core.ui.components.LocalAnimatedStatePlayback
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import dev.typetype.android.domain.feed.Video
+import dev.typetype.android.feature.player.components.ResilientPlayerSurface
+import dev.typetype.android.feature.player.state.ResizeMode
 import dev.typetype.android.services.PlaybackService
 import dev.typetype.android.services.createSyntheticH264Video
 import java.io.File
@@ -108,6 +113,13 @@ class ShortsPlaybackContinuityAndroidTest {
                                 controller.prepare()
                                 controller.play()
                             }
+                            ResilientPlayerSurface(
+                                player = controller,
+                                surfaceKey = current.id,
+                                resizeMode = ResizeMode.Crop,
+                                showNativeSubtitles = false,
+                                modifier = Modifier.fillMaxSize(),
+                            )
                         },
                     )
                 }
@@ -123,20 +135,28 @@ class ShortsPlaybackContinuityAndroidTest {
     ) {
         val startedAt = System.nanoTime()
         val durationNs = TimeUnit.MILLISECONDS.toNanos(requestedDurationMs)
-        val transitionIntervalNs = durationNs / videos.size
-        var nextPage = 1
+        val journey = pageJourney(videos.size)
+        val transitionIntervalNs = durationNs / (journey.size + 1)
+        var transition = 0
+        var currentPage = 0
         var lastPosition = readController(controller) { it.currentPosition }
         var advancementSamples = 0
 
-        while (System.nanoTime() - startedAt < durationNs) {
+        while (System.nanoTime() - startedAt < durationNs || transition < journey.size) {
             val elapsedNs = System.nanoTime() - startedAt
-            if (nextPage < videos.size && elapsedNs >= transitionIntervalNs * nextPage) {
-                composeRule.onNodeWithTag(SHORTS_PAGER_TAG).performTouchInput { swipeUp() }
-                val expected = videos[nextPage]
+            if (transition < journey.size &&
+                elapsedNs >= transitionIntervalNs * (transition + 1)
+            ) {
+                val targetPage = journey[transition]
+                composeRule.onNodeWithTag(SHORTS_PAGER_TAG).performTouchInput {
+                    if (targetPage > currentPage) swipeUp() else swipeDown()
+                }
+                val expected = videos[targetPage]
                 waitForActiveVideo(controller, activeId, expected.id)
-                seekAndVerify(controller, expected.durationSeconds * 400L)
-                if (nextPage == videos.size / 2) exerciseActivityCycle(controller)
-                nextPage++
+                exerciseForwardAndBackwardSeeks(controller, expected.durationSeconds)
+                if (transition == journey.size / 2) exerciseActivityCycle(controller)
+                currentPage = targetPage
+                transition++
                 lastPosition = readController(controller) { it.currentPosition }
             }
 
@@ -158,8 +178,18 @@ class ShortsPlaybackContinuityAndroidTest {
             Thread.sleep(SAMPLE_INTERVAL_MS)
         }
 
-        assertEquals(videos.size, nextPage)
+        assertEquals(journey.size, transition)
         assertTrue(advancementSamples > 0)
+    }
+
+    private fun exerciseForwardAndBackwardSeeks(
+        controller: MediaController,
+        durationSeconds: Long,
+    ) {
+        val forwardTarget = durationSeconds * 400L
+        seekAndVerify(controller, forwardTarget)
+        seekAndVerify(controller, forwardTarget / 3L)
+        seekAndVerify(controller, forwardTarget)
     }
 
     private fun waitForActiveVideo(
@@ -222,6 +252,12 @@ class ShortsPlaybackContinuityAndroidTest {
                 shortDescription = null,
             )
         }
+    }
+
+    private fun pageJourney(videoCount: Int): List<Int> = if (videoCount >= LONG_VIDEO_COUNT) {
+        listOf(1, 2, 3, 2, 3, 4, 5, 4, 5, 6, 7, 6, 7, 8)
+    } else {
+        listOf(1, 0, 1, 2)
     }
 
     private data class PlaybackSnapshot(
