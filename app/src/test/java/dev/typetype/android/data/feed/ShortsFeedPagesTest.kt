@@ -106,6 +106,20 @@ class ShortsFeedPagesTest {
     }
 
     @Test
+    fun normalizationDeduplicatesEquivalentYoutubeUrls() {
+        val videos = listOf(
+            video("first", "channel-a", 15).copy(
+                url = "https://youtube.com/shorts/abcdefghijk",
+            ),
+            video("second", "channel-b", 15).copy(
+                url = "https://www.youtube.com/watch?v=abcdefghijk",
+            ),
+        )
+
+        assertEquals(listOf("first"), videos.normalizedShorts().map(Video::id))
+    }
+
+    @Test
     fun pageLimitIsAppliedAfterShortClassification() {
         val page = ShortsPage(
             videos = listOf(
