@@ -71,6 +71,7 @@ class TypeTypeRssContractTest {
             404 to "rss_feed_not_found",
             409 to "rss_feed_limit_reached",
             429 to "rss_rate_limited",
+            429 to "rate_limited",
         ).forEach { (status, code) ->
             server.enqueue(
                 MockResponse()

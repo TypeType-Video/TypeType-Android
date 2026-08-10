@@ -7,9 +7,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.error.UserErrorMapper
+import dev.typetype.android.data.account.AccountScope
+import dev.typetype.android.data.account.AccountScopeProvider
+import dev.typetype.android.domain.rss.RssFeed
 import dev.typetype.android.domain.rss.RssFeedSecret
 import dev.typetype.android.domain.rss.RssRepository
+import dev.typetype.android.domain.server.RssCapability
 import dev.typetype.android.domain.server.ServerRepository
+import dev.typetype.android.domain.subscriptions.SubscriptionSummary
 import dev.typetype.android.domain.subscriptions.SubscriptionsRepository
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,10 +29,12 @@ class RssFeedsViewModel @Inject constructor(
     private val repository: RssRepository,
     private val serverRepository: ServerRepository,
     private val subscriptionsRepository: SubscriptionsRepository,
+    private val accountScopeProvider: AccountScopeProvider,
     private val errorMapper: UserErrorMapper,
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(RssFeedsState())
     val state = mutableState.asStateFlow()
+    private var activeScope: AccountScope? = null
 
     init {
         viewModelScope.launch {
@@ -35,22 +42,34 @@ class RssFeedsViewModel @Inject constructor(
                 serverRepository.observeCurrentServer(),
                 repository.observeFeeds(),
                 subscriptionsRepository.observeSubscriptions(),
-            ) { server, feeds, subscriptions -> Triple(server, feeds, subscriptions) }
-                .collect { (server, feeds, subscriptions) ->
-                    mutableState.update {
-                        it.copy(
-                            capability = server?.rss ?: it.capability,
-                            availableServiceIds = server?.supportedServices
-                                ?.filter(SUPPORTED_SERVICE_IDS::contains)
-                                ?.toSet()
-                                .orEmpty(),
-                            feeds = feeds,
-                            subscriptions = subscriptions,
-                        )
-                    }
+                accountScopeProvider.observe(),
+            ) { server, feeds, subscriptions, scope ->
+                val alignedScope = scope?.takeIf { it.serverId == server?.id }
+                RssFeedsSnapshot(
+                    server?.rss?.takeIf { alignedScope != null } ?: RssCapability(),
+                    server?.supportedServices?.takeIf { alignedScope != null },
+                    feeds,
+                    subscriptions,
+                    alignedScope,
+                )
+            }.collect { snapshot ->
+                val scopeChanged = snapshot.scope != activeScope
+                activeScope = snapshot.scope
+                mutableState.update {
+                    val scoped = if (scopeChanged) it.clearedForAccountChange() else it
+                    scoped.copy(
+                        capability = snapshot.capability,
+                        availableServiceIds = snapshot.supportedServices
+                            ?.filter(SUPPORTED_SERVICE_IDS::contains)
+                            ?.toSet()
+                            .orEmpty(),
+                        feeds = if (scopeChanged) emptyList() else snapshot.feeds,
+                        subscriptions = if (scopeChanged) emptyList() else snapshot.subscriptions,
+                    )
                 }
+                if (scopeChanged && snapshot.scope != null && snapshot.capability.enabled) refresh()
+            }
         }
-        refresh()
     }
 
     fun onAction(action: RssFeedsAction) {
@@ -89,10 +108,14 @@ class RssFeedsViewModel @Inject constructor(
     }
 
     private fun refresh() {
+        val operationScope = activeScope ?: return
         viewModelScope.launch {
+            if (activeScope != operationScope) return@launch
             update { copy(isLoading = true) }
             subscriptionsRepository.refresh()
-            repository.refresh().fold(
+            val result = repository.refresh()
+            if (activeScope != operationScope) return@launch
+            result.fold(
                 onSuccess = { update { copy(isLoading = false, hasLoadedFeeds = true) } },
                 onFailure = { showFailure(it, isLoading = false) },
             )
@@ -168,9 +191,13 @@ class RssFeedsViewModel @Inject constructor(
         block: suspend () -> Result<T>,
     ) {
         if (mutableState.value.isMutating) return
+        val operationScope = activeScope ?: return
         viewModelScope.launch {
+            if (activeScope != operationScope) return@launch
             update { copy(isMutating = true, errorMessage = null, errorRequestId = null) }
-            block().fold(
+            val result = block()
+            if (activeScope != operationScope) return@launch
+            result.fold(
                 onSuccess = {
                     update { copy(isMutating = false) }
                     onSuccess(it)
@@ -214,3 +241,11 @@ class RssFeedsViewModel @Inject constructor(
         const val MAX_CHANNELS = 100
     }
 }
+
+private data class RssFeedsSnapshot(
+    val capability: RssCapability,
+    val supportedServices: List<Int>?,
+    val feeds: List<RssFeed>,
+    val subscriptions: List<SubscriptionSummary>,
+    val scope: AccountScope?,
+)
