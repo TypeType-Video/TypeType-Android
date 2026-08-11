@@ -11,14 +11,12 @@ import dev.typetype.android.data.network.dto.SabrPlaybackResponse
 import dev.typetype.android.data.network.dto.SabrPlaybackWindowRequestDto
 import dev.typetype.android.data.network.dto.SabrPlaybackWindowResponseDto
 import dev.typetype.android.data.network.dto.StreamResponse
-import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
-import retrofit2.http.Url
 
 interface TypeTypeMediaApi {
     @GET("instance")
@@ -99,6 +97,4 @@ interface TypeTypeMediaApi {
         @Query("url") videoUrl: String,
     ): Response<BulletCommentsPageResponse>
 
-    @GET
-    suspend fun subtitle(@Url url: String): Response<ResponseBody>
 }

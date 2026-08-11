@@ -153,7 +153,9 @@ class StreamRepositoryImpl @Inject constructor(
                 .map { it.toDomainAudioSource(baseUrl) },
             originalAudioTrackId = originalAudioTrackId,
             preferredDefaultAudioTrackId = preferredDefaultAudioTrackId,
-            subtitles = subtitles.mapNotNull { it.toYoutubeSubtitleSource(baseUrl, id) },
+            subtitles = subtitles.mapIndexedNotNull { index, subtitle ->
+                subtitle.toClientSubtitleSource(index)
+            },
             startPositionMillis = startPosition * 1000L,
             sponsorBlockSegments = sponsorBlockSegments.mapNotNull {
                 it.toDomainSponsorBlockSegment(duration)
