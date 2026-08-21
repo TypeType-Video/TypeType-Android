@@ -25,7 +25,6 @@ class PlayerFullscreenEffectTest {
     val composeRule = createAndroidComposeRule<FullscreenTestActivity>()
 
     private val fullscreen = mutableStateOf(false)
-    private var disposedFullscreen = true
 
     @Before
     fun showEffectInPortrait() {
@@ -41,7 +40,7 @@ class PlayerFullscreenEffectTest {
             PlayerFullscreenEffect(
                 activity = composeRule.activity,
                 isFullscreen = fullscreen.value,
-                onFullscreenChange = { disposedFullscreen = it },
+                locksLandscape = true,
             )
         }
         composeRule.waitForIdle()
@@ -102,7 +101,6 @@ class PlayerFullscreenEffectTest {
                     composeRule.activity.window.attributes.layoutInDisplayCutoutMode,
                 )
             }
-            assertTrue(disposedFullscreen)
         }
         composeRule.waitUntil(SYSTEM_BARS_TIMEOUT_MILLIS) { systemBarsVisible() }
     }
