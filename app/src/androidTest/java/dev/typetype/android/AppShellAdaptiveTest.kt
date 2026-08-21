@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
@@ -226,6 +227,47 @@ class AppShellAdaptiveTest {
         composeRule.onNodeWithText("Subscriptions").performClick()
         composeRule.onNodeWithText("Subscriptions content").assertIsDisplayed()
         composeRule.onNodeWithTag(SEARCH_FIELD_TAG).assertDoesNotExist()
+    }
+
+    @Test
+    fun restoredSearchCanLeaveAndReopenWithoutStaleState() {
+        val restorationTester = StateRestorationTester(composeRule)
+        restorationTester.setContent {
+            val navController = rememberNavController()
+            AppShell(
+                navController = navController,
+                playerHostController = PlayerHostController(FakePlaybackQueueController()),
+                onOpenSearch = { navController.navigate(SearchRoute) },
+                onOpenSettings = {},
+                onPlayVideo = {},
+                onOpenChannel = {},
+                onOpenAccounts = {},
+                onClosePlayback = {},
+            ) { contentModifier ->
+                NavHost(navController, HomeRoute, contentModifier) {
+                    composable<HomeRoute> { androidx.compose.material3.Text("Home content") }
+                    composable<LibraryRoute> { androidx.compose.material3.Text("Library content") }
+                    composable<SearchRoute> {
+                        var query by rememberSaveable { mutableStateOf("") }
+                        BasicTextField(
+                            value = query,
+                            onValueChange = { query = it },
+                            modifier = Modifier.testTag(SEARCH_FIELD_TAG),
+                        )
+                    }
+                }
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Search").performClick()
+        composeRule.onNodeWithTag(SEARCH_FIELD_TAG).performTextInput("video")
+        restorationTester.emulateSavedInstanceStateRestore()
+        composeRule.onNodeWithTag(SEARCH_FIELD_TAG).assertTextEquals("video")
+
+        composeRule.onNodeWithText("Library").performClick()
+        composeRule.onNodeWithText("Library content").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Search").performClick()
+        composeRule.onNodeWithTag(SEARCH_FIELD_TAG).assertTextEquals("")
     }
 
     private fun setShellWidth(width: Dp) {
