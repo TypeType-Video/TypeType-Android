@@ -288,6 +288,7 @@
     <string name="diagnostics_result">%1$s · %2$d ms</string>
     <string name="diagnostics_sabr_detail">SABR %1$s</string>
     <string name="diagnostics_request_id">Request %1$s</string>
+    <string name="diagnostics_failure_code">Code %1$s</string>
     <string name="diagnostics_copy_request_id">Copy request ID</string>
     <string name="diagnostics_clipboard_label">TypeType request ID</string>
     <string name="diagnostics_request_id_copied">Request ID copied</string>

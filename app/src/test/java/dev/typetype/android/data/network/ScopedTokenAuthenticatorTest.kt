@@ -56,6 +56,37 @@ class ScopedTokenAuthenticatorTest {
     }
 
     @Test
+    fun subscriptionFeedRequestRecoversAfterTokenRefresh() {
+        server.enqueue(MockResponse().setResponseCode(401))
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody("""{"accessToken":"fresh-token"}"""),
+        )
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody(
+                    """{"videos":[],"nextpage":null,"generation":1,"generatedAt":1,"refreshing":false}""",
+                ),
+        )
+        val scope = NetworkRequestScope("server", "account-a", server.url("/api/").toString())
+        val tokens = FakeScopedTokenStore("expired-token")
+
+        client(scope, tokens).newCall(
+            Request.Builder().url(server.url("/api/subscriptions/feed?limit=30")).build(),
+        ).execute().use { response -> assertEquals(200, response.code) }
+
+        assertEquals("/api/subscriptions/feed?limit=30", server.takeRequest().path)
+        assertEquals("/api/auth/refresh", server.takeRequest().path)
+        val retriedFeed = server.takeRequest()
+        assertEquals("/api/subscriptions/feed?limit=30", retriedFeed.path)
+        assertEquals("Bearer fresh-token", retriedFeed.getHeader("Authorization"))
+    }
+
+    @Test
     fun transientRefreshFailurePreservesTheSavedSession() {
         server.enqueue(MockResponse().setResponseCode(401))
         server.enqueue(
