@@ -175,6 +175,9 @@ internal fun isAppChromeVisible(
 ): Boolean = playerTarget != PlayerHostTarget.Expanded && !isPlayerFullscreen
 
 private fun NavHostController.navigateTopLevel(route: Any) {
+    if (currentDestination?.hasRoute<SearchRoute>() == true) {
+        popBackStack()
+    }
     navigate(route) {
         popUpTo(graph.findStartDestination().id) { saveState = true }
         launchSingleTop = true
