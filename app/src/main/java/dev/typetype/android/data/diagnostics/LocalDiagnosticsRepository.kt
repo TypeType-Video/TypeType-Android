@@ -95,16 +95,21 @@ class LocalDiagnosticsRepository @Inject constructor(
         }
     }
 
-    internal fun recordLocalEvent(route: String, timestampEpochMillis: Long = System.currentTimeMillis()) {
+    internal fun recordLocalEvent(
+        route: String,
+        timestampEpochMillis: Long = System.currentTimeMillis(),
+        statusCode: Int? = null,
+        requestId: String? = null,
+    ) {
         if (route !in LOCAL_EVENT_ROUTES) return
         val scope = currentScope()?.copy(route = route) ?: return
         val entry = DiagnosticEntry(
             timestampEpochMillis = timestampEpochMillis,
             method = LOCAL_METHOD,
             route = route,
-            statusCode = null,
+            statusCode = statusCode?.takeIf { it in 100..599 },
             durationMillis = 0,
-            requestId = null,
+            requestId = requestId?.takeIf(REQUEST_ID_PATTERN::matches),
         )
         synchronized(lock) {
             directory.mkdirs()
@@ -218,6 +223,12 @@ class LocalDiagnosticsRepository @Inject constructor(
             "/network/available",
             "/network/changed",
             "/network/lost",
+            "/subscriptions/feed/contract",
+            "/subscriptions/feed/decode",
+            "/subscriptions/feed/pagination",
+            "/subscriptions/feed/persistence",
+            "/subscriptions/feed/ready",
+            "/subscriptions/feed/server",
         )
     }
 }
