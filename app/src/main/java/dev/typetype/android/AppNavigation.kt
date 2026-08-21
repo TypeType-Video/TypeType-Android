@@ -78,8 +78,9 @@ internal fun AppTopBar(
     unreadNotificationsCount: Int,
     avatarUrl: String?,
     avatarFallbackLetter: String?,
+    modifier: Modifier = Modifier,
 ) {
-    androidx.compose.foundation.layout.Column {
+    androidx.compose.foundation.layout.Column(modifier = modifier) {
         TopAppBar(
             title = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -146,8 +147,9 @@ internal fun AppBottomBar(
     fallbackTabRouteQualifiedName: String?,
     onTabClick: (Any) -> Unit,
     tabs: List<TopLevelTab> = topLevelTabs,
+    modifier: Modifier = Modifier,
 ) {
-    androidx.compose.foundation.layout.Column {
+    androidx.compose.foundation.layout.Column(modifier = modifier) {
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
         NavigationBar(
             modifier = Modifier.testTag(APP_BOTTOM_NAVIGATION_TAG),
@@ -172,9 +174,10 @@ internal fun AppNavigationRail(
     fallbackTabRouteQualifiedName: String?,
     onTabClick: (Any) -> Unit,
     tabs: List<TopLevelTab> = topLevelTabs,
+    modifier: Modifier = Modifier,
 ) {
     NavigationRail(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxHeight()
             .windowInsetsPadding(WindowInsets.systemBars)
             .testTag(APP_NAVIGATION_RAIL_TAG),

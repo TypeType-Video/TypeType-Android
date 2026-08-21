@@ -1,30 +1,22 @@
 package dev.typetype.android.feature.player.host
 
+import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.AnchoredDraggableState
-import androidx.compose.foundation.gestures.DraggableAnchors
-import androidx.compose.foundation.gestures.animateTo
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.session.MediaController
@@ -35,7 +27,6 @@ import dev.typetype.android.feature.player.components.rememberIsInPipMode
 private val MINI_PLAYER_HEIGHT = 64.dp
 internal const val PLAYER_HOST_OVERLAY_TAG = "player_host_overlay"
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PlayerHost(
     controller: PlayerHostController,
@@ -46,14 +37,20 @@ fun PlayerHost(
     onOpenChannel: (channelUrl: String) -> Unit,
     onOpenAccounts: () -> Unit,
     onClosePlayback: () -> Unit,
+    onTransitionProgressChange: (Float) -> Unit = {},
     content: @Composable () -> Unit,
 ) {
     val state by controller.state.collectAsStateWithLifecycle()
     val density = LocalDensity.current
     val isInPip by rememberIsInPipMode()
     val activity = LocalActivity.current
-
-    PlayerFullscreenEffect(activity, isFullscreen, onFullscreenChange)
+    val configuration = LocalConfiguration.current
+    val orientation = when (configuration.orientation) {
+        Configuration.ORIENTATION_PORTRAIT -> DeviceOrientation.Portrait
+        Configuration.ORIENTATION_LANDSCAPE -> DeviceOrientation.Landscape
+        else -> DeviceOrientation.Other
+    }
+    var fullscreenOrientationState by remember { mutableStateOf(FullscreenOrientationState()) }
 
     val navigationBarsBottom = WindowInsets.navigationBars.asPaddingValues()
         .calculateBottomPadding()
@@ -65,27 +62,32 @@ fun PlayerHost(
         val miniAnchorPx = (
             containerHeightPx - miniHeightPx - bottomBarPx - gestureBarPx
         ).coerceAtLeast(0f)
-
-        val anchors = remember(containerHeightPx, miniAnchorPx) {
-            DraggableAnchors {
-                PlayerHostTarget.Expanded at 0f
-                PlayerHostTarget.Mini at miniAnchorPx
-                PlayerHostTarget.Hidden at containerHeightPx
-            }
+        val allowsRotationFullscreen = state.videoUrl != null &&
+            state.target == PlayerHostTarget.Expanded &&
+            !isInPip &&
+            minOf(maxWidth, maxHeight) < 600.dp
+        val requestFullscreen: (Boolean) -> Unit = { requested ->
+            val transition = fullscreenOrientationState.onUserRequest(requested, orientation)
+            fullscreenOrientationState = transition.state
+            transition.fullscreenRequest?.let(onFullscreenChange)
         }
 
-        val anchoredState = remember {
-            AnchoredDraggableState(
-                initialValue = state.target.draggableTarget(),
+        PlayerFullscreenEffect(
+            activity = activity,
+            isFullscreen = isFullscreen,
+            locksLandscape = fullscreenOrientationState.locksLandscape,
+        )
+
+        LaunchedEffect(orientation, allowsRotationFullscreen, isFullscreen) {
+            val transition = fullscreenOrientationState.onEnvironmentChanged(
+                orientation = orientation,
+                allowsRotationFullscreen = allowsRotationFullscreen,
+                isFullscreen = isFullscreen,
             )
+            fullscreenOrientationState = transition.state
+            transition.fullscreenRequest?.let(onFullscreenChange)
         }
-        LaunchedEffect(anchors, state.requestStamp) {
-            val target = state.target.draggableTarget()
-            anchoredState.updateAnchors(anchors, target)
-            if (anchoredState.currentValue != target) {
-                anchoredState.animateTo(target)
-            }
-        }
+
         LaunchedEffect(state.playbackClearRequestStamp, mediaController) {
             val requestStamp = state.playbackClearRequestStamp ?: return@LaunchedEffect
             val player = mediaController ?: return@LaunchedEffect
@@ -95,12 +97,12 @@ fun PlayerHost(
         }
         LaunchedEffect(state.target, isFullscreen) {
             if (state.target != PlayerHostTarget.Expanded && isFullscreen) {
-                onFullscreenChange(false)
+                requestFullscreen(false)
             }
         }
         LaunchedEffect(isInPip, isFullscreen) {
             if (isInPip && isFullscreen) {
-                onFullscreenChange(false)
+                requestFullscreen(false)
             }
         }
 
@@ -109,41 +111,38 @@ fun PlayerHost(
         val hasVideo = state.videoUrl != null && state.target != PlayerHostTarget.Embedded
 
         if (hasVideo) {
-            val isMini = !isInPip && (
-                anchoredState.currentValue == PlayerHostTarget.Mini &&
-                    anchoredState.targetValue == PlayerHostTarget.Mini
-                )
-
-            val hostHeightDp = with(density) {
-                if (isMini) miniHeightPx.toDp() else containerHeightPx.toDp()
-            }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(hostHeightDp)
-                    .testTag(PLAYER_HOST_OVERLAY_TAG)
-                    .offset {
-                        val offset = if (anchoredState.anchors.size > 0) {
-                            anchoredState.requireOffset()
-                        } else {
-                            containerHeightPx
+            PlayerHostMotionLayout(
+                target = state.target,
+                requestStamp = state.requestStamp,
+                miniAnchorPx = miniAnchorPx,
+                containerHeightPx = containerHeightPx,
+                miniHeightPx = miniHeightPx,
+                dragEnabled = !isFullscreen && !isInPip,
+                miniContentEnabled = !isInPip,
+                onTargetSettled = { target ->
+                    when (target) {
+                        PlayerHostTarget.Expanded -> {
+                            if (controller.state.value.target != target) controller.expand()
                         }
-                        IntOffset(0, offset.toInt())
+                        PlayerHostTarget.Mini -> {
+                            if (controller.state.value.target != target) controller.minimize()
+                        }
+                        else -> Unit
                     }
-                    .background(if (isMini) Color.Transparent else Color.Black),
-            ) {
-                if (isMini) {
+                },
+                onProgressChange = onTransitionProgressChange,
+                miniContent = {
                     MiniPlayerRuntime(
                         controller = mediaController,
                         onExpand = { controller.expand() },
                         onSendToBackground = { activity?.moveTaskToBack(false) },
                         onClose = onClosePlayback,
                     )
-                } else {
+                },
+                expandedContent = { transitionModifier ->
                     PlayerRouteScreen(
                         isFullscreen = isFullscreen,
-                        onFullscreenChange = onFullscreenChange,
+                        onFullscreenChange = requestFullscreen,
                         onNavigateBack = { controller.minimize() },
                         onOpenAccounts = {
                             controller.minimize()
@@ -154,22 +153,20 @@ fun PlayerHost(
                             controller.minimize()
                             onOpenChannel(url)
                         },
+                        modifier = transitionModifier,
                     )
-                }
-            }
+                },
+            )
 
             BackHandler(enabled = isFullscreen || state.target == PlayerHostTarget.Expanded) {
                 if (isFullscreen) {
-                    onFullscreenChange(false)
+                    requestFullscreen(false)
                 } else {
                     controller.minimize()
                 }
             }
+        } else {
+            LaunchedEffect(Unit) { onTransitionProgressChange(0f) }
         }
     }
-}
-
-private fun PlayerHostTarget.draggableTarget(): PlayerHostTarget = when (this) {
-    PlayerHostTarget.Embedded -> PlayerHostTarget.Hidden
-    else -> this
 }
