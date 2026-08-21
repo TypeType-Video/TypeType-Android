@@ -36,24 +36,25 @@ class SubscriptionFeedLiveContractTest {
             val first = feedClient.load(api, null, PAGE_SIZE, null, verifyOwner = {})
             assertTrue(first.generation > 0L)
             assertTrue(first.generatedAtMillis > 0L)
+            assertTrue(first.videos.isNotEmpty())
             assertTrue(first.videos.all { it.id.isNotBlank() && it.url.isNotBlank() })
 
-            first.nextCursor?.let { cursor ->
-                val continuation = feedClient.load(
-                    api = api,
-                    cursor = cursor,
-                    limit = PAGE_SIZE,
-                    expectedGeneration = first.generation,
-                    verifyOwner = {},
-                )
-                assertEquals(first.generation, continuation.generation)
-            }
+            val continuation = feedClient.load(
+                api = api,
+                cursor = requireNotNull(first.nextCursor),
+                limit = PAGE_SIZE,
+                expectedGeneration = first.generation,
+                verifyOwner = {},
+            )
+            assertEquals(first.generation, continuation.generation)
+            assertTrue(continuation.videos.isNotEmpty())
+            assertTrue(first.videos.map { it.url }.none(continuation.videos.map { it.url }::contains))
         }
     }
 
     private companion object {
         const val BASE_URL_ENV = "TYPETYPE_TEST_BASE_URL"
         const val ACCESS_TOKEN_ENV = "TYPETYPE_TEST_ACCESS_TOKEN"
-        const val PAGE_SIZE = 30
+        const val PAGE_SIZE = 1
     }
 }
