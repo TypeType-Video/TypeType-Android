@@ -23,6 +23,7 @@ fun buildDiagnosticReport(entries: List<DiagnosticEntry>, crashReport: CrashRepo
                 append(entry.statusCode?.let { "HTTP $it" } ?: "network error")
                 append("  ${entry.durationMillis} ms")
             }
+            entry.failureCode?.let { append("  code $it") }
             entry.requestId?.let { append("  request $it") }
             appendLine()
             entry.sabr?.let {

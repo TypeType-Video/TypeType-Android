@@ -230,6 +230,14 @@ private fun DiagnosticRow(entry: DiagnosticEntry) {
                 fontFamily = FontFamily.Monospace,
             )
         }
+        entry.failureCode?.let {
+            Text(
+                text = stringResource(R.string.diagnostics_failure_code, it),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontFamily = FontFamily.Monospace,
+            )
+        }
         entry.requestId?.let {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(

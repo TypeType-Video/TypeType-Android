@@ -118,6 +118,40 @@ class SubscriptionFeedClientTest {
     }
 
     @Test
+    fun validEmptyReadyPageIsNotTreatedAsAFailure() = runBlocking {
+        server.enqueue(
+            jsonResponse(
+                200,
+                """{"videos":[],"nextpage":null,"generation":12,"generatedAt":1234,"refreshing":false}""",
+            ),
+        )
+
+        val page = SubscriptionFeedClient().load(api, null, 30, null, verifyOwner = {})
+
+        assertTrue(page.videos.isEmpty())
+        assertFalse(page.hasMore)
+        assertEquals(12L, page.generation)
+    }
+
+    @Test
+    fun accountChangeDuringRequestRejectsTheReceivedPage() {
+        server.enqueue(readyResponse(generation = 13, nextpage = null))
+        var ownershipChecks = 0
+
+        val failure = assertThrows(IllegalStateException::class.java) {
+            runBlocking {
+                SubscriptionFeedClient().load(api, null, 30, null) {
+                    ownershipChecks += 1
+                    check(ownershipChecks == 1) { "Account scope changed" }
+                }
+            }
+        }
+
+        assertEquals("Account scope changed", failure.message)
+        assertEquals(2, ownershipChecks)
+    }
+
+    @Test
     fun preparationIsBoundedAndPreservesServerEvidence() {
         repeat(2) {
             server.enqueue(

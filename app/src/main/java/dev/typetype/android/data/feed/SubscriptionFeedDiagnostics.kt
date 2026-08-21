@@ -18,6 +18,7 @@ class SubscriptionFeedDiagnostics @Inject constructor(
             route = subscriptionFeedDiagnosticRoute(failure, isPagination),
             statusCode = coded?.statusCode,
             requestId = coded?.requestId,
+            failureCode = coded?.failureCode,
         )
     }
 
