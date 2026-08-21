@@ -1,5 +1,8 @@
 package dev.typetype.android.feature.player.host
 
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
+
 internal enum class DeviceOrientation { Portrait, Landscape, Other }
 
 internal data class FullscreenOrientationState(
@@ -29,9 +32,16 @@ internal data class FullscreenOrientationState(
 
     fun onEnvironmentChanged(
         orientation: DeviceOrientation,
+        hasFullscreenMedia: Boolean,
         allowsRotationFullscreen: Boolean,
         isFullscreen: Boolean,
     ): FullscreenOrientationTransition {
+        if (!hasFullscreenMedia) {
+            return FullscreenOrientationTransition(
+                state = FullscreenOrientationState(),
+                fullscreenRequest = false.takeIf { isFullscreen },
+            )
+        }
         if (!allowsRotationFullscreen) {
             return FullscreenOrientationTransition(
                 state = copy(locksLandscape = locksLandscape && isFullscreen),
@@ -59,6 +69,13 @@ internal data class FullscreenOrientationState(
                 state = copy(locksLandscape = locksLandscape && isFullscreen),
             )
         }
+    }
+
+    companion object {
+        val Saver: Saver<FullscreenOrientationState, Any> = listSaver(
+            save = { listOf(it.locksLandscape, it.suppressesLandscapeEntry) },
+            restore = { FullscreenOrientationState(it[0], it[1]) },
+        )
     }
 }
 

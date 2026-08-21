@@ -11,6 +11,7 @@ class FullscreenOrientationStateTest {
     fun landscapeRotationEntersFullscreenWithoutLockingOrientation() {
         val transition = FullscreenOrientationState().onEnvironmentChanged(
             orientation = DeviceOrientation.Landscape,
+            hasFullscreenMedia = true,
             allowsRotationFullscreen = true,
             isFullscreen = false,
         )
@@ -23,6 +24,7 @@ class FullscreenOrientationStateTest {
     fun portraitRotationExitsRotationDrivenFullscreen() {
         val transition = FullscreenOrientationState().onEnvironmentChanged(
             orientation = DeviceOrientation.Portrait,
+            hasFullscreenMedia = true,
             allowsRotationFullscreen = true,
             isFullscreen = true,
         )
@@ -38,6 +40,7 @@ class FullscreenOrientationStateTest {
         )
         val rotated = entered.state.onEnvironmentChanged(
             orientation = DeviceOrientation.Landscape,
+            hasFullscreenMedia = true,
             allowsRotationFullscreen = true,
             isFullscreen = true,
         )
@@ -54,6 +57,7 @@ class FullscreenOrientationStateTest {
         )
         val environment = exited.state.onEnvironmentChanged(
             orientation = DeviceOrientation.Landscape,
+            hasFullscreenMedia = true,
             allowsRotationFullscreen = true,
             isFullscreen = false,
         )
@@ -68,6 +72,7 @@ class FullscreenOrientationStateTest {
             suppressesLandscapeEntry = true,
         ).onEnvironmentChanged(
             orientation = DeviceOrientation.Portrait,
+            hasFullscreenMedia = true,
             allowsRotationFullscreen = true,
             isFullscreen = false,
         )
@@ -80,6 +85,7 @@ class FullscreenOrientationStateTest {
     fun miniPlayerAndTabletsCannotAutoEnterFullscreen() {
         val transition = FullscreenOrientationState().onEnvironmentChanged(
             orientation = DeviceOrientation.Landscape,
+            hasFullscreenMedia = true,
             allowsRotationFullscreen = false,
             isFullscreen = false,
         )
@@ -94,11 +100,34 @@ class FullscreenOrientationStateTest {
             locksLandscape = true,
         ).onEnvironmentChanged(
             orientation = DeviceOrientation.Landscape,
+            hasFullscreenMedia = true,
             allowsRotationFullscreen = false,
             isFullscreen = true,
         )
 
         assertTrue(transition.state.locksLandscape)
         assertNull(transition.fullscreenRequest)
+    }
+
+    @Test
+    fun losingTheVideoAlwaysExitsFullscreenAndClearsManualLock() {
+        val transition = FullscreenOrientationState(
+            locksLandscape = true,
+        ).onEnvironmentChanged(
+            orientation = DeviceOrientation.Landscape,
+            hasFullscreenMedia = false,
+            allowsRotationFullscreen = false,
+            isFullscreen = true,
+        )
+
+        assertEquals(false, transition.fullscreenRequest)
+        assertEquals(FullscreenOrientationState(), transition.state)
+    }
+
+    @Test
+    fun savedStateRestoresManualLockAndLandscapeSuppression() {
+        val restored = FullscreenOrientationState.Saver.restore(listOf(true, true))
+
+        assertEquals(FullscreenOrientationState(true, true), restored)
     }
 }

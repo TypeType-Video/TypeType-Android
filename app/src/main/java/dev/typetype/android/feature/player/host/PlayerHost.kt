@@ -12,7 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -50,7 +50,9 @@ fun PlayerHost(
         Configuration.ORIENTATION_LANDSCAPE -> DeviceOrientation.Landscape
         else -> DeviceOrientation.Other
     }
-    var fullscreenOrientationState by remember { mutableStateOf(FullscreenOrientationState()) }
+    var fullscreenOrientationState by rememberSaveable(
+        stateSaver = FullscreenOrientationState.Saver,
+    ) { mutableStateOf(FullscreenOrientationState()) }
 
     val navigationBarsBottom = WindowInsets.navigationBars.asPaddingValues()
         .calculateBottomPadding()
@@ -62,10 +64,10 @@ fun PlayerHost(
         val miniAnchorPx = (
             containerHeightPx - miniHeightPx - bottomBarPx - gestureBarPx
         ).coerceAtLeast(0f)
-        val allowsRotationFullscreen = state.videoUrl != null &&
+        val hasFullscreenMedia = state.videoUrl != null &&
             state.target == PlayerHostTarget.Expanded &&
-            !isInPip &&
-            minOf(maxWidth, maxHeight) < 600.dp
+            !isInPip
+        val allowsRotationFullscreen = hasFullscreenMedia && minOf(maxWidth, maxHeight) < 600.dp
         val requestFullscreen: (Boolean) -> Unit = { requested ->
             val transition = fullscreenOrientationState.onUserRequest(requested, orientation)
             fullscreenOrientationState = transition.state
@@ -78,9 +80,10 @@ fun PlayerHost(
             locksLandscape = fullscreenOrientationState.locksLandscape,
         )
 
-        LaunchedEffect(orientation, allowsRotationFullscreen, isFullscreen) {
+        LaunchedEffect(orientation, hasFullscreenMedia, allowsRotationFullscreen, isFullscreen) {
             val transition = fullscreenOrientationState.onEnvironmentChanged(
                 orientation = orientation,
+                hasFullscreenMedia = hasFullscreenMedia,
                 allowsRotationFullscreen = allowsRotationFullscreen,
                 isFullscreen = isFullscreen,
             )
