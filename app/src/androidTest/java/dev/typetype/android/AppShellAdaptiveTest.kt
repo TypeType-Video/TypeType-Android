@@ -17,8 +17,10 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.input.key.Key
@@ -31,6 +33,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dev.typetype.android.core.ui.navigation.HomeRoute
+import dev.typetype.android.core.ui.navigation.LibraryRoute
+import dev.typetype.android.core.ui.navigation.SearchRoute
+import dev.typetype.android.core.ui.navigation.SubscriptionsRoute
 import dev.typetype.android.domain.playback.PlaybackQueueController
 import dev.typetype.android.domain.playback.PlaybackQueueEntry
 import dev.typetype.android.domain.playback.PlaybackQueueSnapshot
@@ -115,6 +120,48 @@ class AppShellAdaptiveTest {
         home.performKeyInput { pressKey(Key.DirectionRight) }
 
         composeRule.onNodeWithText("Shorts").assertIsFocused()
+    }
+
+    @Test
+    fun topLevelNavigationDoesNotRestoreSearchOverItsOpeningTab() {
+        composeRule.setContent {
+            val navController = rememberNavController()
+            AppShell(
+                navController = navController,
+                playerHostController = PlayerHostController(FakePlaybackQueueController()),
+                onOpenSearch = { navController.navigate(SearchRoute) },
+                onOpenSettings = {},
+                onPlayVideo = {},
+                onOpenChannel = {},
+                onOpenAccounts = {},
+                onClosePlayback = {},
+            ) { contentModifier ->
+                NavHost(
+                    navController = navController,
+                    startDestination = HomeRoute,
+                    modifier = contentModifier,
+                ) {
+                    composable<HomeRoute> { androidx.compose.material3.Text("Home content") }
+                    composable<SubscriptionsRoute> {
+                        androidx.compose.material3.Text("Subscriptions content")
+                    }
+                    composable<LibraryRoute> { androidx.compose.material3.Text("Library content") }
+                    composable<SearchRoute> { androidx.compose.material3.Text("Search content") }
+                }
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Search").performClick()
+        composeRule.onNodeWithText("Search content").assertIsDisplayed()
+        composeRule.onNodeWithText("Subscriptions").performClick()
+        composeRule.onNodeWithText("Subscriptions content").assertIsDisplayed()
+
+        composeRule.onNodeWithContentDescription("Search").performClick()
+        composeRule.onNodeWithText("Search content").assertIsDisplayed()
+        composeRule.onNodeWithText("Home").performClick()
+
+        composeRule.onNodeWithText("Home content").assertIsDisplayed()
+        composeRule.onNodeWithText("Search content").assertDoesNotExist()
     }
 
     private fun setShellWidth(width: Dp) {
