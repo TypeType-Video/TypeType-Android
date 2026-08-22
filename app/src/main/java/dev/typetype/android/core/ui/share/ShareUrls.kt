@@ -1,6 +1,7 @@
 package dev.typetype.android.core.ui.share
 
 import androidx.compose.runtime.compositionLocalOf
+import dev.typetype.android.domain.navigation.toPublicWatchParameter
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -13,6 +14,6 @@ fun buildShareUrl(serverBaseUrl: String?, videoUrl: String): String {
         .removeSuffix("/api")
         .trimEnd('/')
     if (origin.isBlank()) return videoUrl
-    val encoded = URLEncoder.encode(videoUrl, StandardCharsets.UTF_8.toString())
+    val encoded = URLEncoder.encode(toPublicWatchParameter(videoUrl), StandardCharsets.UTF_8.toString())
     return "$origin/watch?v=$encoded"
 }
