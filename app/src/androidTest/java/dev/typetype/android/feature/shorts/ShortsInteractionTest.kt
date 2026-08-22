@@ -30,19 +30,24 @@ class ShortsInteractionTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun horizontalSwipeRightOpensTheShortChannel() {
+    fun horizontalSwipeLeftOpensTheShortChannelWithHapticFeedback() {
         val openedChannel = AtomicReference<String>()
-        show(onOpenChannel = openedChannel::set)
+        val hapticCount = AtomicInteger()
+        show(
+            onOpenChannel = openedChannel::set,
+            hapticFeedback = RecordingHapticFeedback(hapticCount),
+        )
 
         composeRule.onNodeWithTag(SHORTS_PAGER_TAG).performTouchInput {
             swipe(
-                start = center.copy(x = center.x - 180f),
-                end = center.copy(x = center.x + 180f),
+                start = center.copy(x = center.x + 180f),
+                end = center.copy(x = center.x - 180f),
                 durationMillis = 300,
             )
         }
 
         composeRule.waitUntil { openedChannel.get() == "https://channel" }
+        assertEquals(1, hapticCount.get())
     }
 
     @Test

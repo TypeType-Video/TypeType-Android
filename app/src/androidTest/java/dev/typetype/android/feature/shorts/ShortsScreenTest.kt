@@ -161,7 +161,7 @@ class ShortsScreenTest {
     }
 
     @Test
-    fun horizontalSwipeLeftKeepsTheShortOpen() {
+    fun horizontalSwipeRightKeepsTheShortOpen() {
         val openedChannel = AtomicReference<String>()
 
         show(
@@ -171,8 +171,8 @@ class ShortsScreenTest {
 
         composeRule.onNodeWithTag(SHORTS_PAGER_TAG).performTouchInput {
             swipe(
-                start = center.copy(x = center.x + 180f),
-                end = center.copy(x = center.x - 180f),
+                start = center.copy(x = center.x - 180f),
+                end = center.copy(x = center.x + 180f),
                 durationMillis = 300,
             )
         }
