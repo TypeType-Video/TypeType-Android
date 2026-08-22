@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.DoneAll
@@ -17,6 +17,7 @@ import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -134,8 +135,7 @@ private fun NotificationList(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
     ) {
         state.actionErrorMessage?.let { message ->
             item(key = "action-error") {
@@ -145,16 +145,19 @@ private fun NotificationList(
                 }
             }
         }
-        items(
+        itemsIndexed(
             items = state.items,
-            key = { "${it.type}:${it.video.id}:${it.createdAtMillis}" },
-            contentType = { "notification" },
-        ) { item ->
+            key = { _, item -> "${item.type}:${item.video.id}:${item.createdAtMillis}" },
+            contentType = { _, _ -> "notification" },
+        ) { index, item ->
             NotificationRow(
                 item = item,
                 onOpenVideo = { onPlayVideo(item.video.url) },
                 modifier = Modifier.fillMaxWidth(),
             )
+            if (index < state.items.lastIndex) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            }
         }
         item(key = "notifications-pagination") {
             LazyPaginationFooter(
