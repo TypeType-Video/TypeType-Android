@@ -101,6 +101,30 @@ class PlayerHostControllerTest {
         controller.closeEmbeddedPlayback()
         assertEquals(PlayerHostTarget.Expanded, controller.state.value.target)
     }
+
+    @Test
+    fun `expanded Short collapses back into embedded playback`() {
+        val controller = PlayerHostController(FakePlaybackQueueController())
+        controller.openEmbeddedVideo("short", autoplay = true)
+
+        controller.expand()
+        assertEquals(PlayerHostTarget.Expanded, controller.state.value.target)
+
+        controller.collapseExpanded()
+
+        assertEquals(PlayerHostTarget.Embedded, controller.state.value.target)
+        assertEquals("short", controller.state.value.videoUrl)
+    }
+
+    @Test
+    fun `regular expanded video collapses into the mini player`() {
+        val controller = PlayerHostController(FakePlaybackQueueController())
+        controller.openVideo("video")
+
+        controller.collapseExpanded()
+
+        assertEquals(PlayerHostTarget.Mini, controller.state.value.target)
+    }
 }
 
 private class FakePlaybackQueueController : PlaybackQueueController {
