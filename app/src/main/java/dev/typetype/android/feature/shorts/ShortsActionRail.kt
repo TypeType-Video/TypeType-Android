@@ -1,10 +1,10 @@
 package dev.typetype.android.feature.shorts
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -16,7 +16,6 @@ import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.WatchLater
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,7 +54,6 @@ internal fun ShortsActionRail(
                 if (state.isFavorite) R.string.player_remove_from_favorites
                 else R.string.player_add_to_favorites,
             ),
-            selected = state.isFavorite,
             onClick = { onAction(VideoMenuAction.ToggleFavorite) },
         )
         ShortsActionButton(
@@ -64,7 +62,6 @@ internal fun ShortsActionRail(
                 if (state.isInWatchLater) R.string.player_remove_from_watch_later
                 else R.string.player_add_to_watch_later,
             ),
-            selected = state.isInWatchLater,
             onClick = { onAction(VideoMenuAction.ToggleWatchLater) },
         )
         onShowComments?.let {
@@ -99,18 +96,20 @@ private fun ShortsActionButton(
     icon: ImageVector,
     contentDescription: String,
     onClick: () -> Unit,
-    selected: Boolean = false,
 ) {
-    Surface(
-        shape = CircleShape,
-        color = if (selected) Color.White else Color.Black.copy(alpha = 0.64f),
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.3f)),
-    ) {
-        IconButton(onClick = onClick, modifier = Modifier.size(48.dp)) {
+    IconButton(onClick = onClick, modifier = Modifier.size(48.dp)) {
+        Box {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = Color.Black.copy(alpha = 0.78f),
+                modifier = Modifier.size(28.dp).offset(x = 1.dp, y = 2.dp),
+            )
             Icon(
                 imageVector = icon,
                 contentDescription = contentDescription,
-                tint = if (selected) Color.Black else Color.White,
+                tint = Color.White,
+                modifier = Modifier.size(28.dp),
             )
         }
     }

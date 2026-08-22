@@ -10,13 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -29,15 +23,11 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import dev.typetype.android.R
-import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.core.ui.components.AnimatedError
 import dev.typetype.android.core.ui.components.FullScreenLoader
 import dev.typetype.android.core.ui.components.RequestIdRow
@@ -49,6 +39,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlin.math.absoluteValue
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -104,12 +95,18 @@ fun ShortsScreen(
                 VerticalPager(
                     state = pagerState,
                     key = { state.videos[it].shortIdentity() },
+                    beyondViewportPageCount = 1,
                     modifier = Modifier.fillMaxSize().testTag(SHORTS_PAGER_TAG),
                 ) { page ->
+                    val pageOffset = (
+                        pagerState.currentPage - page + pagerState.currentPageOffsetFraction
+                    ).absoluteValue
                     ShortPage(
                         video = state.videos[page],
                         isActive = embeddedPlaybackEnabled &&
                             page == pagerState.settledPage,
+                        embeddedPlaybackEnabled = embeddedPlaybackEnabled,
+                        visuals = shortsPageVisuals(pageOffset),
                         onPlayVideo = onPlayVideo,
                         onOpenChannel = onOpenChannel,
                         menuItemState = menuItemState(state.videos[page]),
@@ -127,16 +124,6 @@ fun ShortsScreen(
                                 }
                             }
                         },
-                    )
-                }
-                IconButton(
-                    onClick = onRefresh,
-                    modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
-                ) {
-                    Icon(
-                        Icons.Outlined.Refresh,
-                        contentDescription = stringResource(R.string.shorts_refresh),
-                        tint = Color.White,
                     )
                 }
                 if (state.isLoadingMore) {
@@ -180,76 +167,6 @@ private fun ShortsInlineError(
                 Text(stringResource(R.string.state_retry))
             }
         }
-    }
-}
-
-@Composable
-private fun ShortPage(
-    video: Video,
-    isActive: Boolean,
-    onPlayVideo: (String) -> Unit,
-    onOpenChannel: (String) -> Unit,
-    menuItemState: VideoMenuItemState,
-    onMenuAction: (VideoMenuAction) -> Unit,
-    onShowComments: (() -> Unit)?,
-    isSubscribed: Boolean,
-    subscriptionInFlight: Boolean,
-    onToggleSubscription: () -> Unit,
-    embeddedPlayback: @Composable () -> Unit,
-) {
-    val branding = rememberVideoBranding(
-        sourceUrl = video.url,
-        title = video.title,
-        thumbnailUrl = video.thumbnailUrl,
-        durationSeconds = video.durationSeconds,
-    )
-    Box(modifier = Modifier.fillMaxSize()) {
-        AsyncImage(
-            model = branding.thumbnailUrl,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize(),
-        )
-        if (isActive) embeddedPlayback()
-        Box(
-            modifier = Modifier.fillMaxSize().background(
-                Brush.verticalGradient(
-                    0f to Color.Black.copy(alpha = 0.18f),
-                    0.55f to Color.Transparent,
-                    1f to Color.Black.copy(alpha = 0.88f),
-                ),
-            ),
-        )
-        if (isActive) {
-            ShortsActionRail(
-                video = video,
-                state = menuItemState,
-                onOpenPlayer = { onPlayVideo(video.url) },
-                onAction = onMenuAction,
-                onShowComments = onShowComments,
-                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 12.dp),
-            )
-        } else {
-            FilledIconButton(
-                onClick = { onPlayVideo(video.url) },
-                modifier = Modifier.align(Alignment.Center).size(68.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.PlayArrow,
-                    contentDescription = stringResource(R.string.shorts_play, branding.title),
-                    modifier = Modifier.size(38.dp),
-                )
-            }
-        }
-        ShortsInfoOverlay(
-            video = video,
-            title = branding.title,
-            isSubscribed = isSubscribed,
-            subscriptionInFlight = subscriptionInFlight,
-            onOpenChannel = { onOpenChannel(video.uploaderUrl) },
-            onToggleSubscription = onToggleSubscription,
-            modifier = Modifier.align(Alignment.BottomStart),
-        )
     }
 }
 
