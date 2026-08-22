@@ -39,6 +39,7 @@ import dev.typetype.android.feature.player.components.PlaybackKeepScreenOnEffect
 import dev.typetype.android.feature.player.components.PlayerSubtitleOverlay
 import dev.typetype.android.feature.player.components.ResilientPlayerSurface
 import dev.typetype.android.feature.player.components.SponsorBlockPlaybackFeedback
+import dev.typetype.android.feature.player.components.rememberCurrentMediaId
 import dev.typetype.android.feature.player.components.rememberPlayerPlaybackStatus
 import dev.typetype.android.feature.player.state.ResizeMode
 
@@ -107,6 +108,7 @@ private fun ShortsPlayerSurface(
             onRetry.takeIf { stream.playbackContract == StreamPlaybackContract.ServerSabr },
         )
     }
+    val currentMediaId = rememberCurrentMediaId(controller)
     val externalSubtitle = stream.subtitles.firstOrNull {
         stream.playbackContract == StreamPlaybackContract.ServerSabr &&
             it.key == selections.selectedSubtitleKey
@@ -158,7 +160,7 @@ private fun ShortsPlayerSurface(
     )
     ShortsEndedEffect(controller, onAdvance)
 
-    if (controller == null || playbackStatus == null) {
+    if (controller == null || playbackStatus == null || currentMediaId != state.videoUrl) {
         CircularProgressIndicator()
         return
     }
@@ -233,10 +235,6 @@ private fun ShortsPlayerSurface(
             policy = sponsorBlockPolicy,
             visible = true,
             modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
-        )
-        ShortsPlaybackProgress(
-            player = controller,
-            modifier = Modifier.align(Alignment.BottomCenter),
         )
     }
 }

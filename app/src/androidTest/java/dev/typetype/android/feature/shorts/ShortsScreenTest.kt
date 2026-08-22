@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.awaitCancellation
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -120,7 +121,7 @@ class ShortsScreenTest {
     }
 
     @Test
-    fun cancelledSwipeKeepsTheSettledShortActive() {
+    fun cancelledSwipeRestoresTheSettledShortAfterPausingDuringDrag() {
         val activeUrl = AtomicReference<String>()
         val inactiveEvents = AtomicInteger()
         val playbackDisposals = AtomicInteger()
@@ -154,8 +155,8 @@ class ShortsScreenTest {
         composeRule.waitForIdle()
 
         assertEquals("https://video/one", activeUrl.get())
-        assertEquals(0, inactiveEvents.get())
-        assertEquals(0, playbackDisposals.get())
+        assertTrue(inactiveEvents.get() > 0)
+        assertTrue(playbackDisposals.get() > 0)
         composeRule.onNodeWithText("Embedded Short one").assertIsDisplayed()
     }
 
@@ -239,9 +240,23 @@ class ShortsScreenTest {
         assertEquals("one", subscribedVideo.get().id)
     }
 
+    @Test
+    fun backButtonIsAvailableOverTheShort() {
+        val navigatedBack = AtomicBoolean()
+
+        show(
+            state = ShortsState(videos = listOf(video("one")), isLoading = false),
+            onNavigateBack = { navigatedBack.set(true) },
+        )
+
+        composeRule.onNodeWithContentDescription("Back").performClick()
+        assertTrue(navigatedBack.get())
+    }
+
     private fun show(
         state: ShortsState,
         onPlayVideo: (String) -> Unit = {},
+        onNavigateBack: () -> Unit = {},
         embeddedPlaybackEnabled: Boolean = false,
         onActiveVideoChanged: (Video?) -> Unit = {},
         onUpcomingVideosChanged: suspend (List<Video>) -> Unit = {},
@@ -255,6 +270,7 @@ class ShortsScreenTest {
                 TypeTypeTheme {
                     ShortsScreen(
                         state = state,
+                        onNavigateBack = onNavigateBack,
                         onPlayVideo = onPlayVideo,
                         onOpenChannel = {},
                         onRefresh = {},

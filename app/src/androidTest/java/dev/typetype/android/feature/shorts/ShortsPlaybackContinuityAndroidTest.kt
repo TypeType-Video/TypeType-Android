@@ -90,6 +90,7 @@ class ShortsPlaybackContinuityAndroidTest {
             CompositionLocalProvider(LocalAnimatedStatePlayback provides false) {
                 TypeTypeTheme {
                     ShortsScreen(
+                        onNavigateBack = {},
                         state = ShortsState(
                             videos = videos,
                             isLoading = false,
