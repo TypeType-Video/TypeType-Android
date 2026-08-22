@@ -15,7 +15,6 @@ import dev.typetype.android.domain.playback.PlaybackQueueState
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.usersettings.UserSettings
 import dev.typetype.android.feature.menu.rememberVideoMenuScope
-import dev.typetype.android.feature.player.components.CommentsBar
 import dev.typetype.android.feature.player.components.DescriptionSection
 import dev.typetype.android.feature.player.components.RelatedStreamsSection
 import dev.typetype.android.feature.player.components.UploaderCard
@@ -70,6 +69,7 @@ internal fun PlayerDetails(
             onToggleFavorite = { onAction(PlayerAction.OnToggleFavorite) },
             onToggleWatchLater = { onAction(PlayerAction.OnToggleWatchLater) },
             onAddToPlaylist = { onAction(PlayerAction.OnOpenPlaylistPicker) },
+            onShowComments = onShowComments.takeUnless { userSettings.hideComments },
             onDownload = onShowDownloads,
             downloadInFlight = downloadInFlight,
         )
@@ -84,9 +84,6 @@ internal fun PlayerDetails(
             onSubscribeClick = onToggleSubscription,
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-        if (!userSettings.hideComments) {
-            CommentsBar(onClick = onShowComments)
-        }
         if (!userSettings.hideRelatedVideos) {
             RelatedStreamsSection(
                 videos = stream.relatedStreams,
