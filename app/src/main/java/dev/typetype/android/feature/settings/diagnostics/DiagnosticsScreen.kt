@@ -82,7 +82,7 @@ private fun DiagnosticsScreen(
     val context = LocalContext.current
     val shareLabel = stringResource(R.string.diagnostics_share)
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars)) {
+        Column(modifier = Modifier.fillMaxSize()) {
             DiagnosticsTopBar(onNavigateBack)
             LazyColumn(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
