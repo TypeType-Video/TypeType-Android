@@ -50,11 +50,20 @@ class PersistentCookieJarTest {
             jar.resumeAuthentication(server.id, server.baseUrl)
             jar.completeAuthentication(server.id, "account-a")
 
-            val stored = jar.scoped(server.id, "account-a", server.baseUrl)
+            val recreatedJar = PersistentCookieJar(
+                context,
+                ApiBaseUrlHolder(FakeServerRepository(server)),
+                accountStore,
+            )
+            val stored = recreatedJar.scoped(server.id, "account-a", server.baseUrl)
                 .loadForRequest(requestUrl)
 
             assertEquals(listOf("refresh_token"), stored.map { it.name })
-            assertTrue(jar.scoped(server.id, "account-b", server.baseUrl).loadForRequest(requestUrl).isEmpty())
+            assertTrue(
+                recreatedJar.scoped(server.id, "account-b", server.baseUrl)
+                    .loadForRequest(requestUrl)
+                    .isEmpty(),
+            )
         } finally {
             jar.clear()
         }
