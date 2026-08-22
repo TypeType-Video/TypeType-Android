@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.activity.compose.LocalActivity
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -17,6 +18,7 @@ import dev.typetype.android.core.ui.components.LocalAppSnackbarHost
 import dev.typetype.android.feature.menu.rememberVideoMenuScope
 import dev.typetype.android.feature.player.PlayerChannelActionsViewModel
 import dev.typetype.android.feature.player.PlayerViewModel
+import dev.typetype.android.feature.player.PlayerFullscreenEffect
 import dev.typetype.android.feature.player.ShortsPlayerRoute
 import dev.typetype.android.feature.player.components.CommentsSheet
 import dev.typetype.android.feature.player.components.LocalMediaController
@@ -44,8 +46,15 @@ fun ShortsRoute(
     val visibleState = state.copy(videos = state.videos.filterNot(menuScope::isHidden))
     val snackbarHost = LocalAppSnackbarHost.current
     val context = LocalContext.current
+    val activity = LocalActivity.current
     val actionFailed = stringResource(R.string.snackbar_action_failed)
     var commentsVideoUrl by remember { mutableStateOf<String?>(null) }
+
+    PlayerFullscreenEffect(
+        activity = activity,
+        isFullscreen = true,
+        locksLandscape = false,
+    )
 
     LaunchedEffect(channelActionsViewModel, snackbarHost, actionFailed) {
         channelActionsViewModel.events.collect {

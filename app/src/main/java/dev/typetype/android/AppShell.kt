@@ -34,6 +34,7 @@ import dev.typetype.android.core.ui.navigation.PlaylistRoute
 import dev.typetype.android.core.ui.navigation.PodcastRoute
 import dev.typetype.android.core.ui.navigation.PublicPlaylistRoute
 import dev.typetype.android.core.ui.navigation.SearchRoute
+import dev.typetype.android.core.ui.navigation.ShortsRoute
 import dev.typetype.android.feature.player.components.LocalMediaController
 import dev.typetype.android.feature.player.components.rememberMediaController
 import dev.typetype.android.feature.player.host.PlayerHost
@@ -65,15 +66,18 @@ fun AppShell(
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
+    val isShorts = currentDestination.matchesRoute(ShortsRoute)
     val navigationTabs = visibleTopLevelTabs(showShorts)
     val isTopLevel = topLevelTabs.any { currentDestination.matchesRoute(it.route) }
-    val showsNavigation = isTopLevel ||
-        currentDestination?.hasRoute<ChannelRoute>() == true ||
-        currentDestination?.hasRoute<PlaylistRoute>() == true ||
-        currentDestination?.hasRoute<PublicPlaylistRoute>() == true ||
-        currentDestination?.hasRoute<PodcastRoute>() == true ||
-        currentDestination?.hasRoute<SearchRoute>() == true ||
-        currentDestination?.hasRoute<NotificationsRoute>() == true
+    val showsNavigation = !isShorts && (
+        isTopLevel ||
+            currentDestination?.hasRoute<ChannelRoute>() == true ||
+            currentDestination?.hasRoute<PlaylistRoute>() == true ||
+            currentDestination?.hasRoute<PublicPlaylistRoute>() == true ||
+            currentDestination?.hasRoute<PodcastRoute>() == true ||
+            currentDestination?.hasRoute<SearchRoute>() == true ||
+            currentDestination?.hasRoute<NotificationsRoute>() == true
+    )
     var activeTabRoute by rememberSaveable { mutableStateOf<String?>(null) }
     var isPlayerFullscreen by remember { mutableStateOf(false) }
     var playerTransitionProgress by remember { mutableStateOf(0f) }
@@ -111,13 +115,13 @@ fun AppShell(
                 }
                 Box(modifier = Modifier.weight(1f)) {
                     Scaffold(
-                        contentWindowInsets = if (isPlayerFullscreen) {
+                        contentWindowInsets = if (isPlayerFullscreen || isShorts) {
                             WindowInsets(0)
                         } else {
                             WindowInsets.systemBars
                         },
                         topBar = {
-                            if (isTopLevel && !usesNavigationRail) {
+                            if (isTopLevel && !isShorts && !usesNavigationRail) {
                                 AppTopBar(
                                     onOpenSearch = onOpenSearch,
                                     onOpenNotifications = onOpenNotifications,
@@ -129,7 +133,7 @@ fun AppShell(
                                     avatarFallbackLetter = avatarFallbackLetter,
                                     modifier = Modifier.playerChrome(phoneChromeAlpha),
                                 )
-                            } else if (isTopLevel && appChromeVisible) {
+                            } else if (isTopLevel && !isShorts && appChromeVisible) {
                                 AppTopBar(
                                     onOpenSearch = onOpenSearch,
                                     onOpenNotifications = onOpenNotifications,
