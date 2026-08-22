@@ -78,7 +78,6 @@ fun SubscriptionsScreen(
         SubscriptionsFeedStatusBar(
             isRefreshing = state.isLoading,
             isServerRefreshing = state.isServerRefreshing,
-            hasPendingRefresh = state.hasPendingRefresh,
             errorMessage = state.errorMessage,
             requestId = state.errorRequestId,
             hasContent = state.videos.isNotEmpty(),

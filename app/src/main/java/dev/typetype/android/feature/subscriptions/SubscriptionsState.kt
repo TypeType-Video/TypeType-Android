@@ -9,7 +9,6 @@ data class SubscriptionsState(
     val isLoading: Boolean = false,
     val isLoadingMore: Boolean = false,
     val isServerRefreshing: Boolean = false,
-    val hasPendingRefresh: Boolean = false,
     val videos: List<Video> = emptyList(),
     val channels: List<SubscriptionSummary> = emptyList(),
     val selectedTab: SubscriptionsTab = SubscriptionsTab.Videos,

@@ -24,7 +24,6 @@ import dev.typetype.android.core.ui.components.RequestIdRow
 internal fun SubscriptionsFeedStatusBar(
     isRefreshing: Boolean,
     isServerRefreshing: Boolean,
-    hasPendingRefresh: Boolean,
     errorMessage: String?,
     requestId: String?,
     hasContent: Boolean,
@@ -33,7 +32,6 @@ internal fun SubscriptionsFeedStatusBar(
     when {
         errorMessage != null && hasContent -> FailureStatus(errorMessage, requestId, onRetry)
         isRefreshing && hasContent -> ProgressStatus(R.string.subscriptions_checking_updates)
-        hasPendingRefresh && hasContent -> RefreshAvailableStatus(onRetry)
         isServerRefreshing && hasContent -> ProgressStatus(R.string.subscriptions_rebuilding)
     }
 }
@@ -52,29 +50,6 @@ private fun ProgressStatus(label: Int) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
         )
-    }
-}
-
-@Composable
-private fun RefreshAvailableStatus(onRefresh: () -> Unit) {
-    Surface(
-        color = MaterialTheme.colorScheme.secondaryContainer,
-        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-        modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(R.string.subscriptions_update_available),
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.weight(1f),
-            )
-            TextButton(onClick = onRefresh) {
-                Text(stringResource(R.string.subscriptions_refresh))
-            }
-        }
     }
 }
 

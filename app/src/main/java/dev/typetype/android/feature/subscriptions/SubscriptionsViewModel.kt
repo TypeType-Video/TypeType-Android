@@ -136,7 +136,6 @@ class SubscriptionsViewModel @Inject constructor(
                 isLoading = true,
                 isLoadingMore = false,
                 isServerRefreshing = false,
-                hasPendingRefresh = false,
                 errorMessage = null,
                 errorRequestId = null,
                 loadMoreError = false,
@@ -161,7 +160,6 @@ class SubscriptionsViewModel @Inject constructor(
                 videos = page.videos.distinctBy { video -> video.url },
                 hasMore = page.hasMore,
                 isServerRefreshing = page.refreshing,
-                hasPendingRefresh = false,
                 generatedAtMillis = page.generatedAtMillis,
                 errorMessage = null,
                 errorRequestId = null,
@@ -197,7 +195,7 @@ class SubscriptionsViewModel @Inject constructor(
                 onFailure = { failure ->
                     if (failure.requiresSubscriptionsPaginationRestart()) {
                         refreshMonitorJob?.cancel()
-                        offerRefresh()
+                        requestJob = viewModelScope.launch { loadFirstPage() }
                     } else {
                         networkRecovery.schedule(failure, SubscriptionsRecoveryRequest.Pagination)
                         val details = errorMapper.details(failure, R.string.subscriptions_failed)
@@ -251,12 +249,13 @@ class SubscriptionsViewModel @Inject constructor(
                     showRefreshFailure(failure)
                     return@launch
                 }
-                if (generation != expectedGeneration) return@launch
-                if (page.generation != expectedGeneration) {
-                    offerRefresh()
-                    return@launch
-                } else {
-                    _state.update {
+                when (subscriptionsGenerationAction(generation, expectedGeneration, page.generation)) {
+                    SubscriptionsGenerationAction.Stop -> return@launch
+                    SubscriptionsGenerationAction.Replace -> {
+                        viewModelScope.launch { acceptFirstPage(page, hadCachedContent = true) }
+                        return@launch
+                    }
+                    SubscriptionsGenerationAction.Continue -> _state.update {
                         it.copy(
                             isServerRefreshing = page.refreshing,
                             generatedAtMillis = page.generatedAtMillis,
@@ -265,19 +264,6 @@ class SubscriptionsViewModel @Inject constructor(
                 }
                 if (!page.refreshing) return@launch
             }
-        }
-    }
-
-    private fun offerRefresh() {
-        nextCursor = null
-        _state.update {
-            it.copy(
-                isLoadingMore = false,
-                isServerRefreshing = false,
-                hasPendingRefresh = true,
-                hasMore = false,
-                loadMoreError = false,
-            )
         }
     }
 
