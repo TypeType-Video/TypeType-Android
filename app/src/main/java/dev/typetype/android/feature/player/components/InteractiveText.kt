@@ -13,6 +13,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
+import java.net.URI
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 
 internal sealed interface InteractiveTextRange {
     val start: Int
@@ -68,12 +71,23 @@ internal fun interactiveTextRanges(text: String): List<InteractiveTextRange> {
     return (urls + timestamps).sortedBy(InteractiveTextRange::start)
 }
 
-internal fun normalizeExternalUrl(url: String): String =
-    if (url.startsWith("http://", true) || url.startsWith("https://", true)) {
+internal fun normalizeExternalUrl(url: String): String {
+    val absolute = if (url.startsWith("http://", true) || url.startsWith("https://", true)) {
         url
     } else {
         "https://$url"
     }
+    val parsed = runCatching { URI(absolute) }.getOrNull() ?: return absolute
+    if (!parsed.path.orEmpty().endsWith("/api/proxy")) return absolute
+    val target = parsed.rawQuery.orEmpty().split('&').firstNotNullOfOrNull { parameter ->
+        val name = parameter.substringBefore('=')
+        if (name != "url") return@firstNotNullOfOrNull null
+        URLDecoder.decode(parameter.substringAfter('=', ""), StandardCharsets.UTF_8)
+    } ?: return absolute
+    return target.takeIf {
+        it.startsWith("https://", ignoreCase = true) || it.startsWith("http://", ignoreCase = true)
+    } ?: absolute
+}
 
 @Composable
 internal fun LinkedText(
