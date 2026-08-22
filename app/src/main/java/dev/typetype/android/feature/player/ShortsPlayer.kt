@@ -234,6 +234,10 @@ private fun ShortsPlayerSurface(
             visible = true,
             modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
         )
+        ShortsPlaybackProgress(
+            player = controller,
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
     }
 }
 

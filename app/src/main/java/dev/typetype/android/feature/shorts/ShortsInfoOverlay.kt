@@ -3,6 +3,7 @@ package dev.typetype.android.feature.shorts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -49,9 +50,8 @@ internal fun ShortsInfoOverlay(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .weight(1f)
-                    .clip(RoundedCornerShape(999.dp))
                     .clickable(role = Role.Button, onClick = onOpenChannel)
-                    .padding(vertical = 6.dp, horizontal = 8.dp),
+                    .padding(vertical = 6.dp),
             ) {
                 AsyncImage(
                     model = video.uploaderAvatarUrl,
@@ -73,7 +73,8 @@ internal fun ShortsInfoOverlay(
                 Button(
                     onClick = onToggleSubscription,
                     enabled = !subscriptionInFlight,
-                    shape = RoundedCornerShape(20.dp),
+                    shape = RoundedCornerShape(6.dp),
+                    modifier = Modifier.defaultMinSize(minHeight = 36.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isSubscribed) {
                             Color.Black.copy(alpha = 0.68f)

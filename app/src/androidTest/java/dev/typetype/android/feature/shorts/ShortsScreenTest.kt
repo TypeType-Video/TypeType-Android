@@ -105,6 +105,21 @@ class ShortsScreenTest {
     }
 
     @Test
+    fun embeddedPagerDoesNotFlashPlayButtonsOnAdjacentPages() {
+        show(
+            state = ShortsState(
+                videos = listOf(video("one"), video("two")),
+                isLoading = false,
+            ),
+            embeddedPlaybackEnabled = true,
+            embeddedPlayback = { video, _ -> Text("Embedded ${video.title}") },
+        )
+
+        composeRule.onNodeWithText("Embedded Short one").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Play Short two").assertDoesNotExist()
+    }
+
+    @Test
     fun cancelledSwipeKeepsTheSettledShortActive() {
         val activeUrl = AtomicReference<String>()
         val inactiveEvents = AtomicInteger()
