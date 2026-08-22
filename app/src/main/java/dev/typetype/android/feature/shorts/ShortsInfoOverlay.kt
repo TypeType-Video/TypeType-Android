@@ -114,14 +114,16 @@ internal fun ShortsInfoOverlay(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            ShortsStat(
-                value = formatShortsCount(stats.viewCount),
-                icon = Icons.Outlined.Visibility,
-                contentDescription = stringResource(
-                    R.string.player_views_count,
-                    formatShortsCount(stats.viewCount),
-                ),
-            )
+            stats.viewCount?.let { views ->
+                ShortsStat(
+                    value = formatShortsCount(views),
+                    icon = Icons.Outlined.Visibility,
+                    contentDescription = stringResource(
+                        R.string.player_views_count,
+                        formatShortsCount(views),
+                    ),
+                )
+            }
             stats.likeCount?.let { likes ->
                 ShortsStat(
                     value = formatShortsCount(likes),

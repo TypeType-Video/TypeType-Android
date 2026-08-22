@@ -246,18 +246,13 @@ private fun ShortsPlayerSurface(
                 .safeDrawingPadding()
                 .padding(top = 64.dp, end = 16.dp),
         )
-        FilledIconButton(
+        ShortsPlaybackOptionsButton(
             onClick = { playbackOptionsVisible = true },
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .safeDrawingPadding()
                 .padding(12.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Settings,
-                contentDescription = stringResource(R.string.player_playback_options),
-            )
-        }
+        )
         if (playbackOptionsVisible) {
             PlaybackOptionsSheet(
                 player = controller,
@@ -282,6 +277,16 @@ private fun ShortsPlayerSurface(
                 onDismiss = { playbackOptionsVisible = false },
             )
         }
+    }
+}
+
+@Composable
+internal fun ShortsPlaybackOptionsButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    FilledIconButton(onClick = onClick, modifier = modifier) {
+        Icon(
+            imageVector = Icons.Filled.Settings,
+            contentDescription = stringResource(R.string.player_playback_options),
+        )
     }
 }
 
