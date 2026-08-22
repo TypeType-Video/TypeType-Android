@@ -15,6 +15,7 @@ enum class PlayerHostTarget { Hidden, Mini, Expanded, Embedded }
 data class PlayerHostStateSnapshot(
     val videoUrl: String? = null,
     val target: PlayerHostTarget = PlayerHostTarget.Hidden,
+    val expandedReturnTarget: PlayerHostTarget = PlayerHostTarget.Mini,
     val resumePositionMillis: Long? = null,
     val initialPlayWhenReady: Boolean = true,
     val requestStamp: Long = 0L,
@@ -34,6 +35,7 @@ class PlayerHostController @Inject constructor(
             it.copy(
                 videoUrl = url,
                 target = PlayerHostTarget.Expanded,
+                expandedReturnTarget = PlayerHostTarget.Mini,
                 resumePositionMillis = null,
                 initialPlayWhenReady = true,
                 requestStamp = it.requestStamp + 1,
@@ -50,6 +52,7 @@ class PlayerHostController @Inject constructor(
             it.copy(
                 videoUrl = firstUrl,
                 target = PlayerHostTarget.Expanded,
+                expandedReturnTarget = PlayerHostTarget.Mini,
                 resumePositionMillis = null,
                 initialPlayWhenReady = true,
                 requestStamp = it.requestStamp + 1,
@@ -65,6 +68,7 @@ class PlayerHostController @Inject constructor(
             it.copy(
                 videoUrl = url,
                 target = PlayerHostTarget.Mini,
+                expandedReturnTarget = PlayerHostTarget.Mini,
                 resumePositionMillis = positionMillis,
                 initialPlayWhenReady = false,
                 requestStamp = it.requestStamp + 1,
@@ -82,6 +86,7 @@ class PlayerHostController @Inject constructor(
             it.copy(
                 videoUrl = currentUrl,
                 target = PlayerHostTarget.Mini,
+                expandedReturnTarget = PlayerHostTarget.Mini,
                 resumePositionMillis = positionMillis,
                 initialPlayWhenReady = false,
                 requestStamp = it.requestStamp + 1,
@@ -102,6 +107,7 @@ class PlayerHostController @Inject constructor(
             it.copy(
                 videoUrl = url,
                 target = PlayerHostTarget.Embedded,
+                expandedReturnTarget = PlayerHostTarget.Embedded,
                 resumePositionMillis = null,
                 initialPlayWhenReady = autoplay,
                 requestStamp = it.requestStamp + 1,
@@ -117,7 +123,24 @@ class PlayerHostController @Inject constructor(
 
     fun expand() {
         _state.update {
-            it.copy(target = PlayerHostTarget.Expanded, requestStamp = it.requestStamp + 1)
+            it.copy(
+                target = PlayerHostTarget.Expanded,
+                expandedReturnTarget = when (it.target) {
+                    PlayerHostTarget.Embedded -> PlayerHostTarget.Embedded
+                    PlayerHostTarget.Mini -> PlayerHostTarget.Mini
+                    else -> it.expandedReturnTarget
+                },
+                requestStamp = it.requestStamp + 1,
+            )
+        }
+    }
+
+    fun collapseExpanded() {
+        _state.update {
+            if (it.target != PlayerHostTarget.Expanded) it else it.copy(
+                target = it.expandedReturnTarget,
+                requestStamp = it.requestStamp + 1,
+            )
         }
     }
 
@@ -133,6 +156,7 @@ class PlayerHostController @Inject constructor(
             it.copy(
                 videoUrl = null,
                 target = PlayerHostTarget.Hidden,
+                expandedReturnTarget = PlayerHostTarget.Mini,
                 resumePositionMillis = null,
                 initialPlayWhenReady = true,
                 requestStamp = requestStamp,

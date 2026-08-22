@@ -146,7 +146,7 @@ fun PlayerHost(
                     PlayerRouteScreen(
                         isFullscreen = isFullscreen,
                         onFullscreenChange = requestFullscreen,
-                        onNavigateBack = { controller.minimize() },
+                        onNavigateBack = { controller.collapseExpanded() },
                         onOpenAccounts = {
                             controller.minimize()
                             onOpenAccounts()
@@ -165,7 +165,7 @@ fun PlayerHost(
                 if (isFullscreen) {
                     requestFullscreen(false)
                 } else {
-                    controller.minimize()
+                    controller.collapseExpanded()
                 }
             }
         } else {
