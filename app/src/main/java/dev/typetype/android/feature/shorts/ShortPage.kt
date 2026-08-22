@@ -19,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
@@ -33,32 +32,28 @@ import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.feature.player.ShortsPlaybackProgress
 import dev.typetype.android.feature.player.components.LocalMediaController
 import dev.typetype.android.feature.player.components.rememberCurrentMediaId
+import kotlin.math.absoluteValue
 
-internal data class ShortsPageVisuals(
-    val overlayAlpha: Float,
-    val overlayTranslationY: Float,
-)
+internal fun shortsOverlayAlpha(pageOffset: Float): Float =
+    1f - pageOffset.coerceIn(0f, 1f) * 0.62f
 
-internal fun shortsPageVisuals(pageOffset: Float): ShortsPageVisuals {
-    val distance = pageOffset.coerceIn(0f, 1f)
-    return ShortsPageVisuals(
-        overlayAlpha = 1f - distance * 0.62f,
-        overlayTranslationY = distance * 24f,
-    )
-}
+internal fun shortsOverlayTranslationY(pageOffset: Float): Float =
+    pageOffset.coerceIn(0f, 1f) * 24f
 
 @Composable
 internal fun ShortPage(
     video: Video,
     isActive: Boolean,
     embeddedPlaybackEnabled: Boolean,
-    visuals: ShortsPageVisuals,
+    enhanceBranding: Boolean,
+    overlayMotion: Modifier,
     onPlayVideo: (String) -> Unit,
     onOpenChannel: (String) -> Unit,
     menuItemState: VideoMenuItemState,
     stats: ShortsVideoStats,
     onMenuAction: (VideoMenuAction) -> Unit,
     onShowComments: (() -> Unit)?,
+    onCopyTitle: (String) -> Unit,
     isSubscribed: Boolean,
     subscriptionInFlight: Boolean,
     onToggleSubscription: () -> Unit,
@@ -71,11 +66,8 @@ internal fun ShortPage(
         title = video.title,
         thumbnailUrl = video.thumbnailUrl,
         durationSeconds = video.durationSeconds,
+        loadEnhancements = enhanceBranding,
     )
-    val overlayMotion = Modifier.graphicsLayer {
-        alpha = visuals.overlayAlpha
-        translationY = visuals.overlayTranslationY
-    }
     var horizontalDrag by remember(video.id) { mutableFloatStateOf(0f) }
     Box(
         modifier = Modifier
@@ -88,7 +80,7 @@ internal fun ShortPage(
                         change.consume()
                     },
                     onDragEnd = {
-                        if (horizontalDrag <= -SHORTS_CHANNEL_SWIPE_THRESHOLD_PX &&
+                        if (horizontalDrag.absoluteValue >= SHORTS_CHANNEL_SWIPE_THRESHOLD_PX &&
                             video.uploaderUrl.isNotBlank()
                         ) {
                             onOpenChannel(video.uploaderUrl)
@@ -145,6 +137,7 @@ internal fun ShortPage(
             isSubscribed = isSubscribed,
             subscriptionInFlight = subscriptionInFlight,
             onOpenChannel = { onOpenChannel(video.uploaderUrl) },
+            onCopyTitle = onCopyTitle,
             onToggleSubscription = onToggleSubscription,
             modifier = Modifier.align(Alignment.BottomStart).then(overlayMotion),
         )

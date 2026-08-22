@@ -180,7 +180,7 @@ class ShortsScreenTest {
     }
 
     @Test
-    fun pagerReportsTwoUpcomingShortsForMetadataPrefetch() {
+    fun pagerReportsTwoUpcomingShortsForPlaybackPrefetch() {
         val upcomingUrls = AtomicReference<List<String>>()
 
         show(
@@ -197,7 +197,7 @@ class ShortsScreenTest {
     }
 
     @Test
-    fun changingPageCancelsThePreviousMetadataPrefetch() {
+    fun changingPageCancelsThePreviousPlaybackPrefetch() {
         val prefetchStarted = AtomicBoolean()
         val prefetchCancelled = AtomicBoolean()
 

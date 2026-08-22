@@ -20,13 +20,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -56,6 +59,7 @@ fun ShortsScreen(
     onRefresh: () -> Unit,
     onLoadMore: () -> Unit,
     embeddedPlaybackEnabled: Boolean = false,
+    playbackReady: Boolean = true,
     onActiveVideoChanged: (Video?) -> Unit = {},
     onUpcomingVideosChanged: suspend (List<Video>) -> Unit = {},
     statsForVideo: (Video) -> ShortsVideoStats = {
@@ -65,6 +69,7 @@ fun ShortsScreen(
     menuItemState: (Video) -> VideoMenuItemState = { VideoMenuItemState() },
     onMenuAction: (VideoMenuAction, Video) -> Unit = { _, _ -> },
     onShowComments: ((Video) -> Unit)? = null,
+    onCopyTitle: (String) -> Unit = {},
     isSubscribed: (Video) -> Boolean = { false },
     subscriptionInFlight: (Video) -> Boolean = { false },
     onToggleSubscription: (Video) -> Unit = {},
@@ -97,7 +102,8 @@ fun ShortsScreen(
                     .distinctUntilChanged()
                     .collect(currentActiveVideoChanged)
             }
-            LaunchedEffect(pagerState, state.videos) {
+            LaunchedEffect(pagerState, state.videos, playbackReady) {
+                if (!playbackReady) return@LaunchedEffect
                 snapshotFlow {
                     state.videos.drop(pagerState.settledPage + 1).take(SHORTS_PREFETCH_COUNT)
                 }.distinctUntilChanged().collectLatest(currentUpcomingVideosChanged)
@@ -109,15 +115,24 @@ fun ShortsScreen(
                     beyondViewportPageCount = 1,
                     modifier = Modifier.fillMaxSize().testTag(SHORTS_PAGER_TAG),
                 ) { page ->
-                    val pageOffset = (
-                        pagerState.currentPage - page + pagerState.currentPageOffsetFraction
-                    ).absoluteValue
+                    val isSettledPage by remember(pagerState, page) {
+                        derivedStateOf { page == pagerState.settledPage }
+                    }
                     ShortPage(
                         video = state.videos[page],
                         isActive = embeddedPlaybackEnabled &&
-                            page == pagerState.settledPage,
+                            isSettledPage,
                         embeddedPlaybackEnabled = embeddedPlaybackEnabled,
-                        visuals = shortsPageVisuals(pageOffset),
+                        enhanceBranding = !embeddedPlaybackEnabled ||
+                            isSettledPage && playbackReady,
+                        overlayMotion = Modifier.graphicsLayer {
+                            val pageOffset = (
+                                pagerState.currentPage - page +
+                                    pagerState.currentPageOffsetFraction
+                                ).absoluteValue
+                            alpha = shortsOverlayAlpha(pageOffset)
+                            translationY = shortsOverlayTranslationY(pageOffset)
+                        },
                         onPlayVideo = onPlayVideo,
                         onOpenChannel = onOpenChannel,
                         menuItemState = menuItemState(state.videos[page]),
@@ -126,6 +141,7 @@ fun ShortsScreen(
                         onShowComments = onShowComments?.let { callback ->
                             { callback(state.videos[page]) }
                         },
+                        onCopyTitle = onCopyTitle,
                         isSubscribed = isSubscribed(state.videos[page]),
                         subscriptionInFlight = subscriptionInFlight(state.videos[page]),
                         onToggleSubscription = { onToggleSubscription(state.videos[page]) },

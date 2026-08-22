@@ -35,6 +35,7 @@ fun rememberVideoBranding(
     title: String,
     thumbnailUrl: String,
     durationSeconds: Long,
+    loadEnhancements: Boolean = true,
 ): VideoBranding {
     val environment = LocalDeArrowBranding.current
     val fallback = VideoBranding(title, thumbnailUrl)
@@ -44,10 +45,11 @@ fun rememberVideoBranding(
         title,
         thumbnailUrl,
         durationSeconds,
+        loadEnhancements,
         environment,
     ) {
         value = fallback
-        if (environment.enabled) {
+        if (environment.enabled && loadEnhancements) {
             value = environment.load(sourceUrl, durationSeconds).fold(
                 onSuccess = { resolveDeArrowBranding(it, fallback, environment.preferences) },
                 onFailure = { fallback },
