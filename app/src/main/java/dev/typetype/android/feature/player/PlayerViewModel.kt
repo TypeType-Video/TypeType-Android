@@ -64,10 +64,6 @@ class PlayerViewModel @Inject constructor(
     private var loadStreamJob: Job? = null
     private var favoriteJob: Job? = null
     private var watchLaterJob: Job? = null
-    private val playbackPrefetch = PlaybackPrefetchCoordinator(
-        scope = viewModelScope,
-        prefetch = playerStreamLoader::prefetchPlayback,
-    )
     private val playerPreferences = PlayerPreferenceCoordinator(
         preferencesRepository,
         userSettingsRepository,
@@ -179,8 +175,6 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
-    fun prefetchPlayback(url: String) = playbackPrefetch.schedule(url)
-
     private fun updateAutoplay(enabled: Boolean) {
         playerPreferences.updateAutoplay(
             enabled = enabled,
@@ -279,7 +273,6 @@ class PlayerViewModel @Inject constructor(
         loadStreamJob?.cancel()
         _state.update { it.copy(isLoading = true, error = null) }
         loadStreamJob = viewModelScope.launch {
-            playbackPrefetch.await(url)
             playerStreamLoader.load(url).collect { update ->
                 if (currentUrl() != url) return@collect
                 _state.update { it.applyStreamUpdate(update, playerHostController.state.value) }

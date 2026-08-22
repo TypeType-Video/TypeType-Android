@@ -55,7 +55,7 @@ internal suspend fun pickSabrSource(
     )
 }
 
-private fun Stream.sabrSelection(
+internal fun Stream.sabrSelection(
     selectedQuality: String,
     selectedAudioKey: String?,
     defaultAudioLanguage: String,

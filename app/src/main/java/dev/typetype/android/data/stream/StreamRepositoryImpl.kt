@@ -53,14 +53,15 @@ internal class StreamRepositoryImpl @Inject constructor(
             ?: load(videoUrl, playbackBootstrap = true)
     }
 
-    override suspend fun prefetchPlaybackStream(videoUrl: String): Result<Unit> {
+    override suspend fun prefetchPlaybackStream(videoUrl: String): Result<Stream> {
         val cached = cancellableStreamResult { prefetchedPlayback(videoUrl) }
             .getOrElse { return Result.failure(it) }
-        if (cached != null) return Result.success(Unit)
+        if (cached != null) return Result.success(cached)
         return load(videoUrl, playbackBootstrap = true).map { stream ->
             if (!stream.isLive && !stream.isLiveContent) {
                 playbackPrefetchCache.put(videoUrl, stream)
             }
+            stream
         }
     }
 

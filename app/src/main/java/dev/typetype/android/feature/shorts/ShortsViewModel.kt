@@ -12,7 +12,10 @@ import dev.typetype.android.domain.feed.shortIdentity
 import dev.typetype.android.domain.library.VideoMetaRepository
 import dev.typetype.android.domain.library.cacheVideos
 import dev.typetype.android.domain.usersettings.UserSettingsRepository
+import dev.typetype.android.domain.usersettings.UserSettings
+import dev.typetype.android.feature.player.PlaybackCodecSupport
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,6 +32,7 @@ class ShortsViewModel @Inject constructor(
     private val videoMetaRepository: VideoMetaRepository,
     private val userSettingsRepository: UserSettingsRepository,
     private val errorMapper: UserErrorMapper,
+    private val playbackPreheater: ShortsPlaybackPreheater,
 ) : ViewModel() {
     private val _state = MutableStateFlow(ShortsState())
     val state = _state.asStateFlow()
@@ -37,6 +41,7 @@ class ShortsViewModel @Inject constructor(
     private var service = 0
     private var loadJob: Job? = null
     private var loadMoreJob: Job? = null
+    private val playbackPreloads = mutableMapOf<String, ShortsPlaybackPreload>()
 
     init {
         viewModelScope.launch {
@@ -68,6 +73,35 @@ class ShortsViewModel @Inject constructor(
             ShortsAction.Refresh -> refresh()
             ShortsAction.LoadMore -> loadMore()
         }
+    }
+
+    internal fun preheatPlayback(
+        videoUrl: String,
+        settings: UserSettings,
+        codecSupport: PlaybackCodecSupport,
+        prepareSession: Boolean,
+    ) {
+        val jobToStart = synchronized(playbackPreloads) {
+            playbackPreloads[videoUrl]?.takeIf { it.job.isActive }?.let {
+                it.prepareSession = it.prepareSession || prepareSession
+                return
+            }
+            val preload = ShortsPlaybackPreload(prepareSession)
+            val job = viewModelScope.launch(start = CoroutineStart.LAZY) {
+                playbackPreheater.preheat(videoUrl, settings, codecSupport) {
+                    synchronized(playbackPreloads) { preload.prepareSession }
+                }
+            }
+            preload.job = job
+            playbackPreloads[videoUrl] = preload
+            job.invokeOnCompletion {
+                synchronized(playbackPreloads) {
+                    if (playbackPreloads[videoUrl] === preload) playbackPreloads.remove(videoUrl)
+                }
+            }
+            job
+        }
+        jobToStart.start()
     }
 
     private fun refresh() {
@@ -159,5 +193,11 @@ private data class ShortsConfiguration(
     val hidden: Boolean,
     val autoplay: Boolean,
 )
+
+private class ShortsPlaybackPreload(
+    var prepareSession: Boolean,
+) {
+    lateinit var job: Job
+}
 
 private const val MAX_EMPTY_PAGE_SKIPS = 3
