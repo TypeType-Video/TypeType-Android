@@ -1,7 +1,8 @@
 package dev.typetype.android.feature.shorts
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -11,14 +12,12 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
@@ -68,8 +67,32 @@ internal fun ShortPage(
         durationSeconds = video.durationSeconds,
         loadEnhancements = enhanceBranding,
     )
-    var horizontalDrag by remember(video.id) { mutableFloatStateOf(0f) }
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier.fillMaxSize()
+            .pointerInput(video.id, video.uploaderUrl) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(
+                        requireUnconsumed = false,
+                        pass = PointerEventPass.Initial,
+                    )
+                    var horizontalDrag = 0f
+                    var verticalDrag = 0f
+                    do {
+                        val change = awaitPointerEvent(PointerEventPass.Initial).changes
+                            .firstOrNull { it.id == down.id } ?: break
+                        val delta = change.positionChange()
+                        horizontalDrag += delta.x
+                        verticalDrag += delta.y
+                    } while (change.pressed)
+                    if (
+                        horizontalDrag >= SHORTS_CHANNEL_SWIPE_THRESHOLD_PX &&
+                        horizontalDrag > verticalDrag.absoluteValue
+                    ) {
+                        onOpenChannel(video.uploaderUrl)
+                    }
+                }
+            },
+    ) {
         AsyncImage(
             model = branding.thumbnailUrl,
             contentDescription = null,
@@ -79,22 +102,6 @@ internal fun ShortPage(
         if (isActive) embeddedPlayback()
         Box(
             modifier = Modifier.fillMaxSize()
-                .pointerInput(video.id, video.uploaderUrl) {
-                    detectHorizontalDragGestures(
-                        onDragStart = { horizontalDrag = 0f },
-                        onHorizontalDrag = { change, dragAmount ->
-                            horizontalDrag += dragAmount
-                            change.consume()
-                        },
-                        onDragEnd = {
-                            if (horizontalDrag.absoluteValue >= SHORTS_CHANNEL_SWIPE_THRESHOLD_PX) {
-                                onOpenChannel(video.uploaderUrl)
-                            }
-                            horizontalDrag = 0f
-                        },
-                        onDragCancel = { horizontalDrag = 0f },
-                    )
-                }
                 .background(
                     Brush.verticalGradient(
                         0f to Color.Black.copy(alpha = 0.16f),
