@@ -10,6 +10,7 @@
         <item quantity="other">%1$d replies</item>
     </plurals>
     <string name="error_network_unavailable">Check your connection and try again</string>
+    <string name="error_secure_connection_failed">Couldn\'t verify this instance\'s secure connection. Check its HTTPS certificate and address, then try again.</string>
     <string name="error_sign_in_again">Sign in again to continue</string>
     <string name="error_permission_denied">Your account cannot perform this action</string>
     <string name="error_content_unavailable">This content is no longer available</string>

@@ -7,6 +7,7 @@ import dev.typetype.android.R
 import dev.typetype.android.data.network.ServerError
 import dev.typetype.android.data.network.ServerResponseException
 import java.io.IOException
+import javax.net.ssl.SSLHandshakeException
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -53,6 +54,14 @@ class UserErrorMapperAndroidTest {
         assertEquals(
             context.getString(R.string.search_failed),
             mapper.message(IllegalStateException("unexpected"), R.string.search_failed),
+        )
+    }
+
+    @Test
+    fun mapsTlsFailureToAnActionableMessage() {
+        assertEquals(
+            context.getString(R.string.error_secure_connection_failed),
+            mapper.message(SSLHandshakeException("certificate rejected"), R.string.setup_server_unreachable),
         )
     }
 

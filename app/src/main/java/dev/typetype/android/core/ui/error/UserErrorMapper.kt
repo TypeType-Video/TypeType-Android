@@ -53,6 +53,7 @@ class UserErrorMapper @Inject constructor(
 
     private fun resourceFor(kind: UserErrorKind, fallbackRes: Int): Int =
         when (kind) {
+            UserErrorKind.SecureConnectionFailed -> R.string.error_secure_connection_failed
             UserErrorKind.NetworkUnavailable -> R.string.error_network_unavailable
             UserErrorKind.SignInAgain -> R.string.error_sign_in_again
             UserErrorKind.PermissionDenied -> R.string.error_permission_denied
