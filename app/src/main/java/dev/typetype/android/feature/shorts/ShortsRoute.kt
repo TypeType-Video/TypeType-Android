@@ -19,6 +19,7 @@ import dev.typetype.android.core.ui.copyPlainText
 import dev.typetype.android.core.ui.components.LocalAppSnackbarHost
 import dev.typetype.android.feature.menu.rememberVideoMenuScope
 import dev.typetype.android.feature.player.PlayerChannelActionsViewModel
+import dev.typetype.android.feature.player.DevicePlaybackCodecSupport
 import dev.typetype.android.feature.player.PlayerViewModel
 import dev.typetype.android.feature.player.PlayerFullscreenEffect
 import dev.typetype.android.feature.player.ShortsPlayerRoute
@@ -51,6 +52,9 @@ fun ShortsRoute(
     val visibleState = state.copy(videos = state.videos.filterNot(menuScope::isHidden))
     val snackbarHost = LocalAppSnackbarHost.current
     val context = LocalContext.current
+    val codecSupport = remember(context.applicationContext) {
+        DevicePlaybackCodecSupport(context.applicationContext)
+    }
     val activity = LocalActivity.current
     val actionFailed = stringResource(R.string.snackbar_action_failed)
     var commentsVideoUrl by remember { mutableStateOf<String?>(null) }
@@ -96,7 +100,7 @@ fun ShortsRoute(
             val playbackChannelUrl = playerState.stream?.uploaderUrl?.takeIf {
                 playerState.videoUrl == playerHostState.videoUrl && it.isNotBlank()
             }
-            onOpenChannel(playbackChannelUrl ?: feedChannelUrl)
+            (playbackChannelUrl ?: feedChannelUrl.takeIf(String::isNotBlank))?.let(onOpenChannel)
         },
         onRefresh = { viewModel.onAction(ShortsAction.Refresh) },
         onLoadMore = { viewModel.onAction(ShortsAction.LoadMore) },
@@ -138,7 +142,12 @@ fun ShortsRoute(
             if (context.allowsShortsPlaybackPrefetch()) {
                 videos.forEachIndexed { index, video ->
                     if (index > 0) delay(SHORTS_SECONDARY_PREFETCH_DELAY_MILLIS)
-                    playerViewModel.prefetchPlayback(video.url)
+                    viewModel.preheatPlayback(
+                        videoUrl = video.url,
+                        settings = playerState.userSettings,
+                        codecSupport = codecSupport,
+                        prepareSession = index == 0,
+                    )
                 }
             }
         },

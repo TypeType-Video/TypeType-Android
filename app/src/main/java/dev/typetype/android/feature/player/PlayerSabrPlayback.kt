@@ -9,6 +9,7 @@ import dev.typetype.android.domain.stream.sabrPlaybackTarget
 
 internal class PlayerSabrPlayback(
     private val repository: SabrPlaybackRepository,
+    private val preloads: SabrPlaybackPreloadStore = SabrPlaybackPreloadStore(),
     private val onPrepared: (stream: Stream, session: SabrPlaybackSession) -> Unit = { _, _ -> },
     private val onFailure: (stream: Stream, failure: Throwable) -> Unit,
 ) {
@@ -18,6 +19,16 @@ internal class PlayerSabrPlayback(
         startTimeMs: Long,
     ): SabrPlaybackSession? {
         val target = stream.sabrPlaybackTarget(selection)
+        preloads.take(target)?.await()?.let { preloaded ->
+            val positioned = preloaded.resolveFor(stream)?.let { session ->
+                if (startTimeMs > 0L) {
+                    repository.seek(target, session.binding, startTimeMs).resolveFor(stream)
+                } else {
+                    session
+                }
+            }
+            return positioned?.also { onPrepared(stream, it) }
+        }
         val session = repository.prepare(target, startTimeMs).resolveFor(stream) ?: return null
         onPrepared(stream, session)
         return session

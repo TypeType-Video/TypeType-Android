@@ -47,10 +47,6 @@ class PlayerStreamLoader @Inject constructor(
         metadataPrefetchCache.put(url, metadata)
     }
 
-    suspend fun prefetchPlayback(url: String) {
-        streamRepository.prefetchPlaybackStream(url).getOrNull()
-    }
-
     private suspend fun loadChannelMetadata(stream: Stream): Result<Stream>? {
         if (stream.uploaderSubscriberCount >= 0L || stream.uploaderUrl.isBlank()) return null
         channelMetadataCache.get(stream.requestScope, stream.uploaderUrl)?.let { metadata ->

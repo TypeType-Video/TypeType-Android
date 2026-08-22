@@ -11,6 +11,7 @@ import dev.typetype.android.domain.stream.StreamPlaybackContract
 import dev.typetype.android.domain.stream.StreamRequestScope
 import dev.typetype.android.domain.stream.StreamSubtitleSource
 import dev.typetype.android.domain.stream.StreamVideoSource
+import dev.typetype.android.domain.stream.sabrPlaybackTarget
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -44,6 +45,49 @@ class PlayerSabrPlaybackTest {
     }
 
     @Test
+    fun `activation consumes the matching preloaded session`() = runBlocking {
+        val repository = RecordingRepository()
+        val stream = stream()
+        val selection = selection()
+        val preloads = SabrPlaybackPreloadStore { 0L }
+        preloads.reserve(stream.sabrPlaybackTarget(selection)).result.complete(
+            Result.success(repository.session),
+        )
+        val playback = PlayerSabrPlayback(
+            repository = repository,
+            preloads = preloads,
+            onFailure = { _, _ -> },
+        )
+
+        val result = playback.prepare(stream, selection, 0L)
+
+        assertEquals(repository.session, result)
+        assertEquals(0, repository.prepareCount)
+    }
+
+    @Test
+    fun `resume position repositions the matching preload`() = runBlocking {
+        val repository = RecordingRepository()
+        val stream = stream()
+        val selection = selection()
+        val preloads = SabrPlaybackPreloadStore { 0L }
+        preloads.reserve(stream.sabrPlaybackTarget(selection)).result.complete(
+            Result.success(repository.session),
+        )
+        val playback = PlayerSabrPlayback(
+            repository = repository,
+            preloads = preloads,
+            onFailure = { _, _ -> },
+        )
+
+        val result = playback.prepare(stream, selection, 4_000L)
+
+        assertEquals(4_000L, result?.startTimeMs)
+        assertEquals(0, repository.prepareCount)
+        assertEquals(1, repository.seekCount)
+    }
+
+    @Test
     fun `stream metadata remains authoritative for subtitles`() {
         val generic = listOf(
             StreamSubtitleSource(
@@ -68,6 +112,7 @@ class PlayerSabrPlaybackTest {
         val session = session()
         var startPositionMs: Long? = null
         var seekCount = 0
+        var prepareCount = 0
 
         override suspend fun prepare(target: SabrPlaybackTarget) =
             Result.success(session)
@@ -76,6 +121,7 @@ class PlayerSabrPlaybackTest {
             target: SabrPlaybackTarget,
             startTimeMs: Long,
         ): Result<SabrPlaybackSession> {
+            prepareCount++
             startPositionMs = startTimeMs
             return Result.success(session.copy(startTimeMs = startTimeMs))
         }

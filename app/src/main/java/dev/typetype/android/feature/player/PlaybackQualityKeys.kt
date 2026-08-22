@@ -42,6 +42,13 @@ internal fun String.selectedQualityHeight(): Int? =
         ?.filter { it.isDigit() }
         ?.toIntOrNull()
 
+internal fun String.effectiveQuality(automaticQualityCap: String): String =
+    if (this == AUTO_QUALITY_KEY || this == RECOMMENDED_QUALITY_KEY) {
+        automaticQualityCap
+    } else {
+        this
+    }
+
 internal fun StreamVideoSource.codecSelectionKey(): String {
     val normalized = codec.orEmpty().trim().lowercase()
     return when {

@@ -279,13 +279,6 @@ private fun applyTrackSelectionDefaults(
 private fun String.normalizedMimeType(): String? =
     substringBefore(";").trim().takeIf { it.isNotBlank() }
 
-private fun String.effectiveQuality(automaticQualityCap: String): String =
-    if (this == AUTO_QUALITY_KEY || this == RECOMMENDED_QUALITY_KEY) {
-        automaticQualityCap
-    } else {
-        this
-    }
-
 internal val StreamAudioSource.key: String
     get() = audioTrackId?.takeIf { it.isNotBlank() }
         ?: audioLocale?.takeIf { it.isNotBlank() }
