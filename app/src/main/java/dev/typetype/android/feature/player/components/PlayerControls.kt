@@ -33,8 +33,6 @@ import dev.typetype.android.feature.player.state.ResizeMode
 fun PlayerControls(
     player: Player,
     title: String,
-    autoplayEnabled: Boolean,
-    onAutoplayChange: (Boolean) -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
     onOpenOptions: () -> Unit = {},
@@ -53,8 +51,6 @@ fun PlayerControls(
         BottomScrim(modifier = Modifier.align(Alignment.BottomCenter))
         PlayerTopBar(
             title = title,
-            autoplayEnabled = autoplayEnabled,
-            onAutoplayChange = onAutoplayChange,
             onNavigateBack = onNavigateBack,
             onOpenChapters = onOpenChapters,
             onOpenOptions = onOpenOptions,

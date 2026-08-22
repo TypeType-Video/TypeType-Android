@@ -16,6 +16,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.outlined.ThumbUp
+import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -71,14 +74,26 @@ fun DescriptionSection(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = buildStatsLine(viewCount, likeCount),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
+                VideoStat(
+                    value = formatCompact(viewCount),
+                    icon = Icons.Outlined.Visibility,
+                    contentDescription = stringResource(
+                        dev.typetype.android.R.string.player_views_count,
+                        formatCompact(viewCount),
+                    ),
                 )
+                if (likeCount > 0) {
+                    Spacer(Modifier.width(16.dp))
+                    VideoStat(
+                        value = formatCompact(likeCount),
+                        icon = Icons.Outlined.ThumbUp,
+                        contentDescription = stringResource(
+                            dev.typetype.android.R.string.player_likes_count,
+                            formatCompact(likeCount),
+                        ),
+                    )
+                }
+                Spacer(Modifier.weight(1f))
                 Icon(
                     imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
                     contentDescription = null,
@@ -117,12 +132,26 @@ fun DescriptionSection(
 private fun String.collapseEmptyLines(): String =
     Regex("\\n{3,}").replace(this, "\n\n")
 
-private fun buildStatsLine(viewCount: Long, likeCount: Long): String {
-    val parts = buildList {
-        add("${formatCompact(viewCount)} views")
-        if (likeCount > 0) add("${formatCompact(likeCount)} likes")
+@Composable
+private fun VideoStat(
+    value: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    contentDescription: String,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.width(18.dp),
+        )
+        Spacer(Modifier.width(5.dp))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
-    return parts.joinToString(" • ")
 }
 
 private fun formatCompact(value: Long): String = when {
