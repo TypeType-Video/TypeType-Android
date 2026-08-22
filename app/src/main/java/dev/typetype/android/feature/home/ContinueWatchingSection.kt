@@ -36,6 +36,7 @@ import coil3.compose.AsyncImage
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.core.ui.components.SectionHeader
+import dev.typetype.android.core.ui.components.VideoDurationBadge
 import dev.typetype.android.domain.library.HistoryItem
 
 @Composable
@@ -99,7 +100,7 @@ private fun ContinueWatchingCard(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
             )
-            DurationBadge(
+            VideoDurationBadge(
                 durationSeconds = item.durationSeconds,
                 modifier = Modifier.align(Alignment.BottomEnd).padding(6.dp),
             )
@@ -157,20 +158,6 @@ private fun ContinueWatchingCard(
 }
 
 @Composable
-private fun DurationBadge(durationSeconds: Long, modifier: Modifier = Modifier) {
-    if (durationSeconds <= 0L) return
-    Text(
-        text = formatDuration(durationSeconds),
-        modifier = modifier
-            .clip(RoundedCornerShape(4.dp))
-            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.78f))
-            .padding(horizontal = 5.dp, vertical = 2.dp),
-        color = MaterialTheme.colorScheme.inverseOnSurface,
-        style = MaterialTheme.typography.labelSmall,
-    )
-}
-
-@Composable
 private fun WatchProgressBar(
     progressSeconds: Long,
     durationSeconds: Long,
@@ -196,16 +183,5 @@ private fun WatchProgressBar(
                 .height(4.dp)
                 .background(MaterialTheme.colorScheme.primary),
         )
-    }
-}
-
-private fun formatDuration(seconds: Long): String {
-    val hours = seconds / 3600
-    val minutes = (seconds % 3600) / 60
-    val remainder = seconds % 60
-    return if (hours > 0) {
-        "%d:%02d:%02d".format(hours, minutes, remainder)
-    } else {
-        "%d:%02d".format(minutes, remainder)
     }
 }

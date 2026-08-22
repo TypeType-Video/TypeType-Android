@@ -7,6 +7,19 @@ import java.nio.charset.StandardCharsets
 fun resolveIncomingVideoUrl(value: String?): String? =
     resolveVideoSource(value?.trim().orEmpty(), depth = 0)
 
+fun toPublicWatchParameter(value: String): String {
+    val trimmed = value.trim()
+    val sourceUrl = resolveIncomingVideoUrl(trimmed) ?: trimmed
+    val uri = runCatching { URI(sourceUrl) }.getOrNull() ?: return trimmed
+    return youtubeVideoId(uri)
+        ?: niconicoVideoId(uri)
+        ?: bilibiliWatchParam(uri)
+        ?: sourceUrl
+}
+
+fun canonicalVideoIdentity(value: String): String =
+    resolveIncomingVideoUrl(value) ?: value.trim()
+
 fun resolveSharedVideoUrl(value: String?): String? {
     val text = value?.trim().orEmpty()
     if (text.isEmpty() || text.length > MAX_SHARED_TEXT_LENGTH) return null
@@ -49,6 +62,9 @@ private fun resolveWebUrl(uri: URI, depth: Int): String? {
     bilibiliWatchParam(uri)?.let { return resolveVideoSource(it, depth + 1) }
     if (uri.path.orEmpty().trimEnd('/') == "/watch") {
         return queryParameter(uri, "v")?.let { value -> resolveVideoSource(value, depth + 1) }
+    }
+    if (uri.path.orEmpty().trimEnd('/') in PROXY_PATHS) {
+        return queryParameter(uri, "url")?.let { value -> resolveVideoSource(value, depth + 1) }
     }
     return uri.toString().takeIf { isSupportedVideoHost(uri.host.lowercase()) }
 }
@@ -132,6 +148,7 @@ private val BILIBILI_WATCH_PARAM_PATTERN =
     Regex("^(BV[A-Za-z0-9]{10})(?:[?]p=([0-9]+))?$", RegexOption.IGNORE_CASE)
 private val BILIBILI_VIDEO_ID_PATTERN = Regex("^BV[A-Za-z0-9]{10}$", RegexOption.IGNORE_CASE)
 private val YOUTUBE_VIDEO_PATHS = setOf("embed", "live", "shorts")
+private val PROXY_PATHS = setOf("/api/proxy", "/proxy")
 private val URL_PATTERN = Regex("(?:https?://|typetype://)[^\\s<>]+", RegexOption.IGNORE_CASE)
 private val TRAILING_PUNCTUATION = charArrayOf('.', ',', ';', ':', '!', '?', ')', ']', '}', '"', '\'')
 private const val MAX_URL_LENGTH = 8_192

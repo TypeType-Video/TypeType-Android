@@ -124,22 +124,10 @@ fun PlaylistVideoCard(
                     modifier = Modifier.align(Alignment.TopEnd).padding(6.dp),
                 )
             }
-            if (video.durationSeconds > 0) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(8.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(MaterialTheme.colorScheme.background.copy(alpha = 0.85f))
-                        .padding(horizontal = 6.dp, vertical = 2.dp),
-                ) {
-                    Text(
-                        text = formatDuration(video.durationSeconds),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onBackground,
-                    )
-                }
-            }
+            VideoDurationBadge(
+                durationSeconds = video.durationSeconds,
+                modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp),
+            )
         }
         Spacer(Modifier.height(12.dp))
         if (hasChannelInfo) {
@@ -203,11 +191,4 @@ fun PlaylistVideoCard(
             )
         }
     }
-}
-
-private fun formatDuration(seconds: Long): String {
-    val h = seconds / 3600
-    val m = (seconds % 3600) / 60
-    val s = seconds % 60
-    return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%d:%02d".format(m, s)
 }
