@@ -146,11 +146,10 @@ class ShortsScreenTest {
 
         composeRule.waitUntil { activeUrl.get() == "https://video/one" }
         composeRule.onNodeWithTag(SHORTS_PAGER_TAG).performTouchInput {
-            swipe(
-                start = center,
-                end = center.copy(y = center.y - 80f),
-                durationMillis = 300,
-            )
+            down(center)
+            moveTo(center.copy(y = -center.y * 0.5f), 180L)
+            moveTo(center, 180L)
+            up()
         }
         composeRule.waitForIdle()
 

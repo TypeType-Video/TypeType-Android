@@ -58,7 +58,9 @@ fun ShortsScreen(
     embeddedPlaybackEnabled: Boolean = false,
     onActiveVideoChanged: (Video?) -> Unit = {},
     onUpcomingVideosChanged: suspend (List<Video>) -> Unit = {},
-    statsForVideo: (Video) -> ShortsVideoStats = { ShortsVideoStats(it.viewCount, null) },
+    statsForVideo: (Video) -> ShortsVideoStats = {
+        ShortsVideoStats(it.viewCount.takeIf { count -> count >= 0L }, null)
+    },
     embeddedPlayback: @Composable (Video, onAdvance: () -> Unit) -> Unit = { _, _ -> },
     menuItemState: (Video) -> VideoMenuItemState = { VideoMenuItemState() },
     onMenuAction: (VideoMenuAction, Video) -> Unit = { _, _ -> },
@@ -90,14 +92,14 @@ fun ShortsScreen(
             }
             LaunchedEffect(pagerState, state.videos) {
                 snapshotFlow {
-                    state.videos.getOrNull(pagerState.currentPage)
+                    state.videos.getOrNull(pagerState.settledPage)
                 }
                     .distinctUntilChanged()
                     .collect(currentActiveVideoChanged)
             }
             LaunchedEffect(pagerState, state.videos) {
                 snapshotFlow {
-                    state.videos.drop(pagerState.currentPage + 1).take(SHORTS_PREFETCH_COUNT)
+                    state.videos.drop(pagerState.settledPage + 1).take(SHORTS_PREFETCH_COUNT)
                 }.distinctUntilChanged().collectLatest(currentUpcomingVideosChanged)
             }
             Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
@@ -113,7 +115,7 @@ fun ShortsScreen(
                     ShortPage(
                         video = state.videos[page],
                         isActive = embeddedPlaybackEnabled &&
-                            page == pagerState.currentPage,
+                            page == pagerState.settledPage,
                         embeddedPlaybackEnabled = embeddedPlaybackEnabled,
                         visuals = shortsPageVisuals(pageOffset),
                         onPlayVideo = onPlayVideo,
