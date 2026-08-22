@@ -28,6 +28,8 @@ class DataStorePreferencesRepository @Inject constructor(
             playerDoubleTapSeekEnabled = prefs[KEY_PLAYER_DOUBLE_TAP_SEEK] ?: true,
             playerSwipeSeekEnabled = prefs[KEY_PLAYER_SWIPE_SEEK] ?: true,
             playerSwipeBrightnessVolumeEnabled = prefs[KEY_PLAYER_SWIPE_BRIGHT_VOL] ?: true,
+            playerPlaybackBrightnessPercent = prefs[KEY_PLAYER_PLAYBACK_BRIGHTNESS]
+                ?.coerceIn(0, 100),
             playerLongPressSpeedEnabled = prefs[KEY_PLAYER_LONG_PRESS_SPEED] ?: true,
             playerAutoplayEnabled = prefs[KEY_PLAYER_AUTOPLAY] ?: true,
             playerAutoplayCountdownSeconds = (
@@ -55,6 +57,10 @@ class DataStorePreferencesRepository @Inject constructor(
 
     override suspend fun setPlayerSwipeBrightnessVolumeEnabled(enabled: Boolean) {
         dataStore.edit { it[KEY_PLAYER_SWIPE_BRIGHT_VOL] = enabled }
+    }
+
+    override suspend fun setPlayerPlaybackBrightnessPercent(percent: Int) {
+        dataStore.edit { it[KEY_PLAYER_PLAYBACK_BRIGHTNESS] = percent.coerceIn(0, 100) }
     }
 
     override suspend fun setPlayerLongPressSpeedEnabled(enabled: Boolean) {
@@ -99,6 +105,7 @@ class DataStorePreferencesRepository @Inject constructor(
         val KEY_PLAYER_DOUBLE_TAP_SEEK = booleanPreferencesKey("player_double_tap_seek")
         val KEY_PLAYER_SWIPE_SEEK = booleanPreferencesKey("player_swipe_seek")
         val KEY_PLAYER_SWIPE_BRIGHT_VOL = booleanPreferencesKey("player_swipe_bright_vol")
+        val KEY_PLAYER_PLAYBACK_BRIGHTNESS = intPreferencesKey("player_playback_brightness")
         val KEY_PLAYER_LONG_PRESS_SPEED = booleanPreferencesKey("player_long_press_speed")
         val KEY_PLAYER_AUTOPLAY = booleanPreferencesKey("player_autoplay")
         val KEY_PLAYER_AUTOPLAY_COUNTDOWN = intPreferencesKey("player_autoplay_countdown_seconds")

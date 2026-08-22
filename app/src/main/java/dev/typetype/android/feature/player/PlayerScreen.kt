@@ -162,6 +162,7 @@ fun PlayerScreen(
                     isFavorited = state.isFavorited,
                     isInWatchLater = state.isInWatchLater,
                     gestureConfig = state.gestureConfig,
+                    playbackBrightnessPercent = state.playbackBrightnessPercent,
                     autoplayCountdownSeconds = state.autoplayCountdownSeconds,
                     audioOnlyPlaybackDefault = state.audioOnlyPlaybackDefault,
                     userSettings = state.userSettings,

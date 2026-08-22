@@ -18,6 +18,7 @@ data class PlayerState(
     val isFavorited: Boolean = false,
     val isInWatchLater: Boolean = false,
     val gestureConfig: PlayerGestureConfig = PlayerGestureConfig(),
+    val playbackBrightnessPercent: Int? = null,
     val autoplayCountdownSeconds: Int = 10,
     val audioOnlyPlaybackDefault: Boolean? = null,
     val userSettings: UserSettings = UserSettings(),
