@@ -30,6 +30,7 @@ import kotlinx.coroutines.coroutineScope
 
 @Composable
 fun ShortsRoute(
+    onNavigateBack: () -> Unit,
     onPlayVideo: (String) -> Unit,
     onOpenChannel: (String) -> Unit,
     playerHostController: PlayerHostController,
@@ -73,6 +74,7 @@ fun ShortsRoute(
 
     ShortsScreen(
         state = visibleState,
+        onNavigateBack = onNavigateBack,
         onPlayVideo = { url ->
             if (
                 playerHostState.videoUrl == url &&
@@ -83,7 +85,12 @@ fun ShortsRoute(
                 onPlayVideo(url)
             }
         },
-        onOpenChannel = onOpenChannel,
+        onOpenChannel = { feedChannelUrl ->
+            val playbackChannelUrl = playerState.stream?.uploaderUrl?.takeIf {
+                playerState.videoUrl == playerHostState.videoUrl && it.isNotBlank()
+            }
+            onOpenChannel(playbackChannelUrl ?: feedChannelUrl)
+        },
         onRefresh = { viewModel.onAction(ShortsAction.Refresh) },
         onLoadMore = { viewModel.onAction(ShortsAction.LoadMore) },
         menuItemState = menuScope::stateFor,

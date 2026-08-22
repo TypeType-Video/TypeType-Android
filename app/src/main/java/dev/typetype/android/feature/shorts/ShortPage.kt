@@ -24,6 +24,9 @@ import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.core.ui.components.VideoMenuAction
 import dev.typetype.android.core.ui.components.VideoMenuItemState
 import dev.typetype.android.domain.feed.Video
+import dev.typetype.android.feature.player.ShortsPlaybackProgress
+import dev.typetype.android.feature.player.components.LocalMediaController
+import dev.typetype.android.feature.player.components.rememberCurrentMediaId
 
 internal data class ShortsPageVisuals(
     val overlayAlpha: Float,
@@ -54,6 +57,8 @@ internal fun ShortPage(
     onToggleSubscription: () -> Unit,
     embeddedPlayback: @Composable () -> Unit,
 ) {
+    val mediaController = LocalMediaController.current
+    val currentMediaId = rememberCurrentMediaId(mediaController)
     val branding = rememberVideoBranding(
         sourceUrl = video.url,
         title = video.title,
@@ -113,5 +118,14 @@ internal fun ShortPage(
             onToggleSubscription = onToggleSubscription,
             modifier = Modifier.align(Alignment.BottomStart).then(overlayMotion),
         )
+        if (isActive && mediaController != null && currentMediaId == video.url) {
+            ShortsPlaybackProgress(
+                player = mediaController,
+                fallbackDurationMs = video.durationSeconds * 1_000L,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+            )
+        }
     }
 }

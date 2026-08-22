@@ -19,23 +19,24 @@ import dev.typetype.android.feature.player.components.TimelineTrack
 @Composable
 internal fun ShortsPlaybackProgress(
     player: Player,
+    fallbackDurationMs: Long,
     modifier: Modifier = Modifier,
 ) {
     val progress = rememberProgressStateWithTickInterval(player, SHORTS_PROGRESS_TICK_MS)
-    if (progress.durationMs <= 0L) return
+    val durationMs = progress.durationMs.takeIf { it > 0L } ?: fallbackDurationMs.coerceAtLeast(0L)
     var scrubPositionMs by remember { mutableStateOf<Long?>(null) }
     TimelineTrack(
         positionMs = scrubPositionMs ?: progress.currentPositionMs,
-        durationMs = progress.durationMs,
+        durationMs = durationMs,
         segments = emptyList(),
-        compact = true,
+        compact = false,
         onScrub = { scrubPositionMs = it },
         onScrubFinished = {
-            player.seekTo(it)
+            if (durationMs > 0L) player.seekTo(it)
             scrubPositionMs = null
         },
         onScrubCancelled = { scrubPositionMs = null },
-        modifier = modifier.fillMaxWidth().height(28.dp),
+        modifier = modifier.fillMaxWidth().height(36.dp),
     )
 }
 

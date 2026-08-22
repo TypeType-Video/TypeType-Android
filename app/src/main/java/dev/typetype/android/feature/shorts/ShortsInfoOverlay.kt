@@ -42,7 +42,7 @@ internal fun ShortsInfoOverlay(
 ) {
     Column(
         modifier = modifier.fillMaxWidth()
-            .padding(start = 20.dp, top = 20.dp, end = 80.dp, bottom = 20.dp),
+            .padding(start = 20.dp, top = 20.dp, end = 80.dp, bottom = 52.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {

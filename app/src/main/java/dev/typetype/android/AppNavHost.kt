@@ -28,6 +28,7 @@ import dev.typetype.android.core.ui.navigation.ProfileSettingsRoute
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
 import dev.typetype.android.core.ui.navigation.AppearanceRoute
 import dev.typetype.android.core.ui.navigation.ChannelRoute
+import dev.typetype.android.core.ui.navigation.channelNavigationUrl
 import dev.typetype.android.core.ui.navigation.ContentSettingsRoute
 import dev.typetype.android.core.ui.navigation.HomeRoute
 import dev.typetype.android.core.ui.navigation.LoginRoute
@@ -110,7 +111,7 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
     }
 
     val onOpenChannel: (String) -> Unit = { channelUrl ->
-        navController.navigate(ChannelRoute(channelUrl = channelUrl)) {
+        navController.navigate(ChannelRoute(channelUrl = channelNavigationUrl(channelUrl))) {
             launchSingleTop = true
         }
     }
@@ -182,22 +183,14 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
                 HomeRouteScreen(
                     viewModel = hiltViewModel<HomeViewModel>(),
                     onPlayVideo = onPlayVideo,
-                    onOpenChannel = { channelUrl ->
-                        navController.navigate(ChannelRoute(channelUrl = channelUrl)) {
-                            launchSingleTop = true
-                        }
-                    },
+                    onOpenChannel = onOpenChannel,
                 )
             }
             composable<SearchRoute> {
                 SearchRouteScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onPlayVideo = onPlayVideo,
-                    onOpenChannel = { channelUrl ->
-                        navController.navigate(ChannelRoute(channelUrl = channelUrl)) {
-                            launchSingleTop = true
-                        }
-                    },
+                    onOpenChannel = onOpenChannel,
                     onOpenPlaylist = { playlistUrl ->
                         navController.navigate(PublicPlaylistRoute(playlistUrl)) {
                             launchSingleTop = true
@@ -207,6 +200,7 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
             }
             composable<ShortsRoute> {
                 ShortsRouteScreen(
+                    onNavigateBack = { navController.popBackStack() },
                     onPlayVideo = onPlayVideo,
                     onOpenChannel = onOpenChannel,
                     playerHostController = playerHostController,
@@ -217,11 +211,7 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
             composable<SubscriptionsRoute> {
                 SubscriptionsRouteScreen(
                     onPlayVideo = onPlayVideo,
-                    onOpenChannel = { channelUrl ->
-                        navController.navigate(ChannelRoute(channelUrl = channelUrl)) {
-                            launchSingleTop = true
-                        }
-                    },
+                    onOpenChannel = onOpenChannel,
                 )
             }
             libraryDestination(

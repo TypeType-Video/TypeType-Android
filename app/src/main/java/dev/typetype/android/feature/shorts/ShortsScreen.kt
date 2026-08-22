@@ -7,10 +7,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -27,6 +30,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.AnimatedError
 import dev.typetype.android.core.ui.components.FullScreenLoader
@@ -45,6 +50,7 @@ import kotlin.math.absoluteValue
 @Composable
 fun ShortsScreen(
     state: ShortsState,
+    onNavigateBack: () -> Unit,
     onPlayVideo: (String) -> Unit,
     onOpenChannel: (String) -> Unit,
     onRefresh: () -> Unit,
@@ -82,13 +88,16 @@ fun ShortsScreen(
                     .collect { nearEnd -> if (nearEnd && state.hasMore) currentLoadMore() }
             }
             LaunchedEffect(pagerState, state.videos) {
-                snapshotFlow { state.videos.getOrNull(pagerState.currentPage) }
+                snapshotFlow {
+                    if (pagerState.isScrollInProgress) null
+                    else state.videos.getOrNull(pagerState.settledPage)
+                }
                     .distinctUntilChanged()
                     .collect(currentActiveVideoChanged)
             }
             LaunchedEffect(pagerState, state.videos) {
                 snapshotFlow {
-                    state.videos.drop(pagerState.currentPage + 1).take(SHORTS_PREFETCH_COUNT)
+                    state.videos.drop(pagerState.settledPage + 1).take(SHORTS_PREFETCH_COUNT)
                 }.distinctUntilChanged().collectLatest(currentUpcomingVideosChanged)
             }
             Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
@@ -104,7 +113,7 @@ fun ShortsScreen(
                     ShortPage(
                         video = state.videos[page],
                         isActive = embeddedPlaybackEnabled &&
-                            page == pagerState.currentPage,
+                            !pagerState.isScrollInProgress && page == pagerState.settledPage,
                         embeddedPlaybackEnabled = embeddedPlaybackEnabled,
                         visuals = shortsPageVisuals(pageOffset),
                         onPlayVideo = onPlayVideo,
@@ -124,6 +133,16 @@ fun ShortsScreen(
                                 }
                             }
                         },
+                    )
+                }
+                IconButton(
+                    onClick = onNavigateBack,
+                    modifier = Modifier.align(Alignment.TopStart).safeDrawingPadding().padding(8.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.player_back),
+                        tint = Color.White,
                     )
                 }
                 if (state.isLoadingMore) {

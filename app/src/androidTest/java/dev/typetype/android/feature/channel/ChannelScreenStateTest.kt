@@ -158,10 +158,13 @@ class ChannelScreenStateTest {
             TypeTypeTheme {
                 ChannelContentGrid(
                     state = state,
+                    onNavigateBack = {},
                     onPlayVideo = {},
                     onOpenPodcast = {},
                     onOpenPlaylist = {},
                     onAction = onAction,
+                    searchExpanded = false,
+                    onSearchExpandedChange = {},
                     menuScope = emptyMenuScope(),
                 )
             }
