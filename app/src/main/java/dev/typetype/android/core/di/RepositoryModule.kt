@@ -24,6 +24,7 @@ import dev.typetype.android.data.library.RoomVideoMetaRepository
 import dev.typetype.android.data.notifications.RemoteNotificationsRepository
 import dev.typetype.android.data.network.NetworkAvailabilityObserver
 import dev.typetype.android.data.network.PlaybackNetworkMonitor
+import dev.typetype.android.data.network.PlaybackNetworkObserver
 import dev.typetype.android.data.preferences.DataStorePreferencesRepository
 import dev.typetype.android.data.podcast.RemotePodcastRepository
 import dev.typetype.android.data.playback.RoomPlaybackResumeRepository
@@ -41,6 +42,8 @@ import dev.typetype.android.data.server.RemoteServerCapabilitiesRepository
 import dev.typetype.android.data.session.RemoteActiveSessionRepository
 import dev.typetype.android.data.setup.SetupRepositoryImpl
 import dev.typetype.android.data.stream.StreamRepositoryImpl
+import dev.typetype.android.data.stream.RetrofitStreamRemoteSource
+import dev.typetype.android.data.stream.StreamRemoteSource
 import dev.typetype.android.data.stream.SabrPlaybackRepositoryImpl
 import dev.typetype.android.data.stream.RemoteAudioOnlyStreamRepository
 import dev.typetype.android.data.stream.RemoteSubtitleRepository
@@ -110,6 +113,18 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
+    abstract fun bindPlaybackNetworkObserver(
+        impl: PlaybackNetworkMonitor,
+    ): PlaybackNetworkObserver
+
+    @Binds
+    @Singleton
+    internal abstract fun bindStreamRemoteSource(
+        impl: RetrofitStreamRemoteSource,
+    ): StreamRemoteSource
+
+    @Binds
+    @Singleton
     abstract fun bindAccountRepository(impl: RoomAccountRepository): AccountRepository
 
     @Binds
@@ -158,7 +173,7 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindStreamRepository(impl: StreamRepositoryImpl): StreamRepository
+    internal abstract fun bindStreamRepository(impl: StreamRepositoryImpl): StreamRepository
 
     @Binds
     @Singleton

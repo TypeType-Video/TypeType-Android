@@ -1,9 +1,8 @@
 package dev.typetype.android.data.stream
 
-import dev.typetype.android.data.account.ActiveAccountScope
+import dev.typetype.android.data.account.AccountScopeProvider
 import dev.typetype.android.core.error.CodedFailure
-import dev.typetype.android.data.network.TypeTypeApiHolder
-import dev.typetype.android.data.network.PlaybackNetworkMonitor
+import dev.typetype.android.data.network.PlaybackNetworkObserver
 import dev.typetype.android.data.network.dto.AudioStreamItem
 import dev.typetype.android.data.network.dto.SponsorBlockSegmentItem
 import dev.typetype.android.data.network.dto.StreamResponse
@@ -36,21 +35,50 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 @Singleton
-class StreamRepositoryImpl @Inject constructor(
-    private val apiHolder: TypeTypeApiHolder,
-    private val activeAccountScope: ActiveAccountScope,
+internal class StreamRepositoryImpl @Inject constructor(
+    private val remoteSource: StreamRemoteSource,
+    private val activeAccountScope: AccountScopeProvider,
     private val serverRepository: ServerRepository,
-    private val networkMonitor: PlaybackNetworkMonitor,
+    private val networkMonitor: PlaybackNetworkObserver,
 ) : StreamRepository {
+    private val playbackPrefetchCache = PlaybackStreamPrefetchCache()
 
     override suspend fun loadStream(videoUrl: String): Result<Stream> =
         load(videoUrl, playbackBootstrap = false)
 
-    override suspend fun loadPlaybackStream(videoUrl: String): Result<Stream> =
-        load(videoUrl, playbackBootstrap = true)
+    override suspend fun loadPlaybackStream(videoUrl: String): Result<Stream> {
+        val cached = cancellableStreamResult { prefetchedPlayback(videoUrl) }
+            .getOrElse { return Result.failure(it) }
+        return cached?.let(Result.Companion::success)
+            ?: load(videoUrl, playbackBootstrap = true)
+    }
+
+    override suspend fun prefetchPlaybackStream(videoUrl: String): Result<Unit> {
+        val cached = cancellableStreamResult { prefetchedPlayback(videoUrl) }
+            .getOrElse { return Result.failure(it) }
+        if (cached != null) return Result.success(Unit)
+        return load(videoUrl, playbackBootstrap = true).map { stream ->
+            if (!stream.isLive && !stream.isLiveContent) {
+                playbackPrefetchCache.put(videoUrl, stream)
+            }
+        }
+    }
 
     override suspend fun loadPlaybackMetadata(videoUrl: String): Result<Stream>? =
         if (videoUrl.streamProvider() == StreamProvider.YouTube) loadStream(videoUrl) else null
+
+    private suspend fun prefetchedPlayback(videoUrl: String): Stream? {
+        val account = activeAccountScope.require()
+        val server = serverRepository.getServer(account.serverId) ?: error("Instance not found")
+        val requestScope = StreamRequestScope(
+            serverId = account.serverId,
+            accountId = account.accountId,
+            baseUrl = server.baseUrl,
+        )
+        val cached = playbackPrefetchCache.get(videoUrl, requestScope)
+        activeAccountScope.verify(account)
+        return cached
+    }
 
     private suspend fun load(
         videoUrl: String,
@@ -59,21 +87,12 @@ class StreamRepositoryImpl @Inject constructor(
         val scope = activeAccountScope.require()
         val server = serverRepository.getServer(scope.serverId) ?: error("Instance not found")
         val provider = videoUrl.streamProvider()
-        val api = if (provider == StreamProvider.YouTube) {
-            apiHolder.requireSabr(scope)
-        } else {
-            apiHolder.require(scope)
-        }
         val response = withContext(Dispatchers.IO) {
             transientPlaybackRequest(
                 pause = { delay(it) },
                 network = networkMonitor,
             ) {
-                if (provider == StreamProvider.YouTube && playbackBootstrap) {
-                    api.loadYouTubeSabrBootstrapResponse(videoUrl)
-                } else {
-                    api.loadStreamResponse(videoUrl)
-                }
+                remoteSource.load(scope, videoUrl, provider, playbackBootstrap)
             }
         }
         if (!response.isSuccessful) {

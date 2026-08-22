@@ -5,5 +5,8 @@ interface StreamRepository {
 
     suspend fun loadPlaybackStream(videoUrl: String): Result<Stream> = loadStream(videoUrl)
 
+    suspend fun prefetchPlaybackStream(videoUrl: String): Result<Unit> =
+        loadPlaybackStream(videoUrl).map { }
+
     suspend fun loadPlaybackMetadata(videoUrl: String): Result<Stream>? = null
 }
