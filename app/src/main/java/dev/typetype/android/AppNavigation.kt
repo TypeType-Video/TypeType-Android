@@ -127,11 +127,10 @@ internal fun AppTopBar(
                         }
                     }
                 }
-                IconButton(onClick = onOpenSettings) {
+                IconButton(onClick = onOpenSettings, modifier = Modifier.size(40.dp)) {
                     Icon(Icons.Filled.Settings, stringResource(R.string.settings_title))
                 }
                 ProfileAvatarButton(avatarUrl, avatarFallbackLetter, onOpenProfile)
-                Spacer(Modifier.width(4.dp))
             },
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.96f),
@@ -205,8 +204,8 @@ private fun ProfileAvatarButton(
 ) {
     Box(
         modifier = Modifier
-            .padding(horizontal = 4.dp)
-            .size(34.dp)
+            .padding(horizontal = 2.dp)
+            .size(36.dp)
             .clip(androidx.compose.foundation.shape.CircleShape)
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .clickable(onClick = onClick),
