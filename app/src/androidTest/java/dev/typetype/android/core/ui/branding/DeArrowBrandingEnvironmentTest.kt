@@ -77,6 +77,38 @@ class DeArrowBrandingEnvironmentTest {
     }
 
     @Test
+    fun deferredEnhancementsKeepOriginalBrandingWithoutLoading() {
+        val calls = AtomicInteger()
+        val environment = DeArrowBrandingEnvironment(
+            enabled = true,
+            preferences = DeArrowPreferences("dearrow", "dearrow", "accepted"),
+            loader = { _, _ ->
+                calls.incrementAndGet()
+                Result.success(BRANDING)
+            },
+        )
+
+        composeRule.setContent {
+            CompositionLocalProvider(LocalDeArrowBranding provides environment) {
+                val branding = rememberVideoBranding(
+                    VIDEO_URL,
+                    "Original",
+                    "original.jpg",
+                    120,
+                    loadEnhancements = false,
+                )
+                Text(
+                    text = "${branding.title}|${branding.thumbnailUrl}",
+                    modifier = Modifier.testTag("branding"),
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("branding").assertTextEquals("Original|original.jpg")
+        assertEquals(0, calls.get())
+    }
+
+    @Test
     fun videoCardRendersResolvedTitle() {
         val environment = DeArrowBrandingEnvironment(
             enabled = true,

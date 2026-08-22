@@ -4,17 +4,17 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.os.Build
 
-internal fun Context.allowsShortsMetadataPrefetch(): Boolean {
+internal fun Context.allowsShortsPlaybackPrefetch(): Boolean {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return true
     val connectivityManager =
         getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-    return allowsShortsMetadataPrefetch(
+    return allowsShortsPlaybackPrefetch(
         sdkInt = Build.VERSION.SDK_INT,
         restrictBackgroundStatus = connectivityManager.restrictBackgroundStatus,
     )
 }
 
-internal fun allowsShortsMetadataPrefetch(
+internal fun allowsShortsPlaybackPrefetch(
     sdkInt: Int,
     restrictBackgroundStatus: Int,
 ): Boolean = sdkInt < Build.VERSION_CODES.N ||

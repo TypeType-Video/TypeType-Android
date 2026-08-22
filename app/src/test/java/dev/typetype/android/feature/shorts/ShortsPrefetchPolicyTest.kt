@@ -10,7 +10,7 @@ class ShortsPrefetchPolicyTest {
     @Test
     fun `api 23 keeps prefetch available without a data saver API`() {
         assertTrue(
-            allowsShortsMetadataPrefetch(
+            allowsShortsPlaybackPrefetch(
                 sdkInt = Build.VERSION_CODES.M,
                 restrictBackgroundStatus = ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED,
             ),
@@ -20,7 +20,7 @@ class ShortsPrefetchPolicyTest {
     @Test
     fun `prefetch remains available when data saver is disabled`() {
         assertTrue(
-            allowsShortsMetadataPrefetch(
+            allowsShortsPlaybackPrefetch(
                 sdkInt = Build.VERSION_CODES.N,
                 restrictBackgroundStatus = ConnectivityManager.RESTRICT_BACKGROUND_STATUS_DISABLED,
             ),
@@ -30,7 +30,7 @@ class ShortsPrefetchPolicyTest {
     @Test
     fun `prefetch stops when data saver is enabled`() {
         assertFalse(
-            allowsShortsMetadataPrefetch(
+            allowsShortsPlaybackPrefetch(
                 sdkInt = Build.VERSION_CODES.N,
                 restrictBackgroundStatus = ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED,
             ),

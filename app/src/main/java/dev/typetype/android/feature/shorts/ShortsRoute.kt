@@ -13,7 +13,9 @@ import androidx.activity.compose.LocalActivity
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.Player
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.copyPlainText
 import dev.typetype.android.core.ui.components.LocalAppSnackbarHost
 import dev.typetype.android.feature.menu.rememberVideoMenuScope
 import dev.typetype.android.feature.player.PlayerChannelActionsViewModel
@@ -22,11 +24,11 @@ import dev.typetype.android.feature.player.PlayerFullscreenEffect
 import dev.typetype.android.feature.player.ShortsPlayerRoute
 import dev.typetype.android.feature.player.components.CommentsSheet
 import dev.typetype.android.feature.player.components.LocalMediaController
+import dev.typetype.android.feature.player.components.rememberCurrentMediaId
+import dev.typetype.android.feature.player.components.rememberPlayerPlaybackStatus
 import dev.typetype.android.feature.player.host.PlayerHostController
 import dev.typetype.android.feature.player.host.PlayerHostTarget
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 
 @Composable
 fun ShortsRoute(
@@ -43,6 +45,8 @@ fun ShortsRoute(
     val channelState by channelActionsViewModel.state.collectAsStateWithLifecycle()
     val playerHostState by playerHostController.state.collectAsStateWithLifecycle()
     val mediaController = LocalMediaController.current
+    val currentMediaId = rememberCurrentMediaId(mediaController)
+    val playbackStatus = mediaController?.let { rememberPlayerPlaybackStatus(it) }
     val menuScope = rememberVideoMenuScope(onOpenChannel)
     val visibleState = state.copy(videos = state.videos.filterNot(menuScope::isHidden))
     val snackbarHost = LocalAppSnackbarHost.current
@@ -50,6 +54,9 @@ fun ShortsRoute(
     val activity = LocalActivity.current
     val actionFailed = stringResource(R.string.snackbar_action_failed)
     var commentsVideoUrl by remember { mutableStateOf<String?>(null) }
+    val playbackReady = playerHostState.target == PlayerHostTarget.Embedded &&
+        currentMediaId == playerHostState.videoUrl &&
+        playbackStatus?.playbackState == Player.STATE_READY
 
     PlayerFullscreenEffect(
         activity = activity,
@@ -98,6 +105,14 @@ fun ShortsRoute(
         onShowComments = if (playerState.userSettings.hideComments) null else {
             { video -> commentsVideoUrl = video.url }
         },
+        onCopyTitle = { title ->
+            copyPlainText(
+                context = context,
+                value = title,
+                labelRes = R.string.shorts_title_clipboard_label,
+                confirmationRes = R.string.shorts_title_copied,
+            )
+        },
         isSubscribed = { channelState.isSubscribed(it.uploaderUrl) },
         subscriptionInFlight = { channelState.isUpdating(it.uploaderUrl) },
         onToggleSubscription = { video ->
@@ -108,6 +123,7 @@ fun ShortsRoute(
             )
         },
         embeddedPlaybackEnabled = true,
+        playbackReady = playbackReady,
         onActiveVideoChanged = { video ->
             if (video == null) {
                 mediaController?.pause()
@@ -119,10 +135,11 @@ fun ShortsRoute(
             }
         },
         onUpcomingVideosChanged = { videos ->
-            if (context.allowsShortsMetadataPrefetch()) coroutineScope {
-                videos.map { video ->
-                    async { playerViewModel.prefetchMetadata(video.url) }
-                }.awaitAll()
+            if (context.allowsShortsPlaybackPrefetch()) {
+                videos.forEachIndexed { index, video ->
+                    if (index > 0) delay(SHORTS_SECONDARY_PREFETCH_DELAY_MILLIS)
+                    playerViewModel.prefetchPlayback(video.url)
+                }
             }
         },
         statsForVideo = { video ->
@@ -160,3 +177,5 @@ fun ShortsRoute(
         )
     }
 }
+
+private const val SHORTS_SECONDARY_PREFETCH_DELAY_MILLIS = 750L
