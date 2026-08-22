@@ -13,13 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.AspectRatio
-import androidx.compose.material.icons.filled.Crop
-import androidx.compose.material.icons.filled.FitScreen
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -27,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -40,6 +32,7 @@ import dev.typetype.android.feature.player.state.ResizeMode
 @OptIn(ExperimentalLayoutApi::class)
 fun PlayerControls(
     player: Player,
+    title: String,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
     onOpenOptions: () -> Unit = {},
@@ -56,13 +49,9 @@ fun PlayerControls(
     Box(modifier = modifier) {
         TopScrim(modifier = Modifier.align(Alignment.TopCenter))
         BottomScrim(modifier = Modifier.align(Alignment.BottomCenter))
-        BackButton(
+        PlayerTopBar(
+            title = title,
             onNavigateBack = onNavigateBack,
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .windowInsetsPadding(WindowInsets.statusBars),
-        )
-        TopActions(
             onOpenChapters = onOpenChapters,
             onOpenOptions = onOpenOptions,
             onEnterPip = onEnterPip,
@@ -72,7 +61,8 @@ fun PlayerControls(
             isPipAvailable = isPipAvailable,
             chaptersAvailable = chaptersAvailable,
             modifier = Modifier
-                .align(Alignment.TopEnd)
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
                 .windowInsetsPadding(WindowInsets.statusBars),
         )
         PlayerCenterControls(
@@ -130,92 +120,6 @@ private fun BottomScrim(modifier: Modifier = Modifier) {
                 ),
             ),
     )
-}
-
-@Composable
-private fun BackButton(onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
-    OverlayIconButton(
-        onClick = onNavigateBack,
-        modifier = modifier.padding(8.dp),
-    ) {
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-            contentDescription = stringResource(R.string.player_back),
-            tint = Color.White,
-        )
-    }
-}
-
-@Composable
-private fun TopActions(
-    onOpenChapters: () -> Unit,
-    onOpenOptions: () -> Unit,
-    onEnterPip: () -> Unit,
-    onCycleResizeMode: () -> Unit,
-    resizeMode: ResizeMode,
-    isFullscreen: Boolean,
-    isPipAvailable: Boolean,
-    chaptersAvailable: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    Row(modifier = modifier.padding(8.dp)) {
-        if (isFullscreen) {
-            OverlayIconButton(onClick = onCycleResizeMode) {
-                Icon(
-                    imageVector = resizeMode.icon(),
-                    contentDescription = stringResource(R.string.player_resize_mode),
-                    tint = Color.White,
-                )
-            }
-        }
-        if (isPipAvailable) {
-            OverlayIconButton(onClick = onEnterPip) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_pip),
-                    contentDescription = stringResource(R.string.player_pip),
-                    tint = Color.White,
-                )
-            }
-        }
-        if (chaptersAvailable) {
-            OverlayIconButton(onClick = onOpenChapters) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.List,
-                    contentDescription = stringResource(R.string.player_chapters),
-                    tint = Color.White,
-                )
-            }
-        }
-        OverlayIconButton(onClick = onOpenOptions) {
-            Icon(
-                imageVector = Icons.Filled.Settings,
-                contentDescription = stringResource(R.string.player_playback_options),
-                tint = Color.White,
-            )
-        }
-    }
-}
-
-@Composable
-private fun OverlayIconButton(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    IconButton(
-        onClick = onClick,
-        modifier = modifier
-            .padding(2.dp)
-            .size(40.dp),
-    ) {
-        content()
-    }
-}
-
-private fun ResizeMode.icon(): ImageVector = when (this) {
-    ResizeMode.Fit -> Icons.Filled.FitScreen
-    ResizeMode.Crop -> Icons.Filled.Crop
-    ResizeMode.Stretch -> Icons.Filled.AspectRatio
 }
 
 @Composable

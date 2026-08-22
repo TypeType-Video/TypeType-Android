@@ -33,6 +33,7 @@ fun PlayerRoute(
     onOpenAccounts: () -> Unit,
     onPlayVideo: (videoUrl: String) -> Unit,
     onOpenChannel: (channelUrl: String) -> Unit = {},
+    modifier: Modifier = Modifier,
     viewModel: PlayerViewModel = hiltViewModel(),
     channelActionsViewModel: PlayerChannelActionsViewModel = hiltViewModel(),
     danmakuViewModel: PlayerDanmakuViewModel = hiltViewModel(),
@@ -57,6 +58,7 @@ fun PlayerRoute(
         onOpenAccounts = onOpenAccounts,
         onPlayVideo = onPlayVideo,
         onOpenChannel = onOpenChannel,
+        modifier = modifier,
         isSubscribed = channelState.isSubscribed(channelUrl),
         subscriptionInFlight = channelState.isUpdating(channelUrl),
         onToggleSubscription = {
@@ -88,6 +90,7 @@ fun PlayerScreen(
     danmakuState: PlayerDanmakuState = PlayerDanmakuState(),
     onDanmakuAction: (PlayerDanmakuAction) -> Unit = {},
     onAction: (PlayerAction) -> Unit = {},
+    modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val favoriteAdded = stringResource(R.string.player_snackbar_favorite_added)
@@ -133,6 +136,7 @@ fun PlayerScreen(
         }
     }
     Scaffold(
+        modifier = modifier,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0),
@@ -158,6 +162,7 @@ fun PlayerScreen(
                     isFavorited = state.isFavorited,
                     isInWatchLater = state.isInWatchLater,
                     gestureConfig = state.gestureConfig,
+                    playbackBrightnessPercent = state.playbackBrightnessPercent,
                     autoplayCountdownSeconds = state.autoplayCountdownSeconds,
                     audioOnlyPlaybackDefault = state.audioOnlyPlaybackDefault,
                     userSettings = state.userSettings,

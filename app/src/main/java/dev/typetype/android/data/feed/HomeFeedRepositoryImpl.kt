@@ -21,6 +21,7 @@ class HomeFeedRepositoryImpl @Inject constructor(
     private val apiHolder: TypeTypeApiHolder,
     private val activeAccountScope: ActiveAccountScope,
     private val feedVideoDao: FeedVideoDao,
+    private val subscriptionFeedDiagnostics: SubscriptionFeedDiagnostics,
 ) : HomeFeedRepository {
     private val subscriptionFeedClient = SubscriptionFeedClient()
 
@@ -34,7 +35,14 @@ class HomeFeedRepositoryImpl @Inject constructor(
     }
 
     override suspend fun cacheSubscriptionsFeed(videos: List<Video>, append: Boolean) {
-        cacheFeed(SUBSCRIPTIONS_FEED_KEY, videos, append)
+        try {
+            cacheFeed(SUBSCRIPTIONS_FEED_KEY, videos, append)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (failure: Throwable) {
+            subscriptionFeedDiagnostics.recordPersistenceFailure()
+            throw failure
+        }
     }
 
     override suspend fun loadHomeRecommendations(
@@ -69,16 +77,21 @@ class HomeFeedRepositoryImpl @Inject constructor(
         cursor: String?,
         limit: Int,
         expectedGeneration: Long?,
-    ): Result<SubscriptionsPage> = feedResult {
-        val scope = activeAccountScope.require()
-        val api = apiHolder.require(scope)
-        subscriptionFeedClient.load(
-            api = api,
-            cursor = cursor,
-            limit = limit,
-            expectedGeneration = expectedGeneration,
-            verifyOwner = { activeAccountScope.verify(scope) },
-        )
+    ): Result<SubscriptionsPage> {
+        val result = feedResult {
+            val scope = activeAccountScope.require()
+            val api = apiHolder.require(scope)
+            subscriptionFeedClient.load(
+                api = api,
+                cursor = cursor,
+                limit = limit,
+                expectedGeneration = expectedGeneration,
+                verifyOwner = { activeAccountScope.verify(scope) },
+            )
+        }
+        result.onSuccess { subscriptionFeedDiagnostics.recordReady() }
+        result.onFailure { subscriptionFeedDiagnostics.recordFailure(it, cursor != null) }
+        return result
     }
 
     override suspend fun loadShorts(

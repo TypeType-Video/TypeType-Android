@@ -18,7 +18,8 @@ fun VideoItem.toDomainVideo(): Video = Video(
     isShortFormContent = isShortFormContent,
     shortDescription = shortDescription,
     publishedAtMillis = publishedAt,
-    isPostLive = isPostLive,
+    isPostLive = isPostLive || streamType == "post_live_stream" ||
+        streamType == "post_live_audio_stream",
     isLiveContent = isLiveContent,
     requiresMembership = requiresMembership,
 )

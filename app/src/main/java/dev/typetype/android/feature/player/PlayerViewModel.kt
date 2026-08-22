@@ -11,7 +11,6 @@ import dev.typetype.android.domain.library.LibraryRepository
 import dev.typetype.android.domain.preferences.PreferencesRepository
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.usersettings.UserSettingsRepository
-import dev.typetype.android.feature.player.components.PlayerGestureConfig
 import dev.typetype.android.feature.player.error.classifyStreamError
 import dev.typetype.android.feature.player.host.PlayerHostController
 import dev.typetype.android.services.PlaybackQueueCoordinator
@@ -49,7 +48,6 @@ class PlayerViewModel @Inject constructor(
         playbackQueueCoordinator.state,
     ) { hostUrl, queue -> queue.current?.videoUrl ?: hostUrl }
         .distinctUntilChanged()
-
     private val _state = MutableStateFlow(PlayerState())
     val state = _state.asStateFlow()
     internal val sabrPlayback = sabrPlaybackFactory.create(
@@ -60,15 +58,17 @@ class PlayerViewModel @Inject constructor(
             }
         },
     )
-
     private val _events = Channel<PlayerEvent>(Channel.BUFFERED)
     val events: Flow<PlayerEvent> = _events.receiveAsFlow()
     val comments = playerCommentsFlow(commentsRepository, videoUrlFlow, viewModelScope)
-
     private var loadStreamJob: Job? = null
     private var favoriteJob: Job? = null
     private var watchLaterJob: Job? = null
-
+    private val playerPreferences = PlayerPreferenceCoordinator(
+        preferencesRepository,
+        userSettingsRepository,
+        viewModelScope,
+    )
     init {
         viewModelScope.launch {
             videoUrlFlow.collect { url ->
@@ -97,7 +97,6 @@ class PlayerViewModel @Inject constructor(
                 }
         }
         observePreferences()
-        observeUserSettings()
         viewModelScope.launch {
             playbackQueueCoordinator.state.collect { queue ->
                 _state.update { it.copy(playbackQueue = queue) }
@@ -109,7 +108,6 @@ class PlayerViewModel @Inject constructor(
             }
         }
     }
-
     private fun observeLibraryStatus(url: String) {
         favoriteJob?.cancel()
         favoriteJob = viewModelScope.launch {
@@ -132,37 +130,22 @@ class PlayerViewModel @Inject constructor(
                 }
         }
     }
-
     private fun observePreferences() {
         viewModelScope.launch {
-            preferencesRepository.observe().collect { prefs ->
+            playerPreferences.states.collect { prefs ->
                 _state.update {
                     it.copy(
-                        gestureConfig = PlayerGestureConfig(
-                            doubleTapSeekEnabled = prefs.playerDoubleTapSeekEnabled,
-                            swipeSeekEnabled = prefs.playerSwipeSeekEnabled,
-                            swipeBrightnessVolumeEnabled = prefs.playerSwipeBrightnessVolumeEnabled,
-                            longPressSpeedEnabled = prefs.playerLongPressSpeedEnabled,
-                        ),
-                        autoplayCountdownSeconds = prefs.playerAutoplayCountdownSeconds,
-                        audioOnlyPlaybackDefault = prefs.playerAudioOnlyPlayback,
+                        gestureConfig = prefs.gestureConfig,
+                        playbackBrightnessPercent = prefs.brightnessPercent,
+                        autoplayCountdownSeconds = prefs.autoplayCountdownSeconds,
+                        audioOnlyPlaybackDefault = prefs.audioOnlyPlaybackDefault,
+                        userSettings = prefs.userSettings,
                     )
                 }
             }
         }
+        viewModelScope.launch { playerPreferences.refresh() }
     }
-
-    private fun observeUserSettings() {
-        viewModelScope.launch {
-            userSettingsRepository.observe().collect { settings ->
-                _state.update {
-                    it.copy(userSettings = settings)
-                }
-            }
-        }
-        viewModelScope.launch { userSettingsRepository.refresh() }
-    }
-
     fun onAction(action: PlayerAction) {
         when (action) {
             PlayerAction.OnToggleFavorite -> toggleFavorite()
@@ -172,6 +155,10 @@ class PlayerViewModel @Inject constructor(
             PlayerAction.OnCancelQueueAutoplay -> playbackQueueCoordinator.cancelAutoplay()
             PlayerAction.OnToggleQueueAutoplayPause ->
                 playbackQueueCoordinator.toggleAutoplayPause()
+            is PlayerAction.OnSetPlaybackBrightness -> playerPreferences.updateBrightness(action.percent) {
+                _state.update { state -> state.copy(playbackBrightnessPercent = it) }
+            }
+            is PlayerAction.OnSetAutoplay -> updateAutoplay(action.enabled)
             is PlayerAction.OnDownload -> downloadCurrentVideo(action.selection)
             PlayerAction.OnOpenPlaylistPicker ->
                 _state.update { it.copy(playlistPickerVisible = true) }
@@ -188,7 +175,18 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
-    suspend fun prefetchMetadata(url: String) = playerStreamLoader.prefetchMetadata(url)
+    private fun updateAutoplay(enabled: Boolean) {
+        playerPreferences.updateAutoplay(
+            enabled = enabled,
+            onChanged = { value ->
+                _state.update { it.copy(userSettings = it.userSettings.copy(autoplay = value)) }
+            },
+            onFailure = {
+                _state.update { it.copy(userSettings = it.userSettings.copy(autoplay = !enabled)) }
+                viewModelScope.launch { _events.send(PlayerEvent.ActionFailed) }
+            },
+        )
+    }
 
     private fun addCurrentToPlaylist(playlistId: String) {
         val url = currentUrl() ?: return

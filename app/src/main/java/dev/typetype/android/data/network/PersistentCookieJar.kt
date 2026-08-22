@@ -89,7 +89,7 @@ class PersistentCookieJar @Inject constructor(
     fun clear() {
         cookies.clear()
         legacyCookies.clear()
-        prefs.edit { clear() }
+        prefs.edit(commit = true) { clear() }
     }
 
     @Synchronized
@@ -186,7 +186,7 @@ class PersistentCookieJar @Inject constructor(
                 arr.put(cookie.toJson(CookieScope("", "", host)))
             }
         }
-        prefs.edit { putString(KEY, arr.toString()) }
+        prefs.edit(commit = true) { putString(KEY, arr.toString()) }
     }
 
     private fun Cookie.toJson(scope: CookieScope): JSONObject = JSONObject().apply {

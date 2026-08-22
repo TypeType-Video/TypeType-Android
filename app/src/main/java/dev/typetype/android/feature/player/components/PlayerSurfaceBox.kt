@@ -245,6 +245,7 @@ internal fun PlayerSurfaceBox(
         ) {
             PlayerControls(
                 player = player,
+                title = stream.title,
                 onNavigateBack = onNavigateBack,
                 onOpenOptions = { optionsVisible = true },
                 onOpenChapters = { chaptersVisible = true },

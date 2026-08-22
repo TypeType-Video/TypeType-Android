@@ -2,8 +2,10 @@ package dev.typetype.android.core.ui.error
 
 import dev.typetype.android.core.error.CodedFailure
 import java.io.IOException
+import javax.net.ssl.SSLException
 
 internal enum class UserErrorKind {
+    SecureConnectionFailed,
     NetworkUnavailable,
     SignInAgain,
     PermissionDenied,
@@ -17,6 +19,7 @@ internal enum class UserErrorKind {
 }
 
 internal fun classifyUserError(failure: Throwable?): UserErrorKind {
+    if (failure.hasCause<SSLException>()) return UserErrorKind.SecureConnectionFailed
     if (failure is IOException) return UserErrorKind.NetworkUnavailable
     return when (failure?.message) {
         "This account needs to sign in again",
@@ -26,6 +29,9 @@ internal fun classifyUserError(failure: Throwable?): UserErrorKind {
         else -> classifyCodedFailure(failure)
     }
 }
+
+private inline fun <reified T : Throwable> Throwable?.hasCause(): Boolean =
+    generateSequence(this) { it.cause }.any { it is T }
 
 private fun classifyCodedFailure(failure: Throwable?): UserErrorKind {
     if (failure?.message?.contains("compatible TypeType instance") == true ||

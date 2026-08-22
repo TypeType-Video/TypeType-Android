@@ -19,6 +19,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
@@ -32,6 +34,7 @@ import dev.typetype.android.core.ui.navigation.PlaylistRoute
 import dev.typetype.android.core.ui.navigation.PodcastRoute
 import dev.typetype.android.core.ui.navigation.PublicPlaylistRoute
 import dev.typetype.android.core.ui.navigation.SearchRoute
+import dev.typetype.android.core.ui.navigation.ShortsRoute
 import dev.typetype.android.feature.player.components.LocalMediaController
 import dev.typetype.android.feature.player.components.rememberMediaController
 import dev.typetype.android.feature.player.host.PlayerHost
@@ -63,19 +66,29 @@ fun AppShell(
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
+    val isShorts = currentDestination.matchesRoute(ShortsRoute)
     val navigationTabs = visibleTopLevelTabs(showShorts)
     val isTopLevel = topLevelTabs.any { currentDestination.matchesRoute(it.route) }
-    val showsNavigation = isTopLevel ||
-        currentDestination?.hasRoute<ChannelRoute>() == true ||
-        currentDestination?.hasRoute<PlaylistRoute>() == true ||
-        currentDestination?.hasRoute<PublicPlaylistRoute>() == true ||
-        currentDestination?.hasRoute<PodcastRoute>() == true ||
-        currentDestination?.hasRoute<SearchRoute>() == true ||
-        currentDestination?.hasRoute<NotificationsRoute>() == true
+    val showsNavigation = !isShorts && (
+        isTopLevel ||
+            currentDestination?.hasRoute<ChannelRoute>() == true ||
+            currentDestination?.hasRoute<PlaylistRoute>() == true ||
+            currentDestination?.hasRoute<PublicPlaylistRoute>() == true ||
+            currentDestination?.hasRoute<PodcastRoute>() == true ||
+            currentDestination?.hasRoute<SearchRoute>() == true ||
+            currentDestination?.hasRoute<NotificationsRoute>() == true
+    )
     var activeTabRoute by rememberSaveable { mutableStateOf<String?>(null) }
     var isPlayerFullscreen by remember { mutableStateOf(false) }
+    var playerTransitionProgress by remember { mutableStateOf(0f) }
     val playerHostState by playerHostController.state.collectAsStateWithLifecycle()
     val appChromeVisible = isAppChromeVisible(playerHostState.target, isPlayerFullscreen)
+    val phoneChromeAlpha = playerPhoneChromeAlpha(
+        hasVideo = playerHostState.videoUrl != null,
+        playerTarget = playerHostState.target,
+        isPlayerFullscreen = isPlayerFullscreen,
+        transitionProgress = playerTransitionProgress,
+    )
     LaunchedEffect(currentDestination) {
         topLevelTabs.firstOrNull { currentDestination.matchesRoute(it.route) }?.let {
             activeTabRoute = it.route::class.qualifiedName
@@ -102,13 +115,25 @@ fun AppShell(
                 }
                 Box(modifier = Modifier.weight(1f)) {
                     Scaffold(
-                        contentWindowInsets = if (isPlayerFullscreen) {
+                        contentWindowInsets = if (isPlayerFullscreen || isShorts) {
                             WindowInsets(0)
                         } else {
                             WindowInsets.systemBars
                         },
                         topBar = {
-                            if (isTopLevel && appChromeVisible) {
+                            if (isTopLevel && !isShorts && !usesNavigationRail) {
+                                AppTopBar(
+                                    onOpenSearch = onOpenSearch,
+                                    onOpenNotifications = onOpenNotifications,
+                                    onOpenSettings = onOpenSettings,
+                                    onOpenProfile = onOpenProfile,
+                                    notificationsAvailable = notificationsAvailable,
+                                    unreadNotificationsCount = unreadNotificationsCount,
+                                    avatarUrl = avatarUrl,
+                                    avatarFallbackLetter = avatarFallbackLetter,
+                                    modifier = Modifier.playerChrome(phoneChromeAlpha),
+                                )
+                            } else if (isTopLevel && !isShorts && appChromeVisible) {
                                 AppTopBar(
                                     onOpenSearch = onOpenSearch,
                                     onOpenNotifications = onOpenNotifications,
@@ -122,12 +147,13 @@ fun AppShell(
                             }
                         },
                         bottomBar = {
-                            if (!usesNavigationRail && showsNavigation && appChromeVisible) {
+                            if (!usesNavigationRail && showsNavigation) {
                                 AppBottomBar(
                                     currentDestination = currentDestination,
                                     fallbackTabRouteQualifiedName = activeTabRoute,
                                     onTabClick = navController::navigateTopLevel,
                                     tabs = navigationTabs,
+                                    modifier = Modifier.playerChrome(phoneChromeAlpha),
                                 )
                             }
                         },
@@ -149,7 +175,7 @@ fun AppShell(
                     PlayerHost(
                         controller = playerHostController,
                         bottomBarHeightDp = if (
-                            !usesNavigationRail && showsNavigation && appChromeVisible
+                            !usesNavigationRail && showsNavigation
                         ) {
                             NAV_BAR_HEIGHT_DP
                         } else {
@@ -161,6 +187,7 @@ fun AppShell(
                         onOpenChannel = onOpenChannel,
                         onOpenAccounts = onOpenAccounts,
                         onClosePlayback = onClosePlayback,
+                        onTransitionProgressChange = { playerTransitionProgress = it },
                         content = {},
                     )
                 }
@@ -169,12 +196,31 @@ fun AppShell(
     }
 }
 
+private fun Modifier.playerChrome(alpha: Float): Modifier =
+    graphicsLayer { this.alpha = alpha.coerceIn(0f, 1f) }
+        .then(if (alpha <= 0f) Modifier.clearAndSetSemantics { } else Modifier)
+
 internal fun isAppChromeVisible(
     playerTarget: PlayerHostTarget,
     isPlayerFullscreen: Boolean,
 ): Boolean = playerTarget != PlayerHostTarget.Expanded && !isPlayerFullscreen
 
+internal fun playerPhoneChromeAlpha(
+    hasVideo: Boolean,
+    playerTarget: PlayerHostTarget,
+    isPlayerFullscreen: Boolean,
+    transitionProgress: Float,
+): Float = when {
+    isPlayerFullscreen -> 0f
+    hasVideo && playerTarget != PlayerHostTarget.Embedded -> transitionProgress.coerceIn(0f, 1f)
+    isAppChromeVisible(playerTarget, false) -> 1f
+    else -> 0f
+}
+
 private fun NavHostController.navigateTopLevel(route: Any) {
+    if (currentDestination?.hasRoute<SearchRoute>() == true) {
+        popBackStack()
+    }
     navigate(route) {
         popUpTo(graph.findStartDestination().id) { saveState = true }
         launchSingleTop = true

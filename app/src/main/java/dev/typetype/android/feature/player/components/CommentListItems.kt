@@ -14,10 +14,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.outlined.ThumbUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
@@ -71,7 +73,7 @@ internal fun CommentBody(
                 }
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = comment.publishedTime,
+                    text = formatCommentPublishedTime(comment),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -89,12 +91,21 @@ internal fun CommentBody(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                if (comment.likeCount > 0) {
-                    Text(
-                        text = comment.textualLikeCount.ifBlank { comment.likeCount.toString() },
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                if (comment.likeCount >= 0) {
+                    val likeLabel = comment.textualLikeCount.ifBlank { comment.likeCount.toString() }
+                    Icon(
+                        imageVector = Icons.Outlined.ThumbUp,
+                        contentDescription = stringResource(R.string.comments_like_count, likeLabel),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(16.dp),
                     )
+                    if (comment.likeCount > 0 || comment.textualLikeCount.isNotBlank()) {
+                        Text(
+                            text = likeLabel,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
         }
@@ -115,12 +126,30 @@ internal fun FooterState(items: LazyPagingItems<Comment>) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        state.append is androidx.paging.LoadState.Loading ||
-            state.refresh is androidx.paging.LoadState.Loading -> Box(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            contentAlignment = Alignment.Center,
+        state.refresh is LoadState.Loading -> CommentSkeletons(count = 4)
+        state.append is LoadState.Loading -> CommentSkeletons(count = 2)
+        state.refresh is LoadState.Error || state.append is LoadState.Error -> Column(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+            Text(
+                text = stringResource(R.string.comments_load_failed),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+            )
+            TextButton(onClick = items::retry) {
+                Text(stringResource(R.string.state_retry))
+            }
+        }
+    }
+}
+
+@Composable
+private fun CommentSkeletons(count: Int) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        repeat(count) {
+            CommentSkeleton()
+            Spacer(Modifier.height(16.dp))
         }
     }
 }

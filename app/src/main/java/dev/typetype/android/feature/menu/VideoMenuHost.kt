@@ -21,6 +21,7 @@ import dev.typetype.android.core.ui.components.VideoMenuItemState
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
 import dev.typetype.android.core.ui.share.buildShareUrl
 import dev.typetype.android.domain.feed.Video
+import dev.typetype.android.domain.navigation.canonicalVideoIdentity
 import dev.typetype.android.domain.actions.titleMatchesBlockedKeyword
 import dev.typetype.android.feature.download.DownloadSelectionSheet
 import dev.typetype.android.feature.player.components.PlaylistPickerSheet
@@ -36,13 +37,13 @@ class VideoMenuScope internal constructor(
     val onAction: (VideoMenuAction, Video) -> Unit,
 ) {
     fun stateFor(video: Video): VideoMenuItemState = VideoMenuItemState(
-        isFavorite = video.url in favorites,
-        isInWatchLater = video.url in watchLater,
-        isWatched = video.url in watchedUrls,
+        isFavorite = canonicalVideoIdentity(video.url) in favorites,
+        isInWatchLater = canonicalVideoIdentity(video.url) in watchLater,
+        isWatched = canonicalVideoIdentity(video.url) in watchedUrls,
     )
 
     fun isHidden(video: Video): Boolean =
-        video.url in blockedVideoUrls ||
+        canonicalVideoIdentity(video.url) in blockedVideoUrls ||
             video.uploaderUrl in blockedChannelUrls ||
             titleMatchesBlockedKeyword(video.title, blockedKeywords)
 }
@@ -110,10 +111,19 @@ fun rememberVideoMenuScope(
         when (action) {
             VideoMenuAction.PlayNext -> viewModel.playNext(video)
             VideoMenuAction.AddToQueue -> viewModel.addToQueue(video)
-            VideoMenuAction.ToggleFavorite -> viewModel.toggleFavorite(video, video.url in favorites)
-            VideoMenuAction.ToggleWatchLater -> viewModel.toggleWatchLater(video, video.url in watchLater)
+            VideoMenuAction.ToggleFavorite -> viewModel.toggleFavorite(
+                video,
+                canonicalVideoIdentity(video.url) in favorites,
+            )
+            VideoMenuAction.ToggleWatchLater -> viewModel.toggleWatchLater(
+                video,
+                canonicalVideoIdentity(video.url) in watchLater,
+            )
             VideoMenuAction.AddToPlaylist -> pickerVideo = video
-            VideoMenuAction.ToggleWatched -> viewModel.toggleWatched(video, video.url in watched)
+            VideoMenuAction.ToggleWatched -> viewModel.toggleWatched(
+                video,
+                canonicalVideoIdentity(video.url) in watched,
+            )
             VideoMenuAction.Download -> downloadVideo = video
             VideoMenuAction.Share -> {
                 val intent = Intent(Intent.ACTION_SEND).apply {

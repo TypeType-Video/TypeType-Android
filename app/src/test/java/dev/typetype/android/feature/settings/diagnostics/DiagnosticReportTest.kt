@@ -8,6 +8,24 @@ import org.junit.Test
 
 class DiagnosticReportTest {
     @Test
+    fun reportIncludesStableFailureCode() {
+        val entry = DiagnosticEntry(
+            timestampEpochMillis = 1_700_000_000_000,
+            method = "LOCAL",
+            route = "/subscriptions/feed/server",
+            statusCode = 503,
+            durationMillis = 0,
+            requestId = "safe-request-id",
+            failureCode = "subscription_feed_upstream_unavailable",
+        )
+
+        val report = buildDiagnosticReport(listOf(entry))
+
+        assertTrue(report.contains("code subscription_feed_upstream_unavailable"))
+        assertTrue(report.contains("request safe-request-id"))
+    }
+
+    @Test
     fun reportContainsOnlyRedactedSabrMetadata() {
         val entry = DiagnosticEntry(
             timestampEpochMillis = 1_700_000_000_000,

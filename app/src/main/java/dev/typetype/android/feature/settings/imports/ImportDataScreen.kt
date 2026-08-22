@@ -33,6 +33,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.RequestIdRow
 import dev.typetype.android.domain.imports.TypeTypeBackupCategory
+import dev.typetype.android.feature.settings.SettingsDetailTopBar
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -123,41 +124,45 @@ fun ImportDataScreen(
     onRetryYoutubeRefresh: () -> Unit,
 ) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.systemBars)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            ImportTopBar(onNavigateBack)
-            TypeTypeBackupSection(
-                state = state,
-                onToggleCategory = onToggleCategory,
-                onExport = onExportTypeType,
-                onChooseBackup = onChooseTypeTypeBackup,
-                onResetResult = onResetTypeTypeResult,
+        Column(modifier = Modifier.fillMaxSize()) {
+            SettingsDetailTopBar(
+                title = stringResource(R.string.settings_import_title),
+                onNavigateBack = onNavigateBack,
             )
-            YoutubeTakeoutImportSection(
-                state = youtubeState,
-                onOpenTakeout = onOpenYoutubeTakeout,
-                onChooseArchives = onChooseYoutubeTakeout,
-                onRetry = onRetryYoutubeTakeout,
-                onCancel = onCancelYoutubeTakeout,
-                onRemove = onRemoveYoutubeTakeout,
-                onRetryCollectionRefresh = onRetryYoutubeRefresh,
-            )
-            PipePipeImportSection(
-                state = state,
-                onChooseBackup = onChoosePipePipeBackup,
-                onRestore = onRestorePipePipe,
-                onResetResult = onResetPipePipeResult,
-            )
-            importErrorMessage(state.errorKey)?.let {
-                Text(it, color = MaterialTheme.colorScheme.error)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                TypeTypeBackupSection(
+                    state = state,
+                    onToggleCategory = onToggleCategory,
+                    onExport = onExportTypeType,
+                    onChooseBackup = onChooseTypeTypeBackup,
+                    onResetResult = onResetTypeTypeResult,
+                )
+                YoutubeTakeoutImportSection(
+                    state = youtubeState,
+                    onOpenTakeout = onOpenYoutubeTakeout,
+                    onChooseArchives = onChooseYoutubeTakeout,
+                    onRetry = onRetryYoutubeTakeout,
+                    onCancel = onCancelYoutubeTakeout,
+                    onRemove = onRemoveYoutubeTakeout,
+                    onRetryCollectionRefresh = onRetryYoutubeRefresh,
+                )
+                PipePipeImportSection(
+                    state = state,
+                    onChooseBackup = onChoosePipePipeBackup,
+                    onRestore = onRestorePipePipe,
+                    onResetResult = onResetPipePipeResult,
+                )
+                importErrorMessage(state.errorKey)?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error)
+                }
+                state.errorRequestId?.let { RequestIdRow(requestId = it) }
             }
-            state.errorRequestId?.let { RequestIdRow(requestId = it) }
         }
     }
     state.selectedTypeTypeDocument?.let { document ->
@@ -172,25 +177,6 @@ fun ImportDataScreen(
 
 private const val YOUTUBE_TAKEOUT_URL =
     "https://takeout.google.com/settings/takeout/custom/youtube,my_activity?dest=mail&frequency=once"
-
-@Composable
-private fun ImportTopBar(onNavigateBack: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = onNavigateBack) {
-            Icon(
-                Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(R.string.settings_back),
-            )
-        }
-        Text(
-            text = stringResource(R.string.settings_import_title),
-            style = MaterialTheme.typography.titleLarge,
-        )
-    }
-}
 
 @Composable
 private fun importErrorMessage(key: String?): String? = when (key) {

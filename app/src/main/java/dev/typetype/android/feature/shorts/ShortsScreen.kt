@@ -7,14 +7,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -23,21 +20,22 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import dev.typetype.android.R
-import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.core.ui.components.AnimatedError
 import dev.typetype.android.core.ui.components.FullScreenLoader
 import dev.typetype.android.core.ui.components.RequestIdRow
@@ -49,22 +47,29 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlin.math.absoluteValue
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ShortsScreen(
     state: ShortsState,
+    onNavigateBack: () -> Unit,
     onPlayVideo: (String) -> Unit,
     onOpenChannel: (String) -> Unit,
     onRefresh: () -> Unit,
     onLoadMore: () -> Unit,
     embeddedPlaybackEnabled: Boolean = false,
+    playbackReady: Boolean = true,
     onActiveVideoChanged: (Video?) -> Unit = {},
     onUpcomingVideosChanged: suspend (List<Video>) -> Unit = {},
+    statsForVideo: (Video) -> ShortsVideoStats = {
+        ShortsVideoStats(it.viewCount.takeIf { count -> count >= 0L }, null)
+    },
     embeddedPlayback: @Composable (Video, onAdvance: () -> Unit) -> Unit = { _, _ -> },
     menuItemState: (Video) -> VideoMenuItemState = { VideoMenuItemState() },
     onMenuAction: (VideoMenuAction, Video) -> Unit = { _, _ -> },
     onShowComments: ((Video) -> Unit)? = null,
+    onCopyTitle: (String) -> Unit = {},
     isSubscribed: (Video) -> Boolean = { false },
     subscriptionInFlight: (Video) -> Boolean = { false },
     onToggleSubscription: (Video) -> Unit = {},
@@ -91,11 +96,14 @@ fun ShortsScreen(
                     .collect { nearEnd -> if (nearEnd && state.hasMore) currentLoadMore() }
             }
             LaunchedEffect(pagerState, state.videos) {
-                snapshotFlow { state.videos.getOrNull(pagerState.settledPage) }
+                snapshotFlow {
+                    state.videos.getOrNull(pagerState.settledPage)
+                }
                     .distinctUntilChanged()
                     .collect(currentActiveVideoChanged)
             }
-            LaunchedEffect(pagerState, state.videos) {
+            LaunchedEffect(pagerState, state.videos, playbackReady) {
+                if (!playbackReady) return@LaunchedEffect
                 snapshotFlow {
                     state.videos.drop(pagerState.settledPage + 1).take(SHORTS_PREFETCH_COUNT)
                 }.distinctUntilChanged().collectLatest(currentUpcomingVideosChanged)
@@ -104,19 +112,36 @@ fun ShortsScreen(
                 VerticalPager(
                     state = pagerState,
                     key = { state.videos[it].shortIdentity() },
+                    beyondViewportPageCount = 1,
                     modifier = Modifier.fillMaxSize().testTag(SHORTS_PAGER_TAG),
                 ) { page ->
+                    val isSettledPage by remember(pagerState, page) {
+                        derivedStateOf { page == pagerState.settledPage }
+                    }
                     ShortPage(
                         video = state.videos[page],
                         isActive = embeddedPlaybackEnabled &&
-                            page == pagerState.settledPage,
+                            isSettledPage,
+                        embeddedPlaybackEnabled = embeddedPlaybackEnabled,
+                        enhanceBranding = !embeddedPlaybackEnabled ||
+                            isSettledPage && playbackReady,
+                        overlayMotion = Modifier.graphicsLayer {
+                            val pageOffset = (
+                                pagerState.currentPage - page +
+                                    pagerState.currentPageOffsetFraction
+                                ).absoluteValue
+                            alpha = shortsOverlayAlpha(pageOffset)
+                            translationY = shortsOverlayTranslationY(pageOffset)
+                        },
                         onPlayVideo = onPlayVideo,
                         onOpenChannel = onOpenChannel,
                         menuItemState = menuItemState(state.videos[page]),
+                        stats = statsForVideo(state.videos[page]),
                         onMenuAction = { onMenuAction(it, state.videos[page]) },
                         onShowComments = onShowComments?.let { callback ->
                             { callback(state.videos[page]) }
                         },
+                        onCopyTitle = onCopyTitle,
                         isSubscribed = isSubscribed(state.videos[page]),
                         subscriptionInFlight = subscriptionInFlight(state.videos[page]),
                         onToggleSubscription = { onToggleSubscription(state.videos[page]) },
@@ -130,12 +155,12 @@ fun ShortsScreen(
                     )
                 }
                 IconButton(
-                    onClick = onRefresh,
-                    modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
+                    onClick = onNavigateBack,
+                    modifier = Modifier.align(Alignment.TopStart).safeDrawingPadding().padding(8.dp),
                 ) {
                     Icon(
-                        Icons.Outlined.Refresh,
-                        contentDescription = stringResource(R.string.shorts_refresh),
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.player_back),
                         tint = Color.White,
                     )
                 }
@@ -180,76 +205,6 @@ private fun ShortsInlineError(
                 Text(stringResource(R.string.state_retry))
             }
         }
-    }
-}
-
-@Composable
-private fun ShortPage(
-    video: Video,
-    isActive: Boolean,
-    onPlayVideo: (String) -> Unit,
-    onOpenChannel: (String) -> Unit,
-    menuItemState: VideoMenuItemState,
-    onMenuAction: (VideoMenuAction) -> Unit,
-    onShowComments: (() -> Unit)?,
-    isSubscribed: Boolean,
-    subscriptionInFlight: Boolean,
-    onToggleSubscription: () -> Unit,
-    embeddedPlayback: @Composable () -> Unit,
-) {
-    val branding = rememberVideoBranding(
-        sourceUrl = video.url,
-        title = video.title,
-        thumbnailUrl = video.thumbnailUrl,
-        durationSeconds = video.durationSeconds,
-    )
-    Box(modifier = Modifier.fillMaxSize()) {
-        AsyncImage(
-            model = branding.thumbnailUrl,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize(),
-        )
-        if (isActive) embeddedPlayback()
-        Box(
-            modifier = Modifier.fillMaxSize().background(
-                Brush.verticalGradient(
-                    0f to Color.Black.copy(alpha = 0.18f),
-                    0.55f to Color.Transparent,
-                    1f to Color.Black.copy(alpha = 0.88f),
-                ),
-            ),
-        )
-        if (isActive) {
-            ShortsActionRail(
-                video = video,
-                state = menuItemState,
-                onOpenPlayer = { onPlayVideo(video.url) },
-                onAction = onMenuAction,
-                onShowComments = onShowComments,
-                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 12.dp),
-            )
-        } else {
-            FilledIconButton(
-                onClick = { onPlayVideo(video.url) },
-                modifier = Modifier.align(Alignment.Center).size(68.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.PlayArrow,
-                    contentDescription = stringResource(R.string.shorts_play, branding.title),
-                    modifier = Modifier.size(38.dp),
-                )
-            }
-        }
-        ShortsInfoOverlay(
-            video = video,
-            title = branding.title,
-            isSubscribed = isSubscribed,
-            subscriptionInFlight = subscriptionInFlight,
-            onOpenChannel = { onOpenChannel(video.uploaderUrl) },
-            onToggleSubscription = onToggleSubscription,
-            modifier = Modifier.align(Alignment.BottomStart),
-        )
     }
 }
 

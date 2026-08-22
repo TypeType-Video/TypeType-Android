@@ -3,6 +3,8 @@ package dev.typetype.android.core.ui.error
 import dev.typetype.android.data.network.ServerError
 import dev.typetype.android.data.network.ServerResponseException
 import java.io.IOException
+import javax.net.ssl.SSLHandshakeException
+import javax.net.ssl.SSLPeerUnverifiedException
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -12,6 +14,18 @@ class UserErrorKindTest {
         assertEquals(UserErrorKind.NetworkUnavailable, classifyUserError(IOException("offline")))
         assertEquals(UserErrorKind.SignInAgain, classifyUserError(serverFailure(401)))
         assertEquals(UserErrorKind.PermissionDenied, classifyUserError(serverFailure(403)))
+    }
+
+    @Test
+    fun `keeps TLS failures distinct from other transport failures`() {
+        assertEquals(
+            UserErrorKind.SecureConnectionFailed,
+            classifyUserError(SSLHandshakeException("certificate rejected")),
+        )
+        assertEquals(
+            UserErrorKind.SecureConnectionFailed,
+            classifyUserError(IOException("probe failed", SSLPeerUnverifiedException("hostname"))),
+        )
     }
 
     @Test

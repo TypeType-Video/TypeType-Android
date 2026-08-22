@@ -82,7 +82,7 @@ private fun DiagnosticsScreen(
     val context = LocalContext.current
     val shareLabel = stringResource(R.string.diagnostics_share)
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars)) {
+        Column(modifier = Modifier.fillMaxSize()) {
             DiagnosticsTopBar(onNavigateBack)
             LazyColumn(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -225,6 +225,14 @@ private fun DiagnosticRow(entry: DiagnosticEntry) {
         entry.sabr?.let {
             Text(
                 text = stringResource(R.string.diagnostics_sabr_detail, it.redactedSummary()),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontFamily = FontFamily.Monospace,
+            )
+        }
+        entry.failureCode?.let {
+            Text(
+                text = stringResource(R.string.diagnostics_failure_code, it),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontFamily = FontFamily.Monospace,

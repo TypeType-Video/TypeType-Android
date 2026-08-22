@@ -40,12 +40,12 @@ private val TIME_LABEL_WIDTH = 52.dp
 private val COMPACT_TIME_LABEL_MIN_WIDTH = 30.dp
 private val TIMELINE_HEIGHT = 36.dp
 private val COMPACT_TIMELINE_HEIGHT = 18.dp
-private val TRACK_HEIGHT = 7.dp
-private val COMPACT_TRACK_HEIGHT = 5.dp
+private val TRACK_HEIGHT = 3.dp
+private val COMPACT_TRACK_HEIGHT = 2.dp
 private val THUMB_WIDTH = 14.dp
-private val THUMB_HEIGHT = 22.dp
-private val COMPACT_THUMB_WIDTH = 12.dp
-private val COMPACT_THUMB_HEIGHT = 18.dp
+private val THUMB_HEIGHT = 14.dp
+private val COMPACT_THUMB_WIDTH = 10.dp
+private val COMPACT_THUMB_HEIGHT = 10.dp
 
 @OptIn(markerClass = [UnstableApi::class])
 @Composable

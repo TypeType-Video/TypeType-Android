@@ -11,12 +11,16 @@ import dev.typetype.android.core.ui.util.WindowHelper
 internal fun PlayerFullscreenEffect(
     activity: Activity?,
     isFullscreen: Boolean,
-    onFullscreenChange: (Boolean) -> Unit,
+    locksLandscape: Boolean,
 ) {
-    LaunchedEffect(isFullscreen) {
+    LaunchedEffect(isFullscreen, locksLandscape) {
         val window = activity?.window ?: return@LaunchedEffect
         if (isFullscreen) {
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            activity.requestedOrientation = if (locksLandscape) {
+                ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            } else {
+                ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            }
             WindowHelper.toggleFullscreen(window, isFullscreen = true)
         } else {
             activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
@@ -29,7 +33,6 @@ internal fun PlayerFullscreenEffect(
             val window = activity?.window ?: return@onDispose
             activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
             WindowHelper.toggleFullscreen(window, isFullscreen = false)
-            onFullscreenChange(false)
         }
     }
 }

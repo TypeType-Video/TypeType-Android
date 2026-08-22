@@ -44,6 +44,7 @@ import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.RequestIdRow
 import dev.typetype.android.domain.rss.RssFeed
 import dev.typetype.android.domain.rss.RssFeedScope
+import dev.typetype.android.feature.settings.SettingsDetailTopBar
 
 @Composable
 fun RssFeedsRoute(
@@ -66,8 +67,11 @@ internal fun RssFeedsScreen(
 ) {
     val channelNames = state.subscriptions.associate { it.channelUrl to it.name }
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars)) {
-            RssTopBar(onNavigateBack)
+        Column(modifier = Modifier.fillMaxSize()) {
+            SettingsDetailTopBar(
+                title = stringResource(R.string.rss_settings_title),
+                onNavigateBack = onNavigateBack,
+            )
             LazyColumn(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -138,26 +142,6 @@ internal fun RssFeedsScreen(
             enabled = !state.isMutating,
             onConfirm = { onAction(RssFeedsAction.ConfirmDelete) },
             onDismiss = { onAction(RssFeedsAction.DismissDelete) },
-        )
-    }
-}
-
-@Composable
-private fun RssTopBar(onNavigateBack: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = onNavigateBack) {
-            Icon(
-                Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(R.string.settings_back),
-            )
-        }
-        Text(
-            text = stringResource(R.string.rss_settings_title),
-            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
-            modifier = Modifier.padding(start = 4.dp),
         )
     }
 }

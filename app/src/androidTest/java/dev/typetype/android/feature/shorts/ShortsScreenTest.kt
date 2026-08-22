@@ -22,6 +22,8 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.awaitCancellation
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -105,7 +107,22 @@ class ShortsScreenTest {
     }
 
     @Test
-    fun cancelledSwipeKeepsTheSettledShortActive() {
+    fun embeddedPagerDoesNotFlashPlayButtonsOnAdjacentPages() {
+        show(
+            state = ShortsState(
+                videos = listOf(video("one"), video("two")),
+                isLoading = false,
+            ),
+            embeddedPlaybackEnabled = true,
+            embeddedPlayback = { video, _ -> Text("Embedded ${video.title}") },
+        )
+
+        composeRule.onNodeWithText("Embedded Short one").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Play Short two").assertDoesNotExist()
+    }
+
+    @Test
+    fun cancelledSwipeKeepsTheCurrentShortPlaying() {
         val activeUrl = AtomicReference<String>()
         val inactiveEvents = AtomicInteger()
         val playbackDisposals = AtomicInteger()
@@ -130,11 +147,10 @@ class ShortsScreenTest {
 
         composeRule.waitUntil { activeUrl.get() == "https://video/one" }
         composeRule.onNodeWithTag(SHORTS_PAGER_TAG).performTouchInput {
-            swipe(
-                start = center,
-                end = center.copy(y = center.y - 80f),
-                durationMillis = 300,
-            )
+            down(center)
+            moveTo(center.copy(y = -center.y * 0.5f), 180L)
+            moveTo(center, 180L)
+            up()
         }
         composeRule.waitForIdle()
 
@@ -145,7 +161,29 @@ class ShortsScreenTest {
     }
 
     @Test
-    fun pagerReportsTwoUpcomingShortsForMetadataPrefetch() {
+    fun horizontalSwipeRightKeepsTheShortOpen() {
+        val openedChannel = AtomicReference<String>()
+
+        show(
+            state = ShortsState(videos = listOf(video("one")), isLoading = false),
+            onOpenChannel = openedChannel::set,
+        )
+
+        composeRule.onNodeWithTag(SHORTS_PAGER_TAG).performTouchInput {
+            swipe(
+                start = center.copy(x = center.x - 180f),
+                end = center.copy(x = center.x + 180f),
+                durationMillis = 300,
+            )
+        }
+
+        composeRule.waitForIdle()
+
+        assertNull(openedChannel.get())
+    }
+
+    @Test
+    fun pagerReportsTwoUpcomingShortsForPlaybackPrefetch() {
         val upcomingUrls = AtomicReference<List<String>>()
 
         show(
@@ -162,7 +200,7 @@ class ShortsScreenTest {
     }
 
     @Test
-    fun changingPageCancelsThePreviousMetadataPrefetch() {
+    fun changingPageCancelsThePreviousPlaybackPrefetch() {
         val prefetchStarted = AtomicBoolean()
         val prefetchCancelled = AtomicBoolean()
 
@@ -224,12 +262,39 @@ class ShortsScreenTest {
         assertEquals("one", subscribedVideo.get().id)
     }
 
+    @Test
+    fun activeShortShowsViewsAndLikes() {
+        show(
+            state = ShortsState(videos = listOf(video("one")), isLoading = false),
+            statsForVideo = { ShortsVideoStats(viewCount = 1_500, likeCount = 42) },
+        )
+
+        composeRule.onNodeWithContentDescription("1.5K views").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("42 likes").assertIsDisplayed()
+    }
+
+    @Test
+    fun backButtonIsAvailableOverTheShort() {
+        val navigatedBack = AtomicBoolean()
+
+        show(
+            state = ShortsState(videos = listOf(video("one")), isLoading = false),
+            onNavigateBack = { navigatedBack.set(true) },
+        )
+
+        composeRule.onNodeWithContentDescription("Back").performClick()
+        assertTrue(navigatedBack.get())
+    }
+
     private fun show(
         state: ShortsState,
         onPlayVideo: (String) -> Unit = {},
+        onNavigateBack: () -> Unit = {},
+        onOpenChannel: (String) -> Unit = {},
         embeddedPlaybackEnabled: Boolean = false,
         onActiveVideoChanged: (Video?) -> Unit = {},
         onUpcomingVideosChanged: suspend (List<Video>) -> Unit = {},
+        statsForVideo: (Video) -> ShortsVideoStats = { ShortsVideoStats(it.viewCount, null) },
         embeddedPlayback: @Composable (Video, () -> Unit) -> Unit = { _, _ -> },
         onMenuAction: (VideoMenuAction, Video) -> Unit = { _, _ -> },
         onShowComments: ((Video) -> Unit)? = null,
@@ -240,13 +305,15 @@ class ShortsScreenTest {
                 TypeTypeTheme {
                     ShortsScreen(
                         state = state,
+                        onNavigateBack = onNavigateBack,
                         onPlayVideo = onPlayVideo,
-                        onOpenChannel = {},
+                        onOpenChannel = onOpenChannel,
                         onRefresh = {},
                         onLoadMore = {},
                         embeddedPlaybackEnabled = embeddedPlaybackEnabled,
                         onActiveVideoChanged = onActiveVideoChanged,
                         onUpcomingVideosChanged = onUpcomingVideosChanged,
+                        statsForVideo = statsForVideo,
                         embeddedPlayback = embeddedPlayback,
                         onMenuAction = onMenuAction,
                         onShowComments = onShowComments,

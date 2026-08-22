@@ -77,11 +77,6 @@ fun MiniPlayerBar(
                         if (!change.pressed || handled) break
                         val deltaY = change.position.y - startY
                         when {
-                            deltaY <= -swipeThresholdPx -> {
-                                change.consume()
-                                handled = true
-                                onExpand()
-                            }
                             deltaY >= swipeThresholdPx -> {
                                 change.consume()
                                 handled = true

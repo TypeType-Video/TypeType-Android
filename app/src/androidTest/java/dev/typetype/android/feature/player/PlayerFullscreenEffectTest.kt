@@ -8,7 +8,9 @@ import android.view.WindowManager
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.Lifecycle
 import androidx.test.filters.SdkSuppress
 import dev.typetype.android.core.ui.util.WindowHelper
@@ -25,7 +27,6 @@ class PlayerFullscreenEffectTest {
     val composeRule = createAndroidComposeRule<FullscreenTestActivity>()
 
     private val fullscreen = mutableStateOf(false)
-    private var disposedFullscreen = true
 
     @Before
     fun showEffectInPortrait() {
@@ -41,7 +42,7 @@ class PlayerFullscreenEffectTest {
             PlayerFullscreenEffect(
                 activity = composeRule.activity,
                 isFullscreen = fullscreen.value,
-                onFullscreenChange = { disposedFullscreen = it },
+                locksLandscape = true,
             )
         }
         composeRule.waitForIdle()
@@ -102,7 +103,6 @@ class PlayerFullscreenEffectTest {
                     composeRule.activity.window.attributes.layoutInDisplayCutoutMode,
                 )
             }
-            assertTrue(disposedFullscreen)
         }
         composeRule.waitUntil(SYSTEM_BARS_TIMEOUT_MILLIS) { systemBarsVisible() }
     }
@@ -129,6 +129,13 @@ class PlayerFullscreenEffectTest {
         composeRule.waitUntil(SYSTEM_BARS_TIMEOUT_MILLIS) { systemBarsVisible() }
         composeRule.runOnIdle {
             assertFalse(hasNoLimitsFlag())
+            assertEquals(
+                WindowInsetsControllerCompat.BEHAVIOR_DEFAULT,
+                WindowCompat.getInsetsController(
+                    composeRule.activity.window,
+                    composeRule.activity.window.decorView,
+                ).systemBarsBehavior,
+            )
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 assertEquals(
                     WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT,
@@ -151,8 +158,12 @@ class PlayerFullscreenEffectTest {
             return decorView.systemUiVisibility and hiddenFlags == 0
         }
         val insets = ViewCompat.getRootWindowInsets(decorView) ?: return false
+        val navigationBars = WindowInsetsCompat.Type.navigationBars()
+        val navigationBarInsets = insets.getInsetsIgnoringVisibility(navigationBars)
+        val hasNavigationBar = navigationBarInsets.left != 0 || navigationBarInsets.top != 0 ||
+            navigationBarInsets.right != 0 || navigationBarInsets.bottom != 0
         return insets.isVisible(WindowInsetsCompat.Type.statusBars()) &&
-            insets.isVisible(WindowInsetsCompat.Type.navigationBars())
+            (!hasNavigationBar || insets.isVisible(navigationBars))
     }
 
     private companion object {

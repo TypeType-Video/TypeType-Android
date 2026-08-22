@@ -14,6 +14,7 @@ import dev.typetype.android.domain.download.DownloadRepository
 import dev.typetype.android.domain.download.DownloadSelection
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.library.LibraryRepository
+import dev.typetype.android.domain.navigation.canonicalVideoIdentity
 import dev.typetype.android.domain.playback.PlaybackQueueEntry
 import dev.typetype.android.domain.playback.PlaybackQueueMutationResult
 import dev.typetype.android.feature.player.host.PlayerHostController
@@ -47,24 +48,28 @@ class VideoMenuHandlerViewModel @Inject constructor(
 
     val playlists = playlistState
 
-    val favoriteUrls = playlistState
-        .map { lists ->
-            lists.firstOrNull { it.name.equals("Favorites", ignoreCase = true) }
-                ?.videos?.map { it.url }?.toSet() ?: emptySet()
-        }
+    private val favoriteTargets = libraryRepository.observeFavorites()
+        .map { items -> items.associate { canonicalVideoIdentity(it.videoUrl) to it.videoUrl } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    val favoriteUrls = favoriteTargets
+        .map { it.keys }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
 
-    val watchLaterUrls = playlistState
-        .map { lists ->
-            lists.firstOrNull { it.name.equals("Watch Later", ignoreCase = true) }
-                ?.videos?.map { it.url }?.toSet() ?: emptySet()
-        }
+    private val watchLaterTargets = libraryRepository.observeWatchLater()
+        .map { items -> items.associate { canonicalVideoIdentity(it.url) to it.url } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    val watchLaterUrls = watchLaterTargets
+        .map { it.keys }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
 
     val watchedUrls = libraryRepository.observeWatchedUrls()
+        .map { urls -> urls.mapTo(mutableSetOf(), ::canonicalVideoIdentity) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
 
     val blockedVideoUrls = videoActionsRepository.observeBlockedVideoUrls()
+        .map { urls -> urls.mapTo(mutableSetOf(), ::canonicalVideoIdentity) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
 
     val blockedChannelUrls = videoActionsRepository.observeBlockedChannelUrls()
@@ -80,7 +85,8 @@ class VideoMenuHandlerViewModel @Inject constructor(
     fun toggleFavorite(video: Video, isCurrentlyFavorite: Boolean) {
         viewModelScope.launch {
             val result = if (isCurrentlyFavorite) {
-                libraryRepository.removeFavorite(video.url)
+                val target = favoriteTargets.value[canonicalVideoIdentity(video.url)] ?: video.url
+                libraryRepository.removeFavorite(target)
             } else {
                 libraryRepository.addFavorite(
                     videoUrl = video.url,
@@ -105,7 +111,8 @@ class VideoMenuHandlerViewModel @Inject constructor(
     fun toggleWatchLater(video: Video, isCurrentlyInWatchLater: Boolean) {
         viewModelScope.launch {
             val result = if (isCurrentlyInWatchLater) {
-                libraryRepository.removeWatchLater(video.url)
+                val target = watchLaterTargets.value[canonicalVideoIdentity(video.url)] ?: video.url
+                libraryRepository.removeWatchLater(target)
             } else {
                 libraryRepository.addWatchLater(
                     url = video.url,

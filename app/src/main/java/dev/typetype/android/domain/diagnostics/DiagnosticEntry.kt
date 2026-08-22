@@ -8,4 +8,5 @@ data class DiagnosticEntry(
     val durationMillis: Long,
     val requestId: String?,
     val sabr: SabrDiagnosticDetail? = null,
+    val failureCode: String? = null,
 )

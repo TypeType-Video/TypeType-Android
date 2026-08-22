@@ -95,16 +95,23 @@ class LocalDiagnosticsRepository @Inject constructor(
         }
     }
 
-    internal fun recordLocalEvent(route: String, timestampEpochMillis: Long = System.currentTimeMillis()) {
+    internal fun recordLocalEvent(
+        route: String,
+        timestampEpochMillis: Long = System.currentTimeMillis(),
+        statusCode: Int? = null,
+        requestId: String? = null,
+        failureCode: String? = null,
+    ) {
         if (route !in LOCAL_EVENT_ROUTES) return
         val scope = currentScope()?.copy(route = route) ?: return
         val entry = DiagnosticEntry(
             timestampEpochMillis = timestampEpochMillis,
             method = LOCAL_METHOD,
             route = route,
-            statusCode = null,
+            statusCode = statusCode?.takeIf { it in 100..599 },
             durationMillis = 0,
-            requestId = null,
+            requestId = requestId?.takeIf(REQUEST_ID_PATTERN::matches),
+            failureCode = failureCode?.takeIf(FAILURE_CODE_PATTERN::matches),
         )
         synchronized(lock) {
             directory.mkdirs()
@@ -160,11 +167,12 @@ class LocalDiagnosticsRepository @Inject constructor(
         entry.durationMillis,
         entry.requestId.orEmpty(),
         entry.sabr?.let(SabrDiagnosticDetailCodec::encode).orEmpty(),
+        entry.failureCode.orEmpty(),
     ).joinToString("\t")
 
     private fun decode(line: String): DiagnosticEntry? {
-        val fields = line.split('\t', limit = 7)
-        if (fields.size !in 6..7) return null
+        val fields = line.split('\t', limit = 8)
+        if (fields.size !in 6..8) return null
         val route = fields[2].takeIf { it.startsWith('/') && it.length <= 40 } ?: return null
         return DiagnosticEntry(
             timestampEpochMillis = fields[0].toLongOrNull() ?: return null,
@@ -180,6 +188,7 @@ class LocalDiagnosticsRepository @Inject constructor(
             sabr = fields.getOrNull(6)
                 ?.takeIf(String::isNotEmpty)
                 ?.let(SabrDiagnosticDetailCodec::decode),
+            failureCode = fields.getOrNull(7)?.takeIf(FAILURE_CODE_PATTERN::matches),
         )
     }
 
@@ -206,6 +215,7 @@ class LocalDiagnosticsRepository @Inject constructor(
         const val MAX_DURATION_MILLIS = 15 * 60 * 1_000L
         val ALLOWED_METHODS = setOf("DELETE", "GET", "PATCH", "POST", "PUT")
         val REQUEST_ID_PATTERN = Regex("[A-Za-z0-9_-]{8,64}")
+        val FAILURE_CODE_PATTERN = Regex("[a-z0-9_]{3,64}")
         const val LOCAL_METHOD = "LOCAL"
         const val LEGACY_APPLICATION_METHOD = "APP"
         val LOCAL_EVENT_ROUTES = setOf(
@@ -218,6 +228,12 @@ class LocalDiagnosticsRepository @Inject constructor(
             "/network/available",
             "/network/changed",
             "/network/lost",
+            "/subscriptions/feed/contract",
+            "/subscriptions/feed/decode",
+            "/subscriptions/feed/pagination",
+            "/subscriptions/feed/persistence",
+            "/subscriptions/feed/ready",
+            "/subscriptions/feed/server",
         )
     }
 }

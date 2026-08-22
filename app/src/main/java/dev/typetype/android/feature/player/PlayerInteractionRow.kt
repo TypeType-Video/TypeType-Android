@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.WatchLater
+import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.WatchLater
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,6 +37,7 @@ fun PlayerInteractionRow(
     onToggleFavorite: () -> Unit,
     onToggleWatchLater: () -> Unit,
     onAddToPlaylist: () -> Unit,
+    onShowComments: (() -> Unit)?,
     onDownload: () -> Unit,
     downloadInFlight: Boolean = false,
 ) {
@@ -69,6 +71,13 @@ fun PlayerInteractionRow(
             contentDescription = stringResource(R.string.player_add_to_playlist),
             onClick = onAddToPlaylist,
         )
+        onShowComments?.let {
+            PlayerActionButton(
+                icon = Icons.Outlined.ChatBubbleOutline,
+                contentDescription = stringResource(R.string.comments_title),
+                onClick = it,
+            )
+        }
         PlayerActionButton(
             icon = Icons.Filled.Download,
             contentDescription = stringResource(R.string.player_download),

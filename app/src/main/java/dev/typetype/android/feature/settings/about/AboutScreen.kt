@@ -45,6 +45,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.BuildConfig
 import dev.typetype.android.R
+import dev.typetype.android.feature.settings.SettingsDetailTopBar
 
 private data class AboutLink(val labelRes: Int, val url: String)
 
@@ -62,8 +63,11 @@ fun AboutScreen(
     val context = LocalContext.current
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars)) {
-            TopBar(onNavigateBack = onNavigateBack)
+        Column(modifier = Modifier.fillMaxSize()) {
+            SettingsDetailTopBar(
+                title = stringResource(R.string.settings_about_title),
+                onNavigateBack = onNavigateBack,
+            )
             LazyColumn(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -145,31 +149,6 @@ fun AboutScreen(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun TopBar(onNavigateBack: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = onNavigateBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(R.string.settings_back),
-                tint = MaterialTheme.colorScheme.onBackground,
-            )
-        }
-        Text(
-            text = stringResource(R.string.settings_about_title),
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = (-0.3).sp,
-            ),
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(start = 4.dp),
-        )
     }
 }
 

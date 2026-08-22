@@ -7,12 +7,14 @@ import javax.inject.Inject
 
 class PlayerSabrPlaybackFactory @Inject constructor(
     private val repository: SabrPlaybackRepository,
+    private val preloads: SabrPlaybackPreloadStore,
     private val windowCache: SabrPlaybackWindowCache,
 ) {
     internal fun create(
         onFailure: (stream: Stream, failure: Throwable) -> Unit,
     ) = PlayerSabrPlayback(
         repository = repository,
+        preloads = preloads,
         onPrepared = { _, session ->
             windowCache.put(session)
         },

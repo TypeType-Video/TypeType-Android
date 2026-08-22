@@ -19,7 +19,7 @@ class PlaybackDanmakuOptionsTest {
     @Test
     fun supportedVideoCanToggleBulletComments() {
         val enabled = AtomicBoolean(false)
-        show(enabled = false) { enabled.set(it) }
+        show(enabled = false, onDanmakuChange = { enabled.set(it) })
 
         composeRule.onNode(hasText("Show bullet comments") and hasClickAction()).performClick()
 
@@ -34,9 +34,28 @@ class PlaybackDanmakuOptionsTest {
         composeRule.onNodeWithText("Bullet comment size").assertIsDisplayed()
     }
 
+    @Test
+    fun mainPageOpensAudioAndCaptionControls() {
+        val audioOpened = AtomicBoolean(false)
+        val captionsOpened = AtomicBoolean(false)
+        show(
+            enabled = false,
+            onOpenAudio = { audioOpened.set(true) },
+            onOpenCaptions = { captionsOpened.set(true) },
+        )
+
+        composeRule.onNode(hasText("Audio") and hasClickAction()).performClick()
+        composeRule.onNode(hasText("Captions") and hasClickAction()).performClick()
+
+        assertTrue(audioOpened.get())
+        assertTrue(captionsOpened.get())
+    }
+
     private fun show(
         enabled: Boolean,
         onDanmakuChange: (Boolean) -> Unit = {},
+        onOpenAudio: () -> Unit = {},
+        onOpenCaptions: () -> Unit = {},
     ) {
         composeRule.setContent {
             TypeTypeTheme {
@@ -58,8 +77,8 @@ class PlaybackDanmakuOptionsTest {
                     danmakuLoadFailed = false,
                     onOpenCodec = {},
                     onOpenQuality = {},
-                    onOpenCaptions = {},
-                    onOpenAudio = {},
+                    onOpenCaptions = onOpenCaptions,
+                    onOpenAudio = onOpenAudio,
                     onOpenSpeed = {},
                     onOpenResize = {},
                     onAudioOnlyChange = {},

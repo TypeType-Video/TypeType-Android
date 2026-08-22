@@ -34,6 +34,30 @@ class IncomingVideoUrlTest {
             "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
             resolveIncomingVideoUrl("https://example.com/watch?v=dQw4w9WgXcQ"),
         )
+        assertEquals(
+            "https://www.bilibili.com/video/BV1xx411c7mD?p=3",
+            resolveIncomingVideoUrl(
+                "https://watch.example/api/proxy?url=" +
+                    "https%3A%2F%2Fwww.bilibili.com%2Fvideo%2FBV1xx411c7mD%3Fp%3D3",
+            ),
+        )
+    }
+
+    @Test
+    fun publicWatchParametersMatchTheFrontendContract() {
+        assertEquals("dQw4w9WgXcQ", toPublicWatchParameter("https://youtu.be/dQw4w9WgXcQ"))
+        assertEquals("sm9", toPublicWatchParameter("https://www.nicovideo.jp/watch/sm9"))
+        assertEquals(
+            "BV1xx411c7mD?p=3",
+            toPublicWatchParameter("https://www.bilibili.com/video/BV1xx411c7mD?p=3"),
+        )
+        assertEquals(
+            "sm9",
+            toPublicWatchParameter(
+                "https://watch.example/watch?v=" +
+                    "https%3A%2F%2Fwww.nicovideo.jp%2Fwatch%2Fsm9",
+            ),
+        )
     }
 
     @Test

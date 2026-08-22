@@ -25,8 +25,8 @@ android {
         applicationId = "dev.typetype.android"
         minSdk = 23
         targetSdk = 37
-        versionCode = 10400
-        versionName = "1.4.0"
+        versionCode = 10500
+        versionName = "1.5.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         resValue("string", "app_name", "TypeType")
     }
@@ -98,6 +98,14 @@ android {
     }
 
     sourceSets["androidTest"].assets.directories.add("$projectDir/schemas")
+}
+
+androidComponents.onVariants { variant ->
+    if (variant.name == "benchmarkRelease") {
+        variant.sources.manifests.addStaticManifestFile(
+            "src/benchmarkRelease/AndroidManifest.xml",
+        )
+    }
 }
 
 dependencies {

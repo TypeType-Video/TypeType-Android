@@ -6,7 +6,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -16,7 +18,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -49,6 +50,7 @@ fun LoadedPlayer(
     isFavorited: Boolean,
     isInWatchLater: Boolean,
     gestureConfig: PlayerGestureConfig,
+    playbackBrightnessPercent: Int?,
     autoplayCountdownSeconds: Int,
     audioOnlyPlaybackDefault: Boolean?,
     userSettings: UserSettings,
@@ -81,9 +83,6 @@ fun LoadedPlayer(
     }
     var commentsVisible by remember { mutableStateOf(false) }
     var downloadPickerVisible by remember { mutableStateOf(false) }
-    var playbackBrightnessPercent by rememberSaveable(stream.id) {
-        mutableStateOf<Int?>(null)
-    }
     val selections = rememberPlayerPlaybackSelectionState(
         stream = stream,
         defaultQuality = userSettings.defaultQuality,
@@ -169,7 +168,9 @@ fun LoadedPlayer(
             .background(MaterialTheme.colorScheme.background)
             .then(
                 if (isFullscreen) Modifier
-                else Modifier.windowInsetsPadding(WindowInsets.statusBars),
+                else Modifier.windowInsetsPadding(
+                    WindowInsets.safeDrawing.only(WindowInsetsSides.Top),
+                ),
             ),
     ) {
         PlayerContentLayout(
@@ -218,7 +219,9 @@ fun LoadedPlayer(
                             chapters = playbackChapters,
                             gestureConfig = gestureConfig,
                             playbackBrightnessPercent = playbackBrightnessPercent,
-                            onPlaybackBrightnessChange = { playbackBrightnessPercent = it },
+                            onPlaybackBrightnessChange = {
+                                onAction(PlayerAction.OnSetPlaybackBrightness(it))
+                            },
                             loadSubtitleCues = loadSubtitleCues,
                             captionStyles = userSettings.captionStyles,
                             danmakuState = danmakuState,

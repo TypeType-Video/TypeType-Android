@@ -9,9 +9,11 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledIconButton
@@ -20,8 +22,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -35,10 +39,12 @@ import androidx.media3.common.Player
 import dev.typetype.android.R
 import dev.typetype.android.domain.stream.StreamPlaybackContract
 import dev.typetype.android.feature.player.components.LocalMediaController
+import dev.typetype.android.feature.player.components.PlaybackOptionsSheet
 import dev.typetype.android.feature.player.components.PlaybackKeepScreenOnEffect
 import dev.typetype.android.feature.player.components.PlayerSubtitleOverlay
 import dev.typetype.android.feature.player.components.ResilientPlayerSurface
 import dev.typetype.android.feature.player.components.SponsorBlockPlaybackFeedback
+import dev.typetype.android.feature.player.components.rememberCurrentMediaId
 import dev.typetype.android.feature.player.components.rememberPlayerPlaybackStatus
 import dev.typetype.android.feature.player.state.ResizeMode
 
@@ -101,12 +107,15 @@ private fun ShortsPlayerSurface(
         defaultPlaybackSpeed = state.userSettings.defaultPlaybackSpeed,
     )
     val sponsorBlockPolicy = rememberSponsorBlockPlaybackPolicy(stream, state.userSettings)
+    var playbackOptionsVisible by remember(stream.id) { mutableStateOf(false) }
+    var resizeMode by remember(stream.id) { mutableStateOf(ResizeMode.Crop) }
     val playbackStatus = controller?.let {
         rememberPlayerPlaybackStatus(
             it,
             onRetry.takeIf { stream.playbackContract == StreamPlaybackContract.ServerSabr },
         )
     }
+    val currentMediaId = rememberCurrentMediaId(controller)
     val externalSubtitle = stream.subtitles.firstOrNull {
         stream.playbackContract == StreamPlaybackContract.ServerSabr &&
             it.key == selections.selectedSubtitleKey
@@ -158,7 +167,7 @@ private fun ShortsPlayerSurface(
     )
     ShortsEndedEffect(controller, onAdvance)
 
-    if (controller == null || playbackStatus == null) {
+    if (controller == null || playbackStatus == null || currentMediaId != state.videoUrl) {
         CircularProgressIndicator()
         return
     }
@@ -178,7 +187,7 @@ private fun ShortsPlayerSurface(
         ResilientPlayerSurface(
             player = controller,
             surfaceKey = stream.id,
-            resizeMode = ResizeMode.Crop,
+            resizeMode = resizeMode,
             showNativeSubtitles = false,
             captionStyles = state.userSettings.captionStyles,
             modifier = Modifier.fillMaxSize(),
@@ -232,7 +241,51 @@ private fun ShortsPlayerSurface(
             player = controller,
             policy = sponsorBlockPolicy,
             visible = true,
-            modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .safeDrawingPadding()
+                .padding(top = 64.dp, end = 16.dp),
+        )
+        ShortsPlaybackOptionsButton(
+            onClick = { playbackOptionsVisible = true },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .safeDrawingPadding()
+                .padding(12.dp),
+        )
+        if (playbackOptionsVisible) {
+            PlaybackOptionsSheet(
+                player = controller,
+                stream = stream,
+                selectedCodec = selections.selectedCodec,
+                selectedQuality = selections.selectedQuality,
+                selectedAudioKey = selections.selectedAudioKey,
+                selectedSubtitleKey = selections.selectedSubtitleKey,
+                selectedSpeed = selections.selectedSpeed,
+                codecSupport = codecSupport,
+                resizeMode = resizeMode,
+                audioOnlyEnabled = false,
+                audioOnlyChanging = false,
+                showAudioOnly = false,
+                onSelectCodec = selections::selectCodec,
+                onSelectQuality = selections::selectQuality,
+                onSelectAudio = selections::selectAudio,
+                onSelectSubtitle = selections::selectSubtitle,
+                onSelectSpeed = selections::selectSpeed,
+                onSelectResizeMode = { resizeMode = it },
+                onAudioOnlyChange = {},
+                onDismiss = { playbackOptionsVisible = false },
+            )
+        }
+    }
+}
+
+@Composable
+internal fun ShortsPlaybackOptionsButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    FilledIconButton(onClick = onClick, modifier = modifier) {
+        Icon(
+            imageVector = Icons.Filled.Settings,
+            contentDescription = stringResource(R.string.player_playback_options),
         )
     }
 }

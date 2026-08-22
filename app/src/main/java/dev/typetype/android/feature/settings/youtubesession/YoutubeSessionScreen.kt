@@ -42,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.RequestIdRow
 import dev.typetype.android.domain.youtubesession.YoutubeRemoteBrowserInput
+import dev.typetype.android.feature.settings.SettingsDetailTopBar
 
 @Composable
 fun YoutubeSessionRoute(
@@ -87,8 +88,11 @@ fun YoutubeSessionScreen(
     }
     Box(modifier = Modifier.fillMaxSize()) {
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            Column(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars)) {
-                YoutubeSessionTopBar(onNavigateBack)
+            Column(modifier = Modifier.fillMaxSize()) {
+                SettingsDetailTopBar(
+                    title = stringResource(R.string.youtube_session_settings_title),
+                    onNavigateBack = onNavigateBack,
+                )
                 BoxWithConstraints(modifier = Modifier.weight(1f)) {
                     if (maxWidth >= TABLET_BREAKPOINT) {
                         Row(
@@ -244,26 +248,6 @@ private fun YoutubeSessionFailure(message: String, requestId: String?, onRetry: 
                 Text(stringResource(R.string.state_retry))
             }
         }
-    }
-}
-
-@Composable
-private fun YoutubeSessionTopBar(onNavigateBack: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = onNavigateBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(R.string.settings_back),
-            )
-        }
-        Text(
-            text = stringResource(R.string.youtube_session_settings_title),
-            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
-            modifier = Modifier.padding(start = 4.dp),
-        )
     }
 }
 
