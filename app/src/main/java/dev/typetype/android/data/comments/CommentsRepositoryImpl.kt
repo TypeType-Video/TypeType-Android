@@ -29,7 +29,7 @@ class CommentsRepositoryImpl @Inject constructor(
             val body = response.body() ?: error("Empty comments body")
             activeAccountScope.verify(scope)
             CommentsPage(
-                comments = body.comments.map { it.toDomain() },
+                comments = body.comments.map(CommentItem::toDomainComment),
                 nextpage = body.nextpage,
                 commentsDisabled = body.commentsDisabled,
             )
@@ -46,24 +46,26 @@ class CommentsRepositoryImpl @Inject constructor(
             val body = response.body() ?: error("Empty replies body")
             activeAccountScope.verify(scope)
             CommentsPage(
-                comments = body.comments.map { it.toDomain() },
+                comments = body.comments.map(CommentItem::toDomainComment),
                 nextpage = body.nextpage,
                 commentsDisabled = body.commentsDisabled,
             )
         }
 
-    private fun CommentItem.toDomain(): Comment = Comment(
-        id = id,
-        text = text,
-        authorName = author,
-        authorAvatarUrl = authorAvatarUrl,
-        likeCount = likeCount,
-        textualLikeCount = textualLikeCount,
-        publishedTime = publishedTime,
-        isHeartedByUploader = isHeartedByUploader,
-        isPinned = isPinned,
-        uploaderVerified = uploaderVerified,
-        replyCount = replyCount,
-        repliesPage = repliesPage,
-    )
 }
+
+internal fun CommentItem.toDomainComment(): Comment = Comment(
+    id = id,
+    text = text,
+    authorName = author,
+    authorAvatarUrl = authorAvatarUrl,
+    likeCount = likeCount,
+    textualLikeCount = textualLikeCount,
+    publishedTime = publishedTime,
+    isHeartedByUploader = isHeartedByUploader,
+    isPinned = isPinned,
+    uploaderVerified = uploaderVerified,
+    replyCount = replyCount,
+    publishedAtMillis = publishedAt,
+    repliesPage = repliesPage,
+)

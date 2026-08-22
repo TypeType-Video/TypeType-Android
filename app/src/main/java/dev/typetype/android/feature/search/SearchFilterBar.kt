@@ -3,6 +3,7 @@ package dev.typetype.android.feature.search
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,6 +12,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.outlined.VideoLibrary
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -25,6 +31,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -48,6 +57,9 @@ fun SearchFilterBar(
     val contentOptions = contentFilters.filterNot {
         it.isDefault || prettifyFilterLabel(it.label).equals("all", ignoreCase = true)
     }
+    val selectedContentLabel = contentOptions.firstOrNull { it.value == selectedContent }
+        ?.let { prettifyFilterLabel(it.label) }
+        ?: stringResource(R.string.search_filter_all)
     if (contentOptions.isEmpty() && filterGroups.isEmpty()) return
 
     Column(
@@ -55,23 +67,13 @@ fun SearchFilterBar(
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(
-                modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                FilterChip(
-                    selected = selectedContent == null,
-                    onClick = { onContentSelect(null) },
-                    label = { Text(stringResource(R.string.search_filter_all)) },
-                )
-                contentOptions.forEach { option ->
-                    FilterChip(
-                        selected = selectedContent == option.value,
-                        onClick = { onContentSelect(option.value) },
-                        label = { Text(prettifyFilterLabel(option.label)) },
-                    )
-                }
-            }
+            SearchContentMenu(
+                label = selectedContentLabel,
+                options = contentOptions,
+                selectedContent = selectedContent,
+                onSelect = onContentSelect,
+                modifier = Modifier.weight(1f, fill = false),
+            )
             if (filterGroups.isNotEmpty()) {
                 OutlinedButton(onClick = { sheetOpen = true }) {
                     Text(
@@ -117,6 +119,62 @@ fun SearchFilterBar(
             )
         }
     }
+}
+
+@Composable
+private fun SearchContentMenu(
+    label: String,
+    options: List<SearchFilterOption>,
+    selectedContent: String?,
+    onSelect: (String?) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val accessibilityLabel = stringResource(R.string.search_content_type)
+    Box(modifier) {
+        OutlinedButton(
+            onClick = { expanded = true },
+            modifier = Modifier.semantics {
+                contentDescription = accessibilityLabel
+                stateDescription = label
+            },
+        ) {
+            Icon(Icons.Outlined.VideoLibrary, contentDescription = null)
+            Text(label, modifier = Modifier.padding(start = 6.dp))
+            Icon(Icons.Default.ExpandMore, contentDescription = null)
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            SearchContentMenuItem(
+                label = stringResource(R.string.search_filter_all),
+                selected = selectedContent == null,
+            ) {
+                expanded = false
+                onSelect(null)
+            }
+            options.forEach { option ->
+                SearchContentMenuItem(
+                    label = prettifyFilterLabel(option.label),
+                    selected = selectedContent == option.value,
+                ) {
+                    expanded = false
+                    onSelect(option.value)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SearchContentMenuItem(label: String, selected: Boolean, onClick: () -> Unit) {
+    DropdownMenuItem(
+        text = { Text(label) },
+        onClick = onClick,
+        leadingIcon = if (selected) {
+            { Icon(Icons.Default.Check, contentDescription = null) }
+        } else {
+            null
+        },
+    )
 }
 
 @Composable

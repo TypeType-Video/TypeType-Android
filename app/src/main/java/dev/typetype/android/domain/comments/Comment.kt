@@ -12,6 +12,7 @@ data class Comment(
     val isPinned: Boolean,
     val uploaderVerified: Boolean,
     val replyCount: Int,
+    val publishedAtMillis: Long? = null,
     val repliesPage: String? = null,
 )
 
