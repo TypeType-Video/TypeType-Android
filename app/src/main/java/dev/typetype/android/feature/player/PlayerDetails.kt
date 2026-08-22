@@ -93,6 +93,8 @@ internal fun PlayerDetails(
                 onPlayVideo = onPlayVideo,
                 menuScope = videoMenuScope,
                 onOpenChannel = onOpenChannel,
+                autoplayEnabled = userSettings.autoplay,
+                onAutoplayChange = { onAction(PlayerAction.OnSetAutoplay(it)) },
                 modifier = Modifier.fillMaxWidth(),
             )
         }

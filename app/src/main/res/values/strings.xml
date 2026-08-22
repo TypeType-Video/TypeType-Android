@@ -30,6 +30,7 @@
     <string name="subscriptions_empty_title">Your subscriptions will appear here</string>
     <string name="subscriptions_empty_description">Subscribe to channels to build a personal feed of their latest videos.</string>
     <string name="subscriptions_title">Subscriptions</string>
+    <string name="subscriptions_view">Subscription view</string>
     <string name="subscriptions_tab_videos">Videos</string>
     <string name="subscriptions_tab_channels">Channels</string>
     <string name="subscriptions_channels_empty">Your subscribed channels will appear here.</string>
@@ -67,6 +68,8 @@
     <string name="player_autoplay_pause">Pause autoplay timer</string>
     <string name="player_autoplay_resume">Resume autoplay timer</string>
     <string name="player_autoplay_short">Autoplay</string>
+    <string name="player_views_count">%1$s views</string>
+    <string name="player_likes_count">%1$s likes</string>
     <string name="player_action_play">Resume playback</string>
     <string name="player_action_pause">Pause playback</string>
     <string name="player_state_playing">Playing</string>
