@@ -103,7 +103,7 @@ fun PlayerSettingsScreen(
             TopBar(onNavigateBack = onNavigateBack)
             LazyColumn(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
                 item { SettingsSectionHeader(stringResource(R.string.settings_player_section_playback)) }
                 item {
