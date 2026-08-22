@@ -82,13 +82,13 @@ fun ShortsScreen(
                     .collect { nearEnd -> if (nearEnd && state.hasMore) currentLoadMore() }
             }
             LaunchedEffect(pagerState, state.videos) {
-                snapshotFlow { state.videos.getOrNull(pagerState.settledPage) }
+                snapshotFlow { state.videos.getOrNull(pagerState.currentPage) }
                     .distinctUntilChanged()
                     .collect(currentActiveVideoChanged)
             }
             LaunchedEffect(pagerState, state.videos) {
                 snapshotFlow {
-                    state.videos.drop(pagerState.settledPage + 1).take(SHORTS_PREFETCH_COUNT)
+                    state.videos.drop(pagerState.currentPage + 1).take(SHORTS_PREFETCH_COUNT)
                 }.distinctUntilChanged().collectLatest(currentUpcomingVideosChanged)
             }
             Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
@@ -104,7 +104,7 @@ fun ShortsScreen(
                     ShortPage(
                         video = state.videos[page],
                         isActive = embeddedPlaybackEnabled &&
-                            page == pagerState.settledPage,
+                            page == pagerState.currentPage,
                         embeddedPlaybackEnabled = embeddedPlaybackEnabled,
                         visuals = shortsPageVisuals(pageOffset),
                         onPlayVideo = onPlayVideo,
