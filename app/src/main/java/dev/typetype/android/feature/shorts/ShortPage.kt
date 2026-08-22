@@ -1,6 +1,7 @@
 package dev.typetype.android.feature.shorts
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -10,12 +11,17 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -50,6 +56,7 @@ internal fun ShortPage(
     onPlayVideo: (String) -> Unit,
     onOpenChannel: (String) -> Unit,
     menuItemState: VideoMenuItemState,
+    stats: ShortsVideoStats,
     onMenuAction: (VideoMenuAction) -> Unit,
     onShowComments: (() -> Unit)?,
     isSubscribed: Boolean,
@@ -69,7 +76,29 @@ internal fun ShortPage(
         alpha = visuals.overlayAlpha
         translationY = visuals.overlayTranslationY
     }
-    Box(modifier = Modifier.fillMaxSize()) {
+    var horizontalDrag by remember(video.id) { mutableFloatStateOf(0f) }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(video.id, video.uploaderUrl) {
+                detectHorizontalDragGestures(
+                    onDragStart = { horizontalDrag = 0f },
+                    onHorizontalDrag = { change, dragAmount ->
+                        horizontalDrag += dragAmount
+                        change.consume()
+                    },
+                    onDragEnd = {
+                        if (horizontalDrag <= -SHORTS_CHANNEL_SWIPE_THRESHOLD_PX &&
+                            video.uploaderUrl.isNotBlank()
+                        ) {
+                            onOpenChannel(video.uploaderUrl)
+                        }
+                        horizontalDrag = 0f
+                    },
+                    onDragCancel = { horizontalDrag = 0f },
+                )
+            },
+    ) {
         AsyncImage(
             model = branding.thumbnailUrl,
             contentDescription = null,
@@ -112,6 +141,7 @@ internal fun ShortPage(
         ShortsInfoOverlay(
             video = video,
             title = branding.title,
+            stats = stats,
             isSubscribed = isSubscribed,
             subscriptionInFlight = subscriptionInFlight,
             onOpenChannel = { onOpenChannel(video.uploaderUrl) },
@@ -129,3 +159,5 @@ internal fun ShortPage(
         }
     }
 }
+
+private const val SHORTS_CHANNEL_SWIPE_THRESHOLD_PX = 96f

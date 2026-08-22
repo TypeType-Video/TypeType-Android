@@ -125,6 +125,13 @@ fun ShortsRoute(
                 }.awaitAll()
             }
         },
+        statsForVideo = { video ->
+            val stream = playerState.stream.takeIf { playerState.videoUrl == video.url }
+            ShortsVideoStats(
+                viewCount = stream?.viewCount ?: video.viewCount,
+                likeCount = stream?.likeCount,
+            )
+        },
         embeddedPlayback = { video, onAdvance ->
             if (
                 playerHostState.videoUrl == video.url &&

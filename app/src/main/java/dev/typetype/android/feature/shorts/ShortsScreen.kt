@@ -58,6 +58,7 @@ fun ShortsScreen(
     embeddedPlaybackEnabled: Boolean = false,
     onActiveVideoChanged: (Video?) -> Unit = {},
     onUpcomingVideosChanged: suspend (List<Video>) -> Unit = {},
+    statsForVideo: (Video) -> ShortsVideoStats = { ShortsVideoStats(it.viewCount, null) },
     embeddedPlayback: @Composable (Video, onAdvance: () -> Unit) -> Unit = { _, _ -> },
     menuItemState: (Video) -> VideoMenuItemState = { VideoMenuItemState() },
     onMenuAction: (VideoMenuAction, Video) -> Unit = { _, _ -> },
@@ -89,15 +90,14 @@ fun ShortsScreen(
             }
             LaunchedEffect(pagerState, state.videos) {
                 snapshotFlow {
-                    if (pagerState.isScrollInProgress) null
-                    else state.videos.getOrNull(pagerState.settledPage)
+                    state.videos.getOrNull(pagerState.currentPage)
                 }
                     .distinctUntilChanged()
                     .collect(currentActiveVideoChanged)
             }
             LaunchedEffect(pagerState, state.videos) {
                 snapshotFlow {
-                    state.videos.drop(pagerState.settledPage + 1).take(SHORTS_PREFETCH_COUNT)
+                    state.videos.drop(pagerState.currentPage + 1).take(SHORTS_PREFETCH_COUNT)
                 }.distinctUntilChanged().collectLatest(currentUpcomingVideosChanged)
             }
             Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
@@ -113,12 +113,13 @@ fun ShortsScreen(
                     ShortPage(
                         video = state.videos[page],
                         isActive = embeddedPlaybackEnabled &&
-                            !pagerState.isScrollInProgress && page == pagerState.settledPage,
+                            page == pagerState.currentPage,
                         embeddedPlaybackEnabled = embeddedPlaybackEnabled,
                         visuals = shortsPageVisuals(pageOffset),
                         onPlayVideo = onPlayVideo,
                         onOpenChannel = onOpenChannel,
                         menuItemState = menuItemState(state.videos[page]),
+                        stats = statsForVideo(state.videos[page]),
                         onMenuAction = { onMenuAction(it, state.videos[page]) },
                         onShowComments = onShowComments?.let { callback ->
                             { callback(state.videos[page]) }

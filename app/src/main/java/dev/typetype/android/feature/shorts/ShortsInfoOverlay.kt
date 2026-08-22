@@ -14,6 +14,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ThumbUp
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -34,6 +38,7 @@ import dev.typetype.android.domain.feed.Video
 internal fun ShortsInfoOverlay(
     video: Video,
     title: String,
+    stats: ShortsVideoStats,
     isSubscribed: Boolean,
     subscriptionInFlight: Boolean,
     onOpenChannel: () -> Unit,
@@ -105,5 +110,48 @@ internal fun ShortsInfoOverlay(
             maxLines = 3,
             overflow = TextOverflow.Ellipsis,
         )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            ShortsStat(
+                value = formatShortsCount(stats.viewCount),
+                icon = Icons.Outlined.Visibility,
+                contentDescription = stringResource(
+                    R.string.player_views_count,
+                    formatShortsCount(stats.viewCount),
+                ),
+            )
+            stats.likeCount?.let { likes ->
+                ShortsStat(
+                    value = formatShortsCount(likes),
+                    icon = Icons.Outlined.ThumbUp,
+                    contentDescription = stringResource(
+                        R.string.player_likes_count,
+                        formatShortsCount(likes),
+                    ),
+                )
+            }
+        }
     }
+}
+
+@Composable
+private fun ShortsStat(value: String, icon: androidx.compose.ui.graphics.vector.ImageVector, contentDescription: String) {
+    Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = Color.White.copy(alpha = 0.88f),
+            modifier = Modifier.size(17.dp),
+        )
+        Text(text = value, color = Color.White.copy(alpha = 0.88f))
+    }
+}
+
+internal fun formatShortsCount(value: Long): String = when {
+    value >= 1_000_000_000L -> "%.1fB".format(value / 1_000_000_000.0)
+    value >= 1_000_000L -> "%.1fM".format(value / 1_000_000.0)
+    value >= 1_000L -> "%.1fK".format(value / 1_000.0)
+    else -> value.coerceAtLeast(0L).toString()
 }
