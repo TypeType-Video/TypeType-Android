@@ -1,6 +1,8 @@
 package dev.typetype.android.feature.shorts
 
+import android.content.res.Configuration
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.defaultMinSize
@@ -24,9 +26,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -42,9 +50,17 @@ internal fun ShortsInfoOverlay(
     isSubscribed: Boolean,
     subscriptionInFlight: Boolean,
     onOpenChannel: () -> Unit,
+    onCopyTitle: (String) -> Unit,
     onToggleSubscription: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val hapticFeedback = LocalHapticFeedback.current
+    val titleCopyEnabled = LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT
+    val copyTitleLabel = stringResource(R.string.shorts_copy_title)
+    val copyTitle = {
+        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+        onCopyTitle(title)
+    }
     Column(
         modifier = modifier.fillMaxWidth()
             .padding(start = 20.dp, top = 20.dp, end = 80.dp, bottom = 52.dp),
@@ -109,6 +125,20 @@ internal fun ShortsInfoOverlay(
             fontWeight = FontWeight.SemiBold,
             maxLines = 3,
             overflow = TextOverflow.Ellipsis,
+            modifier = if (titleCopyEnabled) {
+                Modifier
+                    .pointerInput(title, onCopyTitle) {
+                        detectTapGestures(onLongPress = { copyTitle() })
+                    }
+                    .semantics {
+                        onLongClick(copyTitleLabel) {
+                            copyTitle()
+                            true
+                        }
+                    }
+            } else {
+                Modifier
+            },
         )
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),

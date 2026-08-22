@@ -57,6 +57,9 @@
     <string name="shorts_refresh">Refresh Shorts</string>
     <string name="shorts_play">Play %1$s</string>
     <string name="shorts_open_player">Open %1$s in the full player</string>
+    <string name="shorts_copy_title">Copy title</string>
+    <string name="shorts_title_clipboard_label">Short title</string>
+    <string name="shorts_title_copied">Title copied</string>
     <string name="player_rewind">Rewind</string>
     <string name="player_play_pause">Play / pause</string>
     <plurals name="player_autoplay_up_next">
