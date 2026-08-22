@@ -28,8 +28,6 @@ import dev.typetype.android.feature.player.state.PlayerGestureState
 import dev.typetype.android.feature.player.state.ResizeMode
 import kotlin.math.abs
 
-private const val BRIGHTNESS_DRAG_PIXELS_PER_FULL = 600f
-private const val VOLUME_DRAG_PIXELS_PER_FULL = 600f
 private const val DOUBLE_TAP_SEEK_INCREMENT_MS = 10_000L
 private const val SEEK_DRAG_MS_PER_PIXEL = 80f
 private const val DIRECTION_LOCK_THRESHOLD_PX = 18f
@@ -129,6 +127,7 @@ fun PlayerGestureLayer(
                                 state = state,
                                 mode = mode,
                                 delta = delta,
+                                levelDragRangePx = (size.height * 0.72f).coerceAtLeast(320f),
                                 onAdjustBrightness = onAdjustBrightness,
                                 onAdjustVolume = onAdjustVolume,
                             )
@@ -187,19 +186,21 @@ fun PlayerGestureLayer(
             ),
     ) {
         SeekHintOverlay(state = state)
-        LevelWaveOverlay(
+        PlayerLevelOverlay(
             visible = state.brightnessOverlayActive.value,
             fraction = state.brightnessFraction.floatValue,
             label = stringResource(R.string.player_gesture_brightness),
             icon = Icons.Filled.Brightness6,
-            modifier = Modifier.align(Alignment.Center),
+            side = GestureSide.Left,
+            modifier = Modifier.align(Alignment.CenterStart),
         )
-        LevelWaveOverlay(
+        PlayerLevelOverlay(
             visible = state.volumeOverlayActive.value,
             fraction = state.volumeFraction.floatValue,
             label = stringResource(R.string.player_gesture_volume),
             icon = Icons.AutoMirrored.Filled.VolumeUp,
-            modifier = Modifier.align(Alignment.Center),
+            side = GestureSide.Right,
+            modifier = Modifier.align(Alignment.CenterEnd),
         )
         SeekDragOverlay(state = state, durationMs = player.duration)
         SpeedBoostBadge(visible = state.longPressBoostActive.value, factor = LONG_PRESS_SPEED_FACTOR)
@@ -211,19 +212,26 @@ private fun handleDragMode(
     state: PlayerGestureState,
     mode: DragMode,
     delta: Offset,
+    levelDragRangePx: Float,
     onAdjustBrightness: (Float) -> Unit,
     onAdjustVolume: (Float) -> Unit,
 ) {
     when (mode) {
         DragMode.Brightness -> {
-            val next = (state.brightnessFraction.floatValue - delta.y / BRIGHTNESS_DRAG_PIXELS_PER_FULL)
-                .coerceIn(0f, 1f)
+            val next = adjustLevelFraction(
+                state.brightnessFraction.floatValue,
+                delta.y,
+                levelDragRangePx,
+            )
             state.brightnessFraction.floatValue = next
             onAdjustBrightness(next)
         }
         DragMode.Volume -> {
-            val next = (state.volumeFraction.floatValue - delta.y / VOLUME_DRAG_PIXELS_PER_FULL)
-                .coerceIn(0f, 1f)
+            val next = adjustLevelFraction(
+                state.volumeFraction.floatValue,
+                delta.y,
+                levelDragRangePx,
+            )
             state.volumeFraction.floatValue = next
             onAdjustVolume(next)
         }
@@ -239,6 +247,9 @@ private fun handleDragMode(
         -> Unit
     }
 }
+
+internal fun adjustLevelFraction(current: Float, deltaY: Float, dragRangePx: Float): Float =
+    (current - deltaY / dragRangePx.coerceAtLeast(1f)).coerceIn(0f, 1f)
 
 private fun pickDragMode(dragAmount: Offset, startX: Float, width: Float): DragMode = when {
     abs(dragAmount.x) > abs(dragAmount.y) -> DragMode.Seek

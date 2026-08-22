@@ -8,16 +8,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,7 +26,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import dev.typetype.android.feature.player.state.GestureSide
 import dev.typetype.android.feature.player.state.PlayerGestureState
@@ -154,87 +150,6 @@ internal fun SpeedBoostBadge(visible: Boolean, factor: Float) {
                 text = "${factor}x",
                 color = Color.White,
                 style = MaterialTheme.typography.labelLarge,
-            )
-        }
-    }
-}
-
-@Composable
-internal fun LevelWaveOverlay(
-    visible: Boolean,
-    fraction: Float,
-    label: String,
-    icon: ImageVector,
-    modifier: Modifier = Modifier,
-) {
-    if (!visible) return
-    Row(
-        modifier = modifier
-            .width(238.dp)
-            .height(76.dp)
-            .clip(RoundedCornerShape(22.dp))
-            .background(Color.Black.copy(alpha = 0.72f))
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(42.dp)
-                .clip(RoundedCornerShape(21.dp))
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.24f)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = label,
-                tint = Color.White,
-                modifier = Modifier.size(22.dp),
-            )
-        }
-        Column(
-            modifier = Modifier.weight(1f).padding(horizontal = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(text = label, color = Color.White, style = MaterialTheme.typography.labelMedium)
-                Text(
-                    text = "${(fraction * 100).toInt()}%",
-                    color = Color.White.copy(alpha = 0.82f),
-                    style = MaterialTheme.typography.labelSmall,
-                )
-            }
-            WaveLevelMeter(
-                fraction = fraction,
-                activeColor = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.fillMaxWidth().height(20.dp),
-            )
-        }
-    }
-}
-
-@Composable
-private fun WaveLevelMeter(
-    fraction: Float,
-    activeColor: Color,
-    modifier: Modifier = Modifier,
-) {
-    Canvas(modifier = modifier) {
-        val bars = 28
-        val spacing = size.width / bars
-        val activeBars = (bars * fraction.coerceIn(0f, 1f)).toInt()
-        repeat(bars) { index ->
-            val amplitude = 0.24f + abs(sin(index * 0.76f)) * 0.76f
-            val halfHeight = size.height * amplitude / 2f
-            val x = spacing * (index + 0.5f)
-            drawLine(
-                color = if (index < activeBars) activeColor else Color.White.copy(alpha = 0.24f),
-                start = Offset(x, size.height / 2f - halfHeight),
-                end = Offset(x, size.height / 2f + halfHeight),
-                strokeWidth = 2.dp.toPx(),
-                cap = StrokeCap.Round,
             )
         }
     }
