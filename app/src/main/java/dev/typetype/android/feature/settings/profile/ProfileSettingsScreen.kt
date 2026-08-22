@@ -43,6 +43,7 @@ import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.LocalAppSnackbarHost
 import dev.typetype.android.core.ui.components.RequestIdRow
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.feature.settings.SettingsDetailTopBar
 
 @Composable
 fun ProfileSettingsRoute(
@@ -75,12 +76,12 @@ fun ProfileSettingsRoute(
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.systemBars)
-                .imePadding(),
+            modifier = Modifier.fillMaxSize().imePadding(),
         ) {
-            TopBar(onNavigateBack = onNavigateBack)
+            SettingsDetailTopBar(
+                title = stringResource(R.string.settings_profile_title),
+                onNavigateBack = onNavigateBack,
+            )
             LazyColumn(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -226,30 +227,5 @@ private fun ProfileLoadFailure(
         Button(onClick = onRetry, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.action_retry))
         }
-    }
-}
-
-@Composable
-private fun TopBar(onNavigateBack: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = onNavigateBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(R.string.settings_back),
-                tint = MaterialTheme.colorScheme.onBackground,
-            )
-        }
-        Text(
-            text = stringResource(R.string.settings_profile_title),
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = (-0.3).sp,
-            ),
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(start = 4.dp),
-        )
     }
 }

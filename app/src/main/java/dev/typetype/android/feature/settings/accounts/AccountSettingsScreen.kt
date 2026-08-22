@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.R
+import dev.typetype.android.feature.settings.SettingsDetailTopBar
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -70,8 +71,11 @@ private fun AccountSettingsScreen(
     onAddInstance: () -> Unit,
 ) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars)) {
-            AccountSettingsTopBar(onNavigateBack)
+        Column(modifier = Modifier.fillMaxSize()) {
+            SettingsDetailTopBar(
+                title = stringResource(R.string.accounts_title),
+                onNavigateBack = onNavigateBack,
+            )
             LazyColumn(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -104,25 +108,5 @@ private fun AccountSettingsScreen(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun AccountSettingsTopBar(onNavigateBack: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = onNavigateBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(R.string.settings_back),
-            )
-        }
-        Text(
-            text = stringResource(R.string.accounts_title),
-            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
-            modifier = Modifier.padding(start = 4.dp),
-        )
     }
 }

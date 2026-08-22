@@ -36,6 +36,7 @@ import dev.typetype.android.core.ui.components.DropdownRow
 import dev.typetype.android.core.ui.components.ServiceRow
 import dev.typetype.android.core.ui.components.SettingsSectionHeader
 import dev.typetype.android.core.ui.components.SwitchRow
+import dev.typetype.android.feature.settings.SettingsDetailTopBar
 
 private val QUALITY_OPTIONS = listOf("144p", "240p", "360p", "480p", "720p", "1080p", "1440p", "2160p")
 private val AUTOPLAY_COUNTDOWN_OPTIONS = listOf(0, 5, 10, 15, 30, 60)
@@ -99,8 +100,11 @@ fun PlayerSettingsScreen(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
     ) {
-        Column(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars)) {
-            TopBar(onNavigateBack = onNavigateBack)
+        Column(modifier = Modifier.fillMaxSize()) {
+            SettingsDetailTopBar(
+                title = stringResource(R.string.settings_player_title),
+                onNavigateBack = onNavigateBack,
+            )
             LazyColumn(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
                 verticalArrangement = Arrangement.spacedBy(0.dp),
@@ -293,30 +297,5 @@ fun PlayerSettingsScreen(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun TopBar(onNavigateBack: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = onNavigateBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(R.string.settings_back),
-                tint = MaterialTheme.colorScheme.onBackground,
-            )
-        }
-        Text(
-            text = stringResource(R.string.settings_player_title),
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = (-0.3).sp,
-            ),
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(start = 4.dp),
-        )
     }
 }

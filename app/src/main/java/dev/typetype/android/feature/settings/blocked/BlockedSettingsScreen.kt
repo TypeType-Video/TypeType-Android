@@ -46,6 +46,7 @@ import coil3.compose.AsyncImage
 import dev.typetype.android.R
 import dev.typetype.android.domain.actions.BlockedItem
 import dev.typetype.android.domain.actions.BlockedKeyword
+import dev.typetype.android.feature.settings.SettingsDetailTopBar
 
 @Composable
 fun BlockedSettingsRoute(
@@ -54,8 +55,11 @@ fun BlockedSettingsRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars)) {
-            TopBar(onNavigateBack = onNavigateBack)
+        Column(modifier = Modifier.fillMaxSize()) {
+            SettingsDetailTopBar(
+                title = stringResource(R.string.settings_blocked_title),
+                onNavigateBack = onNavigateBack,
+            )
             LazyColumn(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -161,31 +165,6 @@ private fun BlockedKeywordRow(item: BlockedKeyword, onUnblock: () -> Unit) {
                 color = MaterialTheme.colorScheme.error,
             )
         }
-    }
-}
-
-@Composable
-private fun TopBar(onNavigateBack: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = onNavigateBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(R.string.settings_back),
-                tint = MaterialTheme.colorScheme.onBackground,
-            )
-        }
-        Text(
-            text = stringResource(R.string.settings_blocked_title),
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = (-0.3).sp,
-            ),
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(start = 4.dp),
-        )
     }
 }
 

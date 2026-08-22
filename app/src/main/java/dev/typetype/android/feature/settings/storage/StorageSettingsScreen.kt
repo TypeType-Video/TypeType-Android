@@ -37,6 +37,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.R
 import dev.typetype.android.domain.download.DownloadItem
+import dev.typetype.android.feature.settings.SettingsDetailTopBar
 
 @Composable
 fun StorageSettingsRoute(
@@ -74,8 +75,11 @@ fun StorageSettingsScreen(
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            Column(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars)) {
-                StorageTopBar(onNavigateBack = onNavigateBack)
+            Column(modifier = Modifier.fillMaxSize()) {
+                SettingsDetailTopBar(
+                    title = stringResource(R.string.settings_storage_title),
+                    onNavigateBack = onNavigateBack,
+                )
                 if (downloads.isEmpty()) {
                     EmptyDownloads(modifier = Modifier.weight(1f))
                 } else {
@@ -100,31 +104,6 @@ fun StorageSettingsScreen(
         SnackbarHost(
             hostState = snackbarHostState,
             modifier = Modifier.align(Alignment.BottomCenter).windowInsetsPadding(WindowInsets.systemBars),
-        )
-    }
-}
-
-@Composable
-private fun StorageTopBar(onNavigateBack: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = onNavigateBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(R.string.settings_back),
-                tint = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.offset(y = (-1).dp),
-            )
-        }
-        Text(
-            text = stringResource(R.string.settings_storage_title),
-            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(start = 4.dp),
         )
     }
 }
