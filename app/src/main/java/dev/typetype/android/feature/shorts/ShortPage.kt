@@ -16,10 +16,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -59,6 +61,7 @@ internal fun ShortPage(
     embeddedPlayback: @Composable () -> Unit,
 ) {
     val mediaController = LocalMediaController.current
+    val hapticFeedback = LocalHapticFeedback.current
     val currentMediaId = rememberCurrentMediaId(mediaController)
     val branding = rememberVideoBranding(
         sourceUrl = video.url,
@@ -85,9 +88,10 @@ internal fun ShortPage(
                         verticalDrag += delta.y
                     } while (change.pressed)
                     if (
-                        horizontalDrag >= SHORTS_CHANNEL_SWIPE_THRESHOLD_PX &&
-                        horizontalDrag > verticalDrag.absoluteValue
+                        horizontalDrag <= -SHORTS_CHANNEL_SWIPE_THRESHOLD_PX &&
+                        horizontalDrag.absoluteValue > verticalDrag.absoluteValue
                     ) {
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                         onOpenChannel(video.uploaderUrl)
                     }
                 }

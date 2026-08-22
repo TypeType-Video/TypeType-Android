@@ -7,6 +7,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.activity.compose.LocalActivity
@@ -30,6 +31,7 @@ import dev.typetype.android.feature.player.components.rememberPlayerPlaybackStat
 import dev.typetype.android.feature.player.host.PlayerHostController
 import dev.typetype.android.feature.player.host.PlayerHostTarget
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun ShortsRoute(
@@ -57,6 +59,8 @@ fun ShortsRoute(
     }
     val activity = LocalActivity.current
     val actionFailed = stringResource(R.string.snackbar_action_failed)
+    val titleCopied = stringResource(R.string.shorts_title_copied)
+    val coroutineScope = rememberCoroutineScope()
     var commentsVideoUrl by remember { mutableStateOf<String?>(null) }
     val playbackReady = playerHostState.target == PlayerHostTarget.Embedded &&
         currentMediaId == playerHostState.videoUrl &&
@@ -116,6 +120,9 @@ fun ShortsRoute(
                 labelRes = R.string.shorts_title_clipboard_label,
                 confirmationRes = R.string.shorts_title_copied,
             )
+            coroutineScope.launch {
+                snackbarHost?.showSnackbar(titleCopied, duration = SnackbarDuration.Short)
+            }
         },
         isSubscribed = { channelState.isSubscribed(it.uploaderUrl) },
         subscriptionInFlight = { channelState.isUpdating(it.uploaderUrl) },
