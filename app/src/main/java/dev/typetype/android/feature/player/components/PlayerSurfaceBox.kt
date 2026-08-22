@@ -75,6 +75,8 @@ internal fun PlayerSurfaceBox(
     sponsorBlockPolicy: SponsorBlockPlaybackPolicy = SponsorBlockPlaybackPolicy(),
     chapters: List<Chapter> = emptyList(),
     gestureConfig: PlayerGestureConfig = PlayerGestureConfig(),
+    autoplayEnabled: Boolean,
+    onAutoplayChange: (Boolean) -> Unit,
     playbackBrightnessPercent: Int?,
     onPlaybackBrightnessChange: (Int) -> Unit,
     loadSubtitleCues: LoadSubtitleCues,
@@ -245,6 +247,9 @@ internal fun PlayerSurfaceBox(
         ) {
             PlayerControls(
                 player = player,
+                title = stream.title,
+                autoplayEnabled = autoplayEnabled,
+                onAutoplayChange = onAutoplayChange,
                 onNavigateBack = onNavigateBack,
                 onOpenOptions = { optionsVisible = true },
                 onOpenChapters = { chaptersVisible = true },
