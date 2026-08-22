@@ -1,9 +1,7 @@
 package dev.typetype.android.feature.player.components
 
 import android.content.Intent
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -18,12 +16,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -40,8 +35,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
@@ -52,18 +45,11 @@ import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.core.net.toUri
-import coil3.compose.AsyncImage
 import dev.typetype.android.R
 import dev.typetype.android.domain.comments.Comment
 import dev.typetype.android.domain.comments.CommentsRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
-
-private sealed interface RepliesState {
-    data object Loading : RepliesState
-    data class Loaded(val replies: List<Comment>) : RepliesState
-    data class Failed(val message: String) : RepliesState
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -106,7 +92,10 @@ fun CommentsSheet(
                                     .fold(
                                         onSuccess = {
                                             repliesByCommentId[comment.id] =
-                                                RepliesState.Loaded(it.comments)
+                                                RepliesState.Loaded(
+                                                    replies = it.comments,
+                                                    nextPage = it.nextpage,
+                                                )
                                         },
                                         onFailure = {
                                             repliesByCommentId[comment.id] =
@@ -115,6 +104,37 @@ fun CommentsSheet(
                                     )
                             }
                         }
+                    }
+                },
+                onLoadMoreReplies = { comment ->
+                    val current = repliesByCommentId[comment.id]
+                        as? RepliesState.Loaded ?: return@CommentsList
+                    val nextPage = current.nextPage ?: return@CommentsList
+                    if (current.isLoadingMore) return@CommentsList
+                    repliesByCommentId[comment.id] = current.copy(
+                        isLoadingMore = true,
+                        loadMoreFailed = false,
+                    )
+                    coroutineScope.launch {
+                        commentsRepository.loadReplies(videoUrl, nextPage).fold(
+                            onSuccess = { page ->
+                                val latest = repliesByCommentId[comment.id]
+                                    as? RepliesState.Loaded ?: return@fold
+                                repliesByCommentId[comment.id] = latest.copy(
+                                    replies = mergeCommentReplies(latest.replies, page.comments),
+                                    nextPage = page.nextpage,
+                                    isLoadingMore = false,
+                                )
+                            },
+                            onFailure = {
+                                val latest = repliesByCommentId[comment.id]
+                                    as? RepliesState.Loaded ?: return@fold
+                                repliesByCommentId[comment.id] = latest.copy(
+                                    isLoadingMore = false,
+                                    loadMoreFailed = true,
+                                )
+                            },
+                        )
                     }
                 },
             )
@@ -141,6 +161,7 @@ private fun CommentsList(
     onUrlClick: (String) -> Unit,
     onTimestampClick: (Long) -> Unit,
     onToggleReplies: (Comment) -> Unit,
+    onLoadMoreReplies: (Comment) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -167,6 +188,7 @@ private fun CommentsList(
                     onUrlClick = onUrlClick,
                     onTimestampClick = onTimestampClick,
                     onToggleReplies = { onToggleReplies(comment) },
+                    onLoadMoreReplies = { onLoadMoreReplies(comment) },
                 )
                 Spacer(Modifier.height(12.dp))
             }
@@ -184,6 +206,7 @@ private fun CommentRow(
     onUrlClick: (String) -> Unit,
     onTimestampClick: (Long) -> Unit,
     onToggleReplies: () -> Unit,
+    onLoadMoreReplies: () -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         CommentBody(
@@ -221,42 +244,12 @@ private fun CommentRow(
                 )
             }
         }
-        when (repliesState) {
-            RepliesState.Loading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 46.dp, top = 4.dp, bottom = 4.dp),
-                ) {
-                    CircularProgressIndicator(
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(18.dp),
-                        strokeWidth = 2.dp,
-                    )
-                }
-            }
-            is RepliesState.Loaded -> {
-                Column(modifier = Modifier.padding(start = 46.dp, top = 4.dp)) {
-                    repliesState.replies.forEach { reply ->
-                        CommentBody(
-                            comment = reply,
-                            avatarSize = 28.dp,
-                            onUrlClick = onUrlClick,
-                            onTimestampClick = onTimestampClick,
-                        )
-                        Spacer(Modifier.height(10.dp))
-                    }
-                }
-            }
-            is RepliesState.Failed -> {
-                Text(
-                    text = repliesState.message,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(start = 46.dp, top = 4.dp),
-                )
-            }
-            null -> Unit
-        }
+        CommentReplies(
+            state = repliesState,
+            onUrlClick = onUrlClick,
+            onTimestampClick = onTimestampClick,
+            onRetry = onToggleReplies,
+            onLoadMore = onLoadMoreReplies,
+        )
     }
 }
