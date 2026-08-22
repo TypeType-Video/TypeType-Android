@@ -69,28 +69,7 @@ internal fun ShortPage(
         loadEnhancements = enhanceBranding,
     )
     var horizontalDrag by remember(video.id) { mutableFloatStateOf(0f) }
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .pointerInput(video.id, video.uploaderUrl) {
-                detectHorizontalDragGestures(
-                    onDragStart = { horizontalDrag = 0f },
-                    onHorizontalDrag = { change, dragAmount ->
-                        horizontalDrag += dragAmount
-                        change.consume()
-                    },
-                    onDragEnd = {
-                        if (horizontalDrag.absoluteValue >= SHORTS_CHANNEL_SWIPE_THRESHOLD_PX &&
-                            video.uploaderUrl.isNotBlank()
-                        ) {
-                            onOpenChannel(video.uploaderUrl)
-                        }
-                        horizontalDrag = 0f
-                    },
-                    onDragCancel = { horizontalDrag = 0f },
-                )
-            },
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
         AsyncImage(
             model = branding.thumbnailUrl,
             contentDescription = null,
@@ -99,13 +78,30 @@ internal fun ShortPage(
         )
         if (isActive) embeddedPlayback()
         Box(
-            modifier = Modifier.fillMaxSize().background(
-                Brush.verticalGradient(
-                    0f to Color.Black.copy(alpha = 0.16f),
-                    0.55f to Color.Transparent,
-                    1f to Color.Black.copy(alpha = 0.86f),
+            modifier = Modifier.fillMaxSize()
+                .pointerInput(video.id, video.uploaderUrl) {
+                    detectHorizontalDragGestures(
+                        onDragStart = { horizontalDrag = 0f },
+                        onHorizontalDrag = { change, dragAmount ->
+                            horizontalDrag += dragAmount
+                            change.consume()
+                        },
+                        onDragEnd = {
+                            if (horizontalDrag.absoluteValue >= SHORTS_CHANNEL_SWIPE_THRESHOLD_PX) {
+                                onOpenChannel(video.uploaderUrl)
+                            }
+                            horizontalDrag = 0f
+                        },
+                        onDragCancel = { horizontalDrag = 0f },
+                    )
+                }
+                .background(
+                    Brush.verticalGradient(
+                        0f to Color.Black.copy(alpha = 0.16f),
+                        0.55f to Color.Transparent,
+                        1f to Color.Black.copy(alpha = 0.86f),
+                    ),
                 ),
-            ),
         )
         if (isActive) {
             ShortsActionRail(
