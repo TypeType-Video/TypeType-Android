@@ -423,6 +423,7 @@
     <string name="accounts_forget_failed">Couldn\'t forget account</string>
     <string name="comments_title">Comments</string>
     <string name="comments_empty">No comments</string>
+    <string name="comments_like_count">Likes: %1$s</string>
     <string name="comments_replies_failed">Couldn\'t load replies</string>
     <string name="comments_load_failed">Couldn\'t load comments</string>
     <string name="comments_load_more_replies">Load more replies</string>
@@ -609,6 +610,7 @@
     <string name="about_credits">Inspired by LibreTube and PipePipe Client. Built on TypeType-Server.</string>
     <string name="search_placeholder">Search videos…</string>
     <string name="search_filter_all">All</string>
+    <string name="search_content_type">Content type</string>
     <string name="search_filter_relevance">Relevance</string>
     <string name="search_filters">Filters</string>
     <string name="search_filters_active">Filters (%1$d)</string>
@@ -617,6 +619,7 @@
     <string name="search_channel_verified">Verified channel</string>
     <string name="search_channel_metadata">%1$s subscribers, %2$s videos</string>
     <string name="search_playlist_video_count">%1$s videos</string>
+    <string name="search_playlist_type">Playlist</string>
     <string name="search_did_you_mean">Did you mean %1$s?</string>
     <string name="search_showing_results_for">Showing results for %1$s</string>
     <string name="search_load_more_retry">Couldn\'t load more. Try again</string>

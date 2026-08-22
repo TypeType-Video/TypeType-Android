@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.outlined.ThumbUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -72,7 +73,7 @@ internal fun CommentBody(
                 }
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = comment.publishedTime,
+                    text = formatCommentPublishedTime(comment),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -90,12 +91,21 @@ internal fun CommentBody(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                if (comment.likeCount > 0) {
-                    Text(
-                        text = comment.textualLikeCount.ifBlank { comment.likeCount.toString() },
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                if (comment.likeCount >= 0) {
+                    val likeLabel = comment.textualLikeCount.ifBlank { comment.likeCount.toString() }
+                    Icon(
+                        imageVector = Icons.Outlined.ThumbUp,
+                        contentDescription = stringResource(R.string.comments_like_count, likeLabel),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(16.dp),
                     )
+                    if (comment.likeCount > 0 || comment.textualLikeCount.isNotBlank()) {
+                        Text(
+                            text = likeLabel,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
         }

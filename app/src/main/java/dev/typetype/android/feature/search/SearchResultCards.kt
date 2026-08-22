@@ -30,6 +30,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
@@ -108,6 +109,9 @@ fun SearchPlaylistCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val countLabel = displayablePlaylistStreamCount(playlist.streamCount)?.let {
+        stringResource(R.string.search_playlist_video_count, formatCount(it))
+    } ?: stringResource(R.string.search_playlist_type)
     Column(
         modifier = modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onClick),
         verticalArrangement = Arrangement.spacedBy(9.dp),
@@ -136,17 +140,14 @@ fun SearchPlaylistCard(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.PlaylistPlay,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.inverseOnSurface,
+                        tint = Color.White,
                         modifier = Modifier.size(17.dp),
                     )
                     Spacer(Modifier.width(4.dp))
                     Text(
-                        text = stringResource(
-                            R.string.search_playlist_video_count,
-                            formatCount(playlist.streamCount),
-                        ),
+                        text = countLabel,
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.inverseOnSurface,
+                        color = Color.White,
                     )
                 }
             }
@@ -168,3 +169,5 @@ fun SearchPlaylistCard(
 }
 
 private fun formatCount(value: Long): String = NumberFormat.getIntegerInstance().format(value)
+
+internal fun displayablePlaylistStreamCount(value: Long): Long? = value.takeIf { it >= 0L }
