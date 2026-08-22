@@ -100,6 +100,14 @@ android {
     sourceSets["androidTest"].assets.directories.add("$projectDir/schemas")
 }
 
+androidComponents.onVariants { variant ->
+    if (variant.name == "benchmarkRelease") {
+        variant.sources.manifests.addStaticManifestFile(
+            "src/benchmarkRelease/AndroidManifest.xml",
+        )
+    }
+}
+
 dependencies {
     implementation(project(":player"))
     baselineProfile(project(":baseline-profile"))
