@@ -14,10 +14,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
@@ -115,12 +116,30 @@ internal fun FooterState(items: LazyPagingItems<Comment>) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        state.append is androidx.paging.LoadState.Loading ||
-            state.refresh is androidx.paging.LoadState.Loading -> Box(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            contentAlignment = Alignment.Center,
+        state.refresh is LoadState.Loading -> CommentSkeletons(count = 4)
+        state.append is LoadState.Loading -> CommentSkeletons(count = 2)
+        state.refresh is LoadState.Error || state.append is LoadState.Error -> Column(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+            Text(
+                text = stringResource(R.string.comments_load_failed),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+            )
+            TextButton(onClick = items::retry) {
+                Text(stringResource(R.string.state_retry))
+            }
+        }
+    }
+}
+
+@Composable
+private fun CommentSkeletons(count: Int) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        repeat(count) {
+            CommentSkeleton()
+            Spacer(Modifier.height(16.dp))
         }
     }
 }
