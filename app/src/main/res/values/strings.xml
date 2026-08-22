@@ -68,6 +68,7 @@
     <string name="player_autoplay_cancel">Cancel autoplay</string>
     <string name="player_autoplay_pause">Pause autoplay timer</string>
     <string name="player_autoplay_resume">Resume autoplay timer</string>
+    <string name="player_autoplay_short">Autoplay</string>
     <string name="player_action_play">Resume playback</string>
     <string name="player_action_pause">Pause playback</string>
     <string name="player_state_playing">Playing</string>

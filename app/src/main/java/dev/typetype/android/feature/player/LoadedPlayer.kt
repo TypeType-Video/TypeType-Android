@@ -214,6 +214,8 @@ fun LoadedPlayer(
                             sponsorBlockPolicy = sponsorBlockPolicy,
                             chapters = playbackChapters,
                             gestureConfig = gestureConfig,
+                            autoplayEnabled = userSettings.autoplay,
+                            onAutoplayChange = { onAction(PlayerAction.OnSetAutoplay(it)) },
                             playbackBrightnessPercent = playbackBrightnessPercent,
                             onPlaybackBrightnessChange = {
                                 onAction(PlayerAction.OnSetPlaybackBrightness(it))
