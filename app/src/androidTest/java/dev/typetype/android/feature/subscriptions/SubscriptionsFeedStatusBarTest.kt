@@ -15,29 +15,6 @@ class SubscriptionsFeedStatusBarTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun pendingGenerationWaitsForUserRefresh() {
-        val refreshed = AtomicBoolean(false)
-        composeRule.setContent {
-            TypeTypeTheme {
-                SubscriptionsFeedStatusBar(
-                    isRefreshing = false,
-                    isServerRefreshing = false,
-                    hasPendingRefresh = true,
-                    errorMessage = null,
-                    requestId = null,
-                    hasContent = true,
-                    onRetry = { refreshed.set(true) },
-                )
-            }
-        }
-
-        composeRule.onNodeWithText("New subscription videos are available").assertIsDisplayed()
-        composeRule.onNodeWithText("Refresh").assertIsDisplayed().performClick()
-
-        assertTrue(refreshed.get())
-    }
-
-    @Test
     fun cachedFailureCanBeRetriedImmediately() {
         val retried = AtomicBoolean(false)
         composeRule.setContent {
@@ -45,7 +22,6 @@ class SubscriptionsFeedStatusBarTest {
                 SubscriptionsFeedStatusBar(
                     isRefreshing = false,
                     isServerRefreshing = false,
-                    hasPendingRefresh = false,
                     errorMessage = "Subscriptions are temporarily unavailable",
                     requestId = "request-refresh",
                     hasContent = true,
