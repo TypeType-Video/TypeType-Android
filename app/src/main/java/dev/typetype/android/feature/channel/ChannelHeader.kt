@@ -17,10 +17,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,23 +49,25 @@ internal fun ChannelHeader(
     isSubscribed: Boolean,
     subscribeInFlight: Boolean,
     onToggleSubscribe: () -> Unit,
+    onNavigateBack: () -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Box(modifier = Modifier.fillMaxWidth()) {
+        if (channel.bannerUrl.isNullOrBlank()) {
+            ChannelBackButton(onNavigateBack = onNavigateBack)
+        } else {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(BannerAspectRatio)
                     .background(MaterialTheme.colorScheme.surfaceVariant),
             ) {
-                channel.bannerUrl?.let { bannerUrl ->
-                    AsyncImage(
-                        model = bannerUrl,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
+                AsyncImage(
+                    model = channel.bannerUrl,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+                ChannelBackButton(onNavigateBack = onNavigateBack)
             }
         }
         Row(
@@ -95,6 +99,21 @@ internal fun ChannelHeader(
                 onClick = onToggleSubscribe,
             )
         }
+    }
+}
+
+@Composable
+private fun ChannelBackButton(onNavigateBack: () -> Unit) {
+    IconButton(
+        onClick = onNavigateBack,
+        modifier = Modifier.padding(8.dp).clip(CircleShape)
+            .background(MaterialTheme.colorScheme.background.copy(alpha = 0.72f)),
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+            contentDescription = stringResource(R.string.settings_back),
+            tint = MaterialTheme.colorScheme.onBackground,
+        )
     }
 }
 

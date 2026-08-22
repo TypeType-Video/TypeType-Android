@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -66,7 +65,7 @@ fun ChannelScreen(
     onAction: (ChannelAction) -> Unit,
 ) {
     if (state.channel == null) {
-        Scaffold(
+        androidx.compose.material3.Scaffold(
             topBar = {
                 ChannelTopBar(
                     state = state,
@@ -111,36 +110,29 @@ private fun ChannelContent(
     onAction: (ChannelAction) -> Unit,
 ) {
     var searchExpanded by rememberSaveable { mutableStateOf(false) }
-    Scaffold(
-        topBar = {
-            ChannelTopBar(
-                state = state,
-                searchExpanded = searchExpanded,
-                onSearchExpandedChange = { searchExpanded = it },
-                onNavigateBack = onNavigateBack,
-                onAction = onAction,
-            )
-        },
-    ) { padding ->
-        ChannelContentGrid(
-            state = state,
-            onPlayVideo = onPlayVideo,
-            onOpenPodcast = onOpenPodcast,
-            onOpenPlaylist = onOpenPlaylist,
-            onAction = onAction,
-            menuScope = rememberVideoMenuScope(onOpenChannel = {}),
-            modifier = Modifier.padding(padding),
-        )
-    }
+    ChannelContentGrid(
+        state = state,
+        onNavigateBack = onNavigateBack,
+        onPlayVideo = onPlayVideo,
+        onOpenPodcast = onOpenPodcast,
+        onOpenPlaylist = onOpenPlaylist,
+        onAction = onAction,
+        searchExpanded = searchExpanded,
+        onSearchExpandedChange = { searchExpanded = it },
+        menuScope = rememberVideoMenuScope(onOpenChannel = {}),
+    )
 }
 
 @Composable
 internal fun ChannelContentGrid(
     state: ChannelState,
+    onNavigateBack: () -> Unit,
     onPlayVideo: (videoUrl: String) -> Unit,
     onOpenPodcast: (podcastUrl: String) -> Unit,
     onOpenPlaylist: (playlistUrl: String) -> Unit,
     onAction: (ChannelAction) -> Unit,
+    searchExpanded: Boolean,
+    onSearchExpandedChange: (Boolean) -> Unit,
     menuScope: VideoMenuScope,
     modifier: Modifier = Modifier,
 ) {
@@ -158,6 +150,7 @@ internal fun ChannelContentGrid(
                 isSubscribed = state.isSubscribed,
                 subscribeInFlight = state.subscribeInFlight,
                 onToggleSubscribe = { onAction(ChannelAction.OnToggleSubscribe) },
+                onNavigateBack = onNavigateBack,
             )
         }
         if (state.errorMessage != null && !state.loadMoreError) {
@@ -175,7 +168,12 @@ internal fun ChannelContentGrid(
             }
         }
         item(span = { GridItemSpan(maxLineSpan) }, key = "channel-controls") {
-            ChannelDiscoveryControls(state = state, onAction = onAction)
+            ChannelDiscoveryControls(
+                state = state,
+                searchExpanded = searchExpanded,
+                onSearchExpandedChange = onSearchExpandedChange,
+                onAction = onAction,
+            )
         }
         if (state.isLoading) {
             item(span = { GridItemSpan(maxLineSpan) }, key = "channel-refreshing") {
