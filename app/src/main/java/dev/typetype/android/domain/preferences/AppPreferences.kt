@@ -5,6 +5,7 @@ data class AppPreferences(
     val playerDoubleTapSeekEnabled: Boolean = true,
     val playerSwipeSeekEnabled: Boolean = true,
     val playerSwipeBrightnessVolumeEnabled: Boolean = true,
+    val playerPlaybackBrightnessPercent: Int? = null,
     val playerLongPressSpeedEnabled: Boolean = true,
     val playerAutoplayEnabled: Boolean = true,
     val playerAutoplayCountdownSeconds: Int = 10,

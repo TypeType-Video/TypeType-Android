@@ -68,6 +68,10 @@ class PlayerViewModel @Inject constructor(
     private var loadStreamJob: Job? = null
     private var favoriteJob: Job? = null
     private var watchLaterJob: Job? = null
+    private val brightnessPreferences = PlaybackBrightnessPreferenceController(
+        preferencesRepository,
+        viewModelScope,
+    )
 
     init {
         viewModelScope.launch {
@@ -144,6 +148,7 @@ class PlayerViewModel @Inject constructor(
                             swipeBrightnessVolumeEnabled = prefs.playerSwipeBrightnessVolumeEnabled,
                             longPressSpeedEnabled = prefs.playerLongPressSpeedEnabled,
                         ),
+                        playbackBrightnessPercent = prefs.playerPlaybackBrightnessPercent,
                         autoplayCountdownSeconds = prefs.playerAutoplayCountdownSeconds,
                         audioOnlyPlaybackDefault = prefs.playerAudioOnlyPlayback,
                     )
@@ -172,6 +177,9 @@ class PlayerViewModel @Inject constructor(
             PlayerAction.OnCancelQueueAutoplay -> playbackQueueCoordinator.cancelAutoplay()
             PlayerAction.OnToggleQueueAutoplayPause ->
                 playbackQueueCoordinator.toggleAutoplayPause()
+            is PlayerAction.OnSetPlaybackBrightness -> brightnessPreferences.update(action.percent) {
+                _state.update { state -> state.copy(playbackBrightnessPercent = it) }
+            }
             is PlayerAction.OnDownload -> downloadCurrentVideo(action.selection)
             PlayerAction.OnOpenPlaylistPicker ->
                 _state.update { it.copy(playlistPickerVisible = true) }
