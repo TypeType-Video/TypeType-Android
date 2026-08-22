@@ -2,8 +2,13 @@ package dev.typetype.android.feature.player.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.background
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
@@ -14,9 +19,10 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,6 +31,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.typetype.android.R
@@ -144,12 +151,31 @@ private fun TopActions(
 @Composable
 private fun AutoplaySwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     val label = stringResource(R.string.player_autoplay_short)
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(text = label, color = Color.White, style = MaterialTheme.typography.labelMedium)
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            modifier = Modifier.semantics { contentDescription = label },
+    val thumbOffset by animateDpAsState(
+        targetValue = if (checked) 16.dp else 2.dp,
+        label = "autoplayThumb",
+    )
+    Box(
+        modifier = Modifier
+            .padding(horizontal = 6.dp)
+            .size(width = 34.dp, height = 20.dp)
+            .background(
+                color = if (checked) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.34f),
+                shape = RoundedCornerShape(10.dp),
+            )
+            .toggleable(
+                value = checked,
+                role = Role.Switch,
+                onValueChange = onCheckedChange,
+            )
+            .semantics { contentDescription = label },
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Box(
+            modifier = Modifier
+                .offset(x = thumbOffset)
+                .size(16.dp)
+                .background(Color.White, CircleShape),
         )
     }
 }

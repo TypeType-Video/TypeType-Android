@@ -7,6 +7,23 @@ import org.junit.Test
 class InteractiveTextTest {
 
     @Test
+    fun `normalizes proxied links to their public target`() {
+        assertEquals(
+            "https://example.com/watch?v=abc&list=def",
+            normalizeExternalUrl(
+                "https://beta.example/api/proxy?url=" +
+                    "https%3A%2F%2Fexample.com%2Fwatch%3Fv%3Dabc%26list%3Ddef",
+            ),
+        )
+    }
+
+    @Test
+    fun `does not unwrap unrelated url query parameters`() {
+        val url = "https://example.com/redirect?url=https%3A%2F%2Fother.example"
+        assertEquals(url, normalizeExternalUrl(url))
+    }
+
+    @Test
     fun `parses minute and hour timestamps`() {
         val ranges = interactiveTextRanges("Intro 0:42, topic 1:02:03 and long 90:00")
             .filterIsInstance<InteractiveTextRange.Timestamp>()

@@ -35,7 +35,7 @@ private const val LONG_PRESS_SPEED_FACTOR = 2f
 
 data class PlayerGestureConfig(
     val doubleTapSeekEnabled: Boolean = true,
-    val swipeSeekEnabled: Boolean = true,
+    val swipeSeekEnabled: Boolean = false,
     val swipeBrightnessVolumeEnabled: Boolean = true,
     val longPressSpeedEnabled: Boolean = true,
 )
@@ -74,6 +74,10 @@ fun PlayerGestureLayer(
 
                     while (true) {
                         val event = awaitPointerEvent(PointerEventPass.Initial)
+                        if (event.changes.count { it.pressed } > 1) {
+                            resetDragState(state)
+                            break
+                        }
                         val change = event.changes.firstOrNull { it.id == down.id } ?: break
                         if (!change.pressed) {
                             when (mode) {
