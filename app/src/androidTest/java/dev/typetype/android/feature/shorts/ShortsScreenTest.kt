@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.awaitCancellation
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -160,7 +161,7 @@ class ShortsScreenTest {
     }
 
     @Test
-    fun horizontalSwipeLeftOpensTheShortChannel() {
+    fun horizontalSwipeLeftKeepsTheShortOpen() {
         val openedChannel = AtomicReference<String>()
 
         show(
@@ -176,7 +177,9 @@ class ShortsScreenTest {
             )
         }
 
-        composeRule.waitUntil { openedChannel.get() == "https://channel" }
+        composeRule.waitForIdle()
+
+        assertNull(openedChannel.get())
     }
 
     @Test
