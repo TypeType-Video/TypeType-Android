@@ -45,6 +45,19 @@ class PlayerHostController @Inject constructor(
         playbackQueueCoordinator.clear()
     }
 
+    fun continueWithVideo(url: String) {
+        _state.update {
+            it.copy(
+                videoUrl = url,
+                resumePositionMillis = null,
+                initialPlayWhenReady = true,
+                requestStamp = it.requestStamp + 1,
+                playbackClearRequestStamp = null,
+            )
+        }
+        playbackQueueCoordinator.clear()
+    }
+
     fun openQueue(title: String, entries: List<PlaybackQueueEntry>, shuffle: Boolean) {
         playbackQueueCoordinator.start(title, entries, shuffle)
         val firstUrl = playbackQueueCoordinator.state.value.current?.videoUrl ?: return

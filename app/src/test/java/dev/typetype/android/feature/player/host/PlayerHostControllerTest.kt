@@ -125,6 +125,32 @@ class PlayerHostControllerTest {
 
         assertEquals(PlayerHostTarget.Mini, controller.state.value.target)
     }
+
+    @Test
+    fun `autoplay keeps the mini player minimized`() {
+        val controller = PlayerHostController(FakePlaybackQueueController())
+        controller.openVideo("first")
+        controller.minimize()
+
+        controller.continueWithVideo("second")
+
+        val state = controller.state.value
+        assertEquals("second", state.videoUrl)
+        assertEquals(PlayerHostTarget.Mini, state.target)
+        assertNull(state.resumePositionMillis)
+        assertTrue(state.initialPlayWhenReady)
+    }
+
+    @Test
+    fun `autoplay keeps the expanded player expanded`() {
+        val controller = PlayerHostController(FakePlaybackQueueController())
+        controller.openVideo("first")
+
+        controller.continueWithVideo("second")
+
+        assertEquals("second", controller.state.value.videoUrl)
+        assertEquals(PlayerHostTarget.Expanded, controller.state.value.target)
+    }
 }
 
 private class FakePlaybackQueueController : PlaybackQueueController {

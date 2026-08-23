@@ -70,6 +70,7 @@ fun LoadedPlayer(
     onNavigateBack: () -> Unit,
     onOpenAccounts: () -> Unit,
     onPlayVideo: (videoUrl: String) -> Unit,
+    onAutoplayVideo: (videoUrl: String) -> Unit = onPlayVideo,
     onOpenChannel: (channelUrl: String) -> Unit = {},
     isSubscribed: Boolean = false,
     subscriptionInFlight: Boolean = false,
@@ -112,7 +113,7 @@ fun LoadedPlayer(
         onToggleQueueAutoplayPause = {
             onAction(PlayerAction.OnToggleQueueAutoplayPause)
         },
-        onPlayVideo = onPlayVideo,
+        onPlayVideo = onAutoplayVideo,
     )
 
     LaunchedEffect(
