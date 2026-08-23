@@ -3,6 +3,8 @@ package dev.typetype.android.domain.preferences
 data class AppPreferences(
     val accentColor: AccentColor = AccentColor.Blue,
     val playerDoubleTapSeekEnabled: Boolean = true,
+    val playerDoubleTapSeekSeconds: Int = 10,
+    val playerPreferredCodec: String = "recommended",
     val playerSwipeSeekEnabled: Boolean = true,
     val playerSwipeBrightnessVolumeEnabled: Boolean = true,
     val playerPlaybackBrightnessPercent: Int? = null,

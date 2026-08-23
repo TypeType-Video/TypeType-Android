@@ -26,6 +26,10 @@ class DataStorePreferencesRepository @Inject constructor(
                 ?.let { runCatching { AccentColor.valueOf(it) }.getOrNull() }
                 ?: AccentColor.Blue,
             playerDoubleTapSeekEnabled = prefs[KEY_PLAYER_DOUBLE_TAP_SEEK] ?: true,
+            playerDoubleTapSeekSeconds = (prefs[KEY_PLAYER_DOUBLE_TAP_SEEK_SECONDS] ?: 10)
+                .takeIf(ALLOWED_DOUBLE_TAP_SEEK_SECONDS::contains) ?: 10,
+            playerPreferredCodec = prefs[KEY_PLAYER_PREFERRED_CODEC]
+                ?.takeIf(ALLOWED_PLAYER_CODECS::contains) ?: "recommended",
             playerSwipeSeekEnabled = prefs[KEY_PLAYER_SWIPE_SEEK] ?: true,
             playerSwipeBrightnessVolumeEnabled = prefs[KEY_PLAYER_SWIPE_BRIGHT_VOL] ?: true,
             playerPlaybackBrightnessPercent = prefs[KEY_PLAYER_PLAYBACK_BRIGHTNESS]
@@ -49,6 +53,16 @@ class DataStorePreferencesRepository @Inject constructor(
 
     override suspend fun setPlayerDoubleTapSeekEnabled(enabled: Boolean) {
         dataStore.edit { it[KEY_PLAYER_DOUBLE_TAP_SEEK] = enabled }
+    }
+
+    override suspend fun setPlayerDoubleTapSeekSeconds(seconds: Int) {
+        val value = seconds.takeIf(ALLOWED_DOUBLE_TAP_SEEK_SECONDS::contains) ?: 10
+        dataStore.edit { it[KEY_PLAYER_DOUBLE_TAP_SEEK_SECONDS] = value }
+    }
+
+    override suspend fun setPlayerPreferredCodec(codec: String) {
+        val value = codec.takeIf(ALLOWED_PLAYER_CODECS::contains) ?: "recommended"
+        dataStore.edit { it[KEY_PLAYER_PREFERRED_CODEC] = value }
     }
 
     override suspend fun setPlayerSwipeSeekEnabled(enabled: Boolean) {
@@ -103,6 +117,8 @@ class DataStorePreferencesRepository @Inject constructor(
     private companion object {
         val KEY_ACCENT_COLOR = stringPreferencesKey("accent_color")
         val KEY_PLAYER_DOUBLE_TAP_SEEK = booleanPreferencesKey("player_double_tap_seek")
+        val KEY_PLAYER_DOUBLE_TAP_SEEK_SECONDS = intPreferencesKey("player_double_tap_seek_seconds")
+        val KEY_PLAYER_PREFERRED_CODEC = stringPreferencesKey("player_preferred_codec")
         val KEY_PLAYER_SWIPE_SEEK = booleanPreferencesKey("player_swipe_seek")
         val KEY_PLAYER_SWIPE_BRIGHT_VOL = booleanPreferencesKey("player_swipe_bright_vol")
         val KEY_PLAYER_PLAYBACK_BRIGHTNESS = intPreferencesKey("player_playback_brightness")
@@ -116,5 +132,7 @@ class DataStorePreferencesRepository @Inject constructor(
         val KEY_DANMAKU_SIZE = floatPreferencesKey("player_danmaku_size")
         const val DEFAULT_AUTOPLAY_COUNTDOWN_SECONDS = 10
         const val MAX_AUTOPLAY_COUNTDOWN_SECONDS = 60
+        val ALLOWED_DOUBLE_TAP_SEEK_SECONDS = setOf(5, 10, 15, 20, 30)
+        val ALLOWED_PLAYER_CODECS = setOf("recommended", "av1", "vp9", "h264")
     }
 }
