@@ -27,8 +27,6 @@ import dev.typetype.android.core.ui.navigation.PublicPlaylistRoute
 import dev.typetype.android.core.ui.navigation.ProfileSettingsRoute
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
 import dev.typetype.android.core.ui.navigation.AppearanceRoute
-import dev.typetype.android.core.ui.navigation.ChannelRoute
-import dev.typetype.android.core.ui.navigation.channelNavigationUrl
 import dev.typetype.android.core.ui.navigation.ContentSettingsRoute
 import dev.typetype.android.core.ui.navigation.HomeRoute
 import dev.typetype.android.core.ui.navigation.LoginRoute
@@ -111,9 +109,7 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
     }
 
     val onOpenChannel: (String) -> Unit = { channelUrl ->
-        navController.navigate(ChannelRoute(channelUrl = channelNavigationUrl(channelUrl))) {
-            launchSingleTop = true
-        }
+        navController.navigateToChannel(channelUrl)
     }
 
     val avatarUrl = remember(currentProfile, serverBaseUrl) {
