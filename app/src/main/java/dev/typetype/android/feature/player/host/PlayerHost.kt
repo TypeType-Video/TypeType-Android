@@ -40,13 +40,14 @@ fun PlayerHost(
     onOpenChannel: (channelUrl: String) -> Unit,
     onOpenAccounts: () -> Unit,
     onClosePlayback: () -> Unit,
+    accessibleControlsEnabled: Boolean = false,
     onTransitionProgressChange: (Float) -> Unit = {},
     content: @Composable () -> Unit,
 ) {
     val state by controller.state.collectAsStateWithLifecycle()
     val density = LocalDensity.current
     val isInPip by rememberIsInPipMode()
-    val touchExplorationEnabled = rememberAccessiblePlayerControls(false)
+    val accessibleControls = rememberAccessiblePlayerControls(accessibleControlsEnabled)
     val hapticFeedback = LocalHapticFeedback.current
     val activity = LocalActivity.current
     val configuration = LocalConfiguration.current
@@ -125,7 +126,7 @@ fun PlayerHost(
                 miniAnchorPx = miniAnchorPx,
                 containerHeightPx = containerHeightPx,
                 miniHeightPx = miniHeightPx,
-                dragEnabled = !isFullscreen && !isInPip && !touchExplorationEnabled,
+                dragEnabled = !isFullscreen && !isInPip && !accessibleControls,
                 miniContentEnabled = !isInPip,
                 onTargetSettled = { target ->
                     when (target) {

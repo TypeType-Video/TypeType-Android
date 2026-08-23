@@ -63,6 +63,8 @@
     <string name="shorts_title_copied">Title copied</string>
     <string name="player_rewind">Rewind</string>
     <string name="player_play_pause">Play / pause</string>
+    <string name="player_play">Play</string>
+    <string name="player_pause">Pause</string>
     <plurals name="player_autoplay_up_next">
         <item quantity="one">Up next in %1$d second</item>
         <item quantity="other">Up next in %1$d seconds</item>
@@ -80,6 +82,8 @@
     <string name="player_state_paused">Paused</string>
     <string name="player_forward">Forward</string>
     <string name="player_fullscreen">Fullscreen</string>
+    <string name="player_timeline">Playback position</string>
+    <string name="player_timeline_position">%1$s of %2$s</string>
     <string name="player_back">Back</string>
     <string name="player_playback_options">Playback options</string>
     <string name="playback_options_codec">Codec</string>
@@ -227,7 +231,7 @@
     <string name="settings_about_subtitle">Version and credits</string>
     <string name="settings_player_section_gestures">Gestures</string>
     <string name="settings_player_accessible_controls">Accessible player controls</string>
-    <string name="settings_player_accessible_controls_subtitle">Keep controls visible and replace gesture-only actions with buttons</string>
+    <string name="settings_player_accessible_controls_subtitle">Keep controls visible and disable gesture-only interactions. Enabled automatically with screen readers.</string>
     <string name="settings_player_double_tap_seek">Double-tap to seek</string>
     <string name="settings_player_double_tap_seek_subtitle">Double-tap left or right to seek, or center to play and pause</string>
     <string name="settings_player_double_tap_seek_time">Double-tap seek time</string>

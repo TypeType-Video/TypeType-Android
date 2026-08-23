@@ -49,7 +49,9 @@ internal fun PlayerCenterControls(
         )
         PlayerCenterButton(
             iconRes = if (playPauseState.showPlay) R.drawable.ic_play else R.drawable.ic_pause,
-            contentDescription = stringResource(R.string.player_play_pause),
+            contentDescription = stringResource(
+                if (playPauseState.showPlay) R.string.player_play else R.string.player_pause,
+            ),
             enabled = playPauseState.isEnabled,
             onClick = { playPauseState.onClick() },
             buttonSize = if (isFullscreen) 74.dp else 62.dp,
