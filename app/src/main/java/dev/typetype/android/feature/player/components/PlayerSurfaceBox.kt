@@ -25,6 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.res.stringResource
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
@@ -84,6 +86,7 @@ internal fun PlayerSurfaceBox(
 ) {
     val activity = LocalActivity.current
     val context = LocalContext.current
+    val hapticFeedback = LocalHapticFeedback.current
     val audioManager = remember(context) {
         context.getSystemService(AudioManager::class.java)
     }
@@ -107,7 +110,6 @@ internal fun PlayerSurfaceBox(
         stream.playbackContract == StreamPlaybackContract.ServerSabr &&
             it.key == selectedSubtitleKey
     }
-
     LaunchedEffect(Unit) {
         gestureState.brightnessFraction.floatValue = playbackBrightnessPercent
             ?.let { it / 100f }
@@ -130,7 +132,6 @@ internal fun PlayerSurfaceBox(
         window = activity?.window,
         videoIsPlaying = playbackStatus.isPlaying && !audioOnlyState.active,
     )
-
     LaunchedEffect(controlsVisible, playbackStatus.isPlaying) {
         if (controlsVisible && playbackStatus.isPlaying) {
             delay(AUTO_HIDE_DELAY_MS)
@@ -204,7 +205,7 @@ internal fun PlayerSurfaceBox(
             PlayerGestureLayer(
                 player = player,
                 state = gestureState,
-                onTogglePlayPause = {
+                onSingleTap = {
                     controlsVisible = !controlsVisible
                 },
                 onAdjustBrightness = { fraction ->
@@ -225,7 +226,10 @@ internal fun PlayerSurfaceBox(
                         }
                     }
                 },
-                onGestureFeedback = { controlsVisible = false },
+                onGestureFeedback = {
+                    controlsVisible = false
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                },
                 isFullscreen = isFullscreen,
                 onEnterFullscreenGesture = {
                     if (!isFullscreen) onToggleFullscreen()
