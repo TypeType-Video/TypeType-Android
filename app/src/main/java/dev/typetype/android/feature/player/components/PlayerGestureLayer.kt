@@ -28,13 +28,13 @@ import dev.typetype.android.feature.player.state.PlayerGestureState
 import dev.typetype.android.feature.player.state.ResizeMode
 import kotlin.math.abs
 
-private const val DOUBLE_TAP_SEEK_INCREMENT_MS = 10_000L
 private const val SEEK_DRAG_MS_PER_PIXEL = 80f
 private const val DIRECTION_LOCK_THRESHOLD_PX = 18f
 private const val LONG_PRESS_SPEED_FACTOR = 2f
 
 data class PlayerGestureConfig(
     val doubleTapSeekEnabled: Boolean = true,
+    val doubleTapSeekSeconds: Int = 10,
     val swipeSeekEnabled: Boolean = false,
     val swipeBrightnessVolumeEnabled: Boolean = true,
     val longPressSpeedEnabled: Boolean = true,
@@ -44,7 +44,7 @@ data class PlayerGestureConfig(
 fun PlayerGestureLayer(
     player: Player,
     state: PlayerGestureState,
-    onTogglePlayPause: () -> Unit,
+    onSingleTap: () -> Unit,
     onAdjustBrightness: (Float) -> Unit,
     onAdjustVolume: (Float) -> Unit,
     modifier: Modifier = Modifier,
@@ -141,21 +141,30 @@ fun PlayerGestureLayer(
             }
             .pointerInput(player, config) {
                 detectTapGestures(
-                    onTap = { onTogglePlayPause() },
+                    onTap = { onSingleTap() },
                     onDoubleTap = { offset ->
-                        if (!config.doubleTapSeekEnabled) return@detectTapGestures
-                        onGestureFeedback()
-                        val side = if (offset.x < size.width / 2f) GestureSide.Left else GestureSide.Right
-                        val current = player.currentPosition
-                        val target = if (side == GestureSide.Left) {
-                            (current - DOUBLE_TAP_SEEK_INCREMENT_MS).coerceAtLeast(0L)
-                        } else {
-                            current + DOUBLE_TAP_SEEK_INCREMENT_MS
+                        val action = doubleTapAction(offset.x, size.width.toFloat())
+                        if (!action.isEnabled(config.doubleTapSeekEnabled)) {
+                            return@detectTapGestures
                         }
-                        player.seekTo(target)
-                        state.seekHintSide.value = side
-                        state.seekHintSeconds.floatValue = (DOUBLE_TAP_SEEK_INCREMENT_MS / 1_000f)
-                        state.seekHintPulse.longValue += 1L
+                        onGestureFeedback()
+                        when (action) {
+                            PlayerDoubleTapAction.Rewind -> {
+                                player.seekTo(
+                                    (player.currentPosition - config.seekIncrementMs)
+                                        .coerceAtLeast(0L),
+                                )
+                                state.showSeekHint(GestureSide.Left, config.doubleTapSeekSeconds)
+                            }
+                            PlayerDoubleTapAction.TogglePlayback -> {
+                                if (player.isPlaying) player.pause() else player.play()
+                                state.showPlaybackHint(player.isPlaying)
+                            }
+                            PlayerDoubleTapAction.Forward -> {
+                                player.seekTo(player.currentPosition + config.seekIncrementMs)
+                                state.showSeekHint(GestureSide.Right, config.doubleTapSeekSeconds)
+                            }
+                        }
                     },
                     onLongPress = {
                         if (!config.longPressSpeedEnabled) return@detectTapGestures
@@ -190,6 +199,7 @@ fun PlayerGestureLayer(
             ),
     ) {
         SeekHintOverlay(state = state)
+        PlaybackHintOverlay(state = state)
         PlayerLevelOverlay(
             visible = state.brightnessOverlayActive.value,
             fraction = state.brightnessFraction.floatValue,
@@ -210,6 +220,9 @@ fun PlayerGestureLayer(
         SpeedBoostBadge(visible = state.longPressBoostActive.value, factor = LONG_PRESS_SPEED_FACTOR)
     }
 }
+
+private val PlayerGestureConfig.seekIncrementMs: Long
+    get() = doubleTapSeekSeconds.coerceIn(5, 30) * 1_000L
 
 private fun handleDragMode(
     player: Player,

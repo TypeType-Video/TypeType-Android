@@ -22,6 +22,8 @@ class PlayerGestureState {
     val seekHintSide: MutableState<GestureSide?> = mutableStateOf(null)
     val seekHintSeconds = mutableFloatStateOf(0f)
     val seekHintPulse: MutableLongState = mutableLongStateOf(0L)
+    val playbackHintPlaying: MutableState<Boolean?> = mutableStateOf(null)
+    val playbackHintPulse: MutableLongState = mutableLongStateOf(0L)
     val brightnessOverlayActive: MutableState<Boolean> = mutableStateOf(false)
     val brightnessFraction = mutableFloatStateOf(0.5f)
     val volumeOverlayActive: MutableState<Boolean> = mutableStateOf(false)
@@ -32,4 +34,15 @@ class PlayerGestureState {
     val seekDragTargetMs: MutableLongState = mutableLongStateOf(0L)
     val seekDragOverlayActive: MutableState<Boolean> = mutableStateOf(false)
     val longPressBoostActive: MutableState<Boolean> = mutableStateOf(false)
+
+    fun showSeekHint(side: GestureSide, seconds: Int) {
+        seekHintSide.value = side
+        seekHintSeconds.floatValue = seconds.toFloat()
+        seekHintPulse.longValue += 1L
+    }
+
+    fun showPlaybackHint(isPlaying: Boolean) {
+        playbackHintPlaying.value = isPlaying
+        playbackHintPulse.longValue += 1L
+    }
 }
