@@ -30,6 +30,7 @@ class PlayerHostTransitionTest {
         assertFalse(moving.isSettledMini)
         assertTrue(settled.isSettledMini)
         assertEquals(64, settled.heightPx)
+        assertEquals(1f, settled.miniContentAlpha)
     }
 
     @Test

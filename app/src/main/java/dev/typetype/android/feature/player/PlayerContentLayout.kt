@@ -11,9 +11,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.composed
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.dp
+import kotlin.math.roundToInt
 
 internal const val PLAYER_SINGLE_COLUMN_LAYOUT_TAG = "player_single_column_layout"
 internal const val PLAYER_TWO_PANE_LAYOUT_TAG = "player_two_pane_layout"
@@ -40,13 +53,20 @@ internal fun playerContentLayoutMode(
 @Composable
 internal fun PlayerContentLayout(
     isFullscreen: Boolean,
+    hostTransitionProgress: Float = 0f,
     modifier: Modifier = Modifier,
     viewport: @Composable (Modifier) -> Unit,
     details: @Composable (Modifier) -> Unit,
 ) {
+    val currentViewport by rememberUpdatedState(viewport)
+    val retainedViewport = remember {
+        movableContentOf<Modifier> { viewportModifier ->
+            currentViewport(viewportModifier)
+        }
+    }
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         when (playerContentLayoutMode(maxWidth.value, maxHeight.value, isFullscreen)) {
-            PlayerContentLayoutMode.Fullscreen -> viewport(Modifier.fillMaxSize())
+            PlayerContentLayoutMode.Fullscreen -> retainedViewport(Modifier.fillMaxSize())
             PlayerContentLayoutMode.SingleColumn -> {
                 Column(
                     modifier = Modifier
@@ -54,12 +74,18 @@ internal fun PlayerContentLayout(
                         .testTag(PLAYER_SINGLE_COLUMN_LAYOUT_TAG)
                         .verticalScroll(rememberScrollState()),
                 ) {
-                    viewport(
+                    retainedViewport(
+                        Modifier
+                            .playerViewportTransition(hostTransitionProgress)
+                            .fillMaxWidth()
+                            .aspectRatio(VIDEO_ASPECT_RATIO)
+                            .testTag(PLAYER_VIEWPORT_TAG),
+                    )
+                    details(
                         Modifier
                             .fillMaxWidth()
-                            .aspectRatio(VIDEO_ASPECT_RATIO),
+                            .playerDetailsTransition(hostTransitionProgress),
                     )
-                    details(Modifier.fillMaxWidth())
                 }
             }
             PlayerContentLayoutMode.TwoPane -> {
@@ -72,19 +98,22 @@ internal fun PlayerContentLayout(
                         modifier = Modifier
                             .weight(PLAYER_PANE_WEIGHT)
                             .fillMaxHeight(),
-                        contentAlignment = Alignment.TopCenter,
+                        contentAlignment = Alignment.TopStart,
                     ) {
-                        viewport(
+                        retainedViewport(
                             Modifier
+                                .playerViewportTransition(hostTransitionProgress)
                                 .fillMaxWidth()
-                                .aspectRatio(VIDEO_ASPECT_RATIO),
+                                .aspectRatio(VIDEO_ASPECT_RATIO)
+                                .testTag(PLAYER_VIEWPORT_TAG),
                         )
                     }
                     details(
                         Modifier
                             .weight(DETAILS_PANE_WEIGHT)
                             .fillMaxHeight()
-                            .verticalScroll(rememberScrollState()),
+                            .verticalScroll(rememberScrollState())
+                            .playerDetailsTransition(hostTransitionProgress),
                     )
                 }
             }
@@ -92,8 +121,51 @@ internal fun PlayerContentLayout(
     }
 }
 
+private fun Modifier.playerViewportTransition(progress: Float): Modifier = composed {
+    val fraction = progress.coerceIn(0f, 1f)
+    val density = LocalDensity.current
+    val miniWidthPx = with(density) { MINI_VIDEO_WIDTH.roundToPx() }
+    val miniHeightPx = with(density) { MINI_VIDEO_HEIGHT.roundToPx() }
+    val miniStartPx = with(density) { MINI_VIDEO_START.roundToPx() }
+    val miniTopPx = with(density) { MINI_VIDEO_TOP.roundToPx() }
+    val shape = RoundedCornerShape(MINI_VIDEO_CORNER * fraction)
+    layout { measurable, constraints ->
+        val expandedWidth = constraints.maxWidth
+        val expandedHeight = (expandedWidth / VIDEO_ASPECT_RATIO).roundToInt()
+        val width = interpolate(expandedWidth, miniWidthPx, fraction)
+        val height = interpolate(expandedHeight, miniHeightPx, fraction)
+        val start = interpolate(0, miniStartPx, fraction)
+        val top = interpolate(0, miniTopPx, fraction)
+        val placeable = measurable.measure(Constraints.fixed(width, height))
+        layout(
+            width = (width + start).coerceIn(constraints.minWidth, constraints.maxWidth),
+            height = (height + top).coerceIn(constraints.minHeight, constraints.maxHeight),
+        ) {
+            placeable.placeRelative(start, top)
+        }
+    }.graphicsLayer {
+        this.shape = shape
+        clip = fraction > 0f
+    }
+}
+
+private fun interpolate(start: Int, end: Int, fraction: Float): Int =
+    (start + (end - start) * fraction).roundToInt()
+
+private fun Modifier.playerDetailsTransition(progress: Float): Modifier {
+    val fraction = progress.coerceIn(0f, 1f)
+    return graphicsLayer { alpha = 1f - fraction }
+        .then(if (fraction >= 0.99f) Modifier.clearAndSetSemantics { } else Modifier)
+}
+
 private const val VIDEO_ASPECT_RATIO = 16f / 9f
 private const val TWO_PANE_MIN_WIDTH_DP = 840f
 private const val TWO_PANE_MIN_HEIGHT_DP = 480f
 private const val PLAYER_PANE_WEIGHT = 1.45f
 private const val DETAILS_PANE_WEIGHT = 1f
+private val MINI_VIDEO_WIDTH = 80.dp
+private val MINI_VIDEO_HEIGHT = 45.dp
+private val MINI_VIDEO_START = 8.dp
+private val MINI_VIDEO_TOP = 9.dp
+private val MINI_VIDEO_CORNER = 6.dp
+internal const val PLAYER_VIEWPORT_TAG = "player_viewport"

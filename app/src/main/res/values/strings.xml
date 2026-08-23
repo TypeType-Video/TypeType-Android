@@ -113,6 +113,8 @@
     <string name="player_gesture_brightness">Brightness</string>
     <string name="player_gesture_volume">Volume</string>
     <string name="mini_player_close">Close mini player</string>
+    <string name="mini_player_expand">Expand player</string>
+    <string name="mini_player_send_to_background">Send playback to the background</string>
     <string name="mini_player_restoring">Restoring playback…</string>
     <string name="mini_player_restore_failed">Playback could not be restored</string>
     <string name="player_pip">Picture in picture</string>
