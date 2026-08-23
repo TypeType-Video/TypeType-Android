@@ -23,6 +23,7 @@ internal class PlayerPreferenceCoordinator(
         PlayerPreferenceState(
             gestureConfig = PlayerGestureConfig(
                 doubleTapSeekEnabled = preferences.playerDoubleTapSeekEnabled,
+                doubleTapSeekSeconds = preferences.playerDoubleTapSeekSeconds,
                 swipeSeekEnabled = preferences.playerSwipeSeekEnabled,
                 swipeBrightnessVolumeEnabled = preferences.playerSwipeBrightnessVolumeEnabled,
                 longPressSpeedEnabled = preferences.playerLongPressSpeedEnabled,
@@ -30,6 +31,7 @@ internal class PlayerPreferenceCoordinator(
             brightnessPercent = preferences.playerPlaybackBrightnessPercent,
             autoplayCountdownSeconds = preferences.playerAutoplayCountdownSeconds,
             audioOnlyPlaybackDefault = preferences.playerAudioOnlyPlayback,
+            preferredCodec = preferences.playerPreferredCodec,
             userSettings = userSettings,
         )
     }
@@ -60,6 +62,10 @@ internal class PlayerPreferenceCoordinator(
             server.update { it.copy(autoplay = enabled) }.onFailure { onFailure() }
         }
     }
+
+    fun updatePreferredCodec(codec: String) {
+        scope.launch { local.setPlayerPreferredCodec(codec) }
+    }
 }
 
 internal data class PlayerPreferenceState(
@@ -67,6 +73,7 @@ internal data class PlayerPreferenceState(
     val brightnessPercent: Int?,
     val autoplayCountdownSeconds: Int,
     val audioOnlyPlaybackDefault: Boolean,
+    val preferredCodec: String,
     val userSettings: UserSettings,
 )
 

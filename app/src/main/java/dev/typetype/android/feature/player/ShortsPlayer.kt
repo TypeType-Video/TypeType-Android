@@ -23,6 +23,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
@@ -73,6 +74,9 @@ fun ShortsPlayerRoute(
                 loadSubtitleCues = viewModel.subtitleCueLoader::load,
                 onAdvance = onAdvance,
                 onRetry = { viewModel.onAction(PlayerAction.OnRetry) },
+                onSelectCodec = {
+                    viewModel.onAction(PlayerAction.OnSetPreferredCodec(it))
+                },
                 onSaveProgress = {
                     viewModel.onAction(PlayerAction.OnSaveProgress(it))
                 },
@@ -88,6 +92,7 @@ private fun ShortsPlayerSurface(
     loadSubtitleCues: LoadSubtitleCues,
     onAdvance: () -> Unit,
     onRetry: () -> Unit,
+    onSelectCodec: (String) -> Unit,
     onSaveProgress: (Long) -> Unit,
 ) {
     val stream = requireNotNull(state.stream)
@@ -105,10 +110,12 @@ private fun ShortsPlayerSurface(
         defaultSubtitleLanguage = state.userSettings.defaultSubtitleLanguage,
         preferOriginalLanguage = state.userSettings.preferOriginalLanguage,
         defaultPlaybackSpeed = state.userSettings.defaultPlaybackSpeed,
+        preferredCodec = state.preferredCodec,
     )
     val sponsorBlockPolicy = rememberSponsorBlockPlaybackPolicy(stream, state.userSettings)
     var playbackOptionsVisible by remember(stream.id) { mutableStateOf(false) }
     var resizeMode by remember(stream.id) { mutableStateOf(ResizeMode.Crop) }
+    var codecFallbackGeneration by remember(stream.id) { mutableLongStateOf(0L) }
     val playbackStatus = controller?.let {
         rememberPlayerPlaybackStatus(
             it,
@@ -126,6 +133,7 @@ private fun ShortsPlayerSurface(
         stream.id,
         stream.requestScope,
         state.playbackBindGeneration,
+        codecFallbackGeneration,
         selections.selectedCodec,
         selections.selectedQuality,
         selections.selectedAudioKey,
@@ -153,6 +161,12 @@ private fun ShortsPlayerSurface(
     }
 
     PlayerSubtitleSelectionEffect(controller, selections.selectedSubtitleKey)
+    RuntimeCodecFallbackEffect(
+        player = controller,
+        enabled = selections.selectedCodec == RECOMMENDED_CODEC_KEY,
+        codecSupport = codecSupport,
+        onFallback = { codecFallbackGeneration += 1L },
+    )
     PlayerProgressEffects(
         controller = controller,
         activity = activity,
@@ -267,7 +281,10 @@ private fun ShortsPlayerSurface(
                 audioOnlyEnabled = false,
                 audioOnlyChanging = false,
                 showAudioOnly = false,
-                onSelectCodec = selections::selectCodec,
+                onSelectCodec = {
+                    selections.selectCodec(it)
+                    onSelectCodec(it)
+                },
                 onSelectQuality = selections::selectQuality,
                 onSelectAudio = selections::selectAudio,
                 onSelectSubtitle = selections::selectSubtitle,

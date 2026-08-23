@@ -165,6 +165,7 @@ fun PlayerScreen(
                     playbackBrightnessPercent = state.playbackBrightnessPercent,
                     autoplayCountdownSeconds = state.autoplayCountdownSeconds,
                     audioOnlyPlaybackDefault = state.audioOnlyPlaybackDefault,
+                    preferredCodec = state.preferredCodec,
                     userSettings = state.userSettings,
                     playlists = state.playlists,
                     playlistPickerVisible = state.playlistPickerVisible,
