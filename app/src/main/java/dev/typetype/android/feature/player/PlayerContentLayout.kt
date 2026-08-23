@@ -64,7 +64,11 @@ internal fun PlayerContentLayout(
     }
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         when (playerContentLayoutMode(maxWidth.value, maxHeight.value, isFullscreen)) {
-            PlayerContentLayoutMode.Fullscreen -> retainedViewport(Modifier.fillMaxSize())
+            PlayerContentLayoutMode.Fullscreen -> retainedViewport(
+                Modifier
+                    .playerViewportTransition(hostTransitionProgress)
+                    .fillMaxSize(),
+            )
             PlayerContentLayoutMode.SingleColumn -> {
                 Column(
                     modifier = Modifier

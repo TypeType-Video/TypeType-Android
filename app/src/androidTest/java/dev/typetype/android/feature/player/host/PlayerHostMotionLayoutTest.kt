@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -35,6 +36,8 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import dev.typetype.android.feature.player.PlayerContentLayout
 import dev.typetype.android.feature.player.PLAYER_VIEWPORT_TAG
+import dev.typetype.android.feature.player.components.PlayerGestureLayer
+import dev.typetype.android.feature.player.state.PlayerGestureState
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
@@ -201,10 +204,11 @@ class PlayerHostMotionLayoutTest {
     }
 
     @Test
-    fun realPlayerViewStaysAttachedWhileViewportMorphsBothWays() {
+    fun realPlayerViewStaysAttachedFromFullscreenThroughMiniAndBack() {
         val viewportWidths = mutableStateListOf<Int>()
         val player = HostSurfacePlayer(Looper.getMainLooper())
         var target by mutableStateOf(PlayerHostTarget.Expanded)
+        var isFullscreen by mutableStateOf(true)
         var requestStamp by mutableIntStateOf(0)
         var createdViews = 0
         var expandedWidthPx = 0
@@ -225,31 +229,45 @@ class PlayerHostMotionLayoutTest {
                     miniHeightPx = with(density) { 64.dp.toPx() },
                     dragEnabled = true,
                     miniContentEnabled = true,
+                    fullscreenCenterDragEnabled = isFullscreen,
                     onTargetSettled = {
                         target = it
+                        if (it == PlayerHostTarget.Mini) isFullscreen = false
                         requestStamp += 1
                     },
                     onProgressChange = {},
                     miniContent = { Text("Mini controls") },
                     expandedContent = { transition ->
                         PlayerContentLayout(
-                            isFullscreen = false,
+                            isFullscreen = isFullscreen,
                             hostTransitionProgress = transition.progress,
                             modifier = Modifier.fillMaxSize(),
                             viewport = { modifier ->
-                                AndroidView(
-                                    factory = { context ->
-                                        PlayerView(context).apply {
-                                            useController = false
-                                            this.player = player
-                                            createdViews += 1
-                                            if (createdViews == 1) firstView = this
-                                        }
-                                    },
-                                    modifier = modifier.onSizeChanged {
-                                        viewportWidths += it.width
-                                    },
-                                )
+                                Box(modifier) {
+                                    AndroidView(
+                                        factory = { context ->
+                                            PlayerView(context).apply {
+                                                useController = false
+                                                this.player = player
+                                                createdViews += 1
+                                                if (createdViews == 1) firstView = this
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxSize().onSizeChanged {
+                                            viewportWidths += it.width
+                                        },
+                                    )
+                                    if (transition.progress < 0.01f) {
+                                        PlayerGestureLayer(
+                                            player = player,
+                                            state = remember { PlayerGestureState() },
+                                            onSingleTap = {},
+                                            onAdjustBrightness = {},
+                                            onAdjustVolume = {},
+                                            isFullscreen = isFullscreen,
+                                        )
+                                    }
+                                }
                             },
                             details = { Box(it.requiredHeight(300.dp)) },
                         )
