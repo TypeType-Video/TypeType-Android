@@ -90,8 +90,13 @@
     <string name="playback_options_speed">Playback speed</string>
     <string name="playback_options_auto">Auto</string>
     <string name="playback_options_recommended">Recommended</string>
+    <string name="playback_options_smart">Smart</string>
+    <string name="playback_options_codec_av1">AV1</string>
+    <string name="playback_options_codec_vp9">VP9</string>
+    <string name="playback_options_codec_h264">H.264</string>
     <string name="playback_options_auto_summary">Adapts quality to your connection</string>
     <string name="playback_options_recommended_summary">Chooses the best compatible device format</string>
+    <string name="playback_options_smart_summary">Prefers efficient hardware decoding and falls back safely</string>
     <string name="playback_options_hardware_decoder">Hardware support detected</string>
     <string name="playback_options_software_decoder">Software support only</string>
     <string name="playback_options_quality_auto_current">%1$s (%2$s)</string>
@@ -220,7 +225,8 @@
     <string name="settings_about_subtitle">Version and credits</string>
     <string name="settings_player_section_gestures">Gestures</string>
     <string name="settings_player_double_tap_seek">Double-tap to seek</string>
-    <string name="settings_player_double_tap_seek_subtitle">Double-tap left or right to seek 10 seconds</string>
+    <string name="settings_player_double_tap_seek_subtitle">Double-tap left or right to seek, or center to play and pause</string>
+    <string name="settings_player_double_tap_seek_time">Double-tap seek time</string>
     <string name="settings_player_swipe_seek">Swipe to seek</string>
     <string name="settings_player_swipe_seek_subtitle">Horizontal drag scrubs the timeline</string>
     <string name="settings_player_swipe_brightness_volume">Brightness and volume swipe</string>
@@ -229,6 +235,8 @@
     <string name="settings_player_long_press_speed_subtitle">Hold to play at 2x, release to resume</string>
     <string name="settings_player_section_playback">Playback</string>
     <string name="settings_player_default_quality">Default quality</string>
+    <string name="settings_player_default_codec">Default codec</string>
+    <string name="settings_player_default_codec_subtitle">Smart prefers efficient hardware decoding</string>
     <string name="settings_player_default_quality_subtitle">Preferred video resolution</string>
     <string name="settings_player_default_speed">Default playback speed</string>
     <string name="settings_player_default_speed_subtitle">Applied when a video starts</string>

@@ -32,6 +32,8 @@ class PlayerSettingsViewModel @Inject constructor(
             ) { prefs, server ->
                 PlayerSettingsState(
                     doubleTapSeekEnabled = prefs.playerDoubleTapSeekEnabled,
+                    doubleTapSeekSeconds = prefs.playerDoubleTapSeekSeconds,
+                    preferredCodec = prefs.playerPreferredCodec,
                     swipeSeekEnabled = prefs.playerSwipeSeekEnabled,
                     swipeBrightnessVolumeEnabled = prefs.playerSwipeBrightnessVolumeEnabled,
                     longPressSpeedEnabled = prefs.playerLongPressSpeedEnabled,
@@ -72,6 +74,10 @@ class PlayerSettingsViewModel @Inject constructor(
             when (action) {
                 is PlayerSettingsAction.SetDoubleTapSeek ->
                     preferencesRepository.setPlayerDoubleTapSeekEnabled(action.enabled)
+                is PlayerSettingsAction.SetDoubleTapSeekSeconds ->
+                    preferencesRepository.setPlayerDoubleTapSeekSeconds(action.seconds)
+                is PlayerSettingsAction.SetPreferredCodec ->
+                    preferencesRepository.setPlayerPreferredCodec(action.codec)
                 is PlayerSettingsAction.SetSwipeSeek ->
                     preferencesRepository.setPlayerSwipeSeekEnabled(action.enabled)
                 is PlayerSettingsAction.SetSwipeBrightnessVolume ->

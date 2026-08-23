@@ -6,6 +6,8 @@ import dev.typetype.android.domain.usersettings.SponsorBlockMode
 
 data class PlayerSettingsState(
     val doubleTapSeekEnabled: Boolean = true,
+    val doubleTapSeekSeconds: Int = 10,
+    val preferredCodec: String = "recommended",
     val swipeSeekEnabled: Boolean = true,
     val swipeBrightnessVolumeEnabled: Boolean = true,
     val longPressSpeedEnabled: Boolean = true,
