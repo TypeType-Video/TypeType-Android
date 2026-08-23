@@ -16,9 +16,10 @@ internal class PlayerPlaybackSelectionState(
     subtitlesEnabled: Boolean,
     defaultSubtitleLanguage: String,
     preferOriginalLanguage: Boolean,
+    preferredCodec: String = RECOMMENDED_CODEC_KEY,
     defaultPlaybackSpeed: Double = 1.0,
 ) {
-    var selectedCodec by mutableStateOf(RECOMMENDED_CODEC_KEY)
+    var selectedCodec by mutableStateOf(preferredCodec)
         private set
     var selectedQuality by mutableStateOf(stream.initialQuality())
         private set
@@ -97,6 +98,7 @@ internal fun rememberPlayerPlaybackSelectionState(
     defaultSubtitleLanguage: String,
     preferOriginalLanguage: Boolean,
     defaultPlaybackSpeed: Double,
+    preferredCodec: String = RECOMMENDED_CODEC_KEY,
 ): PlayerPlaybackSelectionState {
     val state = remember(
         stream.id,
@@ -106,6 +108,7 @@ internal fun rememberPlayerPlaybackSelectionState(
         defaultSubtitleLanguage,
         preferOriginalLanguage,
         defaultPlaybackSpeed,
+        preferredCodec,
     ) {
         PlayerPlaybackSelectionState(
             stream = stream,
@@ -114,6 +117,7 @@ internal fun rememberPlayerPlaybackSelectionState(
             defaultSubtitleLanguage = defaultSubtitleLanguage,
             preferOriginalLanguage = preferOriginalLanguage,
             defaultPlaybackSpeed = defaultPlaybackSpeed,
+            preferredCodec = preferredCodec,
         )
     }
     LaunchedEffect(stream.subtitles, subtitlesEnabled, defaultSubtitleLanguage) {

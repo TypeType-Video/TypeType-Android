@@ -21,7 +21,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -37,6 +39,8 @@ import dev.typetype.android.R
 import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.feature.player.DevicePlaybackCodecSupport
 import dev.typetype.android.feature.player.PlayerViewModel
+import dev.typetype.android.feature.player.RECOMMENDED_CODEC_KEY
+import dev.typetype.android.feature.player.RuntimeCodecFallbackEffect
 import dev.typetype.android.feature.player.bindStreamToController
 import dev.typetype.android.feature.player.components.MiniPlayerBar
 import dev.typetype.android.feature.player.initialAudioKey
@@ -64,12 +68,15 @@ internal fun MiniPlayerRuntime(
     }
     val stream = state.stream
     val settings = state.userSettings
+    var codecFallbackGeneration by remember(stream?.id) { mutableLongStateOf(0L) }
 
     LaunchedEffect(
         controller,
         currentItem,
         stream,
         state.playbackBindGeneration,
+        codecFallbackGeneration,
+        state.preferredCodec,
         settings.defaultQuality,
         settings.defaultAudioLanguage,
         settings.subtitlesEnabled,
@@ -99,9 +106,17 @@ internal fun MiniPlayerRuntime(
             initialPlayWhenReady = state.initialPlayWhenReady,
             codecSupport = codecSupport,
             prepareSabrPlayback = viewModel.sabrPlayback::prepare,
+            selectedCodec = state.preferredCodec,
         )
         player.setPlaybackSpeed(normalizeDefaultPlaybackSpeed(settings.defaultPlaybackSpeed))
     }
+
+    RuntimeCodecFallbackEffect(
+        player = controller,
+        enabled = state.preferredCodec == RECOMMENDED_CODEC_KEY,
+        codecSupport = codecSupport,
+        onFallback = { codecFallbackGeneration += 1L },
+    )
 
     val item = currentItem
     if (controller != null && item != null) {

@@ -139,6 +139,7 @@ class PlayerViewModel @Inject constructor(
                         playbackBrightnessPercent = prefs.brightnessPercent,
                         autoplayCountdownSeconds = prefs.autoplayCountdownSeconds,
                         audioOnlyPlaybackDefault = prefs.audioOnlyPlaybackDefault,
+                        preferredCodec = prefs.preferredCodec,
                         userSettings = prefs.userSettings,
                     )
                 }
@@ -157,6 +158,10 @@ class PlayerViewModel @Inject constructor(
                 playbackQueueCoordinator.toggleAutoplayPause()
             is PlayerAction.OnSetPlaybackBrightness -> playerPreferences.updateBrightness(action.percent) {
                 _state.update { state -> state.copy(playbackBrightnessPercent = it) }
+            }
+            is PlayerAction.OnSetPreferredCodec -> {
+                _state.update { it.copy(preferredCodec = action.codec) }
+                playerPreferences.updatePreferredCodec(action.codec)
             }
             is PlayerAction.OnSetAutoplay -> updateAutoplay(action.enabled)
             is PlayerAction.OnDownload -> downloadCurrentVideo(action.selection)

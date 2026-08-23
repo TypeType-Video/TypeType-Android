@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -53,6 +54,7 @@ fun LoadedPlayer(
     playbackBrightnessPercent: Int?,
     autoplayCountdownSeconds: Int,
     audioOnlyPlaybackDefault: Boolean?,
+    preferredCodec: String,
     userSettings: UserSettings,
     playlists: List<Playlist>,
     playlistPickerVisible: Boolean,
@@ -83,6 +85,7 @@ fun LoadedPlayer(
     }
     var commentsVisible by remember { mutableStateOf(false) }
     var downloadPickerVisible by remember { mutableStateOf(false) }
+    var codecFallbackGeneration by remember(stream.id) { mutableLongStateOf(0L) }
     val selections = rememberPlayerPlaybackSelectionState(
         stream = stream,
         defaultQuality = userSettings.defaultQuality,
@@ -91,6 +94,7 @@ fun LoadedPlayer(
         defaultSubtitleLanguage = userSettings.defaultSubtitleLanguage,
         preferOriginalLanguage = userSettings.preferOriginalLanguage,
         defaultPlaybackSpeed = userSettings.defaultPlaybackSpeed,
+        preferredCodec = preferredCodec,
     )
     val sponsorBlockPolicy = rememberSponsorBlockPlaybackPolicy(stream, userSettings)
     val playbackChapters = rememberPlaybackChapters(stream.chapters, sponsorBlockPolicy)
@@ -116,6 +120,7 @@ fun LoadedPlayer(
         stream.requestScope,
         controller,
         playbackBindGeneration,
+        codecFallbackGeneration,
         selections.selectedCodec,
         selections.selectedQuality,
         selections.selectedAudioKey,
@@ -147,6 +152,13 @@ fun LoadedPlayer(
     LaunchedEffect(controller, selections.selectedSpeed) {
         controller?.setPlaybackSpeed(selections.selectedSpeed)
     }
+
+    RuntimeCodecFallbackEffect(
+        player = controller,
+        enabled = selections.selectedCodec == RECOMMENDED_CODEC_KEY,
+        codecSupport = codecSupport,
+        onFallback = { codecFallbackGeneration += 1L },
+    )
 
     PlayerSubtitleSelectionEffect(
         player = controller,
@@ -202,7 +214,10 @@ fun LoadedPlayer(
                             selectedSubtitleKey = selections.selectedSubtitleKey,
                             selectedSpeed = selections.selectedSpeed,
                             codecSupport = codecSupport,
-                            onSelectCodec = selections::selectCodec,
+                            onSelectCodec = {
+                                selections.selectCodec(it)
+                                onAction(PlayerAction.OnSetPreferredCodec(it))
+                            },
                             onSelectQuality = selections::selectQuality,
                             onSelectAudio = selections::selectAudio,
                             onSelectSubtitle = selections::selectSubtitle,

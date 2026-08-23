@@ -21,6 +21,7 @@ data class PlayerState(
     val playbackBrightnessPercent: Int? = null,
     val autoplayCountdownSeconds: Int = 10,
     val audioOnlyPlaybackDefault: Boolean? = null,
+    val preferredCodec: String = RECOMMENDED_CODEC_KEY,
     val userSettings: UserSettings = UserSettings(),
     val playlistPickerVisible: Boolean = false,
     val playlists: List<Playlist> = emptyList(),
