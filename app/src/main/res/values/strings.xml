@@ -224,6 +224,8 @@
     <string name="settings_about_title">About</string>
     <string name="settings_about_subtitle">Version and credits</string>
     <string name="settings_player_section_gestures">Gestures</string>
+    <string name="settings_player_accessible_controls">Accessible player controls</string>
+    <string name="settings_player_accessible_controls_subtitle">Keep controls visible and replace gesture-only actions with buttons</string>
     <string name="settings_player_double_tap_seek">Double-tap to seek</string>
     <string name="settings_player_double_tap_seek_subtitle">Double-tap left or right to seek, or center to play and pause</string>
     <string name="settings_player_double_tap_seek_time">Double-tap seek time</string>

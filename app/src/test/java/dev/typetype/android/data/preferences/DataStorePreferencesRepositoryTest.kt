@@ -24,6 +24,7 @@ class DataStorePreferencesRepositoryTest {
         )
         first.setPlayerDoubleTapSeekSeconds(5)
         first.setPlayerPreferredCodec("vp9")
+        first.setPlayerAccessibleControlsEnabled(true)
         firstJob.cancelAndJoin()
 
         val secondJob = Job()
@@ -35,6 +36,7 @@ class DataStorePreferencesRepositoryTest {
 
         assertEquals(5, preferences.playerDoubleTapSeekSeconds)
         assertEquals("vp9", preferences.playerPreferredCodec)
+        assertEquals(true, preferences.playerAccessibleControlsEnabled)
         secondJob.cancelAndJoin()
         directory.deleteRecursively()
         Unit

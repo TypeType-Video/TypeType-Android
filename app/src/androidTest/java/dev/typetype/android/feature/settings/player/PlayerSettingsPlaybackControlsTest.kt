@@ -40,6 +40,18 @@ class PlayerSettingsPlaybackControlsTest {
         assertEquals(PlayerSettingsAction.SetDoubleTapSeekSeconds(5), action.get())
     }
 
+    @Test
+    fun accessibleControlsCanReplaceGestureOnlyInteraction() {
+        val action = AtomicReference<PlayerSettingsAction>()
+        showSettings(action)
+
+        composeRule.onNode(hasScrollAction())
+            .performScrollToNode(hasText("Accessible player controls"))
+        composeRule.onNodeWithText("Accessible player controls").performClick()
+
+        assertEquals(PlayerSettingsAction.SetAccessibleControls(true), action.get())
+    }
+
     private fun showSettings(action: AtomicReference<PlayerSettingsAction>) {
         composeRule.setContent {
             TypeTypeTheme {
