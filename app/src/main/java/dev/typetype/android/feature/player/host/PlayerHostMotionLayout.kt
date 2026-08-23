@@ -8,6 +8,8 @@ import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.ScrollScope
 import androidx.compose.foundation.gestures.TargetedFlingBehavior
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -23,6 +25,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
@@ -33,12 +36,17 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -50,6 +58,7 @@ internal fun PlayerHostMotionLayout(
     miniHeightPx: Float,
     dragEnabled: Boolean,
     miniContentEnabled: Boolean,
+    fullscreenCenterDragEnabled: Boolean = false,
     onTargetSettled: (PlayerHostTarget) -> Unit,
     onProgressChange: (Float) -> Unit,
     onDragAnchorCrossed: () -> Unit = {},
@@ -68,6 +77,7 @@ internal fun PlayerHostMotionLayout(
         AnchoredDraggableState(initialValue = target.draggableTarget())
     }
     val interactionSource = remember { MutableInteractionSource() }
+    val centerDragScope = rememberCoroutineScope()
     val isDragged by interactionSource.collectIsDraggedAsState()
     var dragSettlementPending by remember { mutableStateOf(false) }
     val flingBehavior = AnchoredDraggableDefaults.flingBehavior(anchoredState)
@@ -126,6 +136,14 @@ internal fun PlayerHostMotionLayout(
             .height(height)
             .testTag(PLAYER_HOST_OVERLAY_TAG)
             .offset { IntOffset(0, transition.offsetPx) }
+            .fullscreenCenterDrag(
+                state = anchoredState,
+                scope = centerDragScope,
+                flingBehavior = flingBehavior,
+                enabled = dragEnabled && fullscreenCenterDragEnabled,
+                onAnchorCrossed = onDragAnchorCrossed,
+                onSettled = onDragSettled,
+            )
             .nestedScroll(nestedScrollConnection)
             .anchoredDraggable(
                 state = anchoredState,
@@ -144,6 +162,74 @@ internal fun PlayerHostMotionLayout(
                 },
             ) {
                 miniContent()
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+private fun Modifier.fullscreenCenterDrag(
+    state: AnchoredDraggableState<PlayerHostTarget>,
+    scope: CoroutineScope,
+    flingBehavior: TargetedFlingBehavior,
+    enabled: Boolean,
+    onAnchorCrossed: () -> Unit,
+    onSettled: () -> Unit,
+): Modifier = if (!enabled) {
+    this
+} else {
+    pointerInput(state) {
+        awaitEachGesture {
+            val down = awaitFirstDown(
+                requireUnconsumed = false,
+                pass = PointerEventPass.Initial,
+            )
+            if (down.position.x !in (size.width * 0.35f)..(size.width * 0.65f)) {
+                return@awaitEachGesture
+            }
+            val tracker = VelocityTracker()
+            tracker.addPosition(down.uptimeMillis, down.position)
+            var lastPosition = down.position
+            var totalX = 0f
+            var totalY = 0f
+            var dragging = false
+            var lastTarget = state.targetValue
+            while (true) {
+                val event = awaitPointerEvent(PointerEventPass.Initial)
+                val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                tracker.addPosition(change.uptimeMillis, change.position)
+                if (!change.pressed) break
+                val delta = change.position - lastPosition
+                lastPosition = change.position
+                totalX += delta.x
+                totalY += delta.y
+                if (!dragging) {
+                    if (kotlin.math.abs(totalX) < viewConfiguration.touchSlop &&
+                        kotlin.math.abs(totalY) < viewConfiguration.touchSlop
+                    ) continue
+                    if (totalY <= kotlin.math.abs(totalX)) break
+                    dragging = true
+                }
+                state.dispatchRawDelta(delta.y)
+                change.consume()
+                if (state.targetValue != lastTarget) {
+                    lastTarget = state.targetValue
+                    onAnchorCrossed()
+                }
+            }
+            if (dragging) {
+                val velocity = tracker.calculateVelocity().y
+                scope.launch {
+                    val scrollScope = object : ScrollScope {
+                        override fun scrollBy(pixels: Float): Float =
+                            state.dispatchRawDelta(pixels)
+                    }
+                    with(flingBehavior) { scrollScope.performFling(velocity) }
+                    state.animateTo(
+                        requireNotNull(state.anchors.closestAnchor(state.requireOffset())),
+                    )
+                    onSettled()
+                }
             }
         }
     }
