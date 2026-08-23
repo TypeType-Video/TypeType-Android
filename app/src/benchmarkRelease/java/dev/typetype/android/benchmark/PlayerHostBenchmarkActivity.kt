@@ -1,7 +1,13 @@
 package dev.typetype.android.benchmark
 
+import android.graphics.Color as AndroidColor
+import android.graphics.Paint
 import android.os.Bundle
+import android.os.Handler
 import android.os.Looper
+import android.view.Surface
+import android.view.SurfaceHolder
+import android.view.SurfaceView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -22,6 +28,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.SimpleBasePlayer
+import androidx.media3.common.VideoSize
 import androidx.media3.ui.PlayerView
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
@@ -67,6 +74,8 @@ class PlayerHostBenchmarkActivity : ComponentActivity() {
                                         factory = { context ->
                                             PlayerView(context).apply {
                                                 useController = false
+                                                setShutterBackgroundColor(AndroidColor.TRANSPARENT)
+                                                setKeepContentOnPlayerReset(true)
                                                 this.player = this@PlayerHostBenchmarkActivity.player
                                             }
                                         },
@@ -93,10 +102,47 @@ class PlayerHostBenchmarkActivity : ComponentActivity() {
 }
 
 private class BenchmarkSurfacePlayer(looper: Looper) : SimpleBasePlayer(looper) {
+    private val handler = Handler(looper)
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private var outputSurface: Surface? = null
+    private var renderedFrame = 0
+    private var surfaceGeneration = 0
+    private val renderFrame = object : Runnable {
+        override fun run() {
+            val surface = outputSurface ?: return
+            if (!surface.isValid) {
+                handler.postDelayed(this, FRAME_DELAY_MS)
+                return
+            }
+            val canvas = surface.lockCanvas(null)
+            try {
+                val phase = renderedFrame % FRAME_PERIOD
+                canvas.drawColor(AndroidColor.rgb(12, 18, 30))
+                paint.color = AndroidColor.rgb(83, 109, 254)
+                val left = canvas.width * phase.toFloat() / FRAME_PERIOD
+                canvas.drawRect(left, 0f, left + canvas.width / 4f, canvas.height.toFloat(), paint)
+                paint.color = AndroidColor.WHITE
+                paint.textSize = canvas.height.coerceAtMost(canvas.width) / 5f
+                canvas.drawText(
+                    "$surfaceGeneration:$renderedFrame",
+                    32f,
+                    canvas.height * 0.72f,
+                    paint,
+                )
+            } finally {
+                surface.unlockCanvasAndPost(canvas)
+            }
+            renderedFrame += 1
+            handler.postDelayed(this, FRAME_DELAY_MS)
+        }
+    }
+
     override fun getState(): State = State.Builder()
         .setAvailableCommands(Player.Commands.Builder().addAllCommands().build())
         .setPlaybackState(Player.STATE_READY)
         .setPlayWhenReady(true, Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST)
+        .setVideoSize(VideoSize(1920, 1080))
+        .setNewlyRenderedFirstFrame(true)
         .setPlaylist(
             listOf(
                 MediaItemData.Builder("benchmark-surface")
@@ -107,11 +153,33 @@ private class BenchmarkSurfacePlayer(looper: Looper) : SimpleBasePlayer(looper) 
         .setContentPositionMs(42_000L)
         .build()
 
-    override fun handleSetVideoOutput(videoOutput: Any): ListenableFuture<*> =
-        Futures.immediateVoidFuture()
+    override fun handleSetVideoOutput(videoOutput: Any): ListenableFuture<*> {
+        surfaceGeneration += 1
+        outputSurface = when (videoOutput) {
+            is Surface -> videoOutput
+            is SurfaceHolder -> videoOutput.surface
+            is SurfaceView -> videoOutput.holder.surface
+            else -> null
+        }
+        handler.removeCallbacks(renderFrame)
+        handler.post(renderFrame)
+        return Futures.immediateVoidFuture()
+    }
 
-    override fun handleClearVideoOutput(videoOutput: Any?): ListenableFuture<*> =
-        Futures.immediateVoidFuture()
+    override fun handleClearVideoOutput(videoOutput: Any?): ListenableFuture<*> {
+        handler.removeCallbacks(renderFrame)
+        outputSurface = null
+        return Futures.immediateVoidFuture()
+    }
 
-    override fun handleRelease(): ListenableFuture<*> = Futures.immediateVoidFuture()
+    override fun handleRelease(): ListenableFuture<*> {
+        handler.removeCallbacks(renderFrame)
+        outputSurface = null
+        return Futures.immediateVoidFuture()
+    }
+
+    private companion object {
+        const val FRAME_DELAY_MS = 33L
+        const val FRAME_PERIOD = 90
+    }
 }
