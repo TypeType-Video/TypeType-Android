@@ -214,6 +214,7 @@ class PlayerHostMotionLayoutTest {
         var expandedWidthPx = 0
         var miniWidthPx = 0
         var miniPositionMs = 0L
+        var hostProgress = 0f
         lateinit var firstView: PlayerView
 
         composeRule.setContent {
@@ -235,7 +236,7 @@ class PlayerHostMotionLayoutTest {
                         if (it == PlayerHostTarget.Mini) isFullscreen = false
                         requestStamp += 1
                     },
-                    onProgressChange = {},
+                    onProgressChange = { hostProgress = it },
                     miniContent = { Text("Mini controls") },
                     expandedContent = { transition ->
                         PlayerContentLayout(
@@ -275,6 +276,16 @@ class PlayerHostMotionLayoutTest {
                 )
             }
         }
+
+        composeRule.onNodeWithTag(PLAYER_HOST_OVERLAY_TAG).performTouchInput {
+            down(center)
+            moveTo(Offset(center.x, center.y + height * 0.3f), 300L)
+            cancel()
+        }
+        composeRule.waitUntil(5_000) { hostProgress < 0.01f }
+        assertEquals(PlayerHostTarget.Expanded, target)
+        assertTrue(isFullscreen)
+        assertEquals(1, createdViews)
 
         composeRule.onNodeWithTag(PLAYER_HOST_OVERLAY_TAG).performTouchInput {
             swipe(center, Offset(center.x, bottom - 1f), 800L)
