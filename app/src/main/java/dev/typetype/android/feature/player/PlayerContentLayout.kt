@@ -19,14 +19,12 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
-import kotlin.math.roundToInt
 
 internal const val PLAYER_SINGLE_COLUMN_LAYOUT_TAG = "player_single_column_layout"
 internal const val PLAYER_TWO_PANE_LAYOUT_TAG = "player_two_pane_layout"
@@ -124,33 +122,23 @@ internal fun PlayerContentLayout(
 private fun Modifier.playerViewportTransition(progress: Float): Modifier = composed {
     val fraction = progress.coerceIn(0f, 1f)
     val density = LocalDensity.current
-    val miniWidthPx = with(density) { MINI_VIDEO_WIDTH.roundToPx() }
-    val miniHeightPx = with(density) { MINI_VIDEO_HEIGHT.roundToPx() }
-    val miniStartPx = with(density) { MINI_VIDEO_START.roundToPx() }
-    val miniTopPx = with(density) { MINI_VIDEO_TOP.roundToPx() }
+    val miniWidthPx = with(density) { MINI_VIDEO_WIDTH.toPx() }
+    val miniHeightPx = with(density) { MINI_VIDEO_HEIGHT.toPx() }
+    val miniStartPx = with(density) { MINI_VIDEO_START.toPx() }
+    val miniTopPx = with(density) { MINI_VIDEO_TOP.toPx() }
     val shape = RoundedCornerShape(MINI_VIDEO_CORNER * fraction)
-    layout { measurable, constraints ->
-        val expandedWidth = constraints.maxWidth
-        val expandedHeight = (expandedWidth / VIDEO_ASPECT_RATIO).roundToInt()
-        val width = interpolate(expandedWidth, miniWidthPx, fraction)
-        val height = interpolate(expandedHeight, miniHeightPx, fraction)
-        val start = interpolate(0, miniStartPx, fraction)
-        val top = interpolate(0, miniTopPx, fraction)
-        val placeable = measurable.measure(Constraints.fixed(width, height))
-        layout(
-            width = (width + start).coerceIn(constraints.minWidth, constraints.maxWidth),
-            height = (height + top).coerceIn(constraints.minHeight, constraints.maxHeight),
-        ) {
-            placeable.placeRelative(start, top)
-        }
-    }.graphicsLayer {
+    graphicsLayer {
+        val targetScaleX = miniWidthPx / size.width.coerceAtLeast(1f)
+        val targetScaleY = miniHeightPx / size.height.coerceAtLeast(1f)
+        scaleX = 1f + (targetScaleX - 1f) * fraction
+        scaleY = 1f + (targetScaleY - 1f) * fraction
+        translationX = miniStartPx * fraction
+        translationY = miniTopPx * fraction
+        transformOrigin = TransformOrigin(0f, 0f)
         this.shape = shape
         clip = fraction > 0f
     }
 }
-
-private fun interpolate(start: Int, end: Int, fraction: Float): Int =
-    (start + (end - start) * fraction).roundToInt()
 
 private fun Modifier.playerDetailsTransition(progress: Float): Modifier {
     val fraction = progress.coerceIn(0f, 1f)

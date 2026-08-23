@@ -4,5 +4,8 @@
         <activity
             android:name="dev.typetype.android.benchmark.ShortsBenchmarkActivity"
             android:exported="true" />
+        <activity
+            android:name="dev.typetype.android.benchmark.PlayerHostBenchmarkActivity"
+            android:exported="true" />
     </application>
 </manifest>

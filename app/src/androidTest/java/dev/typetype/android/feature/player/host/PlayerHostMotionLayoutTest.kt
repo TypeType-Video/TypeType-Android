@@ -34,6 +34,7 @@ import androidx.media3.ui.PlayerView
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import dev.typetype.android.feature.player.PlayerContentLayout
+import dev.typetype.android.feature.player.PLAYER_VIEWPORT_TAG
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
@@ -267,8 +268,10 @@ class PlayerHostMotionLayoutTest {
             miniPositionMs = player.currentPosition
             assertTrue(miniPositionMs in 42_000L..60_000L)
         }
-        assertTrue(viewportWidths.any { it in (miniWidthPx + 10)..(expandedWidthPx - 10) })
-        assertTrue(viewportWidths.last() in (miniWidthPx - 2)..(miniWidthPx + 2))
+        assertTrue(viewportWidths.all { it in (expandedWidthPx - 2)..(expandedWidthPx + 2) })
+        val miniVisualWidth = composeRule.onNodeWithTag(PLAYER_VIEWPORT_TAG)
+            .fetchSemanticsNode().boundsInRoot.width
+        assertTrue(miniVisualWidth in (miniWidthPx - 2f)..(miniWidthPx + 2f))
 
         composeRule.onNodeWithText("Mini controls").performTouchInput {
             swipe(center, Offset(center.x, center.y - 400f), 500L)
@@ -279,7 +282,9 @@ class PlayerHostMotionLayoutTest {
             assertSame(player, firstView.player)
             assertTrue(player.currentPosition in miniPositionMs..(miniPositionMs + 10_000L))
         }
-        assertTrue(viewportWidths.last() in (expandedWidthPx - 2)..(expandedWidthPx + 2))
+        val expandedVisualWidth = composeRule.onNodeWithTag(PLAYER_VIEWPORT_TAG)
+            .fetchSemanticsNode().boundsInRoot.width
+        assertTrue(expandedVisualWidth in (expandedWidthPx - 2f)..(expandedWidthPx + 2f))
         composeRule.runOnIdle { player.release() }
     }
 }
