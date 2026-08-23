@@ -166,6 +166,7 @@ fun PlayerHost(
                             onOpenAccounts()
                         },
                         onPlayVideo = { url -> controller.openVideo(url) },
+                        onAutoplayVideo = { url -> controller.continueWithVideo(url) },
                         onOpenChannel = { url ->
                             controller.minimize()
                             onOpenChannel(url)
