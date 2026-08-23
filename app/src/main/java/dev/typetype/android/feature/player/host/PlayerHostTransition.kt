@@ -6,7 +6,7 @@ internal data class PlayerHostTransition(
     val progress: Float,
     val heightPx: Int,
     val offsetPx: Int,
-    val expandedContentAlpha: Float,
+    val miniContentAlpha: Float,
     val isSettledMini: Boolean,
 )
 
@@ -28,7 +28,7 @@ internal fun playerHostTransition(
         progress = progress,
         heightPx = height.roundToInt().coerceAtLeast(1),
         offsetPx = safeOffset.roundToInt(),
-        expandedContentAlpha = (1f - progress * 0.35f).coerceIn(0f, 1f),
+        miniContentAlpha = ((progress - 0.55f) / 0.45f).coerceIn(0f, 1f),
         isSettledMini = progress >= 0.999f && !isAnimationRunning,
     )
 }

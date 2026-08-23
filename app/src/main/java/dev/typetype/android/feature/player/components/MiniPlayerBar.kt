@@ -29,17 +29,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
-import coil3.compose.AsyncImage
 import dev.typetype.android.R
 
 @OptIn(markerClass = [UnstableApi::class])
@@ -48,7 +49,6 @@ fun MiniPlayerBar(
     player: Player,
     title: String,
     subtitle: String,
-    artworkUri: String?,
     onExpand: () -> Unit,
     onSendToBackground: () -> Unit,
     onClose: () -> Unit,
@@ -56,13 +56,14 @@ fun MiniPlayerBar(
     sleepTimerLabel: String? = null,
 ) {
     val playPauseState = rememberPlayPauseButtonState(player)
+    val backgroundActionLabel = stringResource(R.string.mini_player_send_to_background)
+    val expandActionLabel = stringResource(R.string.mini_player_expand)
     val density = LocalDensity.current
     val swipeThresholdPx = with(density) { MINI_PLAYER_SWIPE_THRESHOLD.toPx() }
     Row(
         modifier = modifier
             .fillMaxWidth()
             .height(64.dp)
-            .background(MaterialTheme.colorScheme.surface)
             .pointerInput(onExpand, onSendToBackground) {
                 awaitEachGesture {
                     val down = awaitFirstDown(
@@ -86,7 +87,15 @@ fun MiniPlayerBar(
                     }
                 }
             }
-            .clickable(onClick = onExpand),
+            .semantics {
+                customActions = listOf(
+                    CustomAccessibilityAction(backgroundActionLabel) {
+                        onSendToBackground()
+                        true
+                    },
+                )
+            }
+            .clickable(onClickLabel = expandActionLabel, onClick = onExpand),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
@@ -95,17 +104,8 @@ fun MiniPlayerBar(
                 .width(80.dp)
                 .aspectRatio(16f / 9f)
                 .clip(RoundedCornerShape(6.dp))
-                .background(Color.Black),
-        ) {
-            if (artworkUri != null) {
-                AsyncImage(
-                    model = artworkUri,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        }
+                .background(Color.Transparent),
+        )
         Spacer(Modifier.width(10.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(

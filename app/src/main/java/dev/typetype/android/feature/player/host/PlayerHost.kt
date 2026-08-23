@@ -15,14 +15,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.session.MediaController
 import dev.typetype.android.feature.player.PlayerFullscreenEffect
 import dev.typetype.android.feature.player.PlayerRoute as PlayerRouteScreen
 import dev.typetype.android.feature.player.components.rememberIsInPipMode
+import dev.typetype.android.feature.player.components.rememberAccessiblePlayerControls
 
 private val MINI_PLAYER_HEIGHT = 64.dp
 internal const val PLAYER_HOST_OVERLAY_TAG = "player_host_overlay"
@@ -43,6 +46,8 @@ fun PlayerHost(
     val state by controller.state.collectAsStateWithLifecycle()
     val density = LocalDensity.current
     val isInPip by rememberIsInPipMode()
+    val touchExplorationEnabled = rememberAccessiblePlayerControls(false)
+    val hapticFeedback = LocalHapticFeedback.current
     val activity = LocalActivity.current
     val configuration = LocalConfiguration.current
     val orientation = when (configuration.orientation) {
@@ -120,7 +125,7 @@ fun PlayerHost(
                 miniAnchorPx = miniAnchorPx,
                 containerHeightPx = containerHeightPx,
                 miniHeightPx = miniHeightPx,
-                dragEnabled = !isFullscreen && !isInPip,
+                dragEnabled = !isFullscreen && !isInPip && !touchExplorationEnabled,
                 miniContentEnabled = !isInPip,
                 onTargetSettled = { target ->
                     when (target) {
@@ -134,6 +139,14 @@ fun PlayerHost(
                     }
                 },
                 onProgressChange = onTransitionProgressChange,
+                onDragAnchorCrossed = {
+                    hapticFeedback.performHapticFeedback(
+                        HapticFeedbackType.GestureThresholdActivate,
+                    )
+                },
+                onDragSettled = {
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                },
                 miniContent = {
                     MiniPlayerRuntime(
                         controller = mediaController,
@@ -142,9 +155,10 @@ fun PlayerHost(
                         onClose = onClosePlayback,
                     )
                 },
-                expandedContent = { transitionModifier ->
+                expandedContent = { transition ->
                     PlayerRouteScreen(
                         isFullscreen = isFullscreen,
+                        hostTransitionProgress = transition.progress,
                         onFullscreenChange = requestFullscreen,
                         onNavigateBack = { controller.collapseExpanded() },
                         onOpenAccounts = {
@@ -156,7 +170,7 @@ fun PlayerHost(
                             controller.minimize()
                             onOpenChannel(url)
                         },
-                        modifier = transitionModifier,
+                        modifier = Modifier.fillMaxSize(),
                     )
                 },
             )
