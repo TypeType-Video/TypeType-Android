@@ -19,6 +19,7 @@ internal enum class DecoderSupport(val rank: Int) {
 internal interface PlaybackCodecSupport {
     fun video(source: StreamVideoSource): DecoderSupport
     fun audio(source: StreamAudioSource): DecoderSupport
+    fun rejectVideo(format: Format): Boolean = false
 }
 
 @OptIn(markerClass = [UnstableApi::class])
@@ -28,15 +29,13 @@ internal class DevicePlaybackCodecSupport(
     private val applicationContext = context.applicationContext
     private val videoCache = ConcurrentHashMap<VideoCodecKey, DecoderSupport>()
     private val audioCache = ConcurrentHashMap<AudioCodecKey, DecoderSupport>()
+    private val rejectedVideoFormats = ConcurrentHashMap.newKeySet<RejectedVideoCodecKey>()
 
     override fun video(source: StreamVideoSource): DecoderSupport {
-        val key = VideoCodecKey(
-            mimeType = source.mimeType,
-            codec = source.codec,
-            width = source.width,
-            height = source.height,
-            fps = source.fps,
-        )
+        val key = source.videoCodecKey()
+        if (source.rejectedVideoCodecKey() in rejectedVideoFormats) {
+            return DecoderSupport.Unsupported
+        }
         videoCache[key]?.let { return it }
         val mediaMimeType = source.videoMediaMimeType() ?: return DecoderSupport.Unsupported
         val format = Format.Builder()
@@ -64,6 +63,11 @@ internal class DevicePlaybackCodecSupport(
         return audioCache.putIfAbsent(key, support) ?: support
     }
 
+    override fun rejectVideo(format: Format): Boolean {
+        val key = format.rejectedVideoCodecKey() ?: return false
+        return rejectedVideoFormats.add(key)
+    }
+
     private fun decoderSupport(format: Format): DecoderSupport = try {
         val decoders = MediaCodecUtil.getDecoderInfos(
             requireNotNull(format.sampleMimeType),
@@ -81,12 +85,40 @@ internal class DevicePlaybackCodecSupport(
 }
 
 private data class VideoCodecKey(
-    val mimeType: String,
-    val codec: String?,
+    val codec: String,
     val width: Int,
     val height: Int,
     val fps: Int,
 )
+
+private data class RejectedVideoCodecKey(
+    val codec: String,
+    val width: Int,
+    val height: Int,
+)
+
+private fun StreamVideoSource.videoCodecKey() = VideoCodecKey(
+    codec = codec.orEmpty().trim().lowercase(),
+    width = width,
+    height = height,
+    fps = fps,
+)
+
+private fun StreamVideoSource.rejectedVideoCodecKey() = RejectedVideoCodecKey(
+    codec = codec.orEmpty().trim().lowercase(),
+    width = width,
+    height = height,
+)
+
+private fun Format.rejectedVideoCodecKey(): RejectedVideoCodecKey? {
+    val codec = codecs.orEmpty().trim().lowercase().takeIf(String::isNotBlank) ?: return null
+    if (width <= 0 || height <= 0) return null
+    return RejectedVideoCodecKey(
+        codec = codec,
+        width = width,
+        height = height,
+    )
+}
 
 private data class AudioCodecKey(
     val mimeType: String,

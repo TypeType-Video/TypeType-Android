@@ -50,7 +50,11 @@ internal fun String.effectiveQuality(automaticQualityCap: String): String =
     }
 
 internal fun StreamVideoSource.codecSelectionKey(): String {
-    val normalized = codec.orEmpty().trim().lowercase()
+    return codec.orEmpty().codecSelectionKey()
+}
+
+internal fun String.codecSelectionKey(): String {
+    val normalized = trim().lowercase()
     return when {
         normalized.startsWith("avc1") || normalized.startsWith("avc3") -> H264_CODEC_KEY
         normalized.startsWith("hvc1") || normalized.startsWith("hev1") -> HEVC_CODEC_KEY

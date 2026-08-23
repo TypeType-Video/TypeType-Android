@@ -3,11 +3,14 @@ package dev.typetype.android.feature.player
 import android.media.MediaCodec
 import android.media.MediaCodecInfo
 import android.media.MediaFormat
+import androidx.media3.common.Format
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.typetype.android.domain.stream.StreamAudioSource
 import dev.typetype.android.domain.stream.StreamVideoSource
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -26,6 +29,18 @@ class DevicePlaybackCodecSupportAndroidTest {
     @Test
     fun unknownFrameRateDoesNotRejectBaselineH264() {
         assertFalse(support.video(h264().copy(fps = 0)) == DecoderSupport.Unsupported)
+    }
+
+    @Test
+    fun runtimeDecoderFailureRejectsTheMatchingAdvertisedFormat() {
+        val activeFormat = Format.Builder()
+            .setCodecs("avc1.42001e")
+            .setWidth(640)
+            .setHeight(360)
+            .build()
+
+        assertTrue(support.rejectVideo(activeFormat))
+        assertEquals(DecoderSupport.Unsupported, support.video(h264()))
     }
 
     @Test

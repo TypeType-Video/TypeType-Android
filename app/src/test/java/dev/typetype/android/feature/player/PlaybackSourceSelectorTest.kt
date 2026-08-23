@@ -91,9 +91,9 @@ class PlaybackSourceSelectorTest {
     }
 
     @Test
-    fun `recommended codec prefers baseline hardware before resolution`() {
-        val baseline = video("baseline", height = 720, codec = "avc1.64001f")
-        val modern = video("modern", height = 1080, codec = "vp09.00.40.08")
+    fun `smart codec keeps target resolution before codec efficiency`() {
+        val baseline = video("baseline", height = 1080, codec = "avc1.640028")
+        val modern = video("modern", height = 720, codec = "av01.0.08M.08")
         val support = FakeCodecSupport(
             video = mapOf(
                 baseline.url to DecoderSupport.Hardware,
@@ -105,6 +105,34 @@ class PlaybackSourceSelectorTest {
             baseline,
             listOf(modern, baseline).pickVideo("1080p", support),
         )
+    }
+
+    @Test
+    fun `smart codec prefers hardware AV1 then VP9 then H264`() {
+        val h264 = video("h264", height = 1080, codec = "avc1.640028")
+        val vp9 = video("vp9", height = 1080, codec = "vp09.00.41.08")
+        val av1 = video("av1", height = 1080, codec = "av01.0.08M.08")
+        val support = FakeCodecSupport(
+            video = listOf(h264, vp9, av1).associate { it.url to DecoderSupport.Hardware },
+        )
+
+        assertEquals(av1, listOf(h264, vp9, av1).pickVideo("1080p", support))
+        assertEquals(vp9, listOf(h264, vp9).pickVideo("1080p", support))
+        assertEquals(h264, listOf(h264).pickVideo("1080p", support))
+    }
+
+    @Test
+    fun `smart codec never selects software AV1 over hardware baseline`() {
+        val h264 = video("h264", height = 720, codec = "avc1.64001f")
+        val av1 = video("av1", height = 1080, codec = "av01.0.08M.08")
+        val support = FakeCodecSupport(
+            video = mapOf(
+                h264.url to DecoderSupport.Hardware,
+                av1.url to DecoderSupport.Software,
+            ),
+        )
+
+        assertEquals(h264, listOf(av1, h264).pickVideo("1080p", support))
     }
 
     @Test
