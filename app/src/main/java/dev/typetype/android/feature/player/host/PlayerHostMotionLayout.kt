@@ -12,6 +12,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.gestures.anchoredDraggable
+import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Box
@@ -193,6 +194,8 @@ private fun Modifier.fullscreenCenterDrag(
             var totalX = 0f
             var totalY = 0f
             var dragging = false
+            var completed = false
+            val initialTarget = state.settledValue
             var lastTarget = state.targetValue
             while (true) {
                 val event = awaitPointerEvent(PointerEventPass.Initial)
@@ -216,10 +219,26 @@ private fun Modifier.fullscreenCenterDrag(
                     lastTarget = state.targetValue
                     onAnchorCrossed()
                 }
+                completed = drag(down.id) { dragChange ->
+                    tracker.addPosition(dragChange.uptimeMillis, dragChange.position)
+                    val dragDelta = dragChange.position - lastPosition
+                    lastPosition = dragChange.position
+                    state.dispatchRawDelta(dragDelta.y)
+                    dragChange.consume()
+                    if (state.targetValue != lastTarget) {
+                        lastTarget = state.targetValue
+                        onAnchorCrossed()
+                    }
+                }
+                break
             }
             if (dragging) {
                 val velocity = tracker.calculateVelocity().y
                 scope.launch {
+                    if (!completed) {
+                        state.animateTo(initialTarget)
+                        return@launch
+                    }
                     val scrollScope = object : ScrollScope {
                         override fun scrollBy(pixels: Float): Float =
                             state.dispatchRawDelta(pixels)
