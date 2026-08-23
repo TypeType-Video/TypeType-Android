@@ -44,6 +44,7 @@ class PlayerHostBenchmarkActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             var target by mutableStateOf(PlayerHostTarget.Expanded)
+            var isFullscreen by mutableStateOf(true)
             var requestStamp by mutableLongStateOf(0L)
             TypeTypeTheme {
                 BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -58,15 +59,17 @@ class PlayerHostBenchmarkActivity : ComponentActivity() {
                         miniHeightPx = miniHeightPx,
                         dragEnabled = true,
                         miniContentEnabled = true,
+                        fullscreenCenterDragEnabled = isFullscreen,
                         onTargetSettled = {
                             target = it
+                            if (it == PlayerHostTarget.Mini) isFullscreen = false
                             requestStamp += 1
                         },
                         onProgressChange = {},
                         miniContent = { Text("Benchmark mini player") },
                         expandedContent = { transition ->
                             PlayerContentLayout(
-                                isFullscreen = false,
+                                isFullscreen = isFullscreen,
                                 hostTransitionProgress = transition.progress,
                                 modifier = Modifier.fillMaxSize(),
                                 viewport = { modifier ->
