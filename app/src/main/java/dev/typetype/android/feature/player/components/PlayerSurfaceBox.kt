@@ -24,14 +24,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.res.stringResource
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.ui.compose.state.rememberPresentationState
-import dev.typetype.android.R
 import dev.typetype.android.domain.stream.Chapter
 import dev.typetype.android.domain.stream.SponsorBlockSegment
 import dev.typetype.android.domain.stream.Stream
@@ -83,6 +82,7 @@ internal fun PlayerSurfaceBox(
     captionStyles: CaptionStyles = CaptionStyles(),
     danmakuState: PlayerDanmakuState = PlayerDanmakuState(),
     onDanmakuAction: (PlayerDanmakuAction) -> Unit = {},
+    hostTransitionProgress: Float = 0f,
 ) {
     val activity = LocalActivity.current
     val context = LocalContext.current
@@ -96,10 +96,11 @@ internal fun PlayerSurfaceBox(
     var controlsVisible by remember { mutableStateOf(true) }
     var optionsVisible by remember { mutableStateOf(false) }
     var chaptersVisible by remember { mutableStateOf(false) }
+    val accessibleControls = rememberAccessiblePlayerControls(
+        gestureConfig.accessibleControlsEnabled,
+    )
     val audioOnlyState = rememberAudioOnlyPlaybackState(player, stream, audioOnlyDefault)
     val audioOnlySnackbar = remember { SnackbarHostState() }
-    val audioOnlyUnavailable = stringResource(R.string.player_audio_only_unavailable)
-    val audioOnlyNetworkFailure = stringResource(R.string.error_network_unavailable)
     val playbackStatus = rememberPlayerPlaybackStatus(
         player,
         onRetryPlayback.takeIf { stream.playbackContract == StreamPlaybackContract.ServerSabr },
@@ -110,18 +111,13 @@ internal fun PlayerSurfaceBox(
         stream.playbackContract == StreamPlaybackContract.ServerSabr &&
             it.key == selectedSubtitleKey
     }
-    LaunchedEffect(Unit) {
-        gestureState.brightnessFraction.floatValue = playbackBrightnessPercent
-            ?.let { it / 100f }
-            ?: activity?.window?.attributes?.screenBrightness
-                ?.takeIf { it in 0f..1f }
-            ?: 0.5f
-        val maxVolume = audioManager?.getStreamMaxVolume(AudioManager.STREAM_MUSIC) ?: 1
-        val currentVolume = audioManager?.getStreamVolume(AudioManager.STREAM_MUSIC) ?: 0
-        gestureState.volumeFraction.floatValue =
-            if (maxVolume > 0) currentVolume / maxVolume.toFloat() else 0f
-        appliedVolumeLevel = currentVolume
-    }
+    PlayerGestureInitializationEffect(
+        state = gestureState,
+        audioManager = audioManager,
+        selectedBrightnessPercent = playbackBrightnessPercent,
+        windowBrightness = activity?.window?.attributes?.screenBrightness,
+        onVolumeInitialized = { appliedVolumeLevel = it },
+    )
 
     PlaybackBrightnessEffect(
         window = activity?.window,
@@ -132,26 +128,22 @@ internal fun PlayerSurfaceBox(
         window = activity?.window,
         videoIsPlaying = playbackStatus.isPlaying && !audioOnlyState.active,
     )
-    LaunchedEffect(controlsVisible, playbackStatus.isPlaying) {
-        if (controlsVisible && playbackStatus.isPlaying) {
+    LaunchedEffect(accessibleControls) {
+        if (accessibleControls) controlsVisible = true
+    }
+    LaunchedEffect(controlsVisible, playbackStatus.isPlaying, accessibleControls) {
+        if (controlsVisible && playbackStatus.isPlaying && !accessibleControls) {
             delay(AUTO_HIDE_DELAY_MS)
             controlsVisible = false
         }
     }
 
-    LaunchedEffect(audioOnlyState.failure) {
-        val failure = audioOnlyState.failure ?: return@LaunchedEffect
-        audioOnlySnackbar.showSnackbar(
-            when (failure) {
-                AudioOnlyPlaybackFailure.Network -> audioOnlyNetworkFailure
-                AudioOnlyPlaybackFailure.Unavailable -> audioOnlyUnavailable
-            },
-        )
-        audioOnlyState.consumeFailure()
-    }
+    PlayerAudioOnlyFailureEffect(audioOnlyState, audioOnlySnackbar)
 
     val presentationState = rememberPresentationState(player, keepContentOnReset = true)
     val surfaceKey = rememberPlayerSurfaceKey(stream.id)
+    val transitionProgress = hostTransitionProgress.coerceIn(0f, 1f)
+    val chromeModifier = Modifier.graphicsLayer { alpha = 1f - transitionProgress }
     Box(modifier = modifier.background(Color.Black).clipToBounds()) {
         if (audioOnlyState.active) {
             DeArrowAudioOnlyPoster(
@@ -171,21 +163,23 @@ internal fun PlayerSurfaceBox(
         }
 
         if (!audioOnlyState.active && (!isInPip || externalSubtitle != null)) {
-            DanmakuOverlay(
-                player = player,
-                state = danmakuState,
-                visible = !isInPip,
-                modifier = Modifier.fillMaxSize(),
-            )
-            PlayerSubtitleOverlay(
-                player = player,
-                controlsVisible = controlsVisible && !isInPip,
-                subtitlesVisible = selectedSubtitleKey != null,
-                externalSource = externalSubtitle,
-                loadExternalCues = loadSubtitleCues,
-                captionStyles = captionStyles,
-                modifier = Modifier.fillMaxSize(),
-            )
+            Box(modifier = chromeModifier.fillMaxSize()) {
+                DanmakuOverlay(
+                    player = player,
+                    state = danmakuState,
+                    visible = !isInPip,
+                    modifier = Modifier.fillMaxSize(),
+                )
+                PlayerSubtitleOverlay(
+                    player = player,
+                    controlsVisible = controlsVisible && !isInPip,
+                    subtitlesVisible = selectedSubtitleKey != null,
+                    externalSource = externalSubtitle,
+                    loadExternalCues = loadSubtitleCues,
+                    captionStyles = captionStyles,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
         }
 
         if (presentationState.coverSurface && !audioOnlyState.active) {
@@ -196,12 +190,14 @@ internal fun PlayerSurfaceBox(
             visible = playbackStatus.isBuffering && !presentationState.coverSurface && !isInPip,
             enter = fadeIn(),
             exit = fadeOut(),
-            modifier = Modifier.align(Alignment.Center),
+            modifier = chromeModifier.align(Alignment.Center),
         ) {
             CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
         }
 
-        if (!isInPip && playbackStatus.acceptsInput) {
+        if (!isInPip && playbackStatus.acceptsInput && !accessibleControls &&
+            transitionProgress < 0.01f
+        ) {
             PlayerGestureLayer(
                 player = player,
                 state = gestureState,
@@ -243,7 +239,9 @@ internal fun PlayerSurfaceBox(
         }
 
         AnimatedVisibility(
-            visible = controlsVisible && !isInPip && playbackStatus.acceptsInput,
+            visible = transitionProgress < 0.99f &&
+                (controlsVisible || accessibleControls) &&
+                !isInPip && playbackStatus.acceptsInput,
             enter = fadeIn(),
             exit = fadeOut(),
         ) {
@@ -271,7 +269,7 @@ internal fun PlayerSurfaceBox(
                 isPipAvailable = isPipAvailable,
                 chaptersAvailable = chapters.isNotEmpty(),
                 sponsorBlockSegments = sponsorBlockPolicy.visibleSegments,
-                modifier = Modifier.fillMaxSize(),
+                modifier = chromeModifier.fillMaxSize(),
             )
         }
 

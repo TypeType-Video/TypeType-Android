@@ -28,6 +28,7 @@ private const val PLAYLIST_NAME_PLACEHOLDER = "__PLAYLIST_NAME__"
 @Composable
 fun PlayerRoute(
     isFullscreen: Boolean,
+    hostTransitionProgress: Float = 0f,
     onFullscreenChange: (Boolean) -> Unit,
     onNavigateBack: () -> Unit,
     onOpenAccounts: () -> Unit,
@@ -53,6 +54,7 @@ fun PlayerRoute(
         prepareSabrPlayback = viewModel.sabrPlayback::prepare,
         loadSubtitleCues = viewModel.subtitleCueLoader::load,
         isFullscreen = isFullscreen,
+        hostTransitionProgress = hostTransitionProgress,
         onFullscreenChange = onFullscreenChange,
         onNavigateBack = onNavigateBack,
         onOpenAccounts = onOpenAccounts,
@@ -79,6 +81,7 @@ fun PlayerScreen(
     prepareSabrPlayback: PrepareSabrPlayback = { _, _, _ -> null },
     loadSubtitleCues: LoadSubtitleCues = { Result.success(emptyList()) },
     isFullscreen: Boolean = false,
+    hostTransitionProgress: Float = 0f,
     onFullscreenChange: (Boolean) -> Unit = {},
     onNavigateBack: () -> Unit,
     onOpenAccounts: () -> Unit,
@@ -177,6 +180,7 @@ fun PlayerScreen(
                     prepareSabrPlayback = prepareSabrPlayback,
                     loadSubtitleCues = loadSubtitleCues,
                     isFullscreen = isFullscreen,
+                    hostTransitionProgress = hostTransitionProgress,
                     onFullscreenChange = onFullscreenChange,
                     onNavigateBack = onNavigateBack,
                     onOpenAccounts = onOpenAccounts,

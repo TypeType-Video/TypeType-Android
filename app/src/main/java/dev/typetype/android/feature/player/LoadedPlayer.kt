@@ -6,10 +6,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -66,6 +65,7 @@ fun LoadedPlayer(
     prepareSabrPlayback: PrepareSabrPlayback,
     loadSubtitleCues: LoadSubtitleCues,
     isFullscreen: Boolean,
+    hostTransitionProgress: Float = 0f,
     onFullscreenChange: (Boolean) -> Unit,
     onNavigateBack: () -> Unit,
     onOpenAccounts: () -> Unit,
@@ -174,19 +174,20 @@ fun LoadedPlayer(
         onSaveProgress = { onAction(PlayerAction.OnSaveProgress(it)) },
     )
 
+    val expandedTopPadding = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding()
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .then(
-                if (isFullscreen) Modifier
-                else Modifier.windowInsetsPadding(
-                    WindowInsets.safeDrawing.only(WindowInsetsSides.Top),
+                if (isFullscreen) Modifier else Modifier.padding(
+                    top = expandedTopPadding * (1f - hostTransitionProgress.coerceIn(0f, 1f)),
                 ),
             ),
     ) {
         PlayerContentLayout(
             isFullscreen = isFullscreen,
+            hostTransitionProgress = hostTransitionProgress,
             viewport = { viewportModifier ->
                 Box(
                     modifier = viewportModifier
@@ -241,12 +242,13 @@ fun LoadedPlayer(
                             captionStyles = userSettings.captionStyles,
                             danmakuState = danmakuState,
                             onDanmakuAction = onDanmakuAction,
+                            hostTransitionProgress = hostTransitionProgress,
                             modifier = Modifier.fillMaxSize(),
                         )
                     } else {
                         CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     }
-                    autoplayCountdown?.let {
+                    autoplayCountdown?.takeIf { hostTransitionProgress < 0.01f }?.let {
                         AutoplayCountdownOverlay(
                             state = it,
                             modifier = Modifier.fillMaxSize(),
