@@ -66,6 +66,7 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
     val serverBaseUrl by mainViewModel.currentServerBaseUrl.collectAsStateWithLifecycle()
     val currentServerId by mainViewModel.currentServerId.collectAsStateWithLifecycle()
     val currentProfile by mainViewModel.currentProfile.collectAsStateWithLifecycle()
+    val appPreferences by mainViewModel.preferences.collectAsStateWithLifecycle()
     val notificationBadge by rememberNotificationBadge()
     val deArrowViewModel = hiltViewModel<DeArrowBrandingViewModel>()
     val playerViewModel = hiltViewModel<PlayerViewModel>()
@@ -141,6 +142,7 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
         avatarUrl = avatarUrl,
         avatarFallbackLetter = avatarFallback,
         showShorts = !deArrowSettings.hideShorts,
+        accessiblePlayerControls = appPreferences.playerAccessibleControlsEnabled,
         onPlayVideo = onPlayVideo,
         onOpenChannel = onOpenChannel,
         onClosePlayback = mainViewModel::closePlayback,

@@ -26,12 +26,20 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.setProgress
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.state.rememberProgressStateWithTickInterval
+import dev.typetype.android.R
 import dev.typetype.android.domain.stream.SponsorBlockSegment
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -60,6 +68,8 @@ fun PlayerTimeBar(
 
     val durationMs = progressState.durationMs.coerceAtLeast(0L)
     val displayedPosMs = scrubPositionMs ?: progressState.currentPositionMs.coerceIn(0L, durationMs)
+    val positionLabel = formatPlayerTime(displayedPosMs)
+    val durationLabel = formatPlayerTime(durationMs)
 
     Row(
         modifier = modifier,
@@ -67,7 +77,7 @@ fun PlayerTimeBar(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
-            text = formatTime(displayedPosMs),
+            text = positionLabel,
             style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp),
             color = Color.White,
             modifier = if (compact) {
@@ -88,13 +98,19 @@ fun PlayerTimeBar(
                 scrubPositionMs = null
             },
             onScrubCancelled = { scrubPositionMs = null },
+            accessibilityLabel = stringResource(R.string.player_timeline),
+            accessibilityStateDescription = stringResource(
+                R.string.player_timeline_position,
+                positionLabel,
+                durationLabel,
+            ),
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = if (compact) 2.dp else 4.dp)
                 .height(if (compact) COMPACT_TIMELINE_HEIGHT else TIMELINE_HEIGHT),
         )
         Text(
-            text = formatTime(durationMs),
+            text = durationLabel,
             style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp),
             color = Color.White.copy(alpha = 0.7f),
             modifier = if (compact) {
@@ -115,12 +131,28 @@ internal fun TimelineTrack(
     onScrub: (Long) -> Unit,
     onScrubFinished: (Long) -> Unit,
     onScrubCancelled: () -> Unit,
+    accessibilityLabel: String,
+    accessibilityStateDescription: String,
     modifier: Modifier = Modifier,
 ) {
     val activeColor = MaterialTheme.colorScheme.primary
     val inactiveColor = Color.White.copy(alpha = 0.3f)
     Box(
         modifier = modifier
+            .semantics {
+                contentDescription = accessibilityLabel
+                stateDescription = accessibilityStateDescription
+                progressBarRangeInfo = ProgressBarRangeInfo(
+                    current = positionMs.toFloat(),
+                    range = 0f..durationMs.coerceAtLeast(1L).toFloat(),
+                )
+                setProgress { target ->
+                    val targetMs = target.toLong().coerceIn(0L, durationMs.coerceAtLeast(0L))
+                    onScrub(targetMs)
+                    onScrubFinished(targetMs)
+                    true
+                }
+            }
             .pointerInput(durationMs) {
                 detectTapGestures { offset ->
                     val targetMs = offset.x.toPositionMs(size.width.toFloat(), durationMs)
@@ -207,7 +239,7 @@ private fun Float.toPositionMs(width: Float, durationMs: Long): Long {
     return ((this / width).coerceIn(0f, 1f) * durationMs).toLong()
 }
 
-private fun formatTime(ms: Long): String {
+internal fun formatPlayerTime(ms: Long): String {
     val total = ms.milliseconds.inWholeSeconds
     val h = total / 3600
     val m = (total % 3600) / 60
