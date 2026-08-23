@@ -56,9 +56,10 @@ internal fun PlaybackOptionsSheet(
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val currentVideoHeight = rememberCurrentVideoHeight(player)
+    val activeVideoFormat = rememberActiveVideoFormat(player)
     val autoLabel = stringResource(R.string.playback_options_auto)
     val recommendedLabel = stringResource(R.string.playback_options_recommended)
+    val smartLabel = stringResource(R.string.playback_options_smart)
     val isServerSabr = stream.playbackContract == StreamPlaybackContract.ServerSabr
     val usesRecommendedSelection = isServerSabr || !stream.hasAdaptiveSource()
     val codecOptions = remember(stream, codecSupport) { stream.codecOptions(codecSupport) }
@@ -68,8 +69,8 @@ internal fun PlaybackOptionsSheet(
     val allCodecOptions = listOf(
         PlaybackPickerOption(
             RECOMMENDED_CODEC_KEY,
-            recommendedLabel,
-            stringResource(R.string.playback_options_recommended_summary),
+            smartLabel,
+            stringResource(R.string.playback_options_smart_summary),
         ),
     ) + codecOptions
     val automaticOption = if (usesRecommendedSelection) {
@@ -86,12 +87,16 @@ internal fun PlaybackOptionsSheet(
         )
     }
     val allQualityOptions = listOf(automaticOption) + qualityOptions
-    val selectedCodecLabel = allCodecOptions
-        .firstOrNull { it.key == selectedCodec }
-        ?.label
-        ?: recommendedLabel
-    val selectedQualityLabel = if (selectedQuality == AUTO_QUALITY_KEY && currentVideoHeight != null) {
-        stringResource(R.string.playback_options_quality_auto_current, autoLabel, "${currentVideoHeight}p")
+    val selectedCodecLabel = if (selectedCodec == RECOMMENDED_CODEC_KEY) {
+        activeVideoFormat?.let { "$smartLabel · ${it.codec}" } ?: smartLabel
+    } else {
+        allCodecOptions.firstOrNull { it.key == selectedCodec }?.label ?: selectedCodec
+    }
+    val selectedQualityLabel = if (
+        selectedQuality in setOf(AUTO_QUALITY_KEY, RECOMMENDED_QUALITY_KEY) &&
+        activeVideoFormat != null
+    ) {
+        activeVideoFormat.qualityLabel
     } else {
         allQualityOptions.firstOrNull { it.key == selectedQuality }?.label
             ?: if (selectedQuality == AUTO_QUALITY_KEY) autoLabel else selectedQuality
@@ -151,7 +156,7 @@ internal fun PlaybackOptionsSheet(
                 title = stringResource(R.string.playback_options_codec),
                 options = allCodecOptions,
                 selectedKey = selectedCodec,
-                emptyLabel = recommendedLabel,
+                emptyLabel = smartLabel,
                 onBack = { page = PlaybackOptionsPage.Main },
                 onSelect = { key ->
                     key?.let(onSelectCodec)
