@@ -37,6 +37,7 @@ class PlayerSettingsViewModel @Inject constructor(
                     swipeSeekEnabled = prefs.playerSwipeSeekEnabled,
                     swipeBrightnessVolumeEnabled = prefs.playerSwipeBrightnessVolumeEnabled,
                     longPressSpeedEnabled = prefs.playerLongPressSpeedEnabled,
+                    accessibleControlsEnabled = prefs.playerAccessibleControlsEnabled,
                     autoplayEnabled = server.autoplay,
                     autoplayCountdownSeconds = prefs.playerAutoplayCountdownSeconds,
                     skipPlaylistAutoplayScreen = server.skipPlaylistAutoplayScreen,
@@ -84,6 +85,8 @@ class PlayerSettingsViewModel @Inject constructor(
                     preferencesRepository.setPlayerSwipeBrightnessVolumeEnabled(action.enabled)
                 is PlayerSettingsAction.SetLongPressSpeed ->
                     preferencesRepository.setPlayerLongPressSpeedEnabled(action.enabled)
+                is PlayerSettingsAction.SetAccessibleControls ->
+                    preferencesRepository.setPlayerAccessibleControlsEnabled(action.enabled)
                 is PlayerSettingsAction.SetPauseInBackground ->
                     preferencesRepository.setPlayerPauseInBackground(action.enabled)
                 is PlayerSettingsAction.SetDanmakuEnabled ->

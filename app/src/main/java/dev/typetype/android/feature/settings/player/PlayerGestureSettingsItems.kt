@@ -22,6 +22,14 @@ internal fun LazyListScope.playerGestureSettingsItems(
     item { SettingsSectionHeader(stringResource(R.string.settings_player_section_gestures)) }
     item {
         SwitchRow(
+            title = stringResource(R.string.settings_player_accessible_controls),
+            subtitle = stringResource(R.string.settings_player_accessible_controls_subtitle),
+            checked = state.accessibleControlsEnabled,
+            onCheckedChange = { onAction(PlayerSettingsAction.SetAccessibleControls(it)) },
+        )
+    }
+    item {
+        SwitchRow(
             title = stringResource(R.string.settings_player_double_tap_seek),
             subtitle = stringResource(R.string.settings_player_double_tap_seek_subtitle),
             checked = state.doubleTapSeekEnabled,

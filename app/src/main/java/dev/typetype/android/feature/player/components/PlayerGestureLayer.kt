@@ -38,6 +38,7 @@ data class PlayerGestureConfig(
     val swipeSeekEnabled: Boolean = false,
     val swipeBrightnessVolumeEnabled: Boolean = true,
     val longPressSpeedEnabled: Boolean = true,
+    val accessibleControlsEnabled: Boolean = false,
 )
 
 @Composable
@@ -103,7 +104,7 @@ fun PlayerGestureLayer(
                                 width = size.width.toFloat(),
                             )
                             val allowed = when (candidate) {
-                                DragMode.Seek -> isFullscreen && config.swipeSeekEnabled
+                                DragMode.Seek -> config.swipeSeekEnabled
                                 DragMode.Brightness,
                                 DragMode.Volume,
                                 -> isFullscreen && config.swipeBrightnessVolumeEnabled

@@ -11,6 +11,7 @@ import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipe
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -66,6 +67,38 @@ class PlayerGestureLayerTest {
         composeRule.runOnIdle {
             assertTrue(player.isPlaying)
             assertEquals(3, feedbackCount.get())
+            player.release()
+        }
+    }
+
+    @Test
+    fun enabledHorizontalSwipeSeeksOutsideFullscreen() {
+        val player = GestureTestPlayer(Looper.getMainLooper())
+        composeRule.setContent {
+            MaterialTheme {
+                PlayerGestureLayer(
+                    player = player,
+                    state = PlayerGestureState(),
+                    onSingleTap = {},
+                    onAdjustBrightness = {},
+                    onAdjustVolume = {},
+                    config = PlayerGestureConfig(swipeSeekEnabled = true),
+                    modifier = Modifier
+                        .size(width = 300.dp, height = 180.dp)
+                        .testTag(GESTURE_TAG),
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag(GESTURE_TAG).performTouchInput {
+            swipe(
+                start = Offset(60f, center.y),
+                end = Offset(240f, center.y),
+                durationMillis = 300L,
+            )
+        }
+        composeRule.runOnIdle {
+            assertTrue(player.currentPosition > 20_000L)
             player.release()
         }
     }

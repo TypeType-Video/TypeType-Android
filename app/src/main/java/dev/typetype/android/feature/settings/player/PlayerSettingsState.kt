@@ -11,6 +11,7 @@ data class PlayerSettingsState(
     val swipeSeekEnabled: Boolean = true,
     val swipeBrightnessVolumeEnabled: Boolean = true,
     val longPressSpeedEnabled: Boolean = true,
+    val accessibleControlsEnabled: Boolean = false,
     val autoplayEnabled: Boolean = true,
     val autoplayCountdownSeconds: Int = 10,
     val skipPlaylistAutoplayScreen: Boolean = false,

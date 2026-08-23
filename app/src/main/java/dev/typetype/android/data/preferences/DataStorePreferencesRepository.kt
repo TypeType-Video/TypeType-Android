@@ -35,6 +35,7 @@ class DataStorePreferencesRepository @Inject constructor(
             playerPlaybackBrightnessPercent = prefs[KEY_PLAYER_PLAYBACK_BRIGHTNESS]
                 ?.coerceIn(0, 100),
             playerLongPressSpeedEnabled = prefs[KEY_PLAYER_LONG_PRESS_SPEED] ?: true,
+            playerAccessibleControlsEnabled = prefs[KEY_PLAYER_ACCESSIBLE_CONTROLS] ?: false,
             playerAutoplayEnabled = prefs[KEY_PLAYER_AUTOPLAY] ?: true,
             playerAutoplayCountdownSeconds = (
                 prefs[KEY_PLAYER_AUTOPLAY_COUNTDOWN] ?: DEFAULT_AUTOPLAY_COUNTDOWN_SECONDS
@@ -81,6 +82,10 @@ class DataStorePreferencesRepository @Inject constructor(
         dataStore.edit { it[KEY_PLAYER_LONG_PRESS_SPEED] = enabled }
     }
 
+    override suspend fun setPlayerAccessibleControlsEnabled(enabled: Boolean) {
+        dataStore.edit { it[KEY_PLAYER_ACCESSIBLE_CONTROLS] = enabled }
+    }
+
     override suspend fun setPlayerAutoplayEnabled(enabled: Boolean) {
         dataStore.edit { it[KEY_PLAYER_AUTOPLAY] = enabled }
     }
@@ -123,6 +128,7 @@ class DataStorePreferencesRepository @Inject constructor(
         val KEY_PLAYER_SWIPE_BRIGHT_VOL = booleanPreferencesKey("player_swipe_bright_vol")
         val KEY_PLAYER_PLAYBACK_BRIGHTNESS = intPreferencesKey("player_playback_brightness")
         val KEY_PLAYER_LONG_PRESS_SPEED = booleanPreferencesKey("player_long_press_speed")
+        val KEY_PLAYER_ACCESSIBLE_CONTROLS = booleanPreferencesKey("player_accessible_controls")
         val KEY_PLAYER_AUTOPLAY = booleanPreferencesKey("player_autoplay")
         val KEY_PLAYER_AUTOPLAY_COUNTDOWN = intPreferencesKey("player_autoplay_countdown_seconds")
         val KEY_PLAYER_AUDIO_ONLY_PLAYBACK = booleanPreferencesKey("player_audio_only_playback")

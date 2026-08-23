@@ -9,6 +9,7 @@ data class AppPreferences(
     val playerSwipeBrightnessVolumeEnabled: Boolean = true,
     val playerPlaybackBrightnessPercent: Int? = null,
     val playerLongPressSpeedEnabled: Boolean = true,
+    val playerAccessibleControlsEnabled: Boolean = false,
     val playerAutoplayEnabled: Boolean = true,
     val playerAutoplayCountdownSeconds: Int = 10,
     val playerAudioOnlyPlayback: Boolean = false,

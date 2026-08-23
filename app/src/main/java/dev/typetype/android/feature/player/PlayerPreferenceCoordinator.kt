@@ -27,6 +27,7 @@ internal class PlayerPreferenceCoordinator(
                 swipeSeekEnabled = preferences.playerSwipeSeekEnabled,
                 swipeBrightnessVolumeEnabled = preferences.playerSwipeBrightnessVolumeEnabled,
                 longPressSpeedEnabled = preferences.playerLongPressSpeedEnabled,
+                accessibleControlsEnabled = preferences.playerAccessibleControlsEnabled,
             ),
             brightnessPercent = preferences.playerPlaybackBrightnessPercent,
             autoplayCountdownSeconds = preferences.playerAutoplayCountdownSeconds,
