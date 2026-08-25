@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Icon
@@ -32,8 +31,6 @@ internal fun PrivacyFailureCard(
     onDismiss: () -> Unit,
 ) {
     val title = when (action) {
-        PrivacyFailureAction.LoadSearchHistory ->
-            stringResource(R.string.settings_privacy_status_search_count)
         PrivacyFailureAction.LoadSubscriptions ->
             stringResource(R.string.settings_privacy_status_subscription_count)
         PrivacyFailureAction.LoadTrackingPreference ->
@@ -45,7 +42,7 @@ internal fun PrivacyFailureCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(MaterialTheme.shapes.medium)
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {

@@ -190,10 +190,6 @@
     <string name="settings_content_subtitle">Discovery, DeArrow, and visible surfaces</string>
     <string name="settings_content_youtube">YouTube</string>
     <string name="settings_content_visibility">Visible surfaces</string>
-    <string name="settings_content_hide_everything">Hide everything</string>
-    <string name="settings_content_hide_everything_subtitle">Hide recommendations, comments, danmaku, and Shorts at once</string>
-    <string name="settings_content_hide_everything_confirm_title">Hide every content surface?</string>
-    <string name="settings_content_hide_everything_confirm_message">You can restore every surface with this switch or enable them individually later.</string>
     <string name="settings_content_dearrow">DeArrow titles and thumbnails</string>
     <string name="settings_content_dearrow_subtitle">Use community-written titles and representative thumbnails</string>
     <string name="settings_content_dearrow_titles">Titles</string>
@@ -609,7 +605,6 @@
     <string name="about_license">License</string>
     <string name="about_license_value">GPL v3</string>
     <string name="about_section_server">Server</string>
-    <string name="about_section_links">Links</string>
     <string name="about_section_versions">Versions</string>
     <string name="about_refresh_versions">Refresh versions</string>
     <string name="about_version_frontend">Frontend</string>
@@ -620,8 +615,6 @@
     <string name="about_version_unavailable">Unavailable</string>
     <string name="about_server_url">Server URL</string>
     <string name="about_server_signed_in_as">Signed in as</string>
-    <string name="about_link_typetype">TypeType (server)</string>
-    <string name="about_link_typetype_android">TypeType-Android</string>
     <string name="settings_player_autoplay">Autoplay related videos</string>
     <string name="settings_player_autoplay_countdown">Autoplay countdown</string>
     <string name="settings_player_autoplay_countdown_subtitle">Time before the next video starts</string>
@@ -667,7 +660,6 @@
     <string name="player_sponsorblock_category_other">SponsorBlock segment</string>
     <string name="about_app_name">TypeType</string>
     <string name="about_version">Version</string>
-    <string name="about_credits">Inspired by LibreTube and PipePipe Client. Built on TypeType-Server.</string>
     <string name="search_placeholder">Search videos…</string>
     <string name="search_filter_all">All</string>
     <string name="search_content_type">Content type</string>

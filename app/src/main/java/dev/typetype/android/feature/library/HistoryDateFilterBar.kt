@@ -1,8 +1,15 @@
 package dev.typetype.android.feature.library
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -12,8 +19,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -25,7 +32,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.typetype.android.R
 import java.time.Instant
@@ -56,7 +67,7 @@ internal fun HistoryDateFilterBar(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             items(options, key = { it.first.name }) { (option, label) ->
-                FilterChip(
+                HistoryFilterOption(
                     selected = selection == option,
                     onClick = {
                         onSelectionChange(
@@ -64,24 +75,18 @@ internal fun HistoryDateFilterBar(
                             null,
                         )
                     },
-                    label = { Text(label) },
+                    label = label,
                 )
             }
             item(key = "specific-date") {
-                FilterChip(
+                HistoryFilterOption(
                     selected = selection == HistoryDateSelection.SpecificDay,
                     onClick = { showDatePicker = true },
-                    leadingIcon = {
-                        Icon(Icons.Outlined.CalendarMonth, contentDescription = null)
-                    },
-                    label = {
-                        Text(
-                            selectedDateMillis?.takeIf {
-                                selection == HistoryDateSelection.SpecificDay
-                            }?.let(::formatHistoryDate)
-                                ?: stringResource(R.string.library_history_choose_date),
-                        )
-                    },
+                    icon = Icons.Outlined.CalendarMonth,
+                    label = selectedDateMillis?.takeIf {
+                        selection == HistoryDateSelection.SpecificDay
+                    }?.let(::formatHistoryDate)
+                        ?: stringResource(R.string.library_history_choose_date),
                 )
             }
         }
@@ -150,6 +155,41 @@ internal fun HistoryDateFilterBar(
                     Text(stringResource(R.string.action_cancel))
                 }
             },
+        )
+    }
+}
+
+@Composable
+private fun HistoryFilterOption(
+    selected: Boolean,
+    label: String,
+    icon: ImageVector? = null,
+    onClick: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.selectable(
+            selected = selected,
+            role = Role.RadioButton,
+            onClick = onClick,
+        ).padding(horizontal = 12.dp, vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            icon?.let { Icon(it, contentDescription = null) }
+            Text(
+                text = label,
+                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            )
+        }
+        Spacer(
+            Modifier.fillMaxWidth().height(2.dp).background(
+                if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
+            ),
         )
     }
 }

@@ -18,7 +18,3 @@ data class ContentSettingsState(
     val errorMessage: String? = null,
     val errorRequestId: String? = null,
 )
-
-internal fun ContentSettingsState.areAllSurfacesHidden(): Boolean =
-    hideHomeRecommendations && hideContinueWatching && hideRelatedVideos && hideComments &&
-        hideShorts && (!supportsHideSubscriptionLiveStreams || hideSubscriptionLiveStreams)
