@@ -21,6 +21,9 @@ data class PlayerHostStateSnapshot(
     val requestStamp: Long = 0L,
     val playbackClearRequestStamp: Long? = null,
     val embeddedReturnTarget: PlayerHostTarget = PlayerHostTarget.Hidden,
+    val embeddedReturnVideoUrl: String? = null,
+    val embeddedReturnPositionMillis: Long? = null,
+    val embeddedReturnPlayWhenReady: Boolean = false,
 )
 
 @Singleton
@@ -42,6 +45,9 @@ class PlayerHostController @Inject constructor(
                 requestStamp = it.requestStamp + 1,
                 playbackClearRequestStamp = null,
                 embeddedReturnTarget = PlayerHostTarget.Hidden,
+                embeddedReturnVideoUrl = null,
+                embeddedReturnPositionMillis = null,
+                embeddedReturnPlayWhenReady = false,
             )
         }
         playbackQueueCoordinator.clear()
@@ -56,6 +62,9 @@ class PlayerHostController @Inject constructor(
                 requestStamp = it.requestStamp + 1,
                 playbackClearRequestStamp = null,
                 embeddedReturnTarget = PlayerHostTarget.Hidden,
+                embeddedReturnVideoUrl = null,
+                embeddedReturnPositionMillis = null,
+                embeddedReturnPlayWhenReady = false,
             )
         }
         playbackQueueCoordinator.clear()
@@ -74,6 +83,9 @@ class PlayerHostController @Inject constructor(
                 requestStamp = it.requestStamp + 1,
                 playbackClearRequestStamp = null,
                 embeddedReturnTarget = PlayerHostTarget.Hidden,
+                embeddedReturnVideoUrl = null,
+                embeddedReturnPositionMillis = null,
+                embeddedReturnPlayWhenReady = false,
             )
         }
     }
@@ -91,6 +103,9 @@ class PlayerHostController @Inject constructor(
                 requestStamp = it.requestStamp + 1,
                 playbackClearRequestStamp = null,
                 embeddedReturnTarget = PlayerHostTarget.Hidden,
+                embeddedReturnVideoUrl = null,
+                embeddedReturnPositionMillis = null,
+                embeddedReturnPlayWhenReady = false,
             )
         }
         playbackQueueCoordinator.clear()
@@ -110,11 +125,19 @@ class PlayerHostController @Inject constructor(
                 requestStamp = it.requestStamp + 1,
                 playbackClearRequestStamp = null,
                 embeddedReturnTarget = PlayerHostTarget.Hidden,
+                embeddedReturnVideoUrl = null,
+                embeddedReturnPositionMillis = null,
+                embeddedReturnPlayWhenReady = false,
             )
         }
     }
 
-    fun openEmbeddedVideo(url: String, autoplay: Boolean) {
+    fun openEmbeddedVideo(
+        url: String,
+        autoplay: Boolean,
+        returnPositionMillis: Long? = null,
+        returnPlayWhenReady: Boolean = false,
+    ) {
         require(url.isNotBlank())
         val current = _state.value
         if (
@@ -140,9 +163,23 @@ class PlayerHostController @Inject constructor(
                 } else {
                     returnTarget
                 },
+                embeddedReturnVideoUrl = if (it.target == PlayerHostTarget.Embedded) {
+                    it.embeddedReturnVideoUrl
+                } else {
+                    it.videoUrl
+                },
+                embeddedReturnPositionMillis = if (it.target == PlayerHostTarget.Embedded) {
+                    it.embeddedReturnPositionMillis
+                } else {
+                    returnPositionMillis
+                },
+                embeddedReturnPlayWhenReady = if (it.target == PlayerHostTarget.Embedded) {
+                    it.embeddedReturnPlayWhenReady
+                } else {
+                    returnPlayWhenReady
+                },
             )
         }
-        playbackQueueCoordinator.clear()
     }
 
     fun closeEmbeddedPlayback() {
@@ -160,13 +197,22 @@ class PlayerHostController @Inject constructor(
                     requestStamp = requestStamp,
                     playbackClearRequestStamp = requestStamp,
                     embeddedReturnTarget = PlayerHostTarget.Hidden,
+                    embeddedReturnVideoUrl = null,
+                    embeddedReturnPositionMillis = null,
+                    embeddedReturnPlayWhenReady = false,
                 )
             } else {
                 current.copy(
+                    videoUrl = current.embeddedReturnVideoUrl,
                     target = current.embeddedReturnTarget,
                     expandedReturnTarget = PlayerHostTarget.Mini,
+                    resumePositionMillis = current.embeddedReturnPositionMillis,
+                    initialPlayWhenReady = current.embeddedReturnPlayWhenReady,
                     requestStamp = current.requestStamp + 1,
                     embeddedReturnTarget = PlayerHostTarget.Hidden,
+                    embeddedReturnVideoUrl = null,
+                    embeddedReturnPositionMillis = null,
+                    embeddedReturnPlayWhenReady = false,
                 )
             }
         }
@@ -216,6 +262,9 @@ class PlayerHostController @Inject constructor(
                 requestStamp = requestStamp,
                 playbackClearRequestStamp = requestStamp,
                 embeddedReturnTarget = PlayerHostTarget.Hidden,
+                embeddedReturnVideoUrl = null,
+                embeddedReturnPositionMillis = null,
+                embeddedReturnPlayWhenReady = false,
             )
         }
         playbackQueueCoordinator.clear()
