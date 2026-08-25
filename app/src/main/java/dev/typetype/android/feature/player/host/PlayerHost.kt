@@ -84,6 +84,7 @@ fun PlayerHost(
             activity = activity,
             isFullscreen = isFullscreen,
             locksLandscape = fullscreenOrientationState.locksLandscape,
+            restoresPortraitOnExit = fullscreenOrientationState.restoresPortraitOnExit,
         )
 
         LaunchedEffect(orientation, hasFullscreenMedia, allowsRotationFullscreen, isFullscreen) {
@@ -135,6 +136,7 @@ fun PlayerHost(
                             if (controller.state.value.target != target) controller.expand()
                         }
                         PlayerHostTarget.Mini -> {
+                            if (isFullscreen) requestFullscreen(false)
                             if (controller.state.value.target != target) controller.minimize()
                         }
                         else -> Unit

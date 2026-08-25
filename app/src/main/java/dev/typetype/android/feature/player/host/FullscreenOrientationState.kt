@@ -8,6 +8,7 @@ internal enum class DeviceOrientation { Portrait, Landscape, Other }
 internal data class FullscreenOrientationState(
     val locksLandscape: Boolean = false,
     val suppressesLandscapeEntry: Boolean = false,
+    val restoresPortraitOnExit: Boolean = false,
 ) {
     fun onUserRequest(
         fullscreen: Boolean,
@@ -17,6 +18,7 @@ internal data class FullscreenOrientationState(
             state = copy(
                 locksLandscape = true,
                 suppressesLandscapeEntry = false,
+                restoresPortraitOnExit = orientation == DeviceOrientation.Portrait,
             ),
             fullscreenRequest = true,
         )
@@ -25,6 +27,7 @@ internal data class FullscreenOrientationState(
             state = copy(
                 locksLandscape = false,
                 suppressesLandscapeEntry = orientation == DeviceOrientation.Landscape,
+                restoresPortraitOnExit = locksLandscape,
             ),
             fullscreenRequest = false,
         )
@@ -54,6 +57,7 @@ internal data class FullscreenOrientationState(
                 state = copy(
                     locksLandscape = locksLandscape && isFullscreen,
                     suppressesLandscapeEntry = false,
+                    restoresPortraitOnExit = false,
                 ),
                 fullscreenRequest = false.takeIf { isFullscreen && !locksLandscape },
             )
@@ -73,8 +77,16 @@ internal data class FullscreenOrientationState(
 
     companion object {
         val Saver: Saver<FullscreenOrientationState, Any> = listSaver(
-            save = { listOf(it.locksLandscape, it.suppressesLandscapeEntry) },
-            restore = { FullscreenOrientationState(it[0], it[1]) },
+            save = {
+                listOf(it.locksLandscape, it.suppressesLandscapeEntry, it.restoresPortraitOnExit)
+            },
+            restore = {
+                FullscreenOrientationState(
+                    locksLandscape = it[0],
+                    suppressesLandscapeEntry = it[1],
+                    restoresPortraitOnExit = it.getOrNull(2) == true,
+                )
+            },
         )
     }
 }
