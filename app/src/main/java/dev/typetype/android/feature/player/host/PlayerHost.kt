@@ -127,9 +127,8 @@ fun PlayerHost(
                 miniAnchorPx = miniAnchorPx,
                 containerHeightPx = containerHeightPx,
                 miniHeightPx = miniHeightPx,
-                dragEnabled = !isInPip && !accessibleControls,
+                dragEnabled = !isInPip && !accessibleControls && !isFullscreen,
                 miniContentEnabled = !isInPip,
-                fullscreenCenterDragEnabled = isFullscreen,
                 onTargetSettled = { target ->
                     when (target) {
                         PlayerHostTarget.Expanded -> {

@@ -52,6 +52,7 @@ fun PlayerGestureLayer(
     onGestureFeedback: () -> Unit = {},
     isFullscreen: Boolean = false,
     onEnterFullscreenGesture: () -> Unit = {},
+    onExitFullscreenGesture: () -> Unit = {},
     config: PlayerGestureConfig = PlayerGestureConfig(),
 ) {
     var savedSpeed by remember { mutableFloatStateOf(1f) }
@@ -83,6 +84,7 @@ fun PlayerGestureLayer(
                             when (mode) {
                                 DragMode.Seek -> player.seekTo(state.seekDragTargetMs.longValue)
                                 DragMode.FullscreenEnter -> onEnterFullscreenGesture()
+                                DragMode.FullscreenExit -> onExitFullscreenGesture()
                                 else -> Unit
                             }
                             resetDragState(state)
@@ -107,6 +109,7 @@ fun PlayerGestureLayer(
                                 DragMode.Volume,
                                 -> isFullscreen && config.swipeBrightnessVolumeEnabled
                                 DragMode.FullscreenEnter -> !isFullscreen
+                                DragMode.FullscreenExit -> isFullscreen
                                 DragMode.None -> false
                             }
                             if (!allowed) continue
@@ -118,6 +121,7 @@ fun PlayerGestureLayer(
                                 DragMode.Volume -> state.volumeOverlayActive.value = true
                                 DragMode.Seek -> state.seekDragOverlayActive.value = true
                                 DragMode.FullscreenEnter -> Unit
+                                DragMode.FullscreenExit -> Unit
                                 DragMode.None -> Unit
                             }
                         }
@@ -256,6 +260,7 @@ private fun handleDragMode(
                 (state.seekDragTargetMs.longValue + deltaMs).coerceIn(0L, duration)
         }
         DragMode.FullscreenEnter,
+        DragMode.FullscreenExit,
         DragMode.None,
         -> Unit
     }
@@ -267,7 +272,7 @@ internal fun adjustLevelFraction(current: Float, deltaY: Float, dragRangePx: Flo
 private fun pickDragMode(dragAmount: Offset, startX: Float, width: Float): DragMode = when {
     abs(dragAmount.x) > abs(dragAmount.y) -> DragMode.Seek
     startX in (width * 0.35f)..(width * 0.65f) && dragAmount.y < 0f -> DragMode.FullscreenEnter
-    startX in (width * 0.35f)..(width * 0.65f) && dragAmount.y > 0f -> DragMode.None
+    startX in (width * 0.35f)..(width * 0.65f) && dragAmount.y > 0f -> DragMode.FullscreenExit
     startX < width / 2f -> DragMode.Brightness
     else -> DragMode.Volume
 }
