@@ -70,6 +70,14 @@ class PrivacySettingsScreenTest {
         composeRule.onNodeWithText("The server could not refresh this value").assertIsDisplayed()
     }
 
+    @Test
+    fun searchHistoryShowsTheLoadedEntryCount() {
+        show(PrivacyState(searchHistoryCount = 7))
+
+        composeRule.onNodeWithText("7 entries").assertIsDisplayed()
+        composeRule.onNodeWithText("Search history count unavailable").assertDoesNotExist()
+    }
+
     private fun show(
         state: PrivacyState,
         onSetWatchHistoryTracking: (Boolean) -> Unit = {},
