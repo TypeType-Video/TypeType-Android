@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
@@ -126,13 +125,9 @@ internal fun PrivacySettingsScreen(
                 item {
                     PrivacyRow(
                         title = stringResource(R.string.settings_privacy_search_history),
-                        subtitle = pluralStringResource(
-                            R.plurals.settings_privacy_entries_count,
-                            state.searchHistoryCount,
-                            state.searchHistoryCount,
-                        ),
+                        subtitle = stringResource(R.string.settings_privacy_status_search_count),
                         actionLabel = stringResource(R.string.settings_privacy_clear),
-                        actionEnabled = state.searchHistoryCount > 0,
+                        actionEnabled = true,
                         onAction = { pending = PendingAction.SearchHistory },
                     )
                 }
@@ -212,7 +207,7 @@ private fun PrivacyRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(MaterialTheme.shapes.medium)
             .background(MaterialTheme.colorScheme.surface)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,

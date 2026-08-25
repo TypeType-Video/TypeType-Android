@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -44,6 +43,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.components.SectionHeader
 import dev.typetype.android.domain.actions.BlockedItem
 import dev.typetype.android.domain.actions.BlockedKeyword
 import dev.typetype.android.feature.settings.SettingsDetailTopBar
@@ -102,7 +102,7 @@ fun BlockedSettingsRoute(
                     items(state.videos, key = { "vid-${it.url}" }) { item ->
                         BlockedRow(
                             item = item,
-                            avatarShape = RoundedCornerShape(8.dp),
+                            avatarShape = MaterialTheme.shapes.small,
                             onUnblock = { viewModel.unblockVideo(item.url) },
                         )
                     }
@@ -146,7 +146,7 @@ private fun BlockedKeywordRow(item: BlockedKeyword, onUnblock: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(MaterialTheme.shapes.medium)
             .background(MaterialTheme.colorScheme.surface)
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -169,21 +169,11 @@ private fun BlockedKeywordRow(item: BlockedKeyword, onUnblock: () -> Unit) {
 }
 
 @Composable
-private fun SectionHeader(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-    )
-}
-
-@Composable
 private fun EmptyRow(text: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(MaterialTheme.shapes.medium)
             .background(MaterialTheme.colorScheme.surface)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         contentAlignment = Alignment.CenterStart,
@@ -205,7 +195,7 @@ private fun BlockedRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(MaterialTheme.shapes.medium)
             .background(MaterialTheme.colorScheme.surface)
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,

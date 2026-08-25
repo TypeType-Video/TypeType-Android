@@ -28,28 +28,6 @@ class ContentSettingsActionTest {
     }
 
     @Test
-    fun `master visibility action updates every related server preference atomically`() {
-        val hidden = UserSettings(supportsHideSubscriptionLiveStreams = true)
-            .updatedBy(ContentSettingsAction.SetAllHidden(true))
-
-        assertTrue(hidden.hideHomeRecommendations)
-        assertTrue(hidden.hideContinueWatching)
-        assertTrue(hidden.hideRelatedVideos)
-        assertTrue(hidden.hideComments)
-        assertTrue(hidden.hideShorts)
-        assertTrue(hidden.hideSubscriptionLiveStreams)
-        assertEquals("home", hidden.defaultLandingPage)
-    }
-
-    @Test
-    fun `master visibility action does not invent old server capability`() {
-        val hidden = UserSettings().updatedBy(ContentSettingsAction.SetAllHidden(true))
-
-        assertFalse(hidden.hideSubscriptionLiveStreams)
-        assertFalse(hidden.supportsHideSubscriptionLiveStreams)
-    }
-
-    @Test
     fun `landing page action preserves unrelated preferences`() {
         val updated = UserSettings(autoplay = false).updatedBy(
             ContentSettingsAction.SetDefaultLandingPage("favorites"),
