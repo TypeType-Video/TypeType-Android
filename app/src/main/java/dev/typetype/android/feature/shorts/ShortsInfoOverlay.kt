@@ -13,14 +13,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ThumbUp
 import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -91,31 +90,31 @@ internal fun ShortsInfoOverlay(
             }
             if (video.uploaderUrl.isNotBlank()) {
                 Spacer(Modifier.width(8.dp))
-                Button(
+                TextButton(
                     onClick = onToggleSubscription,
                     enabled = !subscriptionInFlight,
-                    shape = RoundedCornerShape(6.dp),
-                    modifier = Modifier.defaultMinSize(minHeight = 36.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isSubscribed) {
-                            Color.Black.copy(alpha = 0.68f)
-                        } else {
-                            Color.White
-                        },
-                        contentColor = if (isSubscribed) Color.White else Color.Black,
-                    ),
+                    modifier = Modifier.defaultMinSize(minWidth = 0.dp, minHeight = 40.dp),
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                        horizontal = 12.dp,
-                        vertical = 6.dp,
+                        horizontal = 6.dp,
+                        vertical = 4.dp,
                     ),
                 ) {
-                    Text(
-                        text = stringResource(
-                            if (isSubscribed) R.string.channel_subscribed
-                            else R.string.channel_subscribe,
-                        ),
-                        fontWeight = FontWeight.SemiBold,
-                    )
+                    if (subscriptionInFlight) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(16.dp),
+                        )
+                    } else {
+                        Text(
+                            text = stringResource(
+                                if (isSubscribed) R.string.channel_subscribed
+                                else R.string.channel_subscribe,
+                            ),
+                            color = Color.White.copy(alpha = if (isSubscribed) 0.72f else 1f),
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
                 }
             }
         }
