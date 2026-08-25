@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.ManageAccounts
-import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayCircle
@@ -52,8 +51,6 @@ fun SettingsScreen(
     onOpenProfile: () -> Unit = {},
     onOpenImport: () -> Unit = {},
     importsAvailable: Boolean = false,
-    onOpenYoutubeSession: () -> Unit = {},
-    youtubeSessionAvailable: Boolean = false,
     onOpenRssFeeds: () -> Unit = {},
     rssAvailable: Boolean = false,
     onOpenAccounts: () -> Unit = {},
@@ -72,16 +69,6 @@ fun SettingsScreen(
         add(SettingsEntry(R.string.settings_profile_title, R.string.settings_profile_subtitle, Icons.Filled.Person, onOpenProfile))
         if (importsAvailable) {
             add(SettingsEntry(R.string.settings_import_title, R.string.settings_import_subtitle, Icons.Filled.UploadFile, onOpenImport))
-        }
-        if (youtubeSessionAvailable) {
-            add(
-                SettingsEntry(
-                    R.string.youtube_session_settings_title,
-                    R.string.youtube_session_settings_subtitle,
-                    Icons.Filled.Link,
-                    onOpenYoutubeSession,
-                ),
-            )
         }
         if (rssAvailable) {
             add(
