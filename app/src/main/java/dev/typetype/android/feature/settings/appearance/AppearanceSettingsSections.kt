@@ -208,15 +208,19 @@ fun AccentChooser(current: AccentColor, onAction: (AppearanceAction) -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         accents.forEach { swatch ->
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            val label = stringResource(swatch.label)
+            Column(
+                modifier = Modifier.selectable(
+                    selected = swatch.accent == current,
+                    role = Role.RadioButton,
+                ) { onAction(AppearanceAction.SelectAccent(swatch.accent)) },
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
                 Box(
                     Modifier.size(48.dp).background(swatch.color, CircleShape)
-                        .border(if (swatch.accent == current) 3.dp else 1.dp, MaterialTheme.colorScheme.onBackground, CircleShape)
-                        .selectable(selected = swatch.accent == current, role = Role.RadioButton) {
-                            onAction(AppearanceAction.SelectAccent(swatch.accent))
-                        },
+                        .border(if (swatch.accent == current) 3.dp else 1.dp, MaterialTheme.colorScheme.onBackground, CircleShape),
                 )
-                Text(stringResource(swatch.label), style = MaterialTheme.typography.labelSmall)
+                Text(label, style = MaterialTheme.typography.labelSmall)
             }
         }
     }

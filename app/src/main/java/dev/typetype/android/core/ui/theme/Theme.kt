@@ -23,7 +23,7 @@ import dev.typetype.android.domain.preferences.AppPreferences
 
 @Composable
 fun TypeTypeTheme(
-    preferences: AppPreferences,
+    preferences: AppPreferences = AppPreferences(),
     content: @Composable () -> Unit,
 ) {
     val systemDark = isSystemInDarkTheme()
