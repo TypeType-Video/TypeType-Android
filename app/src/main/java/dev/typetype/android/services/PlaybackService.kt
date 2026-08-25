@@ -8,7 +8,6 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
 import androidx.media3.session.CommandButton
@@ -66,6 +65,9 @@ class PlaybackService : MediaSessionService() {
 
     @Inject
     lateinit var preferencesRepository: PreferencesRepository
+
+    @Inject
+    lateinit var playbackAudioWaveform: PlaybackAudioWaveform
 
     private var mediaSession: MediaSession? = null
     private var audioOnlyPlaybackBridge: PlaybackAudioOnlyServiceBridge? = null
@@ -174,7 +176,7 @@ class PlaybackService : MediaSessionService() {
             .setUsage(C.USAGE_MEDIA)
             .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
             .build()
-        val renderersFactory = DefaultRenderersFactory(this)
+        val renderersFactory = PlaybackRenderersFactory(this, playbackAudioWaveform)
             .setEnableDecoderFallback(true)
         return ExoPlayer.Builder(this, renderersFactory)
             .setAudioAttributes(audioAttributes, true)
