@@ -20,6 +20,7 @@ data class PlayerHostStateSnapshot(
     val initialPlayWhenReady: Boolean = true,
     val requestStamp: Long = 0L,
     val playbackClearRequestStamp: Long? = null,
+    val embeddedReturnTarget: PlayerHostTarget = PlayerHostTarget.Hidden,
 )
 
 @Singleton
@@ -40,6 +41,7 @@ class PlayerHostController @Inject constructor(
                 initialPlayWhenReady = true,
                 requestStamp = it.requestStamp + 1,
                 playbackClearRequestStamp = null,
+                embeddedReturnTarget = PlayerHostTarget.Hidden,
             )
         }
         playbackQueueCoordinator.clear()
@@ -53,6 +55,7 @@ class PlayerHostController @Inject constructor(
                 initialPlayWhenReady = true,
                 requestStamp = it.requestStamp + 1,
                 playbackClearRequestStamp = null,
+                embeddedReturnTarget = PlayerHostTarget.Hidden,
             )
         }
         playbackQueueCoordinator.clear()
@@ -70,6 +73,7 @@ class PlayerHostController @Inject constructor(
                 initialPlayWhenReady = true,
                 requestStamp = it.requestStamp + 1,
                 playbackClearRequestStamp = null,
+                embeddedReturnTarget = PlayerHostTarget.Hidden,
             )
         }
     }
@@ -86,6 +90,7 @@ class PlayerHostController @Inject constructor(
                 initialPlayWhenReady = false,
                 requestStamp = it.requestStamp + 1,
                 playbackClearRequestStamp = null,
+                embeddedReturnTarget = PlayerHostTarget.Hidden,
             )
         }
         playbackQueueCoordinator.clear()
@@ -104,6 +109,7 @@ class PlayerHostController @Inject constructor(
                 initialPlayWhenReady = false,
                 requestStamp = it.requestStamp + 1,
                 playbackClearRequestStamp = null,
+                embeddedReturnTarget = PlayerHostTarget.Hidden,
             )
         }
     }
@@ -117,6 +123,10 @@ class PlayerHostController @Inject constructor(
             current.initialPlayWhenReady == autoplay
         ) return
         _state.update {
+            val returnTarget = when (it.target) {
+                PlayerHostTarget.Mini, PlayerHostTarget.Expanded -> it.target
+                else -> PlayerHostTarget.Hidden
+            }
             it.copy(
                 videoUrl = url,
                 target = PlayerHostTarget.Embedded,
@@ -125,13 +135,44 @@ class PlayerHostController @Inject constructor(
                 initialPlayWhenReady = autoplay,
                 requestStamp = it.requestStamp + 1,
                 playbackClearRequestStamp = null,
+                embeddedReturnTarget = if (it.target == PlayerHostTarget.Embedded) {
+                    it.embeddedReturnTarget
+                } else {
+                    returnTarget
+                },
             )
         }
         playbackQueueCoordinator.clear()
     }
 
     fun closeEmbeddedPlayback() {
-        if (_state.value.target == PlayerHostTarget.Embedded) hide()
+        _state.update { current ->
+            if (current.target != PlayerHostTarget.Embedded) {
+                current
+            } else if (current.embeddedReturnTarget == PlayerHostTarget.Hidden) {
+                val requestStamp = current.requestStamp + 1
+                current.copy(
+                    videoUrl = null,
+                    target = PlayerHostTarget.Hidden,
+                    expandedReturnTarget = PlayerHostTarget.Mini,
+                    resumePositionMillis = null,
+                    initialPlayWhenReady = true,
+                    requestStamp = requestStamp,
+                    playbackClearRequestStamp = requestStamp,
+                    embeddedReturnTarget = PlayerHostTarget.Hidden,
+                )
+            } else {
+                current.copy(
+                    target = current.embeddedReturnTarget,
+                    expandedReturnTarget = PlayerHostTarget.Mini,
+                    requestStamp = current.requestStamp + 1,
+                    embeddedReturnTarget = PlayerHostTarget.Hidden,
+                )
+            }
+        }
+        if (_state.value.target == PlayerHostTarget.Hidden) {
+            playbackQueueCoordinator.clear()
+        }
     }
 
     fun expand() {
@@ -174,6 +215,7 @@ class PlayerHostController @Inject constructor(
                 initialPlayWhenReady = true,
                 requestStamp = requestStamp,
                 playbackClearRequestStamp = requestStamp,
+                embeddedReturnTarget = PlayerHostTarget.Hidden,
             )
         }
         playbackQueueCoordinator.clear()
