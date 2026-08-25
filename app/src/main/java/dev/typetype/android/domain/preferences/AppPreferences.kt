@@ -2,6 +2,18 @@ package dev.typetype.android.domain.preferences
 
 data class AppPreferences(
     val accentColor: AccentColor = AccentColor.Blue,
+    val appearancePersonality: AppearancePersonality = AppearancePersonality.Classic,
+    val appearanceMode: AppearanceMode = AppearanceMode.System,
+    val appearanceAmoled: Boolean = false,
+    val appearanceFont: AppearanceFont = AppearanceFont.System,
+    val appearanceMotion: AppearanceMotion = AppearanceMotion.Subtle,
+    val mangaPaper: MangaPaper = MangaPaper.Day,
+    val mangaHeadlineMarker: MangaHeadlineMarker = MangaHeadlineMarker.Stamp,
+    val mangaScreentone: Boolean = true,
+    val mangaSpeedLines: Boolean = true,
+    val mangaStarburst: Boolean = true,
+    val mangaInkedIcons: Boolean = true,
+    val mangaPanelTilt: Boolean = false,
     val playerDoubleTapSeekEnabled: Boolean = true,
     val playerDoubleTapSeekSeconds: Int = 10,
     val playerPreferredCodec: String = "recommended",
