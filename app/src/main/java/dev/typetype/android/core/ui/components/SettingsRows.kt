@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.DropdownMenu
@@ -177,7 +176,7 @@ fun ServiceRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                modifier = Modifier.size(32.dp).clip(RoundedCornerShape(8.dp)).background(brandColor),
+                modifier = Modifier.size(32.dp).clip(MaterialTheme.shapes.small).background(brandColor),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(

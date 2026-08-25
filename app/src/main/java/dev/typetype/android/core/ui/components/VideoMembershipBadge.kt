@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -26,7 +25,7 @@ internal fun VideoMembershipBadge(
 ) {
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(6.dp))
+            .clip(MaterialTheme.shapes.small)
             .background(Color.Black.copy(alpha = 0.86f))
             .padding(horizontal = if (compact) 5.dp else 7.dp, vertical = 3.dp),
         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,

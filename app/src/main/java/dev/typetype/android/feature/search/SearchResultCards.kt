@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.Verified
@@ -115,7 +114,7 @@ fun SearchPlaylistCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(16f / 9f)
-                .clip(RoundedCornerShape(12.dp)),
+                .clip(MaterialTheme.shapes.medium),
         ) {
             AsyncImage(
                 model = playlist.thumbnailUrl,
@@ -125,7 +124,7 @@ fun SearchPlaylistCard(
             )
             Surface(
                 modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp),
-                shape = RoundedCornerShape(7.dp),
+                shape = MaterialTheme.shapes.small,
                 color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.82f),
             ) {
                 Row(

@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -97,7 +96,7 @@ fun StreamErrorState(
                 contentDescription = null,
                 modifier = Modifier
                     .size(220.dp)
-                    .clip(RoundedCornerShape(20.dp)),
+                    .clip(MaterialTheme.shapes.large),
             )
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -137,7 +136,7 @@ fun StreamErrorState(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     if (onRetry != null) {
-                        ActionPill(
+                        ErrorAction(
                             label = retryLabel ?: stringResource(R.string.state_retry),
                             background = MaterialTheme.colorScheme.onBackground,
                             contentColor = MaterialTheme.colorScheme.background,
@@ -145,7 +144,7 @@ fun StreamErrorState(
                         )
                     }
                     if (onBack != null) {
-                        ActionPill(
+                        ErrorAction(
                             label = stringResource(R.string.state_go_back),
                             background = MaterialTheme.colorScheme.surface,
                             contentColor = MaterialTheme.colorScheme.onSurface,
@@ -176,7 +175,7 @@ fun AnimatedError(
 }
 
 @Composable
-private fun ActionPill(
+private fun ErrorAction(
     label: String,
     background: Color,
     contentColor: Color,
@@ -184,7 +183,7 @@ private fun ActionPill(
 ) {
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(999.dp))
+            .clip(MaterialTheme.shapes.medium)
             .background(background)
             .clickable(onClick = onClick)
             .padding(horizontal = 18.dp, vertical = 10.dp),

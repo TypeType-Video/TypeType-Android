@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -148,7 +147,7 @@ internal fun RssFeedsScreen(
 
 @Composable
 private fun RssLimitsCard(state: RssFeedsState) {
-    Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surface) {
+    Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surface) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -181,7 +180,7 @@ private fun RssFeedCard(
         feed.name,
         stringResource(if (feed.enabled) R.string.rss_enabled else R.string.rss_disabled),
     )
-    Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surface) {
+    Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surface) {
         Column(modifier = Modifier.fillMaxWidth().padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
@@ -239,7 +238,7 @@ private fun RssFeedCard(
 
 @Composable
 private fun RssEmptyCard() {
-    Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surface) {
+    Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surface) {
         Text(
             text = stringResource(R.string.rss_empty),
             modifier = Modifier.fillMaxWidth().padding(20.dp),
@@ -258,7 +257,7 @@ private fun RssFailureCard(
 ) {
     Column(
         modifier = Modifier.fillMaxWidth()
-            .background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.errorContainer, MaterialTheme.shapes.large)
             .padding(12.dp),
     ) {
         Text(message, color = MaterialTheme.colorScheme.onErrorContainer)
