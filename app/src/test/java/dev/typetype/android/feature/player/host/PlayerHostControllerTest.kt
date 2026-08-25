@@ -91,7 +91,7 @@ class PlayerHostControllerTest {
     }
 
     @Test
-    fun `leaving Shorts only closes embedded playback`() {
+    fun `leaving Shorts without previous playback hides embedded playback`() {
         val controller = PlayerHostController(FakePlaybackQueueController())
         controller.openEmbeddedVideo("short", autoplay = true)
         controller.closeEmbeddedPlayback()
@@ -99,6 +99,30 @@ class PlayerHostControllerTest {
 
         controller.openVideo("video")
         controller.closeEmbeddedPlayback()
+        assertEquals(PlayerHostTarget.Expanded, controller.state.value.target)
+    }
+
+    @Test
+    fun `leaving Shorts restores the mini player that opened it`() {
+        val controller = PlayerHostController(FakePlaybackQueueController())
+        controller.openVideo("video")
+        controller.minimize()
+
+        controller.openEmbeddedVideo("short", autoplay = true)
+        controller.closeEmbeddedPlayback()
+
+        assertEquals(PlayerHostTarget.Mini, controller.state.value.target)
+        assertEquals("short", controller.state.value.videoUrl)
+    }
+
+    @Test
+    fun `leaving Shorts restores an expanded player`() {
+        val controller = PlayerHostController(FakePlaybackQueueController())
+        controller.openVideo("video")
+
+        controller.openEmbeddedVideo("short", autoplay = true)
+        controller.closeEmbeddedPlayback()
+
         assertEquals(PlayerHostTarget.Expanded, controller.state.value.target)
     }
 
