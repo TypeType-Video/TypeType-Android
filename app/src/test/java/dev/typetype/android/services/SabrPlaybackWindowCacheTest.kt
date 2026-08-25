@@ -71,4 +71,36 @@ class SabrPlaybackWindowCacheTest {
 
         assertNull(cache.take(session.binding))
     }
+
+    @Test
+    fun `abandoned sessions cannot grow the cache without a bound`() {
+        val cache = SabrPlaybackWindowCache()
+        val sessions = (1..5).map { index -> playableSession("session-$index") }
+
+        sessions.forEach(cache::put)
+
+        assertNull(cache.take(sessions.first().binding))
+        sessions.drop(1).forEach { assertEquals(it, cache.take(it.binding)) }
+    }
+
+    private fun playableSession(sessionId: String) = SabrPlaybackSession(
+        sessionId = sessionId,
+        manifestUrl = "https://instance.example/api/sabr/playback/$sessionId/manifest",
+        generation = 1,
+        videoItag = 137,
+        audioItag = 140,
+        audioTrackId = null,
+        audioWindow = SabrPlaybackWindowTrack(
+            itag = 140,
+            mimeType = "audio/mp4",
+            initializationUrl = "https://instance.example/$sessionId/init",
+            segments = listOf(
+                SabrPlaybackWindowSegment(
+                    url = "https://instance.example/$sessionId/segment",
+                    startMs = 0,
+                    durationMs = 10_000,
+                ),
+            ),
+        ),
+    )
 }
