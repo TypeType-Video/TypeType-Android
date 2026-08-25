@@ -8,7 +8,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 
 enum class GestureSide { Left, Right }
-enum class DragMode { None, Brightness, Volume, Seek, FullscreenEnter }
+enum class DragMode { None, Brightness, Volume, Seek, FullscreenEnter, FullscreenExit }
 enum class ResizeMode { Fit, Crop, Stretch }
 
 fun ResizeMode.next(): ResizeMode = when (this) {

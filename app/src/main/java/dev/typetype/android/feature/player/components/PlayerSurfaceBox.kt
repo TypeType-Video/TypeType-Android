@@ -230,6 +230,9 @@ internal fun PlayerSurfaceBox(
                 onEnterFullscreenGesture = {
                     if (!isFullscreen) onToggleFullscreen()
                 },
+                onExitFullscreenGesture = {
+                    if (isFullscreen) onToggleFullscreen()
+                },
                 config = gestureConfig,
                 modifier = Modifier.fillMaxSize(),
             )
