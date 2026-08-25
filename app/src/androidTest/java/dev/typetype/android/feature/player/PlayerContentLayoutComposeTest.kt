@@ -104,6 +104,32 @@ class PlayerContentLayoutComposeTest {
         assertEquals(1, createdViews)
     }
 
+    @Test
+    fun pictureInPictureShowsOnlyTheVideoAfterDetailsWereScrolled() {
+        var isInPip by mutableStateOf(false)
+        composeRule.setContent {
+            MaterialTheme {
+                Box(Modifier.requiredWidth(400.dp).requiredHeight(600.dp)) {
+                    PlayerContentLayout(
+                        isFullscreen = false,
+                        isInPip = isInPip,
+                        modifier = Modifier.fillMaxSize(),
+                        viewport = { Box(it.testTag(VIEWPORT_TAG)) },
+                        details = { Box(it.height(900.dp).testTag(DETAILS_TAG)) },
+                    )
+                }
+            }
+        }
+
+        composeRule.runOnIdle { isInPip = true }
+        composeRule.waitForIdle()
+
+        val viewport = bounds(VIEWPORT_TAG)
+        assertEquals(0f, viewport.top, 1f)
+        assertEquals(600.dp.value, with(composeRule.density) { viewport.height.toDp().value }, 1f)
+        assertNodeCount(DETAILS_TAG, 0)
+    }
+
     private fun setLayout(width: Dp, height: Dp) {
         composeRule.setContent {
             MaterialTheme {

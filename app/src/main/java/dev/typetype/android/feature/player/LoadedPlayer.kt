@@ -36,6 +36,7 @@ import dev.typetype.android.feature.player.components.AudioOnlyPlaybackDefault
 import dev.typetype.android.feature.player.components.LocalMediaController
 import dev.typetype.android.feature.player.components.PlayerGestureConfig
 import dev.typetype.android.feature.player.components.PlayerSurfaceBox
+import dev.typetype.android.feature.player.components.rememberIsInPipMode
 import dev.typetype.android.feature.player.components.rememberPlaybackChapters
 import kotlinx.coroutines.flow.Flow
 import kotlin.math.roundToInt
@@ -80,6 +81,7 @@ fun LoadedPlayer(
     onAction: (PlayerAction) -> Unit = {},
 ) {
     val controller = LocalMediaController.current
+    val isInPip by rememberIsInPipMode()
     val context = LocalContext.current
     val codecSupport = remember(context.applicationContext) {
         DevicePlaybackCodecSupport(context.applicationContext)
@@ -188,6 +190,7 @@ fun LoadedPlayer(
     ) {
         PlayerContentLayout(
             isFullscreen = isFullscreen,
+            isInPip = isInPip,
             hostTransitionProgress = hostTransitionProgress,
             viewport = { viewportModifier ->
                 Box(

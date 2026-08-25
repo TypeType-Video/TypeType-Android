@@ -39,8 +39,9 @@ internal fun playerContentLayoutMode(
     widthDp: Float,
     heightDp: Float,
     isFullscreen: Boolean,
+    isInPip: Boolean = false,
 ): PlayerContentLayoutMode = when {
-    isFullscreen -> PlayerContentLayoutMode.Fullscreen
+    isFullscreen || isInPip -> PlayerContentLayoutMode.Fullscreen
     widthDp > heightDp &&
         widthDp >= TWO_PANE_MIN_WIDTH_DP &&
         heightDp >= TWO_PANE_MIN_HEIGHT_DP ->
@@ -51,6 +52,7 @@ internal fun playerContentLayoutMode(
 @Composable
 internal fun PlayerContentLayout(
     isFullscreen: Boolean,
+    isInPip: Boolean = false,
     hostTransitionProgress: Float = 0f,
     modifier: Modifier = Modifier,
     viewport: @Composable (Modifier) -> Unit,
@@ -63,7 +65,7 @@ internal fun PlayerContentLayout(
         }
     }
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        when (playerContentLayoutMode(maxWidth.value, maxHeight.value, isFullscreen)) {
+        when (playerContentLayoutMode(maxWidth.value, maxHeight.value, isFullscreen, isInPip)) {
             PlayerContentLayoutMode.Fullscreen -> retainedViewport(
                 Modifier
                     .playerViewportTransition(hostTransitionProgress)
