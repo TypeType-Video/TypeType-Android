@@ -146,6 +146,8 @@ provided useful technical and product references:
   UX and Media3 playback lifecycle patterns
 - [Findroid](https://github.com/jarnedemeulemeester/findroid), for native
   server-first client architecture and multi-server setup patterns
+- [Komi Store](https://github.com/kurikomi-labs/komi-store), for appearance
+  personalities and manga-inspired presentation patterns (Apache-2.0)
 
 ## License
 
