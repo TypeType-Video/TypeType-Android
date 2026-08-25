@@ -3,7 +3,6 @@ package dev.typetype.android.feature.settings.appearance
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.typetype.android.domain.preferences.AccentColor
 import dev.typetype.android.domain.preferences.AppPreferences
 import dev.typetype.android.domain.preferences.PreferencesRepository
 import javax.inject.Inject
@@ -40,10 +39,6 @@ class AppearanceViewModel @Inject constructor(
                 is AppearanceAction.SetMangaDecoration -> setMangaDecoration(action)
             }
         }
-    }
-
-    fun selectAccent(accent: AccentColor) {
-        onAction(AppearanceAction.SelectAccent(accent))
     }
 
     private suspend fun setMangaDecoration(action: AppearanceAction.SetMangaDecoration) {
