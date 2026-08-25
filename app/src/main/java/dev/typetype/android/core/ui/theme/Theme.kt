@@ -20,6 +20,7 @@ import dev.typetype.android.domain.preferences.AppearanceFont
 import dev.typetype.android.domain.preferences.AppearanceMode
 import dev.typetype.android.domain.preferences.AppearancePersonality
 import dev.typetype.android.domain.preferences.AppPreferences
+import dev.typetype.android.core.ui.components.LocalAnimatedStatePlayback
 
 @Composable
 fun TypeTypeTheme(
@@ -46,7 +47,10 @@ fun TypeTypeTheme(
         else -> classicLightScheme(accent, accentSoft)
     }
     val appearance = preferences.toAppearance()
-    CompositionLocalProvider(LocalTypeTypeAppearance provides appearance) {
+    CompositionLocalProvider(
+        LocalTypeTypeAppearance provides appearance,
+        LocalAnimatedStatePlayback provides (appearance.transitionMillis > 0),
+    ) {
         MaterialTheme(
             colorScheme = colorScheme,
             shapes = shapesFor(appearance),
