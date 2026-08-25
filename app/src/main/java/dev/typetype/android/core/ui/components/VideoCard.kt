@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Icon
@@ -85,7 +84,7 @@ fun VideoCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(16f / 9f)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(MaterialTheme.shapes.medium)
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
             AsyncImage(
@@ -185,7 +184,7 @@ fun VideoCard(
 private fun WatchedBadge(modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(6.dp))
+            .clip(MaterialTheme.shapes.small)
             .background(Color.Black.copy(alpha = 0.7f))
             .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,

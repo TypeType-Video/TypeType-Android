@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -67,7 +66,7 @@ fun LibraryFilterBar(
         Box(
             modifier = Modifier
                 .weight(1f)
-                .clip(RoundedCornerShape(20.dp))
+                .clip(MaterialTheme.shapes.medium)
                 .background(MaterialTheme.colorScheme.surface)
                 .padding(horizontal = 12.dp, vertical = 6.dp),
         ) {
@@ -140,7 +139,7 @@ private fun SortMenu(
             onClick = { expanded = true },
             modifier = Modifier
                 .size(40.dp)
-                .clip(RoundedCornerShape(20.dp))
+                .clip(MaterialTheme.shapes.medium)
                 .background(MaterialTheme.colorScheme.surface),
         ) {
             Icon(

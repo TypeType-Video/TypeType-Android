@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.Button
@@ -202,7 +201,7 @@ private fun DiagnosticRow(entry: DiagnosticEntry) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.large)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {
@@ -279,7 +278,7 @@ private fun ApplicationDiagnosticRow(entry: DiagnosticEntry, formatter: DateForm
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.large)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {

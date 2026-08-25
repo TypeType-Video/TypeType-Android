@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ExpandMore
@@ -73,7 +72,7 @@ private fun SubscriptionsViewMenu(
     Box {
         OutlinedButton(
             onClick = { expanded = true },
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.medium,
             modifier = Modifier.semantics {
                 contentDescription = viewDescription
                 stateDescription = selectedLabel

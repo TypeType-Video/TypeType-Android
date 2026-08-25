@@ -2,7 +2,6 @@ package dev.typetype.android.core.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,7 +34,7 @@ internal fun VideoStatusBadge(
         ),
         color = Color.White,
         modifier = modifier
-            .clip(RoundedCornerShape(6.dp))
+            .clip(MaterialTheme.shapes.small)
             .background(status.backgroundColor())
             .padding(horizontal = if (compact) 5.dp else 7.dp, vertical = 2.dp),
     )

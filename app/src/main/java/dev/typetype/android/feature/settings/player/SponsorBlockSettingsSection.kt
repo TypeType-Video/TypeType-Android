@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -165,7 +164,7 @@ private fun SponsorBlockMinimumDurationRow(
             suffix = { Text(stringResource(R.string.settings_player_seconds_short)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true,
-            shape = RoundedCornerShape(10.dp),
+            shape = MaterialTheme.shapes.medium,
         )
     }
 }

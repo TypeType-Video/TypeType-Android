@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
@@ -153,7 +152,7 @@ private fun PlaylistListCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(16f / 9f)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(MaterialTheme.shapes.medium)
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
             playlist.videos.firstOrNull()?.thumbnailUrl?.let { cover ->
@@ -177,7 +176,7 @@ private fun PlaylistListCard(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(8.dp)
-                    .clip(RoundedCornerShape(6.dp))
+                    .clip(MaterialTheme.shapes.small)
                     .background(MaterialTheme.colorScheme.background.copy(alpha = 0.85f))
                     .padding(horizontal = 8.dp, vertical = 3.dp),
             ) {
@@ -219,7 +218,7 @@ private fun PlaylistActionsMenu(
             onClick = onExpand,
             enabled = enabled,
             modifier = Modifier
-                .clip(RoundedCornerShape(20.dp))
+                .clip(MaterialTheme.shapes.large)
                 .background(MaterialTheme.colorScheme.background.copy(alpha = 0.85f)),
         ) {
             Icon(
