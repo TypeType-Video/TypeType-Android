@@ -54,7 +54,7 @@ private const val AUTO_HIDE_DELAY_MS = 3_500L
 internal fun PlayerSurfaceBox(
     player: MediaController,
     stream: Stream,
-    audioOnlyDefault: AudioOnlyPlaybackDefault,
+    audioOnlyState: AudioOnlyPlaybackState,
     selectedCodec: String,
     selectedQuality: String,
     selectedAudioKey: String?,
@@ -99,7 +99,6 @@ internal fun PlayerSurfaceBox(
     val accessibleControls = rememberAccessiblePlayerControls(
         gestureConfig.accessibleControlsEnabled,
     )
-    val audioOnlyState = rememberAudioOnlyPlaybackState(player, stream, audioOnlyDefault)
     val audioOnlySnackbar = remember { SnackbarHostState() }
     val playbackStatus = rememberPlayerPlaybackStatus(
         player,
@@ -148,6 +147,7 @@ internal fun PlayerSurfaceBox(
         if (audioOnlyState.active) {
             DeArrowAudioOnlyPoster(
                 stream = stream,
+                isPlaying = playbackStatus.isPlaying,
                 modifier = Modifier.fillMaxSize(),
             )
         } else {

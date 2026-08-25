@@ -5,12 +5,15 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.WatchLater
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
@@ -40,13 +43,17 @@ fun PlayerInteractionRow(
     onShowComments: (() -> Unit)?,
     onDownload: () -> Unit,
     downloadInFlight: Boolean = false,
+    audioOnlyEnabled: Boolean = false,
+    audioOnlyAvailable: Boolean = false,
+    audioOnlyChanging: Boolean = false,
+    onToggleAudioOnly: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val shareChooserTitle = stringResource(R.string.video_menu_share_chooser)
     val serverBaseUrl = LocalServerBaseUrl.current
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         PlayerActionButton(
             icon = if (isFavorited) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
@@ -76,6 +83,15 @@ fun PlayerInteractionRow(
                 icon = Icons.Outlined.ChatBubbleOutline,
                 contentDescription = stringResource(R.string.comments_title),
                 onClick = it,
+            )
+        }
+        if (audioOnlyAvailable) {
+            PlayerActionButton(
+                icon = Icons.Filled.GraphicEq,
+                contentDescription = stringResource(R.string.player_audio_only),
+                selected = audioOnlyEnabled,
+                enabled = !audioOnlyChanging,
+                onClick = onToggleAudioOnly,
             )
         }
         PlayerActionButton(

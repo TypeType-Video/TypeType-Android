@@ -16,6 +16,7 @@ import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.usersettings.UserSettings
 import dev.typetype.android.feature.menu.rememberVideoMenuScope
 import dev.typetype.android.feature.player.components.DescriptionSection
+import dev.typetype.android.feature.player.components.AudioOnlyPlaybackState
 import dev.typetype.android.feature.player.components.RelatedStreamsSection
 import dev.typetype.android.feature.player.components.UploaderCard
 import dev.typetype.android.feature.player.queue.PlaybackQueueControls
@@ -33,6 +34,7 @@ internal fun PlayerDetails(
     isSubscribed: Boolean,
     subscriptionInFlight: Boolean,
     downloadInFlight: Boolean,
+    audioOnlyState: AudioOnlyPlaybackState?,
     onAction: (PlayerAction) -> Unit,
     onShowComments: () -> Unit,
     onShowDownloads: () -> Unit,
@@ -72,6 +74,12 @@ internal fun PlayerDetails(
             onShowComments = onShowComments.takeUnless { userSettings.hideComments },
             onDownload = onShowDownloads,
             downloadInFlight = downloadInFlight,
+            audioOnlyEnabled = audioOnlyState?.active == true,
+            audioOnlyAvailable = audioOnlyState?.available == true,
+            audioOnlyChanging = audioOnlyState?.changing == true,
+            onToggleAudioOnly = {
+                audioOnlyState?.setEnabled(audioOnlyState.active.not())
+            },
         )
         UploaderCard(
             name = stream.uploaderName,

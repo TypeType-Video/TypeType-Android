@@ -55,4 +55,29 @@ class PlayerInteractionRowTest {
 
         composeRule.onNodeWithContentDescription("Comments").assertDoesNotExist()
     }
+
+    @Test
+    fun audioOnlyActionIsShownNextToCommentsWhenAvailable() {
+        val toggled = AtomicBoolean(false)
+        composeRule.setContent {
+            TypeTypeTheme {
+                PlayerInteractionRow(
+                    isFavorited = false,
+                    isInWatchLater = false,
+                    shareUrl = "/watch?v=test",
+                    onToggleFavorite = {},
+                    onToggleWatchLater = {},
+                    onAddToPlaylist = {},
+                    onShowComments = {},
+                    onDownload = {},
+                    audioOnlyAvailable = true,
+                    onToggleAudioOnly = { toggled.set(true) },
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Audio only").performClick()
+
+        assertTrue(toggled.get())
+    }
 }

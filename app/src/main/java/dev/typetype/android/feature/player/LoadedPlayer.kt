@@ -37,6 +37,7 @@ import dev.typetype.android.feature.player.components.LocalMediaController
 import dev.typetype.android.feature.player.components.PlayerGestureConfig
 import dev.typetype.android.feature.player.components.PlayerSurfaceBox
 import dev.typetype.android.feature.player.components.rememberIsInPipMode
+import dev.typetype.android.feature.player.components.rememberAudioOnlyPlaybackState
 import dev.typetype.android.feature.player.components.rememberPlaybackChapters
 import kotlinx.coroutines.flow.Flow
 import kotlin.math.roundToInt
@@ -101,6 +102,13 @@ fun LoadedPlayer(
     )
     val sponsorBlockPolicy = rememberSponsorBlockPlaybackPolicy(stream, userSettings)
     val playbackChapters = rememberPlaybackChapters(stream.chapters, sponsorBlockPolicy)
+    val audioOnlyState = controller?.let {
+        rememberAudioOnlyPlaybackState(
+            controller = it,
+            stream = stream,
+            default = AudioOnlyPlaybackDefault(videoUrl, audioOnlyPlaybackDefault),
+        )
+    }
     var pipSourceRect by remember(stream.id) { mutableStateOf<Rect?>(null) }
     val activity = LocalActivity.current
     val autoplayCountdown = rememberPlayerAutoplayCountdown(
@@ -212,7 +220,7 @@ fun LoadedPlayer(
                         PlayerSurfaceBox(
                             player = controller,
                             stream = stream,
-                            audioOnlyDefault = AudioOnlyPlaybackDefault(videoUrl, audioOnlyPlaybackDefault),
+                            audioOnlyState = requireNotNull(audioOnlyState),
                             selectedCodec = selections.selectedCodec,
                             selectedQuality = selections.selectedQuality,
                             selectedAudioKey = selections.selectedAudioKey,
@@ -272,6 +280,7 @@ fun LoadedPlayer(
                     isSubscribed = isSubscribed,
                     subscriptionInFlight = subscriptionInFlight,
                     downloadInFlight = downloadInFlight,
+                    audioOnlyState = audioOnlyState,
                     onAction = onAction,
                     onShowComments = { commentsVisible = true },
                     onShowDownloads = { downloadPickerVisible = true },
