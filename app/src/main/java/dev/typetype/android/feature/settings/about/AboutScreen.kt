@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -145,10 +146,7 @@ private fun AppHeader() {
 @Composable
 private fun InfoCard(content: @Composable ColumnScope.() -> Unit) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth(),
     ) {
         content()
     }
@@ -176,4 +174,5 @@ private fun InfoRow(label: String, value: String) {
             overflow = TextOverflow.Ellipsis,
         )
     }
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 }
