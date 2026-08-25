@@ -49,7 +49,7 @@ fun PlayerControls(
     sponsorBlockSegments: List<SponsorBlockSegment> = emptyList(),
 ) {
     BoxWithConstraints(modifier = modifier) {
-        val compactControls = !isFullscreen && maxHeight < 240.dp
+        val compactControls = !isFullscreen && maxHeight < COMPACT_CONTROLS_HEIGHT
         TopScrim(
             compact = compactControls,
             modifier = Modifier.align(Alignment.TopCenter),
@@ -74,7 +74,13 @@ fun PlayerControls(
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .testTag(PLAYER_TOP_CONTROLS_TAG)
-                .windowInsetsPadding(WindowInsets.statusBars),
+                .then(
+                    if (isFullscreen) {
+                        Modifier.windowInsetsPadding(WindowInsets.statusBars)
+                    } else {
+                        Modifier
+                    },
+                ),
         )
         PlayerCenterControls(
             player = player,
@@ -193,3 +199,4 @@ private fun BottomBar(
 internal const val PLAYER_TOP_CONTROLS_TAG = "player_top_controls"
 internal const val PLAYER_CENTER_CONTROLS_TAG = "player_center_controls"
 internal const val PLAYER_BOTTOM_CONTROLS_TAG = "player_bottom_controls"
+private val COMPACT_CONTROLS_HEIGHT = 180.dp
