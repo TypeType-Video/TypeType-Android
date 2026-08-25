@@ -2,6 +2,7 @@ package dev.typetype.android.feature.player.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,6 +23,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import dev.typetype.android.R
@@ -46,9 +48,16 @@ fun PlayerControls(
     chaptersAvailable: Boolean = false,
     sponsorBlockSegments: List<SponsorBlockSegment> = emptyList(),
 ) {
-    Box(modifier = modifier) {
-        TopScrim(modifier = Modifier.align(Alignment.TopCenter))
-        BottomScrim(modifier = Modifier.align(Alignment.BottomCenter))
+    BoxWithConstraints(modifier = modifier) {
+        val compactControls = !isFullscreen && maxHeight < 240.dp
+        TopScrim(
+            compact = compactControls,
+            modifier = Modifier.align(Alignment.TopCenter),
+        )
+        BottomScrim(
+            compact = compactControls,
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
         PlayerTopBar(
             title = title,
             onNavigateBack = onNavigateBack,
@@ -60,24 +69,29 @@ fun PlayerControls(
             isFullscreen = isFullscreen,
             isPipAvailable = isPipAvailable,
             chaptersAvailable = chaptersAvailable,
+            compact = compactControls,
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
+                .testTag(PLAYER_TOP_CONTROLS_TAG)
                 .windowInsetsPadding(WindowInsets.statusBars),
         )
         PlayerCenterControls(
             player = player,
             isFullscreen = isFullscreen,
-            modifier = Modifier.align(Alignment.Center),
+            compact = compactControls,
+            modifier = Modifier.align(Alignment.Center).testTag(PLAYER_CENTER_CONTROLS_TAG),
         )
         BottomBar(
             player = player,
             sponsorBlockSegments = sponsorBlockSegments,
             isFullscreen = isFullscreen,
+            compact = compactControls,
             onToggleFullscreen = onToggleFullscreen,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
+                .testTag(PLAYER_BOTTOM_CONTROLS_TAG)
                 .then(
                     if (isFullscreen) {
                         Modifier.windowInsetsPadding(WindowInsets.navigationBarsIgnoringVisibility)
@@ -95,11 +109,11 @@ fun PlayerControls(
 }
 
 @Composable
-private fun TopScrim(modifier: Modifier = Modifier) {
+private fun TopScrim(compact: Boolean, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(112.dp)
+            .height(if (compact) 72.dp else 112.dp)
             .background(
                 Brush.verticalGradient(
                     colors = listOf(Color.Black.copy(alpha = 0.68f), Color.Transparent),
@@ -109,11 +123,11 @@ private fun TopScrim(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun BottomScrim(modifier: Modifier = Modifier) {
+private fun BottomScrim(compact: Boolean, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(152.dp)
+            .height(if (compact) 88.dp else 152.dp)
             .background(
                 Brush.verticalGradient(
                     colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.72f)),
@@ -127,6 +141,7 @@ private fun BottomBar(
     player: Player,
     sponsorBlockSegments: List<SponsorBlockSegment>,
     isFullscreen: Boolean,
+    compact: Boolean,
     onToggleFullscreen: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -137,7 +152,13 @@ private fun BottomBar(
     }
     Row(
         modifier = modifier
-            .height(if (isFullscreen) 52.dp else 40.dp)
+            .height(
+                when {
+                    isFullscreen -> 52.dp
+                    compact -> 36.dp
+                    else -> 40.dp
+                },
+            )
             .then(backgroundModifier)
             .padding(start = if (isFullscreen) 8.dp else 2.dp, end = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -150,7 +171,13 @@ private fun BottomBar(
         )
         IconButton(
             onClick = onToggleFullscreen,
-            modifier = Modifier.size(if (isFullscreen) 48.dp else 40.dp),
+            modifier = Modifier.size(
+                when {
+                    isFullscreen -> 48.dp
+                    compact -> 36.dp
+                    else -> 40.dp
+                },
+            ),
         ) {
             Icon(
                 painter = painterResource(
@@ -162,3 +189,7 @@ private fun BottomBar(
         }
     }
 }
+
+internal const val PLAYER_TOP_CONTROLS_TAG = "player_top_controls"
+internal const val PLAYER_CENTER_CONTROLS_TAG = "player_center_controls"
+internal const val PLAYER_BOTTOM_CONTROLS_TAG = "player_bottom_controls"

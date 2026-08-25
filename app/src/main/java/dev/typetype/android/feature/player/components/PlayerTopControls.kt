@@ -39,10 +39,11 @@ internal fun PlayerTopBar(
     isFullscreen: Boolean,
     isPipAvailable: Boolean,
     chaptersAvailable: Boolean,
+    compact: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-        BackButton(onNavigateBack)
+        BackButton(onNavigateBack, compact)
         if (isFullscreen) {
             Text(
                 text = title,
@@ -64,13 +65,18 @@ internal fun PlayerTopBar(
             isFullscreen,
             isPipAvailable,
             chaptersAvailable,
+            compact,
         )
     }
 }
 
 @Composable
-private fun BackButton(onNavigateBack: () -> Unit) {
-    OverlayIconButton(onClick = onNavigateBack, modifier = Modifier.padding(8.dp)) {
+private fun BackButton(onNavigateBack: () -> Unit, compact: Boolean) {
+    OverlayIconButton(
+        onClick = onNavigateBack,
+        compact = compact,
+        modifier = Modifier.padding(if (compact) 4.dp else 8.dp),
+    ) {
         Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
             contentDescription = stringResource(R.string.player_back),
@@ -89,13 +95,14 @@ private fun TopActions(
     isFullscreen: Boolean,
     isPipAvailable: Boolean,
     chaptersAvailable: Boolean,
+    compact: Boolean,
 ) {
     Row(
-        modifier = Modifier.padding(8.dp),
+        modifier = Modifier.padding(if (compact) 4.dp else 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (isFullscreen) {
-            OverlayIconButton(onCycleResizeMode) {
+            OverlayIconButton(onCycleResizeMode, compact = compact) {
                 Icon(
                     imageVector = resizeMode.icon(),
                     contentDescription = stringResource(R.string.player_resize_mode),
@@ -104,7 +111,7 @@ private fun TopActions(
             }
         }
         if (isPipAvailable) {
-            OverlayIconButton(onEnterPip) {
+            OverlayIconButton(onEnterPip, compact = compact) {
                 Icon(
                     painter = painterResource(R.drawable.ic_pip),
                     contentDescription = stringResource(R.string.player_pip),
@@ -113,7 +120,7 @@ private fun TopActions(
             }
         }
         if (chaptersAvailable) {
-            OverlayIconButton(onOpenChapters) {
+            OverlayIconButton(onOpenChapters, compact = compact) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.List,
                     contentDescription = stringResource(R.string.player_chapters),
@@ -121,7 +128,7 @@ private fun TopActions(
                 )
             }
         }
-        OverlayIconButton(onOpenOptions) {
+        OverlayIconButton(onOpenOptions, compact = compact) {
             Icon(
                 imageVector = Icons.Filled.Settings,
                 contentDescription = stringResource(R.string.player_playback_options),
@@ -135,11 +142,12 @@ private fun TopActions(
 private fun OverlayIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    compact: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     IconButton(
         onClick = onClick,
-        modifier = modifier.padding(2.dp).size(40.dp),
+        modifier = modifier.padding(2.dp).size(if (compact) 36.dp else 40.dp),
         content = content,
     )
 }
