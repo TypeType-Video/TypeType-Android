@@ -2,8 +2,13 @@ package dev.typetype.android.feature.player.components
 
 import android.os.Looper
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.testTag
@@ -103,8 +108,56 @@ class PlayerGestureLayerTest {
         }
     }
 
+    @Test
+    fun fullscreenSwipeDownWorksThroughAnInteractiveControl() {
+        val exitCount = AtomicInteger()
+        val clickCount = AtomicInteger()
+        val feedbackCount = AtomicInteger()
+        composeRule.setContent {
+            MaterialTheme {
+                val state = rememberPlayerFullscreenExitGestureState()
+                Box(
+                    Modifier
+                        .size(width = 300.dp, height = 180.dp)
+                        .playerFullscreenExitGesture(
+                            enabled = true,
+                            state = state,
+                            onGestureFeedback = { feedbackCount.incrementAndGet() },
+                            onExitFullscreen = { exitCount.incrementAndGet() },
+                        )
+                        .testTag(FULLSCREEN_GESTURE_TAG),
+                ) {
+                    Button(
+                        onClick = { clickCount.incrementAndGet() },
+                        modifier = Modifier.align(Alignment.Center)
+                            .size(width = 120.dp, height = 64.dp)
+                            .testTag(INTERACTIVE_CONTROL_TAG),
+                    ) {
+                        Text("Play")
+                    }
+                }
+            }
+        }
+
+        composeRule.onNodeWithTag(FULLSCREEN_GESTURE_TAG).performTouchInput {
+            swipe(
+                start = center,
+                end = Offset(center.x, center.y + 240f),
+                durationMillis = 300L,
+            )
+        }
+
+        composeRule.runOnIdle {
+            assertEquals(1, exitCount.get())
+            assertEquals(0, clickCount.get())
+            assertEquals(1, feedbackCount.get())
+        }
+    }
+
     private companion object {
         const val GESTURE_TAG = "player_gesture_layer"
+        const val FULLSCREEN_GESTURE_TAG = "player_fullscreen_exit_gesture"
+        const val INTERACTIVE_CONTROL_TAG = "player_interactive_control"
     }
 }
 

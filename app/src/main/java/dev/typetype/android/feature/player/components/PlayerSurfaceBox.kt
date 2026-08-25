@@ -7,11 +7,8 @@ import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,8 +19,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -143,7 +138,15 @@ internal fun PlayerSurfaceBox(
     val surfaceKey = rememberPlayerSurfaceKey(stream.id)
     val transitionProgress = hostTransitionProgress.coerceIn(0f, 1f)
     val chromeModifier = Modifier.graphicsLayer { alpha = 1f - transitionProgress }
-    Box(modifier = modifier.background(Color.Black).clipToBounds()) {
+    PlayerFullscreenExitGestureBox(
+        enabled = isFullscreen && playbackStatus.acceptsInput && !isInPip,
+        onGestureFeedback = {
+            controlsVisible = false
+            hapticFeedback.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
+        },
+        onExitFullscreen = onToggleFullscreen,
+        modifier = modifier,
+    ) {
         if (audioOnlyState.active) {
             DeArrowAudioOnlyPoster(
                 stream = stream,
@@ -186,14 +189,10 @@ internal fun PlayerSurfaceBox(
             PlayerLoadingPoster(stream = stream, modifier = Modifier.fillMaxSize())
         }
 
-        AnimatedVisibility(
+        PlayerBufferingIndicator(
             visible = playbackStatus.isBuffering && !presentationState.coverSurface && !isInPip,
-            enter = fadeIn(),
-            exit = fadeOut(),
             modifier = chromeModifier.align(Alignment.Center),
-        ) {
-            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-        }
+        )
 
         if (!isInPip && playbackStatus.acceptsInput && !accessibleControls &&
             transitionProgress < 0.01f
@@ -233,6 +232,7 @@ internal fun PlayerSurfaceBox(
                 onExitFullscreenGesture = {
                     if (isFullscreen) onToggleFullscreen()
                 },
+                fullscreenExitGestureEnabled = false,
                 config = gestureConfig,
                 modifier = Modifier.fillMaxSize(),
             )

@@ -53,6 +53,7 @@ fun PlayerGestureLayer(
     isFullscreen: Boolean = false,
     onEnterFullscreenGesture: () -> Unit = {},
     onExitFullscreenGesture: () -> Unit = {},
+    fullscreenExitGestureEnabled: Boolean = true,
     config: PlayerGestureConfig = PlayerGestureConfig(),
 ) {
     var savedSpeed by remember { mutableFloatStateOf(1f) }
@@ -109,7 +110,7 @@ fun PlayerGestureLayer(
                                 DragMode.Volume,
                                 -> isFullscreen && config.swipeBrightnessVolumeEnabled
                                 DragMode.FullscreenEnter -> !isFullscreen
-                                DragMode.FullscreenExit -> isFullscreen
+                                DragMode.FullscreenExit -> isFullscreen && fullscreenExitGestureEnabled
                                 DragMode.None -> false
                             }
                             if (!allowed) continue
