@@ -16,11 +16,9 @@ import dev.typetype.android.core.ui.navigation.ProfileSettingsRoute
 import dev.typetype.android.core.ui.navigation.RssFeedsRoute
 import dev.typetype.android.core.ui.navigation.SettingsRoute
 import dev.typetype.android.core.ui.navigation.StorageSettingsRoute
-import dev.typetype.android.core.ui.navigation.YoutubeSessionRoute
 import dev.typetype.android.feature.settings.SettingsRoute as SettingsRouteScreen
 import dev.typetype.android.feature.settings.imports.ImportDataRoute as ImportDataRouteScreen
 import dev.typetype.android.feature.settings.rss.RssFeedsRoute as RssFeedsRouteScreen
-import dev.typetype.android.feature.settings.youtubesession.YoutubeSessionRoute as YoutubeSessionRouteScreen
 
 internal fun NavGraphBuilder.settingsDestinations(
     navController: NavHostController,
@@ -32,7 +30,6 @@ internal fun NavGraphBuilder.settingsDestinations(
             onOpenAccounts = { navController.navigate(AccountsRoute) },
             onOpenProfile = { navController.navigate(ProfileSettingsRoute) },
             onOpenImport = { navController.navigate(ImportDataRoute) },
-            onOpenYoutubeSession = { navController.navigate(YoutubeSessionRoute) },
             onOpenRssFeeds = { navController.navigate(RssFeedsRoute) },
             onOpenAppearance = { navController.navigate(AppearanceRoute) },
             onOpenContent = { navController.navigate(ContentSettingsRoute) },
@@ -47,11 +44,6 @@ internal fun NavGraphBuilder.settingsDestinations(
     }
     composable<ImportDataRoute> {
         ImportDataRouteScreen(
-            onNavigateBack = { navController.popBackStack() },
-        )
-    }
-    composable<YoutubeSessionRoute> {
-        YoutubeSessionRouteScreen(
             onNavigateBack = { navController.popBackStack() },
         )
     }

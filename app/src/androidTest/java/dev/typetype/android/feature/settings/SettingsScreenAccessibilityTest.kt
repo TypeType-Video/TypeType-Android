@@ -117,8 +117,6 @@ class SettingsScreenAccessibilityTest {
                         onOpenProfile = {},
                         onOpenImport = {},
                         importsAvailable = true,
-                        onOpenYoutubeSession = {},
-                        youtubeSessionAvailable = true,
                         onOpenRssFeeds = {},
                         rssAvailable = true,
                         onOpenAccounts = { onOpenAccounts(true) },
