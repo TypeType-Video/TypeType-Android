@@ -431,6 +431,7 @@
     <string name="settings_privacy_load_search_failed">Couldn\'t refresh your search history count</string>
     <string name="settings_privacy_load_subscriptions_failed">Couldn\'t refresh your subscription count</string>
     <string name="settings_privacy_load_tracking_failed">Couldn\'t load the watch history preference</string>
+    <string name="settings_privacy_count_loading">Loading count…</string>
     <string name="settings_privacy_status_search_count">Search history count unavailable</string>
     <string name="settings_privacy_status_subscription_count">Subscription count unavailable</string>
     <string name="settings_privacy_status_tracking">Watch history setting unavailable</string>

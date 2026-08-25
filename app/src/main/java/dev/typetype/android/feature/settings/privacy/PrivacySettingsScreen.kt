@@ -1,6 +1,5 @@
 package dev.typetype.android.feature.settings.privacy
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -28,7 +28,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -123,11 +122,20 @@ internal fun PrivacySettingsScreen(
                     )
                 }
                 item {
+                    val count = state.searchHistoryCount
                     PrivacyRow(
                         title = stringResource(R.string.settings_privacy_search_history),
-                        subtitle = stringResource(R.string.settings_privacy_status_search_count),
+                        subtitle = if (count == null) {
+                            stringResource(R.string.settings_privacy_count_loading)
+                        } else {
+                            pluralStringResource(
+                                R.plurals.settings_privacy_entries_count,
+                                count,
+                                count,
+                            )
+                        },
                         actionLabel = stringResource(R.string.settings_privacy_clear),
-                        actionEnabled = true,
+                        actionEnabled = count != null && count > 0,
                         onAction = { pending = PendingAction.SearchHistory },
                     )
                 }
@@ -207,8 +215,6 @@ private fun PrivacyRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
-            .background(MaterialTheme.colorScheme.surface)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -235,4 +241,5 @@ private fun PrivacyRow(
             )
         }
     }
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 }

@@ -15,7 +15,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,6 +30,8 @@ internal fun PrivacyFailureCard(
     onDismiss: () -> Unit,
 ) {
     val title = when (action) {
+        PrivacyFailureAction.LoadSearchHistory ->
+            stringResource(R.string.settings_privacy_status_search_count)
         PrivacyFailureAction.LoadSubscriptions ->
             stringResource(R.string.settings_privacy_status_subscription_count)
         PrivacyFailureAction.LoadTrackingPreference ->
@@ -42,7 +43,6 @@ internal fun PrivacyFailureCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
