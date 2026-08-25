@@ -1,5 +1,6 @@
 package dev.typetype.android.services
 
+import android.app.ActivityManager
 import android.app.PendingIntent
 import android.content.Intent
 import dagger.hilt.android.AndroidEntryPoint
@@ -168,6 +169,7 @@ class PlaybackService : MediaSessionService() {
         playbackClock: SabrPlaybackClock,
         recoveryDispatcher: SabrPlaybackRecoveryDispatcher,
     ): ExoPlayer {
+        val activityManager = requireNotNull(getSystemService(ActivityManager::class.java))
         val audioAttributes = AudioAttributes.Builder()
             .setUsage(C.USAGE_MEDIA)
             .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
@@ -178,7 +180,7 @@ class PlaybackService : MediaSessionService() {
             .setAudioAttributes(audioAttributes, true)
             .setHandleAudioBecomingNoisy(true)
             .setWakeMode(C.WAKE_MODE_NETWORK)
-            .setLoadControl(createPlaybackLoadControl())
+            .setLoadControl(createPlaybackLoadControl(activityManager))
             .setMediaSourceFactory(
                 MergedStreamMediaSourceFactory(
                     this,
