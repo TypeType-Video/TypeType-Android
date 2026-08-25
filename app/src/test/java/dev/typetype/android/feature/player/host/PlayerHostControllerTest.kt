@@ -108,11 +108,24 @@ class PlayerHostControllerTest {
         controller.openVideo("video")
         controller.minimize()
 
-        controller.openEmbeddedVideo("short", autoplay = true)
+        controller.openEmbeddedVideo(
+            url = "short",
+            autoplay = true,
+            returnPositionMillis = 18_000L,
+            returnPlayWhenReady = true,
+        )
+        controller.openEmbeddedVideo(
+            url = "next-short",
+            autoplay = true,
+            returnPositionMillis = 2_000L,
+            returnPlayWhenReady = false,
+        )
         controller.closeEmbeddedPlayback()
 
         assertEquals(PlayerHostTarget.Mini, controller.state.value.target)
-        assertEquals("short", controller.state.value.videoUrl)
+        assertEquals("video", controller.state.value.videoUrl)
+        assertEquals(18_000L, controller.state.value.resumePositionMillis)
+        assertTrue(controller.state.value.initialPlayWhenReady)
     }
 
     @Test

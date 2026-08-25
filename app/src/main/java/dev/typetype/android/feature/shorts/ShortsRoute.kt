@@ -142,7 +142,12 @@ fun ShortsRoute(
                 if (playerHostController.state.value.videoUrl != video.url) {
                     mediaController?.pause()
                 }
-                playerHostController.openEmbeddedVideo(video.url, state.autoplayEnabled)
+                playerHostController.openEmbeddedVideo(
+                    url = video.url,
+                    autoplay = state.autoplayEnabled,
+                    returnPositionMillis = mediaController?.currentPosition?.coerceAtLeast(0L),
+                    returnPlayWhenReady = mediaController?.playWhenReady == true,
+                )
             }
         },
         onUpcomingVideosChanged = { videos ->
