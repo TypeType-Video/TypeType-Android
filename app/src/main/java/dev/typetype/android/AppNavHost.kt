@@ -67,6 +67,11 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
     val currentServerId by mainViewModel.currentServerId.collectAsStateWithLifecycle()
     val currentProfile by mainViewModel.currentProfile.collectAsStateWithLifecycle()
     val appPreferences by mainViewModel.preferences.collectAsStateWithLifecycle()
+    val navigationTransitionMillis = when (appPreferences.appearanceMotion) {
+        dev.typetype.android.domain.preferences.AppearanceMotion.Full -> 280
+        dev.typetype.android.domain.preferences.AppearanceMotion.Subtle -> 140
+        dev.typetype.android.domain.preferences.AppearanceMotion.Off -> 0
+    }
     val notificationBadge by rememberNotificationBadge()
     val deArrowViewModel = hiltViewModel<DeArrowBrandingViewModel>()
     val playerViewModel = hiltViewModel<PlayerViewModel>()
@@ -154,25 +159,25 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
             enterTransition = {
                 slideIntoContainer(
                     AnimatedContentTransitionScope.SlideDirection.Left,
-                    animationSpec = tween(280),
+                    animationSpec = tween(navigationTransitionMillis),
                 )
             },
             exitTransition = {
                 slideOutOfContainer(
                     AnimatedContentTransitionScope.SlideDirection.Left,
-                    animationSpec = tween(280),
+                    animationSpec = tween(navigationTransitionMillis),
                 )
             },
             popEnterTransition = {
                 slideIntoContainer(
                     AnimatedContentTransitionScope.SlideDirection.Right,
-                    animationSpec = tween(280),
+                    animationSpec = tween(navigationTransitionMillis),
                 )
             },
             popExitTransition = {
                 slideOutOfContainer(
                     AnimatedContentTransitionScope.SlideDirection.Right,
-                    animationSpec = tween(280),
+                    animationSpec = tween(navigationTransitionMillis),
                 )
             },
         ) {
