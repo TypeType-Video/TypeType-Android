@@ -3,7 +3,6 @@ package dev.typetype.android.baselineprofile
 import android.content.Intent
 import androidx.benchmark.macro.CompilationMode
 import androidx.benchmark.macro.ExperimentalMetricApi
-import androidx.benchmark.macro.FrameTimingMetric
 import androidx.benchmark.macro.MemoryUsageMetric
 import androidx.benchmark.macro.MacrobenchmarkScope
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
@@ -22,7 +21,6 @@ class PlayerHostMacrobenchmark {
     fun playerMorph() = benchmarkRule.measureRepeated(
         packageName = PACKAGE_NAME,
         metrics = listOf(
-            FrameTimingMetric(),
             MemoryUsageMetric(
                 mode = MemoryUsageMetric.Mode.Max,
                 subMetrics = listOf(
