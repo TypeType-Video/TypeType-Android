@@ -12,8 +12,9 @@ internal fun PlayerFullscreenEffect(
     activity: Activity?,
     isFullscreen: Boolean,
     locksLandscape: Boolean,
+    restoresPortraitOnExit: Boolean = false,
 ) {
-    LaunchedEffect(isFullscreen, locksLandscape) {
+    LaunchedEffect(isFullscreen, locksLandscape, restoresPortraitOnExit) {
         val window = activity?.window ?: return@LaunchedEffect
         if (isFullscreen) {
             activity.requestedOrientation = if (locksLandscape) {
@@ -23,7 +24,11 @@ internal fun PlayerFullscreenEffect(
             }
             WindowHelper.toggleFullscreen(window, isFullscreen = true)
         } else {
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            activity.requestedOrientation = if (restoresPortraitOnExit) {
+                ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+            } else {
+                ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            }
             WindowHelper.toggleFullscreen(window, isFullscreen = false)
         }
     }
