@@ -50,7 +50,7 @@ class PlaybackLoadControlAndroidTest {
     }
 
     @Test
-    fun timeThresholdOwnsStreamingBufferDecisions() {
+    fun byteBudgetStopsLoadingBelowTheDurationGoal() {
         val fixture = fixture()
         fixture.loadControl.onPrepared(fixture.playerId)
         fixture.loadControl.onTracksSelected(
@@ -60,20 +60,15 @@ class PlaybackLoadControlAndroidTest {
         )
         val allocator = fixture.loadControl.getAllocator(fixture.playerId)
         val allocations = buildList {
-            while (allocator.totalBytesAllocated < 32 * 1024 * 1024) {
+            while (allocator.totalBytesAllocated < 2 * 1024 * 1024) {
                 add(allocator.allocate())
             }
         }
 
         try {
-            assertTrue(
-                fixture.loadControl.shouldContinueLoading(
-                    fixture.parameters(bufferedDurationUs = 10_000_000L),
-                ),
-            )
             assertFalse(
                 fixture.loadControl.shouldContinueLoading(
-                    fixture.parameters(bufferedDurationUs = 30_000_000L),
+                    fixture.parameters(bufferedDurationUs = 10_000_000L),
                 ),
             )
         } finally {
@@ -93,7 +88,9 @@ class PlaybackLoadControlAndroidTest {
             MediaItem.fromUri("https://instance.test/media"),
         )
         return Fixture(
-            loadControl = createPlaybackLoadControl(),
+            loadControl = createPlaybackLoadControl(
+                PlaybackBufferPolicy(targetBufferBytes = 2 * 1024 * 1024),
+            ),
             playerId = playerId,
             timeline = timeline,
             periodId = MediaSource.MediaPeriodId(timeline.getUidOfPeriod(0)),
