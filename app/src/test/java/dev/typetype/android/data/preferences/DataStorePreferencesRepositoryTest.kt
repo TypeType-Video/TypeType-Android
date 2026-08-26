@@ -5,6 +5,7 @@ import dev.typetype.android.domain.preferences.AppearanceFont
 import dev.typetype.android.domain.preferences.AppearanceMode
 import dev.typetype.android.domain.preferences.AppearanceMotion
 import dev.typetype.android.domain.preferences.AppearancePersonality
+import dev.typetype.android.domain.preferences.AppearanceTheme
 import dev.typetype.android.domain.preferences.MangaHeadlineMarker
 import dev.typetype.android.domain.preferences.MangaPaper
 import java.io.File
@@ -30,6 +31,7 @@ class DataStorePreferencesRepositoryTest {
         first.setAppearancePersonality(AppearancePersonality.Manga)
         first.setAppearanceMode(AppearanceMode.Dark)
         first.setAppearanceAmoled(true)
+        first.setAppearanceTheme(AppearanceTheme.Forest)
         first.setAppearanceFont(AppearanceFont.Expressive)
         first.setAppearanceMotion(AppearanceMotion.Off)
         first.setMangaPaper(MangaPaper.Nord)
@@ -46,6 +48,7 @@ class DataStorePreferencesRepositoryTest {
         assertEquals(AppearancePersonality.Manga, preferences.appearancePersonality)
         assertEquals(AppearanceMode.Dark, preferences.appearanceMode)
         assertEquals(true, preferences.appearanceAmoled)
+        assertEquals(AppearanceTheme.Forest, preferences.appearanceTheme)
         assertEquals(AppearanceFont.Expressive, preferences.appearanceFont)
         assertEquals(AppearanceMotion.Off, preferences.appearanceMotion)
         assertEquals(MangaPaper.Nord, preferences.mangaPaper)
