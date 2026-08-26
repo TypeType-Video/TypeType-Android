@@ -77,19 +77,20 @@ internal fun PortabilityFormatPicker(
             formats.forEach { format ->
                 DropdownMenuItem(
                     text = {
-                        Column {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                PortabilityFormatIcon(format.format)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            PortabilityFormatIcon(format.format)
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(portabilityFormatName(format.format))
+                                Text(
+                                    text = ".${format.defaultExtension}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
                             }
-                            Text(
-                                text = ".${format.defaultExtension}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
                         }
                     },
                     onClick = {

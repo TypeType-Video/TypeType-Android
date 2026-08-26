@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.UploadFile
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +35,7 @@ import dev.typetype.android.domain.imports.TypeTypeBackupCategory
 internal fun ExportPanel(
     state: PortabilityUiState,
     onFormatSelected: (PortabilityFormat) -> Unit,
+    onSelectAllCategories: (Set<TypeTypeBackupCategory>) -> Unit,
     onCategoryToggled: (TypeTypeBackupCategory) -> Unit,
     onStartExport: () -> Unit,
     onCancelJob: () -> Unit,
@@ -62,6 +64,25 @@ internal fun ExportPanel(
                 onSelect = onFormatSelected,
             )
             if (state.selectedFormat != null) {
+                val available = TypeTypeBackupCategory.entries.filter { category ->
+                    state.selectedFormat.supports(state.mode.direction, category)
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Checkbox(
+                        checked = available.isNotEmpty() &&
+                            available.all(state.selectedCategories::contains),
+                        onCheckedChange = { checked ->
+                            onSelectAllCategories(
+                                if (checked) available.toSet() else emptySet(),
+                            )
+                        },
+                    )
+                    Text(stringResource(R.string.portability_select_all))
+                }
                 PortabilityCategoryGrid(
                     format = state.selectedFormat,
                     direction = state.mode.direction,
