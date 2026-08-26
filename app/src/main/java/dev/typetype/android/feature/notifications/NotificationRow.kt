@@ -30,6 +30,8 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.branding.rememberVideoBranding
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.notifications.NotificationItem
 import java.util.Date
 
@@ -39,6 +41,7 @@ internal fun NotificationRow(
     onOpenVideo: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val serverBaseUrl = LocalServerBaseUrl.current
     val branding = rememberVideoBranding(
         sourceUrl = item.video.url,
         title = item.video.title,
@@ -52,7 +55,7 @@ internal fun NotificationRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AsyncImage(
-            model = branding.thumbnailUrl,
+            model = buildImageUrl(serverBaseUrl, branding.thumbnailUrl),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier
@@ -81,7 +84,7 @@ internal fun NotificationRow(
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AsyncImage(
-                    model = item.channelAvatarUrl,
+                    model = buildImageUrl(serverBaseUrl, item.channelAvatarUrl),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier

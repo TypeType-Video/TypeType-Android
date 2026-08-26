@@ -29,6 +29,8 @@ import dev.typetype.android.R
 import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.core.ui.components.VideoMenuAction
 import dev.typetype.android.core.ui.components.VideoMenuItemState
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.feature.player.ShortsPlaybackProgress
 import dev.typetype.android.feature.player.components.LocalMediaController
@@ -61,6 +63,7 @@ internal fun ShortPage(
     embeddedPlayback: @Composable () -> Unit,
 ) {
     val mediaController = LocalMediaController.current
+    val serverBaseUrl = LocalServerBaseUrl.current
     val hapticFeedback = LocalHapticFeedback.current
     val currentMediaId = rememberCurrentMediaId(mediaController)
     val branding = rememberVideoBranding(
@@ -98,7 +101,7 @@ internal fun ShortPage(
             },
     ) {
         AsyncImage(
-            model = branding.thumbnailUrl,
+            model = buildImageUrl(serverBaseUrl, branding.thumbnailUrl),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),

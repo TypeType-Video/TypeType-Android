@@ -33,6 +33,8 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.comments.Comment
 
 @Composable
@@ -42,9 +44,10 @@ internal fun CommentBody(
     onUrlClick: (String) -> Unit,
     onTimestampClick: (Long) -> Unit,
 ) {
+    val serverBaseUrl = LocalServerBaseUrl.current
     Row(modifier = Modifier.fillMaxWidth()) {
         AsyncImage(
-            model = comment.authorAvatarUrl,
+            model = buildImageUrl(serverBaseUrl, comment.authorAvatarUrl),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier

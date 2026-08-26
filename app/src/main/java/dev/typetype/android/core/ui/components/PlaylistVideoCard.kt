@@ -34,6 +34,8 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.branding.rememberVideoBranding
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.library.PlaylistVideo
 import dev.typetype.android.domain.library.VideoMeta
 
@@ -49,6 +51,7 @@ fun PlaylistVideoCard(
     onChannelClick: ((channelUrl: String) -> Unit)? = null,
     onMoreClick: (() -> Unit)? = null,
 ) {
+    val serverBaseUrl = LocalServerBaseUrl.current
     val avatarUrl = video.channelAvatarUrl.takeIf { it.isNotBlank() }
         ?: meta?.channelAvatarUrl?.takeIf { it.isNotBlank() }
     val channelName = video.channelName.takeIf { it.isNotBlank() }
@@ -82,7 +85,7 @@ fun PlaylistVideoCard(
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
             AsyncImage(
-                model = branding.thumbnailUrl,
+                model = buildImageUrl(serverBaseUrl, branding.thumbnailUrl),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
@@ -146,7 +149,7 @@ fun PlaylistVideoCard(
                         }
                     }
                 AsyncImage(
-                    model = avatarUrl,
+                    model = avatarUrl?.let { buildImageUrl(serverBaseUrl, it) },
                     contentDescription = channelActionDescription,
                     contentScale = ContentScale.Crop,
                     modifier = avatarModifier,

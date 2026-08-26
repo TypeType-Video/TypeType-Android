@@ -30,6 +30,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildImageUrl
 
 @Composable
 fun UploaderCard(
@@ -43,12 +45,13 @@ fun UploaderCard(
     onCardClick: () -> Unit = {},
     onSubscribeClick: () -> Unit = {},
 ) {
+    val serverBaseUrl = LocalServerBaseUrl.current
     Row(
         modifier = modifier.fillMaxWidth().clickable(onClick = onCardClick),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AsyncImage(
-            model = avatarUrl,
+            model = buildImageUrl(serverBaseUrl, avatarUrl),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier

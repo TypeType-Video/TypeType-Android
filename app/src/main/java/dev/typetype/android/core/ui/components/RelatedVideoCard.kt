@@ -34,6 +34,8 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.branding.rememberVideoBranding
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.feed.VideoAvailability
 import dev.typetype.android.domain.feed.availabilityAt
@@ -50,6 +52,7 @@ fun RelatedVideoCard(
 ) {
     var menuVisible by remember { mutableStateOf(false) }
     var availabilityVisible by remember { mutableStateOf(false) }
+    val serverBaseUrl = LocalServerBaseUrl.current
     val availability = video.availabilityAt(System.currentTimeMillis())
     val branding = rememberVideoBranding(
         sourceUrl = video.url,
@@ -81,7 +84,7 @@ fun RelatedVideoCard(
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
             AsyncImage(
-                model = branding.thumbnailUrl,
+                model = buildImageUrl(serverBaseUrl, branding.thumbnailUrl),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
@@ -108,7 +111,7 @@ fun RelatedVideoCard(
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AsyncImage(
-                    model = video.uploaderAvatarUrl,
+                    model = buildImageUrl(serverBaseUrl, video.uploaderAvatarUrl),
                     contentDescription = stringResource(
                         R.string.video_open_channel_accessibility,
                         video.uploaderName,

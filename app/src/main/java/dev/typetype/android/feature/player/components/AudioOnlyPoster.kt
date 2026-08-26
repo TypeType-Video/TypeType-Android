@@ -38,6 +38,8 @@ import coil3.BitmapImage
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildImageUrl
 
 @Composable
 internal fun AudioOnlyPoster(
@@ -47,7 +49,6 @@ internal fun AudioOnlyPoster(
     modifier: Modifier = Modifier,
     viewModel: AudioOnlyPosterViewModel = hiltViewModel(),
 ) {
-    val levels by viewModel.levels.collectAsStateWithLifecycle()
     var palette by remember(thumbnailUrl) { mutableStateOf(AudioOnlyPalette.Default) }
     Box(
         modifier = modifier.background(
@@ -66,8 +67,8 @@ internal fun AudioOnlyPoster(
                 AudioOnlyCompactContent(
                     thumbnailUrl,
                     title,
-                    levels,
                     isPlaying,
+                    viewModel,
                     palette,
                     onPalette = { palette = it },
                 )
@@ -75,8 +76,8 @@ internal fun AudioOnlyPoster(
                 AudioOnlyExpandedContent(
                     thumbnailUrl,
                     title,
-                    levels,
                     isPlaying,
+                    viewModel,
                     palette,
                     onPalette = { palette = it },
                 )
@@ -89,8 +90,8 @@ internal fun AudioOnlyPoster(
 private fun AudioOnlyExpandedContent(
     thumbnailUrl: String,
     title: String,
-    levels: FloatArray,
     isPlaying: Boolean,
+    viewModel: AudioOnlyPosterViewModel,
     palette: AudioOnlyPalette,
     onPalette: (AudioOnlyPalette) -> Unit,
 ) {
@@ -101,7 +102,7 @@ private fun AudioOnlyExpandedContent(
     ) {
         AudioOnlyArtwork(thumbnailUrl, 112.dp, onPalette)
         AudioOnlyTitle(title, centered = true)
-        AudioOnlyWaveform(levels, isPlaying, palette, Modifier.fillMaxWidth().height(64.dp))
+        AudioOnlyWaveform(viewModel, isPlaying, palette, Modifier.fillMaxWidth().height(64.dp))
     }
 }
 
@@ -109,8 +110,8 @@ private fun AudioOnlyExpandedContent(
 private fun AudioOnlyCompactContent(
     thumbnailUrl: String,
     title: String,
-    levels: FloatArray,
     isPlaying: Boolean,
+    viewModel: AudioOnlyPosterViewModel,
     palette: AudioOnlyPalette,
     onPalette: (AudioOnlyPalette) -> Unit,
 ) {
@@ -122,7 +123,7 @@ private fun AudioOnlyCompactContent(
         AudioOnlyArtwork(thumbnailUrl, 88.dp, onPalette)
         Column(modifier = Modifier.weight(1f)) {
             AudioOnlyTitle(title, centered = false)
-            AudioOnlyWaveform(levels, isPlaying, palette, Modifier.fillMaxWidth().height(42.dp))
+            AudioOnlyWaveform(viewModel, isPlaying, palette, Modifier.fillMaxWidth().height(42.dp))
         }
     }
 }
@@ -134,9 +135,10 @@ private fun AudioOnlyArtwork(
     onPalette: (AudioOnlyPalette) -> Unit,
 ) {
     val context = LocalContext.current
-    val request = remember(context, thumbnailUrl) {
+    val serverBaseUrl = LocalServerBaseUrl.current
+    val request = remember(context, serverBaseUrl, thumbnailUrl) {
         ImageRequest.Builder(context)
-            .data(thumbnailUrl)
+            .data(buildImageUrl(serverBaseUrl, thumbnailUrl))
             .size(224)
             .allowHardware(false)
             .build()
@@ -169,18 +171,23 @@ private fun AudioOnlyTitle(title: String, centered: Boolean) {
 
 @Composable
 private fun AudioOnlyWaveform(
-    levels: FloatArray,
+    viewModel: AudioOnlyPosterViewModel,
     isPlaying: Boolean,
     palette: AudioOnlyPalette,
     modifier: Modifier,
 ) {
+    val levels by viewModel.levels.collectAsStateWithLifecycle()
     Canvas(modifier) {
         val count = levels.size.coerceAtLeast(1)
         val gap = 4.dp.toPx()
         val barWidth = ((size.width - gap * (count - 1)) / count).coerceAtLeast(2.dp.toPx())
         val brush = Brush.verticalGradient(listOf(palette.highlight, Color.White))
         levels.forEachIndexed { index, level ->
-            val activeLevel = if (isPlaying) level else 0f
+            val activeLevel = if (isPlaying) {
+                level.coerceAtLeast(ACTIVE_WAVEFORM_FLOOR)
+            } else {
+                0f
+            }
             val barHeight = (size.height * activeLevel).coerceAtLeast(3.dp.toPx())
             val x = index * (barWidth + gap)
             drawRoundRect(
@@ -240,3 +247,4 @@ private fun Bitmap.audioOnlyPalette(): AudioOnlyPalette {
 }
 
 private const val SAMPLE_GRID = 6
+private const val ACTIVE_WAVEFORM_FLOOR = 0.34f

@@ -27,6 +27,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.podcast.Podcast
 
 @Composable
@@ -35,6 +37,7 @@ fun ChannelPodcastsSection(
     isLoading: Boolean,
     onOpenPodcast: (String) -> Unit,
 ) {
+    val serverBaseUrl = LocalServerBaseUrl.current
     Column(
         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -57,7 +60,11 @@ fun ChannelPodcastsSection(
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 items(podcasts, key = { it.url }) { podcast ->
-                    PodcastCard(podcast, onClick = { onOpenPodcast(podcast.url) })
+                    PodcastCard(
+                        podcast = podcast,
+                        serverBaseUrl = serverBaseUrl,
+                        onClick = { onOpenPodcast(podcast.url) },
+                    )
                 }
             }
         }
@@ -65,13 +72,17 @@ fun ChannelPodcastsSection(
 }
 
 @Composable
-private fun PodcastCard(podcast: Podcast, onClick: () -> Unit) {
+private fun PodcastCard(
+    podcast: Podcast,
+    serverBaseUrl: String?,
+    onClick: () -> Unit,
+) {
     Column(
         modifier = Modifier.width(168.dp).clickable(role = Role.Button, onClick = onClick),
         verticalArrangement = Arrangement.spacedBy(5.dp),
     ) {
         AsyncImage(
-            model = podcast.thumbnailUrl,
+            model = buildImageUrl(serverBaseUrl, podcast.thumbnailUrl),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(MaterialTheme.shapes.large),

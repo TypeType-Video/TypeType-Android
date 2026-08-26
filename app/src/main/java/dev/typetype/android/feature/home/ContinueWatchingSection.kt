@@ -36,6 +36,8 @@ import dev.typetype.android.R
 import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.core.ui.components.SectionHeader
 import dev.typetype.android.core.ui.components.VideoDurationBadge
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.library.HistoryItem
 
 @Composable
@@ -45,6 +47,7 @@ internal fun ContinueWatchingSection(
     onOpenChannel: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val serverBaseUrl = LocalServerBaseUrl.current
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -61,6 +64,7 @@ internal fun ContinueWatchingSection(
             ) { item ->
                 ContinueWatchingCard(
                     item = item,
+                    serverBaseUrl = serverBaseUrl,
                     onClick = { onPlayVideo(item.url) },
                     onOpenChannel = onOpenChannel,
                 )
@@ -72,6 +76,7 @@ internal fun ContinueWatchingSection(
 @Composable
 private fun ContinueWatchingCard(
     item: HistoryItem,
+    serverBaseUrl: String?,
     onClick: () -> Unit,
     onOpenChannel: (String) -> Unit,
 ) {
@@ -94,7 +99,7 @@ private fun ContinueWatchingCard(
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
             AsyncImage(
-                model = branding.thumbnailUrl,
+                model = buildImageUrl(serverBaseUrl, branding.thumbnailUrl),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
@@ -121,7 +126,7 @@ private fun ContinueWatchingCard(
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (item.channelAvatarUrl.isNotBlank()) {
                 AsyncImage(
-                    model = item.channelAvatarUrl,
+                    model = buildImageUrl(serverBaseUrl, item.channelAvatarUrl),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier

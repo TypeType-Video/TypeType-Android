@@ -26,6 +26,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.podcast.Podcast
 import java.text.NumberFormat
 
@@ -37,13 +39,14 @@ fun PodcastHeader(
     onPlay: () -> Unit,
     onShuffle: () -> Unit,
 ) {
+    val serverBaseUrl = LocalServerBaseUrl.current
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth()) {
             AsyncImage(
-                model = podcast.thumbnailUrl,
+                model = buildImageUrl(serverBaseUrl, podcast.thumbnailUrl),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.width(132.dp).aspectRatio(1f).clip(RoundedCornerShape(14.dp)),
