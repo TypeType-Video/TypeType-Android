@@ -26,7 +26,7 @@ fun TypeTypeCard(
     val appearance = LocalTypeTypeAppearance.current
     Card(
         modifier = modifier.fillMaxWidth().rotate(if (appearance.isManga && appearance.panelTilt) -0.5f else 0f),
-        shape = MaterialTheme.shapes.large,
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(if (appearance.isManga) 2.dp else 1.dp, MaterialTheme.colorScheme.outline),
     ) {

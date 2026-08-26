@@ -33,6 +33,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.BuildConfig
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.SectionHeader
+import dev.typetype.android.core.ui.components.KomiStoreAttribution
 import dev.typetype.android.feature.settings.SettingsDetailTopBar
 
 @Composable
@@ -103,6 +104,7 @@ fun AboutScreen(
                         }
                     }
                 }
+                item { KomiStoreAttribution() }
             }
         }
     }
