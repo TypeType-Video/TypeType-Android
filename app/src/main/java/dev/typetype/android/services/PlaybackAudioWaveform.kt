@@ -56,7 +56,9 @@ internal fun measurePcmWaveform(
     val sampleCount = buffer.remaining() / bytesPerSample
     if (sampleCount == 0 || barCount <= 0) return FloatArray(max(0, barCount))
     val basePosition = buffer.position()
-    return FloatArray(barCount) { barIndex ->
+    var globalSumSquares = 0.0
+    var globalSamples = 0
+    val levels = FloatArray(barCount) { barIndex ->
         val firstSample = barIndex * sampleCount / barCount
         val lastSample = max(firstSample + 1, (barIndex + 1) * sampleCount / barCount)
             .coerceAtMost(sampleCount)
@@ -68,12 +70,26 @@ internal fun measurePcmWaveform(
             val offset = basePosition + sampleIndex * bytesPerSample
             val sample = readPcmSample(buffer, offset, encoding)
             sumSquares += sample * sample
+            globalSumSquares += sample * sample
             measuredSamples += 1
+            globalSamples += 1
             sampleIndex += stride
         }
         val rms = sqrt(sumSquares / max(1, measuredSamples)).toFloat()
         (rms * LEVEL_GAIN).coerceIn(0f, 1f)
     }
+    val energy = (sqrt(globalSumSquares / max(1, globalSamples)) * LEVEL_GAIN)
+        .toFloat()
+        .coerceIn(0f, 1f)
+    val spread = energy * ENERGY_SPREAD
+    return FloatArray(barCount) { index ->
+        max(levels[index], spread * barEnvelope(index, barCount)).coerceIn(0f, 1f)
+    }
+}
+
+private fun barEnvelope(index: Int, barCount: Int): Float {
+    val phase = (index.toFloat() / max(1, barCount - 1)) * WAVEFORM_PHASE_SPAN
+    return 0.78f + 0.22f * ((kotlin.math.sin(phase) + 1f) / 2f)
 }
 
 private fun readPcmSample(buffer: ByteBuffer, offset: Int, encoding: Int): Float =
@@ -94,6 +110,8 @@ private fun readPcmSample(buffer: ByteBuffer, offset: Int, encoding: Int): Float
 private const val BAR_COUNT = 24
 private const val MAX_SAMPLES_PER_BAR = 32
 private const val LEVEL_GAIN = 2.2f
+private const val ENERGY_SPREAD = 0.18f
+private const val WAVEFORM_PHASE_SPAN = 4.8f
 private const val SMOOTHING_RETAINED = 0.45f
 private const val SMOOTHING_NEW = 0.55f
 private const val EMISSION_INTERVAL_NANOS = 50_000_000L
