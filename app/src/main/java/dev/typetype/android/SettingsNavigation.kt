@@ -17,7 +17,7 @@ import dev.typetype.android.core.ui.navigation.RssFeedsRoute
 import dev.typetype.android.core.ui.navigation.SettingsRoute
 import dev.typetype.android.core.ui.navigation.StorageSettingsRoute
 import dev.typetype.android.feature.settings.SettingsRoute as SettingsRouteScreen
-import dev.typetype.android.feature.settings.imports.ImportDataRoute as ImportDataRouteScreen
+import dev.typetype.android.feature.settings.imports.PortabilityRoute as ImportDataRouteScreen
 import dev.typetype.android.feature.settings.rss.RssFeedsRoute as RssFeedsRouteScreen
 
 internal fun NavGraphBuilder.settingsDestinations(
