@@ -16,7 +16,9 @@ import dev.typetype.android.domain.imports.PortabilityDirection
 import dev.typetype.android.domain.imports.PortabilityFidelity
 import dev.typetype.android.domain.imports.PortabilityFormat
 import dev.typetype.android.domain.imports.TypeTypeBackupCategory
+import java.util.concurrent.atomic.AtomicReference
 import org.junit.Rule
+import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -44,6 +46,7 @@ class PortabilityPanelTest {
             defaultExtension = "json",
             contentType = "application/json",
         )
+        val selectedAll = AtomicReference<Set<TypeTypeBackupCategory>>(emptySet())
 
         composeRule.setContent {
             var mode by remember { mutableStateOf(PortabilityScreenMode.Export) }
@@ -58,7 +61,7 @@ class PortabilityPanelTest {
                     ),
                     onModeSelected = { mode = it },
                     onFormatSelected = {},
-                    onSelectAllCategories = {},
+                    onSelectAllCategories = selectedAll::set,
                     onCategoryToggled = { category ->
                         selected.value = selected.value.toMutableSet().apply {
                             if (!add(category)) remove(category)
@@ -81,6 +84,10 @@ class PortabilityPanelTest {
         composeRule.onNodeWithText("Destination format").assertIsDisplayed()
         composeRule.onNodeWithText(".json").assertIsDisplayed()
         composeRule.onNodeWithText("Subscriptions").assertIsDisplayed()
+        composeRule.onNodeWithText("Select all").assertIsDisplayed().performClick()
+        composeRule.runOnIdle {
+            assertEquals(TypeTypeBackupCategory.entries.size, selectedAll.get().size)
+        }
         composeRule.onNodeWithText("Generate export").assertExists()
 
         composeRule.onNode(hasText("Import")).performClick()
