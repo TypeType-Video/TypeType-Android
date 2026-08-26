@@ -35,6 +35,19 @@ class PlaybackAudioWaveformTest {
     }
 
     @Test
+    fun activeEnergyKeepsQuietBarsVisible() {
+        val buffer = ByteBuffer.allocate(128).order(ByteOrder.LITTLE_ENDIAN)
+        repeat(32) { buffer.putShort(0) }
+        repeat(32) { buffer.putShort(20_000) }
+        buffer.flip()
+
+        val levels = requireNotNull(measurePcmWaveform(buffer, C.ENCODING_PCM_16BIT, 4))
+
+        assertTrue(levels[0] > 0f)
+        assertTrue(levels[1] > levels[0])
+    }
+
+    @Test
     fun unsupportedEncodingIsIgnored() {
         val levels = measurePcmWaveform(ByteBuffer.allocate(8), C.ENCODING_INVALID, 4)
 
