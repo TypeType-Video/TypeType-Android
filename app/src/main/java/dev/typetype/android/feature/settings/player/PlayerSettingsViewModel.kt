@@ -7,6 +7,7 @@ import dev.typetype.android.domain.preferences.PreferencesRepository
 import dev.typetype.android.domain.usersettings.DEFAULT_SPONSOR_BLOCK_CATEGORY_ACTIONS
 import dev.typetype.android.domain.usersettings.SponsorBlockMode
 import dev.typetype.android.domain.usersettings.UserSettings
+import dev.typetype.android.domain.usersettings.normalizeQualityName
 import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,7 +47,7 @@ class PlayerSettingsViewModel @Inject constructor(
                     danmakuEnabled = prefs.danmakuEnabled,
                     danmakuSpeed = prefs.danmakuSpeed,
                     danmakuSize = prefs.danmakuSize,
-                    defaultQuality = server.defaultQuality,
+                    defaultQuality = normalizeQualityName(server.defaultQuality),
                     defaultPlaybackSpeed = server.defaultPlaybackSpeed,
                     defaultService = server.defaultService,
                     subtitlesEnabled = server.subtitlesEnabled,
