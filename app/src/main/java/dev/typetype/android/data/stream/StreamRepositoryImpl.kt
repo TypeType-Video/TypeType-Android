@@ -212,7 +212,11 @@ internal class StreamRepositoryImpl @Inject constructor(
         url = if (deliveryMethod == SABR_DELIVERY_METHOD) resolveServerUrl(baseUrl, manifestUrl).orEmpty() else url,
         mimeType = mimeType,
         codec = codec,
-        resolution = resolution,
+        resolution = buildString {
+            append("${height.coerceAtLeast(0)}p")
+            fps.takeIf { it > 0 }?.let { append(it) }
+            if (resolution.contains("HDR", ignoreCase = true)) append(" HDR")
+        },
         width = width,
         height = height,
         fps = fps,
