@@ -26,11 +26,15 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,6 +62,10 @@ fun BlockedSettingsRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val serverBaseUrl = LocalServerBaseUrl.current
+    var channelLimit by remember { mutableIntStateOf(BLOCKED_PAGE_SIZE) }
+    var videoLimit by remember { mutableIntStateOf(BLOCKED_PAGE_SIZE) }
+    val visibleChannels = state.channels.take(channelLimit)
+    val visibleVideos = state.videos.take(videoLimit)
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
             SettingsDetailTopBar(
@@ -106,6 +114,13 @@ fun BlockedSettingsRoute(
                             onUnblock = { viewModel.unblockChannel(item.url) },
                         )
                     }
+                    if (state.channels.size > channelLimit) {
+                        item(key = "load-more-channels") {
+                            LoadMoreRow {
+                                channelLimit += BLOCKED_PAGE_SIZE
+                            }
+                        }
+                    }
                 }
                 item { Spacer(Modifier.size(8.dp)) }
                 item { SectionHeader(stringResource(R.string.settings_blocked_section_videos)) }
@@ -124,8 +139,27 @@ fun BlockedSettingsRoute(
                             onUnblock = { viewModel.unblockVideo(item.url) },
                         )
                     }
+                    if (state.videos.size > videoLimit) {
+                        item(key = "load-more-videos") {
+                            LoadMoreRow {
+                                videoLimit += BLOCKED_PAGE_SIZE
+                            }
+                        }
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun LoadMoreRow(onClick: () -> Unit) {
+    Box(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        TextButton(onClick = onClick) {
+            Text(stringResource(R.string.settings_blocked_load_more))
         }
     }
 }
@@ -186,6 +220,8 @@ private fun BlockedKeywordRow(item: BlockedKeyword, onUnblock: () -> Unit) {
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     }
 }
+
+private const val BLOCKED_PAGE_SIZE = 50
 
 @Composable
 private fun EmptyRow(text: String) {

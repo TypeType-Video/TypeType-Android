@@ -469,6 +469,7 @@
     <string name="settings_blocked_keyword_add">Add blocked keyword</string>
     <string name="settings_blocked_keyword_add_failed">Could not block this keyword</string>
     <string name="settings_blocked_keyword_remove_failed">Could not unblock this keyword</string>
+    <string name="settings_blocked_load_more">Load more</string>
     <string name="settings_section_default_service">Default service</string>
     <string name="settings_default_service_youtube">YouTube</string>
     <string name="settings_default_service_niconico">NicoNico</string>
@@ -556,6 +557,7 @@
     <string name="portability_compatibility_notes">Compatibility notes</string>
     <string name="portability_export_notes">Export notes</string>
     <string name="portability_duplicate_policy">Duplicate policy</string>
+    <string name="portability_select_all">Select all</string>
     <string name="portability_skip">Skip</string>
     <string name="portability_replace">Replace</string>
     <string name="portability_import_selected">Import selected</string>
