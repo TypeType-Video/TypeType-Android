@@ -29,14 +29,12 @@ fun TypeTypeTheme(
     content: @Composable () -> Unit,
 ) {
     val systemDark = isSystemInDarkTheme()
-    val dark = if (preferences.appearanceAmoled) {
-        true
-    } else {
-        when (preferences.appearanceMode) {
-            AppearanceMode.System -> systemDark
-            AppearanceMode.Light -> false
-            AppearanceMode.Dark -> true
-        }
+    val effectiveAmoled = preferences.appearanceAmoled &&
+        preferences.appearanceMode != AppearanceMode.Light
+    val dark = when (preferences.appearanceMode) {
+        AppearanceMode.Light -> false
+        AppearanceMode.Dark -> true
+        AppearanceMode.System -> effectiveAmoled || systemDark
     }
     val (accent, accentSoft) = accentColors(preferences.accentColor)
     val context = LocalContext.current
@@ -52,13 +50,14 @@ fun TypeTypeTheme(
                 preferences.appearanceTheme,
                 accent,
                 accentSoft,
-                amoled = preferences.appearanceAmoled,
+                amoled = effectiveAmoled,
+                isDark = dark,
             )
-        dark && preferences.appearanceAmoled -> themedDarkScheme(
+        dark && effectiveAmoled -> themedDarkScheme(
             preferences.appearanceTheme,
             accent,
             accentSoft,
-            amoled = true,
+            amoled = effectiveAmoled,
         )
         dynamic && dark -> dynamicDarkColorScheme(context)
         dynamic -> dynamicLightColorScheme(context)
@@ -66,7 +65,7 @@ fun TypeTypeTheme(
             preferences.appearanceTheme,
             accent,
             accentSoft,
-            preferences.appearanceAmoled,
+            effectiveAmoled,
         )
         else -> themedLightScheme(preferences.appearanceTheme, accent, accentSoft)
     }

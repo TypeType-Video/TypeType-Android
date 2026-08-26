@@ -167,8 +167,9 @@ internal fun mangaScheme(
     accent: Color,
     accentSoft: Color,
     amoled: Boolean,
+    isDark: Boolean,
 ): ColorScheme {
-    val dark = amoled || paper != MangaPaper.Day
+    val dark = isDark || amoled
     val background = if (amoled) {
         Color.Black
     } else {

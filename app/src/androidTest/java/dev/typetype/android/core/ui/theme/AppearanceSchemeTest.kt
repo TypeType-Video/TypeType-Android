@@ -21,6 +21,7 @@ class AppearanceSchemeTest {
             accent = accent.first,
             accentSoft = accent.second,
             amoled = false,
+            isDark = false,
         )
         val forest = mangaScheme(
             paper = MangaPaper.Day,
@@ -28,6 +29,7 @@ class AppearanceSchemeTest {
             accent = accent.first,
             accentSoft = accent.second,
             amoled = false,
+            isDark = true,
         )
 
         assertNotEquals(default.background, forest.background)
@@ -43,6 +45,7 @@ class AppearanceSchemeTest {
             accent = accent.first,
             accentSoft = accent.second,
             amoled = true,
+            isDark = true,
         )
 
         assertEquals(Color.Black, scheme.background)
