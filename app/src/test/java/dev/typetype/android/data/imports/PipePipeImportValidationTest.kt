@@ -56,6 +56,7 @@ class PipePipeImportValidationTest {
         assertEquals(
             listOf(
                 "subscriptions",
+                "subscriptionGroups",
                 "history",
                 "playlists",
                 "watchLater",
