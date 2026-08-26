@@ -11,6 +11,7 @@ import androidx.compose.material3.TextButton
 import dev.typetype.android.core.ui.components.TypeTypeSwitch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -35,8 +36,8 @@ fun RelatedStreamsSection(
 ) {
     val visibleVideos = videos.filterNot { menuScope.isHidden(it) }
     if (visibleVideos.isEmpty()) return
-    var showAll by remember { mutableStateOf(false) }
-    val videosToRender = if (showAll) visibleVideos else visibleVideos.take(INITIAL_RELATED_VIDEO_COUNT)
+    var visibleCount by remember(videos) { mutableIntStateOf(INITIAL_RELATED_VIDEO_COUNT) }
+    val videosToRender = visibleVideos.take(visibleCount)
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -69,8 +70,11 @@ fun RelatedStreamsSection(
                 modifier = Modifier.fillMaxWidth(),
             )
         }
-        if (visibleVideos.size > INITIAL_RELATED_VIDEO_COUNT && !showAll) {
-            TextButton(onClick = { showAll = true }) {
+        if (visibleVideos.size > visibleCount) {
+            TextButton(onClick = {
+                visibleCount = (visibleCount + RELATED_VIDEO_PAGE_SIZE)
+                    .coerceAtMost(visibleVideos.size)
+            }) {
                 Text(stringResource(R.string.player_show_more_recommendations))
             }
         }
@@ -78,3 +82,4 @@ fun RelatedStreamsSection(
 }
 
 private const val INITIAL_RELATED_VIDEO_COUNT = 6
+private const val RELATED_VIDEO_PAGE_SIZE = 12

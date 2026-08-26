@@ -43,6 +43,7 @@ internal class AudioOnlyPlaybackState(
     fun setEnabled(enabled: Boolean, defaultRequest: Boolean = false) {
         if (!available || changing || active == enabled) return
         changing = true
+        active = enabled
         failure = null
         val future = controller.sendCustomCommand(
             PlaybackAudioOnlyCommand.command,
@@ -56,6 +57,7 @@ internal class AudioOnlyPlaybackState(
                     if (result?.resultCode == SessionResult.RESULT_SUCCESS) {
                         synchronize()
                     } else {
+                        active = !enabled
                         failure = when (result?.resultCode) {
                             SessionError.ERROR_IO -> AudioOnlyPlaybackFailure.Network
                             else -> AudioOnlyPlaybackFailure.Unavailable
