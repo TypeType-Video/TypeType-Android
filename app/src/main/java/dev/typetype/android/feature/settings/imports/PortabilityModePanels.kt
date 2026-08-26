@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.UploadFile
@@ -68,7 +69,15 @@ internal fun ExportPanel(
                     state.selectedFormat.supports(state.mode.direction, category)
                 }
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().toggleable(
+                        value = available.isNotEmpty() &&
+                            available.all(state.selectedCategories::contains),
+                        role = Role.Checkbox,
+                    ) { checked ->
+                        onSelectAllCategories(
+                            if (checked) available.toSet() else emptySet(),
+                        )
+                    },
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
