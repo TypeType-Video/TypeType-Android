@@ -19,6 +19,7 @@ import dev.typetype.android.data.diagnostics.LocalCrashReportRepository
 import dev.typetype.android.data.feed.HomeFeedRepositoryImpl
 import dev.typetype.android.data.library.OfflineLibraryRepository
 import dev.typetype.android.data.imports.RemoteImportRepository
+import dev.typetype.android.data.imports.RemotePortabilityRepository
 import dev.typetype.android.data.imports.RoomYoutubeTakeoutImportRepository
 import dev.typetype.android.data.library.RoomVideoMetaRepository
 import dev.typetype.android.data.notifications.RemoteNotificationsRepository
@@ -66,6 +67,7 @@ import dev.typetype.android.domain.diagnostics.CrashReportRepository
 import dev.typetype.android.domain.feed.HomeFeedRepository
 import dev.typetype.android.domain.library.LibraryRepository
 import dev.typetype.android.domain.imports.ImportRepository
+import dev.typetype.android.domain.imports.PortabilityRepository
 import dev.typetype.android.domain.imports.YoutubeTakeoutImportRepository
 import dev.typetype.android.domain.library.VideoMetaRepository
 import dev.typetype.android.domain.notifications.NotificationsRepository
@@ -210,6 +212,12 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindImportRepository(impl: RemoteImportRepository): ImportRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPortabilityRepository(
+        impl: RemotePortabilityRepository,
+    ): PortabilityRepository
 
     @Binds
     @Singleton
