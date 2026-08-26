@@ -34,6 +34,7 @@ internal fun PortabilityPanel(
     state: PortabilityUiState,
     onModeSelected: (PortabilityScreenMode) -> Unit,
     onFormatSelected: (dev.typetype.android.domain.imports.PortabilityFormat) -> Unit,
+    onSelectAllCategories: (Set<dev.typetype.android.domain.imports.TypeTypeBackupCategory>) -> Unit,
     onCategoryToggled: (dev.typetype.android.domain.imports.TypeTypeBackupCategory) -> Unit,
     onPolicySelected: (PortabilityDuplicatePolicy) -> Unit,
     onStartExport: () -> Unit,
@@ -100,6 +101,7 @@ internal fun PortabilityPanel(
                 PortabilityScreenMode.Export -> ExportPanel(
                     state = state,
                     onFormatSelected = onFormatSelected,
+                    onSelectAllCategories = onSelectAllCategories,
                     onCategoryToggled = onCategoryToggled,
                     onStartExport = onStartExport,
                     onCancelJob = onCancelJob,

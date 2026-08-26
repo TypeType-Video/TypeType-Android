@@ -67,6 +67,7 @@ fun PortabilityRoute(
                         state = state,
                         onModeSelected = viewModel::selectMode,
                         onFormatSelected = viewModel::selectFormat,
+                        onSelectAllCategories = viewModel::setExportSelection,
                         onCategoryToggled = viewModel::toggleCategory,
                         onPolicySelected = viewModel::setDuplicatePolicy,
                         onStartExport = viewModel::startExport,

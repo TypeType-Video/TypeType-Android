@@ -90,6 +90,11 @@ class PortabilityViewModel @Inject constructor(
         }
     }
 
+    fun setExportSelection(categories: Set<TypeTypeBackupCategory>) {
+        if (_state.value.isStartingJob) return
+        _state.update { it.copy(selectedCategories = categories) }
+    }
+
     fun setDuplicatePolicy(policy: PortabilityDuplicatePolicy) =
         _state.update { it.copy(duplicatePolicy = policy) }
 

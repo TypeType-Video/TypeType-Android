@@ -58,6 +58,7 @@ class PortabilityPanelTest {
                     ),
                     onModeSelected = { mode = it },
                     onFormatSelected = {},
+                    onSelectAllCategories = {},
                     onCategoryToggled = { category ->
                         selected.value = selected.value.toMutableSet().apply {
                             if (!add(category)) remove(category)
