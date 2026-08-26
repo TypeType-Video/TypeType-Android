@@ -8,6 +8,7 @@ interface PreferencesRepository {
     suspend fun setAppearancePersonality(personality: AppearancePersonality)
     suspend fun setAppearanceMode(mode: AppearanceMode)
     suspend fun setAppearanceAmoled(enabled: Boolean)
+    suspend fun setAppearanceTheme(theme: AppearanceTheme)
     suspend fun setAppearanceFont(font: AppearanceFont)
     suspend fun setAppearanceMotion(motion: AppearanceMotion)
     suspend fun setMangaPaper(paper: MangaPaper)

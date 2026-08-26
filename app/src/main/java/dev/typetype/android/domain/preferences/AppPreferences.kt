@@ -5,6 +5,7 @@ data class AppPreferences(
     val appearancePersonality: AppearancePersonality = AppearancePersonality.Classic,
     val appearanceMode: AppearanceMode = AppearanceMode.System,
     val appearanceAmoled: Boolean = false,
+    val appearanceTheme: AppearanceTheme = AppearanceTheme.TypeType,
     val appearanceFont: AppearanceFont = AppearanceFont.System,
     val appearanceMotion: AppearanceMotion = AppearanceMotion.Subtle,
     val mangaPaper: MangaPaper = MangaPaper.Day,

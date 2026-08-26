@@ -19,6 +19,7 @@ import dev.typetype.android.domain.preferences.AccentColor
 import dev.typetype.android.domain.preferences.AppearanceFont
 import dev.typetype.android.domain.preferences.AppearanceMode
 import dev.typetype.android.domain.preferences.AppearancePersonality
+import dev.typetype.android.domain.preferences.AppearanceTheme
 import dev.typetype.android.domain.preferences.AppPreferences
 import dev.typetype.android.core.ui.components.LocalAnimatedStatePlayback
 
@@ -28,23 +29,46 @@ fun TypeTypeTheme(
     content: @Composable () -> Unit,
 ) {
     val systemDark = isSystemInDarkTheme()
-    val dark = when (preferences.appearanceMode) {
-        AppearanceMode.System -> systemDark
-        AppearanceMode.Light -> false
-        AppearanceMode.Dark -> true
+    val dark = if (preferences.appearanceAmoled) {
+        true
+    } else {
+        when (preferences.appearanceMode) {
+            AppearanceMode.System -> systemDark
+            AppearanceMode.Light -> false
+            AppearanceMode.Dark -> true
+        }
     }
     val (accent, accentSoft) = accentColors(preferences.accentColor)
     val context = LocalContext.current
-    val dynamic = preferences.accentColor == AccentColor.System &&
-        preferences.appearancePersonality == AppearancePersonality.Classic &&
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val dynamic = preferences.appearancePersonality == AppearancePersonality.Classic &&
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+        (preferences.appearanceTheme == AppearanceTheme.Dynamic ||
+            (preferences.appearanceTheme == AppearanceTheme.TypeType &&
+                preferences.accentColor == AccentColor.System))
     val colorScheme = when {
         preferences.appearancePersonality == AppearancePersonality.Manga ->
-            mangaScheme(preferences.mangaPaper, accent, accentSoft)
+            mangaScheme(
+                preferences.mangaPaper,
+                preferences.appearanceTheme,
+                accent,
+                accentSoft,
+                amoled = preferences.appearanceAmoled,
+            )
+        dark && preferences.appearanceAmoled -> themedDarkScheme(
+            preferences.appearanceTheme,
+            accent,
+            accentSoft,
+            amoled = true,
+        )
         dynamic && dark -> dynamicDarkColorScheme(context)
         dynamic -> dynamicLightColorScheme(context)
-        dark -> classicDarkScheme(accent, accentSoft, preferences.appearanceAmoled)
-        else -> classicLightScheme(accent, accentSoft)
+        dark -> themedDarkScheme(
+            preferences.appearanceTheme,
+            accent,
+            accentSoft,
+            preferences.appearanceAmoled,
+        )
+        else -> themedLightScheme(preferences.appearanceTheme, accent, accentSoft)
     }
     val appearance = preferences.toAppearance()
     CompositionLocalProvider(
