@@ -29,6 +29,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.subscriptions.SubscriptionSummary
 
 @Composable
@@ -37,6 +39,7 @@ internal fun SubscriptionChannelsGrid(
     isLoading: Boolean,
     onOpenChannel: (String) -> Unit,
 ) {
+    val serverBaseUrl = LocalServerBaseUrl.current
     when {
         isLoading && channels.isEmpty() -> SubscriptionsLoadingGrid()
         channels.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -56,7 +59,7 @@ internal fun SubscriptionChannelsGrid(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(channels, key = SubscriptionSummary::channelUrl) { channel ->
-                SubscriptionChannelCard(channel, onOpenChannel)
+                SubscriptionChannelCard(channel, serverBaseUrl, onOpenChannel)
             }
         }
     }
@@ -65,6 +68,7 @@ internal fun SubscriptionChannelsGrid(
 @Composable
 private fun SubscriptionChannelCard(
     channel: SubscriptionSummary,
+    serverBaseUrl: String?,
     onOpenChannel: (String) -> Unit,
 ) {
     Surface(
@@ -86,7 +90,7 @@ private fun SubscriptionChannelCard(
             ) {
                 if (channel.avatarUrl.isNotBlank()) {
                     AsyncImage(
-                        model = channel.avatarUrl,
+                        model = buildImageUrl(serverBaseUrl, channel.avatarUrl),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize(),

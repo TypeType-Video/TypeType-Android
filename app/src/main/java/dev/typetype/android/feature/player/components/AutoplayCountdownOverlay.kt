@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.branding.rememberVideoBranding
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.feature.player.AutoplayCountdownState
 
 @Composable
@@ -38,6 +40,7 @@ internal fun AutoplayCountdownOverlay(
     state: AutoplayCountdownState,
     modifier: Modifier = Modifier,
 ) {
+    val serverBaseUrl = LocalServerBaseUrl.current
     val branding = rememberVideoBranding(
         sourceUrl = state.target.videoUrl,
         title = state.target.title,
@@ -46,7 +49,7 @@ internal fun AutoplayCountdownOverlay(
     )
     Box(modifier = modifier.background(Color.Black)) {
         AsyncImage(
-            model = branding.thumbnailUrl,
+            model = buildImageUrl(serverBaseUrl, branding.thumbnailUrl),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),

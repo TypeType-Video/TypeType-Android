@@ -12,6 +12,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
 import dev.typetype.android.core.ui.branding.rememberVideoBranding
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.stream.Stream
 
 @Composable
@@ -19,6 +21,7 @@ internal fun PlayerLoadingPoster(
     stream: Stream,
     modifier: Modifier = Modifier,
 ) {
+    val serverBaseUrl = LocalServerBaseUrl.current
     val branding = rememberVideoBranding(
         sourceUrl = stream.id,
         title = stream.title,
@@ -30,7 +33,7 @@ internal fun PlayerLoadingPoster(
         contentAlignment = Alignment.Center,
     ) {
         AsyncImage(
-            model = branding.thumbnailUrl,
+            model = buildImageUrl(serverBaseUrl, branding.thumbnailUrl),
             contentDescription = null,
             contentScale = ContentScale.Fit,
             modifier = Modifier.fillMaxSize(),

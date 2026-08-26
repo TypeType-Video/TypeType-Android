@@ -42,6 +42,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.feed.Video
 
 @Composable
@@ -57,6 +59,7 @@ internal fun ShortsInfoOverlay(
     modifier: Modifier = Modifier,
 ) {
     val hapticFeedback = LocalHapticFeedback.current
+    val serverBaseUrl = LocalServerBaseUrl.current
     val titleCopyEnabled = LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT
     val copyTitleLabel = stringResource(R.string.shorts_copy_title)
     val copyTitle = {
@@ -77,7 +80,7 @@ internal fun ShortsInfoOverlay(
                     .padding(vertical = 6.dp),
             ) {
                 AsyncImage(
-                    model = video.uploaderAvatarUrl,
+                    model = buildImageUrl(serverBaseUrl, video.uploaderAvatarUrl),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.size(34.dp).clip(CircleShape),

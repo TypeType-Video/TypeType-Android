@@ -42,6 +42,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.library.Playlist
 
 @Composable
@@ -54,6 +56,7 @@ fun PlaylistsTab(
     onRenamePlaylist: (playlistId: String, name: String) -> Unit,
     onDeletePlaylist: (playlistId: String) -> Unit,
 ) {
+    val serverBaseUrl = LocalServerBaseUrl.current
     var dialog by remember { mutableStateOf<PlaylistDialog?>(null) }
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
@@ -85,6 +88,7 @@ fun PlaylistsTab(
                 items(playlists, key = { it.id }) { playlist ->
                     PlaylistListCard(
                         playlist = playlist,
+                        serverBaseUrl = serverBaseUrl,
                         actionsEnabled = !isMutationInFlight,
                         onClick = { onOpenPlaylist(playlist.id) },
                         onRename = { dialog = PlaylistDialog.Rename(playlist) },
@@ -131,6 +135,7 @@ fun PlaylistsTab(
 @Composable
 private fun PlaylistListCard(
     playlist: Playlist,
+    serverBaseUrl: String?,
     actionsEnabled: Boolean,
     onClick: () -> Unit,
     onRename: () -> Unit,
@@ -157,7 +162,7 @@ private fun PlaylistListCard(
         ) {
             playlist.videos.firstOrNull()?.thumbnailUrl?.let { cover ->
                 AsyncImage(
-                    model = cover,
+                    model = buildImageUrl(serverBaseUrl, cover),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),

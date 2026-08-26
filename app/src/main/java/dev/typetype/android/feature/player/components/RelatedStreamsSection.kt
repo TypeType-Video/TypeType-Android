@@ -7,8 +7,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.Switch
+import androidx.compose.material3.TextButton
+import dev.typetype.android.core.ui.components.TypeTypeSwitch
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -30,6 +35,8 @@ fun RelatedStreamsSection(
 ) {
     val visibleVideos = videos.filterNot { menuScope.isHidden(it) }
     if (visibleVideos.isEmpty()) return
+    var showAll by remember { mutableStateOf(false) }
+    val videosToRender = if (showAll) visibleVideos else visibleVideos.take(INITIAL_RELATED_VIDEO_COUNT)
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -50,9 +57,9 @@ fun RelatedStreamsSection(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(end = 8.dp),
             )
-            Switch(checked = autoplayEnabled, onCheckedChange = onAutoplayChange)
+            TypeTypeSwitch(checked = autoplayEnabled, onCheckedChange = onAutoplayChange)
         }
-        visibleVideos.forEach { video ->
+        videosToRender.forEach { video ->
             RelatedVideoCard(
                 video = video,
                 menuItemState = menuScope.stateFor(video),
@@ -62,5 +69,12 @@ fun RelatedStreamsSection(
                 modifier = Modifier.fillMaxWidth(),
             )
         }
+        if (visibleVideos.size > INITIAL_RELATED_VIDEO_COUNT && !showAll) {
+            TextButton(onClick = { showAll = true }) {
+                Text(stringResource(R.string.player_show_more_recommendations))
+            }
+        }
     }
 }
+
+private const val INITIAL_RELATED_VIDEO_COUNT = 6

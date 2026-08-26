@@ -20,10 +20,11 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
-import coil3.gif.repeatCount
 import coil3.request.ImageRequest
 import dev.typetype.android.core.openmoji.openMojiUrl
 import dev.typetype.android.core.openmoji.pickOpenMojiCode
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildImageUrl
 import java.net.URI
 
 @Composable
@@ -35,6 +36,7 @@ fun ProfileAvatar(
 ) {
     var loaded by remember(imageUrl) { mutableStateOf(false) }
     val context = LocalPlatformContext.current
+    val serverBaseUrl = LocalServerBaseUrl.current
     Box(
         modifier = modifier
             .clip(CircleShape)
@@ -55,8 +57,7 @@ fun ProfileAvatar(
         if (!imageUrl.isNullOrBlank()) {
             AsyncImage(
                 model = ImageRequest.Builder(context)
-                    .data(imageUrl)
-                    .repeatCount(Int.MAX_VALUE)
+                    .data(buildImageUrl(serverBaseUrl, imageUrl))
                     .build(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
