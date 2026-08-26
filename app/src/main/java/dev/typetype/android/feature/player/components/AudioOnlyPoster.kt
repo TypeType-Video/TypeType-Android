@@ -32,8 +32,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.BitmapImage
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
@@ -47,7 +45,6 @@ internal fun AudioOnlyPoster(
     title: String,
     isPlaying: Boolean,
     modifier: Modifier = Modifier,
-    viewModel: AudioOnlyPosterViewModel = hiltViewModel(),
 ) {
     var palette by remember(thumbnailUrl) { mutableStateOf(AudioOnlyPalette.Default) }
     Box(
@@ -68,7 +65,6 @@ internal fun AudioOnlyPoster(
                     thumbnailUrl,
                     title,
                     isPlaying,
-                    viewModel,
                     palette,
                     onPalette = { palette = it },
                 )
@@ -77,7 +73,6 @@ internal fun AudioOnlyPoster(
                     thumbnailUrl,
                     title,
                     isPlaying,
-                    viewModel,
                     palette,
                     onPalette = { palette = it },
                 )
@@ -91,7 +86,6 @@ private fun AudioOnlyExpandedContent(
     thumbnailUrl: String,
     title: String,
     isPlaying: Boolean,
-    viewModel: AudioOnlyPosterViewModel,
     palette: AudioOnlyPalette,
     onPalette: (AudioOnlyPalette) -> Unit,
 ) {
@@ -102,7 +96,7 @@ private fun AudioOnlyExpandedContent(
     ) {
         AudioOnlyArtwork(thumbnailUrl, 112.dp, onPalette)
         AudioOnlyTitle(title, centered = true)
-        AudioOnlyWaveform(viewModel, isPlaying, palette, Modifier.fillMaxWidth().height(64.dp))
+        AudioOnlyWaveform(isPlaying, palette, Modifier.fillMaxWidth().height(64.dp))
     }
 }
 
@@ -111,7 +105,6 @@ private fun AudioOnlyCompactContent(
     thumbnailUrl: String,
     title: String,
     isPlaying: Boolean,
-    viewModel: AudioOnlyPosterViewModel,
     palette: AudioOnlyPalette,
     onPalette: (AudioOnlyPalette) -> Unit,
 ) {
@@ -123,7 +116,7 @@ private fun AudioOnlyCompactContent(
         AudioOnlyArtwork(thumbnailUrl, 88.dp, onPalette)
         Column(modifier = Modifier.weight(1f)) {
             AudioOnlyTitle(title, centered = false)
-            AudioOnlyWaveform(viewModel, isPlaying, palette, Modifier.fillMaxWidth().height(42.dp))
+            AudioOnlyWaveform(isPlaying, palette, Modifier.fillMaxWidth().height(42.dp))
         }
     }
 }
@@ -169,38 +162,7 @@ private fun AudioOnlyTitle(title: String, centered: Boolean) {
     )
 }
 
-@Composable
-private fun AudioOnlyWaveform(
-    viewModel: AudioOnlyPosterViewModel,
-    isPlaying: Boolean,
-    palette: AudioOnlyPalette,
-    modifier: Modifier,
-) {
-    val levels by viewModel.levels.collectAsStateWithLifecycle()
-    Canvas(modifier) {
-        val count = levels.size.coerceAtLeast(1)
-        val gap = 4.dp.toPx()
-        val barWidth = ((size.width - gap * (count - 1)) / count).coerceAtLeast(2.dp.toPx())
-        val brush = Brush.verticalGradient(listOf(palette.highlight, Color.White))
-        levels.forEachIndexed { index, level ->
-            val activeLevel = if (isPlaying) {
-                level.coerceAtLeast(ACTIVE_WAVEFORM_FLOOR)
-            } else {
-                0f
-            }
-            val barHeight = (size.height * activeLevel).coerceAtLeast(3.dp.toPx())
-            val x = index * (barWidth + gap)
-            drawRoundRect(
-                brush = brush,
-                topLeft = Offset(x, (size.height - barHeight) / 2f),
-                size = Size(barWidth, barHeight),
-                cornerRadius = CornerRadius(barWidth / 2f),
-            )
-        }
-    }
-}
-
-private data class AudioOnlyPalette(
+internal data class AudioOnlyPalette(
     val primary: Color,
     val secondary: Color,
     val highlight: Color,
@@ -247,4 +209,3 @@ private fun Bitmap.audioOnlyPalette(): AudioOnlyPalette {
 }
 
 private const val SAMPLE_GRID = 6
-private const val ACTIVE_WAVEFORM_FLOOR = 0.34f

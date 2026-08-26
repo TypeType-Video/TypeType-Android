@@ -66,9 +66,6 @@ class PlaybackService : MediaSessionService() {
     @Inject
     lateinit var preferencesRepository: PreferencesRepository
 
-    @Inject
-    lateinit var playbackAudioWaveform: PlaybackAudioWaveform
-
     private var mediaSession: MediaSession? = null
     private var audioOnlyPlaybackBridge: PlaybackAudioOnlyServiceBridge? = null
     private var playbackResumeRecorder: PlaybackResumeRecorder? = null
@@ -176,7 +173,7 @@ class PlaybackService : MediaSessionService() {
             .setUsage(C.USAGE_MEDIA)
             .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
             .build()
-        val renderersFactory = PlaybackRenderersFactory(this, playbackAudioWaveform)
+        val renderersFactory = PlaybackRenderersFactory(this)
             .setEnableDecoderFallback(true)
         return ExoPlayer.Builder(this, renderersFactory)
             .setAudioAttributes(audioAttributes, true)
