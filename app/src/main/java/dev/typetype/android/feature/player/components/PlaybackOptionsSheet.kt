@@ -56,7 +56,7 @@ internal fun PlaybackOptionsSheet(
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val activeVideoFormat = rememberActiveVideoFormat(player)
+    val activeVideoFormat = rememberActiveVideoFormat(player, stream)
     val autoLabel = stringResource(R.string.playback_options_auto)
     val recommendedLabel = stringResource(R.string.playback_options_recommended)
     val smartLabel = stringResource(R.string.playback_options_smart)

@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -41,8 +42,18 @@ import dev.typetype.android.feature.player.host.PlayerHost
 import dev.typetype.android.feature.player.host.PlayerHostController
 import dev.typetype.android.feature.player.host.PlayerHostTarget
 
+import kotlin.math.abs
+
 private const val NAV_BAR_HEIGHT_DP = 80f
 private val WIDE_NAVIGATION_THRESHOLD = 600.dp
+
+internal const val PLAYER_TRANSITION_STEP = 0.05f
+
+internal fun shouldReportPlayerProgress(
+    previous: Float,
+    next: Float,
+): Boolean = next == 0f || next == 1f ||
+    abs(previous.coerceIn(0f, 1f) - next.coerceIn(0f, 1f)) >= PLAYER_TRANSITION_STEP
 
 @Composable
 fun AppShell(
@@ -81,7 +92,7 @@ fun AppShell(
     )
     var activeTabRoute by rememberSaveable { mutableStateOf<String?>(null) }
     var isPlayerFullscreen by remember { mutableStateOf(false) }
-    var playerTransitionProgress by remember { mutableStateOf(0f) }
+    var playerTransitionProgress by remember { mutableFloatStateOf(0f) }
     val playerHostState by playerHostController.state.collectAsStateWithLifecycle()
     val appChromeVisible = isAppChromeVisible(playerHostState.target, isPlayerFullscreen)
     val phoneChromeAlpha = playerPhoneChromeAlpha(
@@ -189,7 +200,11 @@ fun AppShell(
                         onOpenChannel = onOpenChannel,
                         onOpenAccounts = onOpenAccounts,
                         onClosePlayback = onClosePlayback,
-                        onTransitionProgressChange = { playerTransitionProgress = it },
+                        onTransitionProgressChange = { progress ->
+                            if (shouldReportPlayerProgress(playerTransitionProgress, progress)) {
+                                playerTransitionProgress = progress
+                            }
+                        },
                         content = {},
                     )
                 }
