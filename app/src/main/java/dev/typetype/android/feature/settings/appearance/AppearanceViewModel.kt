@@ -31,6 +31,7 @@ class AppearanceViewModel @Inject constructor(
                     preferencesRepository.setAppearancePersonality(action.personality)
                 is AppearanceAction.SelectMode -> preferencesRepository.setAppearanceMode(action.mode)
                 is AppearanceAction.SetAmoled -> preferencesRepository.setAppearanceAmoled(action.enabled)
+                is AppearanceAction.SelectTheme -> preferencesRepository.setAppearanceTheme(action.theme)
                 is AppearanceAction.SelectFont -> preferencesRepository.setAppearanceFont(action.font)
                 is AppearanceAction.SelectMotion -> preferencesRepository.setAppearanceMotion(action.motion)
                 is AppearanceAction.SelectMangaPaper -> preferencesRepository.setMangaPaper(action.paper)

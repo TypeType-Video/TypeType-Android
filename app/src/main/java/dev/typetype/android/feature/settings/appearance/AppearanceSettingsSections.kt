@@ -21,7 +21,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -34,11 +33,13 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.components.TypeTypeSwitch
 import dev.typetype.android.domain.preferences.AccentColor
 import dev.typetype.android.domain.preferences.AppearanceFont
 import dev.typetype.android.domain.preferences.AppearanceMode
 import dev.typetype.android.domain.preferences.AppearanceMotion
 import dev.typetype.android.domain.preferences.AppearancePersonality
+import dev.typetype.android.domain.preferences.AppearanceTheme
 import dev.typetype.android.domain.preferences.AppPreferences
 import dev.typetype.android.domain.preferences.MangaHeadlineMarker
 import dev.typetype.android.domain.preferences.MangaPaper
@@ -54,6 +55,14 @@ private val modeOptions = listOf(
     LabelledOption(AppearanceMode.System, R.string.appearance_system),
     LabelledOption(AppearanceMode.Light, R.string.appearance_light),
     LabelledOption(AppearanceMode.Dark, R.string.appearance_dark),
+)
+private val themeOptions = listOf(
+    LabelledOption(AppearanceTheme.TypeType, R.string.appearance_theme_typetype, R.string.appearance_theme_typetype_description),
+    LabelledOption(AppearanceTheme.Dynamic, R.string.appearance_theme_dynamic, R.string.appearance_theme_dynamic_description),
+    LabelledOption(AppearanceTheme.Nord, R.string.appearance_theme_nord),
+    LabelledOption(AppearanceTheme.Cream, R.string.appearance_theme_cream),
+    LabelledOption(AppearanceTheme.Forest, R.string.appearance_theme_forest),
+    LabelledOption(AppearanceTheme.Plum, R.string.appearance_theme_plum),
 )
 private val paperOptions = listOf(
     LabelledOption(MangaPaper.Day, R.string.appearance_paper_day),
@@ -92,6 +101,11 @@ fun androidx.compose.foundation.lazy.LazyListScope.appearanceModeItems(
     onAction: (AppearanceAction) -> Unit,
 ) = options(modeOptions, state.appearanceMode) { onAction(AppearanceAction.SelectMode(it)) }
 
+fun androidx.compose.foundation.lazy.LazyListScope.appearanceThemeItems(
+    state: AppPreferences,
+    onAction: (AppearanceAction) -> Unit,
+) = options(themeOptions, state.appearanceTheme) { onAction(AppearanceAction.SelectTheme(it)) }
+
 fun androidx.compose.foundation.lazy.LazyListScope.mangaPaperItems(
     state: AppPreferences,
     onAction: (AppearanceAction) -> Unit,
@@ -112,7 +126,7 @@ private fun <T> androidx.compose.foundation.lazy.LazyListScope.options(
     selected: T,
     onSelect: (T) -> Unit,
 ) {
-    items(entries.size) { index ->
+    items(entries.size, contentType = { "appearance-option" }) { index ->
         val option = entries[index]
         AppearanceOptionRow(option, option.value == selected) { onSelect(option.value) }
     }
@@ -196,7 +210,7 @@ private fun AppearanceToggleRow(
             Text(stringResource(title), style = MaterialTheme.typography.bodyLarge)
             subtitle?.let { Text(stringResource(it), style = MaterialTheme.typography.bodySmall) }
         }
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        TypeTypeSwitch(checked = checked, onCheckedChange = onCheckedChange)
     }
     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 }

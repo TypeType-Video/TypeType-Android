@@ -12,6 +12,7 @@ import dev.typetype.android.domain.preferences.AppearanceFont
 import dev.typetype.android.domain.preferences.AppearanceMode
 import dev.typetype.android.domain.preferences.AppearanceMotion
 import dev.typetype.android.domain.preferences.AppearancePersonality
+import dev.typetype.android.domain.preferences.AppearanceTheme
 import dev.typetype.android.domain.preferences.AppPreferences
 import dev.typetype.android.domain.preferences.MangaHeadlineMarker
 import dev.typetype.android.domain.preferences.MangaPaper
@@ -34,6 +35,7 @@ class DataStorePreferencesRepository @Inject constructor(
             appearancePersonality = prefs.enum(KEY_APPEARANCE_PERSONALITY, AppearancePersonality.Classic),
             appearanceMode = prefs.enum(KEY_APPEARANCE_MODE, AppearanceMode.System),
             appearanceAmoled = prefs[KEY_APPEARANCE_AMOLED] ?: false,
+            appearanceTheme = prefs.enum(KEY_APPEARANCE_THEME, AppearanceTheme.TypeType),
             appearanceFont = prefs.enum(KEY_APPEARANCE_FONT, AppearanceFont.System),
             appearanceMotion = prefs.enum(KEY_APPEARANCE_MOTION, AppearanceMotion.Subtle),
             mangaPaper = prefs.enum(KEY_MANGA_PAPER, MangaPaper.Day),
@@ -76,6 +78,8 @@ class DataStorePreferencesRepository @Inject constructor(
     override suspend fun setAppearanceMode(mode: AppearanceMode) = store(KEY_APPEARANCE_MODE, mode.name)
 
     override suspend fun setAppearanceAmoled(enabled: Boolean) = store(KEY_APPEARANCE_AMOLED, enabled)
+
+    override suspend fun setAppearanceTheme(theme: AppearanceTheme) = store(KEY_APPEARANCE_THEME, theme.name)
 
     override suspend fun setAppearanceFont(font: AppearanceFont) = store(KEY_APPEARANCE_FONT, font.name)
 
@@ -176,6 +180,7 @@ class DataStorePreferencesRepository @Inject constructor(
         val KEY_APPEARANCE_PERSONALITY = stringPreferencesKey("appearance_personality")
         val KEY_APPEARANCE_MODE = stringPreferencesKey("appearance_mode")
         val KEY_APPEARANCE_AMOLED = booleanPreferencesKey("appearance_amoled")
+        val KEY_APPEARANCE_THEME = stringPreferencesKey("appearance_theme")
         val KEY_APPEARANCE_FONT = stringPreferencesKey("appearance_font")
         val KEY_APPEARANCE_MOTION = stringPreferencesKey("appearance_motion")
         val KEY_MANGA_PAPER = stringPreferencesKey("manga_paper")
