@@ -31,44 +31,52 @@ internal fun TypeTypeBackupSection(
     onExport: () -> Unit,
     onChooseBackup: () -> Unit,
     onResetResult: () -> Unit,
+    showExportControls: Boolean = false,
+    showRestoreControls: Boolean = false,
 ) {
     Text(
         text = stringResource(R.string.settings_backup_typetype_title),
         style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold),
     )
-    Text(
-        text = stringResource(R.string.settings_backup_typetype_description),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
+    if (showExportControls) {
+        Text(
+            text = stringResource(R.string.settings_backup_typetype_description),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
     state.typeTypeSummary?.let { summary ->
         TypeTypeRestoreSummaryCard(summary, onResetResult)
     } ?: TypeTypeCard {
-        TypeTypeBackupCategory.entries.forEach { category ->
-            BackupCategoryRow(
-                category = category,
-                checked = category in state.selectedCategories,
-                enabled = !state.isExportingTypeType && !state.isRestoringTypeType,
-                onToggle = { onToggleCategory(category) },
+        if (showExportControls) {
+            TypeTypeBackupCategory.entries.forEach { category ->
+                BackupCategoryRow(
+                    category = category,
+                    checked = category in state.selectedCategories,
+                    enabled = !state.isExportingTypeType && !state.isRestoringTypeType,
+                    onToggle = { onToggleCategory(category) },
+                )
+            }
+            TypeTypePrimaryButton(
+                text = stringResource(R.string.settings_backup_export_selected),
+                onClick = onExport,
+                enabled = state.canExportTypeType,
+                isLoading = state.isExportingTypeType,
+                modifier = Modifier.padding(top = 12.dp),
             )
+            if (state.typeTypeExportComplete) {
+                Text(
+                    text = stringResource(R.string.settings_backup_export_complete),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            }
         }
-        TypeTypePrimaryButton(
-            text = stringResource(R.string.settings_backup_export_selected),
-            onClick = onExport,
-            enabled = state.canExportTypeType,
-            isLoading = state.isExportingTypeType,
-            modifier = Modifier.padding(top = 12.dp),
-        )
-        TypeTypeSecondaryButton(
-            text = stringResource(R.string.settings_backup_restore_typetype),
-            onClick = onChooseBackup,
-            enabled = !state.isExportingTypeType && !state.isRestoringTypeType,
-        )
-        if (state.typeTypeExportComplete) {
-            Text(
-                text = stringResource(R.string.settings_backup_export_complete),
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(top = 8.dp),
+        if (showRestoreControls) {
+            TypeTypeSecondaryButton(
+                text = stringResource(R.string.settings_backup_restore_typetype),
+                onClick = onChooseBackup,
+                enabled = !state.isExportingTypeType && !state.isRestoringTypeType,
             )
         }
         Text(
@@ -162,6 +170,7 @@ internal fun TypeTypeRestoreDialog(
 
 private fun TypeTypeBackupCategory.labelRes(): Int = when (this) {
     TypeTypeBackupCategory.Subscriptions -> R.string.settings_import_subscriptions
+    TypeTypeBackupCategory.SubscriptionGroups -> R.string.settings_import_subscription_groups
     TypeTypeBackupCategory.History -> R.string.settings_import_history
     TypeTypeBackupCategory.Playlists -> R.string.settings_import_playlists
     TypeTypeBackupCategory.WatchLater -> R.string.settings_backup_watch_later

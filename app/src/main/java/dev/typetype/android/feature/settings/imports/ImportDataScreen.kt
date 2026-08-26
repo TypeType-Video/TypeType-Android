@@ -4,15 +4,17 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
@@ -23,8 +25,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -37,6 +41,7 @@ import dev.typetype.android.feature.settings.SettingsDetailTopBar
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 @Composable
 fun ImportDataRoute(
@@ -123,45 +128,96 @@ fun ImportDataScreen(
     onRemoveYoutubeTakeout: (String) -> Unit,
     onRetryYoutubeRefresh: () -> Unit,
 ) {
+    val errorMessage = importErrorMessage(state.errorKey)
+    val listState = remember { LazyListState() }
+    val scope = rememberCoroutineScope()
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
             SettingsDetailTopBar(
                 title = stringResource(R.string.settings_import_title),
                 onNavigateBack = onNavigateBack,
             )
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                state = listState,
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                TypeTypeBackupSection(
-                    state = state,
-                    onToggleCategory = onToggleCategory,
-                    onExport = onExportTypeType,
-                    onChooseBackup = onChooseTypeTypeBackup,
-                    onResetResult = onResetTypeTypeResult,
-                )
-                YoutubeTakeoutImportSection(
-                    state = youtubeState,
-                    onOpenTakeout = onOpenYoutubeTakeout,
-                    onChooseArchives = onChooseYoutubeTakeout,
-                    onRetry = onRetryYoutubeTakeout,
-                    onCancel = onCancelYoutubeTakeout,
-                    onRemove = onRemoveYoutubeTakeout,
-                    onRetryCollectionRefresh = onRetryYoutubeRefresh,
-                )
-                PipePipeImportSection(
-                    state = state,
-                    onChooseBackup = onChoosePipePipeBackup,
-                    onRestore = onRestorePipePipe,
-                    onResetResult = onResetPipePipeResult,
-                )
-                importErrorMessage(state.errorKey)?.let {
-                    Text(it, color = MaterialTheme.colorScheme.error)
+                item {
+                    Text(
+                        text = stringResource(R.string.settings_import_portability_title),
+                        style = MaterialTheme.typography.headlineSmall,
+                    )
                 }
-                state.errorRequestId?.let { RequestIdRow(requestId = it) }
+                item {
+                    Text(
+                        text = stringResource(R.string.settings_import_portability_description),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                item {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ImportSourceCard(
+                            title = stringResource(R.string.settings_backup_typetype_title),
+                            subtitle = stringResource(R.string.settings_import_source_backup),
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                scope.launch { listState.animateScrollToItem(TYPE_TYPE_SECTION_INDEX) }
+                            },
+                        )
+                        ImportSourceCard(
+                            title = stringResource(R.string.settings_import_youtube_title),
+                            subtitle = stringResource(R.string.settings_import_source_youtube),
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                scope.launch { listState.animateScrollToItem(YOUTUBE_SECTION_INDEX) }
+                            },
+                        )
+                        ImportSourceCard(
+                            title = stringResource(R.string.settings_import_pipepipe_title),
+                            subtitle = stringResource(R.string.settings_import_source_pipepipe),
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                scope.launch { listState.animateScrollToItem(PIPEPIPE_SECTION_INDEX) }
+                            },
+                        )
+                    }
+                }
+                item {
+                    TypeTypeBackupSection(
+                        state = state,
+                        onToggleCategory = onToggleCategory,
+                        onExport = onExportTypeType,
+                        onChooseBackup = onChooseTypeTypeBackup,
+                        onResetResult = onResetTypeTypeResult,
+                    )
+                }
+                item {
+                    YoutubeTakeoutImportSection(
+                        state = youtubeState,
+                        onOpenTakeout = onOpenYoutubeTakeout,
+                        onChooseArchives = onChooseYoutubeTakeout,
+                        onRetry = onRetryYoutubeTakeout,
+                        onCancel = onCancelYoutubeTakeout,
+                        onRemove = onRemoveYoutubeTakeout,
+                        onRetryCollectionRefresh = onRetryYoutubeRefresh,
+                    )
+                }
+                item {
+                    PipePipeImportSection(
+                        state = state,
+                        onChooseBackup = onChoosePipePipeBackup,
+                        onRestore = onRestorePipePipe,
+                        onResetResult = onResetPipePipeResult,
+                    )
+                }
+                errorMessage?.let { message ->
+                    item { Text(message, color = MaterialTheme.colorScheme.error) }
+                }
+                state.errorRequestId?.let { requestId ->
+                    item { RequestIdRow(requestId = requestId) }
+                }
             }
         }
     }
@@ -174,6 +230,43 @@ fun ImportDataScreen(
         )
     }
 }
+
+@Composable
+private fun ImportSourceCard(
+    title: String,
+    subtitle: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Surface(
+        modifier = modifier
+            .clip(MaterialTheme.shapes.medium)
+            .clickable(onClick = onClick),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.labelSmall,
+                maxLines = 2,
+            )
+        }
+    }
+}
+
+private const val TYPE_TYPE_SECTION_INDEX = 3
+private const val YOUTUBE_SECTION_INDEX = 4
+private const val PIPEPIPE_SECTION_INDEX = 5
 
 private const val YOUTUBE_TAKEOUT_URL =
     "https://takeout.google.com/settings/takeout/custom/youtube,my_activity?dest=mail&frequency=once"
