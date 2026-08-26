@@ -12,8 +12,10 @@ import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
+import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.feature.player.codecDisplayName
 import dev.typetype.android.feature.player.codecSelectionKey
+import dev.typetype.android.services.MergedStreamMediaKeys
 
 internal data class PlaybackActiveVideoFormat(
     val height: Int,
@@ -30,18 +32,26 @@ internal data class PlaybackActiveVideoFormat(
 }
 
 @Composable
-internal fun rememberActiveVideoFormat(player: Player): PlaybackActiveVideoFormat? {
-    var format by remember(player) {
-        mutableStateOf(player.currentTracks.selectedVideoFormat(player.videoSize))
+internal fun rememberActiveVideoFormat(
+    player: Player,
+    stream: Stream? = null,
+): PlaybackActiveVideoFormat? {
+    var format by remember(player, stream?.id) {
+        mutableStateOf(
+            player.currentTracks.selectedVideoFormat(player.videoSize)
+                ?: player.selectedSabrSourceFormat(stream),
+        )
     }
     DisposableEffect(player) {
         val listener = object : Player.Listener {
             override fun onTracksChanged(tracks: Tracks) {
                 format = tracks.selectedVideoFormat(player.videoSize)
+                    ?: player.selectedSabrSourceFormat(stream)
             }
 
             override fun onVideoSizeChanged(videoSize: VideoSize) {
                 format = player.currentTracks.selectedVideoFormat(videoSize)
+                    ?: player.selectedSabrSourceFormat(stream)
             }
         }
         player.addListener(listener)
@@ -72,6 +82,21 @@ private fun Tracks.selectedVideoFormat(videoSize: VideoSize): PlaybackActiveVide
         codec = format.codecs.orEmpty().codecSelectionKey().codecDisplayName(),
         framesPerSecond = format.frameRate.takeIf { it > 0f }?.toInt(),
         hdr = format.colorInfo?.colorTransfer in HDR_TRANSFERS,
+    )
+}
+
+private fun Player.selectedSabrSourceFormat(
+    stream: Stream?,
+): PlaybackActiveVideoFormat? {
+    val videoItag = currentMediaItem?.requestMetadata?.extras
+        ?.getInt(MergedStreamMediaKeys.EXTRA_SABR_VIDEO_ITAG)
+        ?.takeIf { it > 0 } ?: return null
+    val source = stream?.sabrVideoStreams?.firstOrNull { it.itag == videoItag } ?: return null
+    return PlaybackActiveVideoFormat(
+        height = source.height,
+        codec = source.codec.orEmpty().codecSelectionKey().codecDisplayName(),
+        framesPerSecond = source.fps.takeIf { it > 0 },
+        hdr = false,
     )
 }
 
