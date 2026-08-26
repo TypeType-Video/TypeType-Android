@@ -33,6 +33,9 @@ class PlayerSettingsPlaybackControlsTest {
         showSettings(action)
 
         composeRule.onNode(hasScrollAction())
+            .performScrollToNode(hasText("Show advanced player settings"))
+        composeRule.onNodeWithText("Show advanced player settings").performClick()
+        composeRule.onNode(hasScrollAction())
             .performScrollToNode(hasText("Double-tap seek time"))
         composeRule.onNodeWithText("Double-tap seek time").performClick()
         composeRule.onNodeWithText("5 seconds").performClick()
@@ -45,6 +48,9 @@ class PlayerSettingsPlaybackControlsTest {
         val action = AtomicReference<PlayerSettingsAction>()
         showSettings(action)
 
+        composeRule.onNode(hasScrollAction())
+            .performScrollToNode(hasText("Show advanced player settings"))
+        composeRule.onNodeWithText("Show advanced player settings").performClick()
         composeRule.onNode(hasScrollAction())
             .performScrollToNode(hasText("Accessible player controls"))
         composeRule.onNodeWithText("Accessible player controls").performClick()

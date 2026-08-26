@@ -101,7 +101,7 @@ fun SettingsScreen(
                 contentPadding = PaddingValues(vertical = 4.dp),
                 modifier = Modifier.weight(1f),
             ) {
-                items(entries) { entry ->
+                items(entries, contentType = { "settings-entry" }) { entry ->
                     SettingsCategoryRow(entry = entry)
                     HorizontalDivider(
                         modifier = Modifier.padding(start = 64.dp),

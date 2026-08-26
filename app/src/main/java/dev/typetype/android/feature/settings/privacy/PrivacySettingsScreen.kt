@@ -122,20 +122,11 @@ internal fun PrivacySettingsScreen(
                     )
                 }
                 item {
-                    val count = state.searchHistoryCount
                     PrivacyRow(
                         title = stringResource(R.string.settings_privacy_search_history),
-                        subtitle = if (count == null) {
-                            stringResource(R.string.settings_privacy_count_loading)
-                        } else {
-                            pluralStringResource(
-                                R.plurals.settings_privacy_entries_count,
-                                count,
-                                count,
-                            )
-                        },
+                        subtitle = stringResource(R.string.settings_privacy_search_history_description),
                         actionLabel = stringResource(R.string.settings_privacy_clear),
-                        actionEnabled = count != null && count > 0,
+                        actionEnabled = true,
                         onAction = { pending = PendingAction.SearchHistory },
                     )
                 }

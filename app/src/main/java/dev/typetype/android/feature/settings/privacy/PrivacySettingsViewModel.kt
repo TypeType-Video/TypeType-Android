@@ -24,7 +24,6 @@ import kotlinx.coroutines.launch
 
 data class PrivacyState(
     val historyCount: Int = 0,
-    val searchHistoryCount: Int? = null,
     val subscriptionsCount: Int = 0,
     val watchHistoryTrackingEnabled: Boolean = true,
     val watchHistoryTrackingControlEnabled: Boolean = false,
@@ -35,7 +34,6 @@ data class PrivacyState(
 )
 
 enum class PrivacyFailureAction {
-    LoadSearchHistory,
     LoadSubscriptions,
     LoadTrackingPreference,
     UpdateTrackingPreference,
@@ -57,19 +55,16 @@ class PrivacySettingsViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val subscriptionsCount = MutableStateFlow(0)
-    private val searchHistoryCount = MutableStateFlow<Int?>(null)
     private var trackingRetryTarget: Boolean? = null
 
     val state = combine(
         libraryRepository.observeHistoryCount(),
-        searchHistoryCount,
         subscriptionsCount,
         userSettingsRepository.observe(),
         activeSessionRepository.observeDeviceName(),
-    ) { historyCount, searchCount, subsCount, settings, deviceName ->
+    ) { historyCount, subsCount, settings, deviceName ->
         PrivacyState(
             historyCount = historyCount,
-            searchHistoryCount = searchCount,
             subscriptionsCount = subsCount,
             watchHistoryTrackingEnabled = !settings.disableWatchHistory,
             deviceName = deviceName,
@@ -87,7 +82,6 @@ class PrivacySettingsViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PrivacyState())
 
     init {
-        refreshSearchHistory()
         refreshSubscriptions()
         refreshWatchHistoryTracking()
     }
@@ -145,7 +139,6 @@ class PrivacySettingsViewModel @Inject constructor(
         viewModelScope.launch {
             clearFailure()
             searchHistoryRepository.clearHistory()
-                .onSuccess { searchHistoryCount.value = 0 }
                 .onFailure {
                     showFailure(
                         it,
@@ -181,7 +174,6 @@ class PrivacySettingsViewModel @Inject constructor(
         val action = _localState.value.failureAction
         clearFailure()
         when (action) {
-            PrivacyFailureAction.LoadSearchHistory -> refreshSearchHistory()
             PrivacyFailureAction.LoadSubscriptions -> refreshSubscriptions()
             PrivacyFailureAction.LoadTrackingPreference -> refreshWatchHistoryTracking()
             PrivacyFailureAction.UpdateTrackingPreference ->
@@ -207,20 +199,6 @@ class PrivacySettingsViewModel @Inject constructor(
                         it,
                         PrivacyFailureAction.LoadSubscriptions,
                         R.string.settings_privacy_load_subscriptions_failed,
-                    )
-                }
-        }
-    }
-
-    private fun refreshSearchHistory() {
-        viewModelScope.launch {
-            searchHistoryRepository.loadHistory()
-                .onSuccess { searchHistoryCount.value = it.size }
-                .onFailure {
-                    showFailure(
-                        it,
-                        PrivacyFailureAction.LoadSearchHistory,
-                        R.string.settings_privacy_load_search_failed,
                     )
                 }
         }

@@ -21,7 +21,11 @@ class TypeTypeYoutubeSessionContractTest {
         server.start()
         api = RetrofitFactory(
             sessionClient = OkHttpClient(),
-            json = Json { ignoreUnknownKeys = true },
+            json = Json {
+                ignoreUnknownKeys = true
+                explicitNulls = false
+                encodeDefaults = true
+            },
         ).create(server.url("/").toString())
     }
 
@@ -72,6 +76,23 @@ class TypeTypeYoutubeSessionContractTest {
         val disconnectRequest = server.takeRequest()
         assertEquals("DELETE", disconnectRequest.method)
         assertEquals("/youtube-session", disconnectRequest.path)
+    }
+
+    @Test
+    fun browserStartWithoutReturnTargetSendsAnEmptyObject() = runBlocking {
+        server.enqueue(
+            jsonResponse(
+                """{"sessionId":"remote-id","wsUrl":"/youtube-session/browser/remote-id?token=one-time","expiresAt":123}""",
+                code = 201,
+            ),
+        )
+
+        api.startYoutubeRemoteBrowser(YoutubeRemoteBrowserStartRequest())
+
+        val request = server.takeRequest()
+        assertEquals("POST", request.method)
+        assertEquals("/youtube-session/browser/start", request.path)
+        assertEquals("{}", request.body.readUtf8())
     }
 
     private fun jsonResponse(body: String, code: Int = 200) = MockResponse()
