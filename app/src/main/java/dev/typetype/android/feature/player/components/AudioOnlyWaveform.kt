@@ -3,13 +3,10 @@ package dev.typetype.android.feature.player.components
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -42,17 +39,18 @@ internal fun AudioOnlyWaveform(
     palette: AudioOnlyPalette,
     modifier: Modifier,
 ) {
-    var frame by remember { mutableIntStateOf(0) }
+    val frame = remember { mutableIntStateOf(0) }
     val motion = remember { WaveMotion(BAR_COUNT, WAVE_SEED) }
 
     LaunchedEffect(Unit) {
         while (true) {
             withFrameNanos { }
-            frame += 1
+            frame.intValue += 1
         }
     }
 
     Canvas(modifier) {
+        val frameCount = frame.intValue
         val slotWidth = size.width / motion.levels.size
         val barWidth = slotWidth * 0.71f
         val gap = slotWidth - barWidth
@@ -67,13 +65,13 @@ internal fun AudioOnlyWaveform(
 
         repeat(motion.levels.size) { index ->
             val interval = motion.intervals[index].coerceAtLeast(1)
-            if ((frame + motion.offsets[index]) % interval == 0) {
+            if ((frameCount + motion.offsets[index]) % interval == 0) {
                 motion.nextTarget(index)
             }
             motion.levels[index] += (
                 motion.targets[index] - motion.levels[index]
                 ) * 0.11f
-            val phase = frame * motion.speeds[index] + motion.phases[index]
+            val phase = frameCount * motion.speeds[index] + motion.phases[index]
             val pulse = 0.5f + sin(phase) * 0.5f
             val movement = signal * (
                 0.08f + motion.levels[index] * 0.52f + pulse * 0.26f
@@ -95,7 +93,6 @@ internal fun AudioOnlyWaveform(
                 brush = brush,
                 topLeft = Offset(index * slotWidth + gap / 2f, (size.height - barHeight) / 2f),
                 size = Size(barWidth, barHeight),
-                cornerRadius = CornerRadius(barWidth / 2f),
             )
         }
     }
