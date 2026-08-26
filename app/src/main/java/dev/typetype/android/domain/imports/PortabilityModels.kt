@@ -88,8 +88,7 @@ data class PortabilityJob(
     val errorMessage: String? = null,
 ) {
     val isTerminal: Boolean
-        get() = state == PortabilityJobState.Ready ||
-            state == PortabilityJobState.Completed ||
+        get() = state == PortabilityJobState.Completed ||
             state == PortabilityJobState.Failed ||
             state == PortabilityJobState.Cancelled
 }
