@@ -71,10 +71,10 @@ class PrivacySettingsScreenTest {
     }
 
     @Test
-    fun searchHistoryShowsTheLoadedEntryCount() {
-        show(PrivacyState(searchHistoryCount = 7))
+    fun searchHistoryDoesNotExposeAnUnavailableCount() {
+        show(PrivacyState())
 
-        composeRule.onNodeWithText("7 entries").assertIsDisplayed()
+        composeRule.onNodeWithText("Clear saved searches from this account").assertIsDisplayed()
         composeRule.onNodeWithText("Search history count unavailable").assertDoesNotExist()
     }
 

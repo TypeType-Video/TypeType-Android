@@ -45,6 +45,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.SectionHeader
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.actions.BlockedItem
 import dev.typetype.android.domain.actions.BlockedKeyword
 import dev.typetype.android.feature.settings.SettingsDetailTopBar
@@ -55,6 +57,7 @@ fun BlockedSettingsRoute(
     viewModel: BlockedSettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val serverBaseUrl = LocalServerBaseUrl.current
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
             SettingsDetailTopBar(
@@ -78,7 +81,11 @@ fun BlockedSettingsRoute(
                 if (state.keywords.isEmpty()) {
                     item { EmptyRow(stringResource(R.string.settings_blocked_empty_keywords)) }
                 } else {
-                    items(state.keywords, key = { "keyword-${it.keyword}" }) { item ->
+                    items(
+                        state.keywords,
+                        key = { "keyword-${it.keyword}" },
+                        contentType = { "blocked-keyword" },
+                    ) { item ->
                         BlockedKeywordRow(item, onUnblock = { viewModel.unblockKeyword(item.keyword) })
                     }
                 }
@@ -87,9 +94,14 @@ fun BlockedSettingsRoute(
                 if (state.channels.isEmpty()) {
                     item { EmptyRow(stringResource(R.string.settings_blocked_empty_channels)) }
                 } else {
-                    items(state.channels, key = { "ch-${it.url}" }) { item ->
+                    items(
+                        state.channels,
+                        key = { "ch-${it.url}" },
+                        contentType = { "blocked-channel" },
+                    ) { item ->
                         BlockedRow(
                             item = item,
+                            serverBaseUrl = serverBaseUrl,
                             avatarShape = CircleShape,
                             onUnblock = { viewModel.unblockChannel(item.url) },
                         )
@@ -100,9 +112,14 @@ fun BlockedSettingsRoute(
                 if (state.videos.isEmpty()) {
                     item { EmptyRow(stringResource(R.string.settings_blocked_empty_videos)) }
                 } else {
-                    items(state.videos, key = { "vid-${it.url}" }) { item ->
+                    items(
+                        state.videos,
+                        key = { "vid-${it.url}" },
+                        contentType = { "blocked-video" },
+                    ) { item ->
                         BlockedRow(
                             item = item,
+                            serverBaseUrl = serverBaseUrl,
                             avatarShape = MaterialTheme.shapes.small,
                             onUnblock = { viewModel.unblockVideo(item.url) },
                         )
@@ -189,6 +206,7 @@ private fun EmptyRow(text: String) {
 @Composable
 private fun BlockedRow(
     item: BlockedItem,
+    serverBaseUrl: String?,
     avatarShape: androidx.compose.ui.graphics.Shape,
     onUnblock: () -> Unit,
 ) {
@@ -208,7 +226,7 @@ private fun BlockedRow(
             ) {
                 if (item.thumbnailUrl.isNotBlank()) {
                     AsyncImage(
-                        model = item.thumbnailUrl,
+                        model = buildImageUrl(serverBaseUrl, item.thumbnailUrl),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize(),

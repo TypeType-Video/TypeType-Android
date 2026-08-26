@@ -30,8 +30,6 @@ internal fun PrivacyFailureCard(
     onDismiss: () -> Unit,
 ) {
     val title = when (action) {
-        PrivacyFailureAction.LoadSearchHistory ->
-            stringResource(R.string.settings_privacy_status_search_count)
         PrivacyFailureAction.LoadSubscriptions ->
             stringResource(R.string.settings_privacy_status_subscription_count)
         PrivacyFailureAction.LoadTrackingPreference ->

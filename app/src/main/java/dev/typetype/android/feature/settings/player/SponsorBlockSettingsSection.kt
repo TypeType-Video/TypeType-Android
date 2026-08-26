@@ -67,7 +67,11 @@ internal fun LazyListScope.sponsorBlockSettingsItems(
                 },
             )
         }
-        items(SPONSOR_BLOCK_CATEGORIES.size, key = { "sponsor-${SPONSOR_BLOCK_CATEGORIES[it].key}" }) {
+        items(
+            SPONSOR_BLOCK_CATEGORIES.size,
+            key = { "sponsor-${SPONSOR_BLOCK_CATEGORIES[it].key}" },
+            contentType = { "sponsor-category" },
+        ) {
             val category = SPONSOR_BLOCK_CATEGORIES[it]
             DropdownRow(
                 title = stringResource(category.labelResource),

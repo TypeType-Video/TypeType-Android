@@ -20,8 +20,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
@@ -100,6 +104,7 @@ fun PlayerSettingsScreen(
     onNavigateBack: () -> Unit,
     onAction: (PlayerSettingsAction) -> Unit,
 ) {
+    var advancedExpanded by rememberSaveable { mutableStateOf(false) }
     val codecOptions = listOf(
         RECOMMENDED_CODEC_KEY to stringResource(R.string.playback_options_smart),
         AV1_CODEC_KEY to stringResource(R.string.playback_options_codec_av1),
@@ -258,12 +263,18 @@ fun PlayerSettingsScreen(
                             onCheckedChange = { onAction(PlayerSettingsAction.SetPreferOriginalLanguage(it)) },
                         )
                     }
-                    captionStyleSettingsItems(state = state, onAction = onAction)
+                    if (advancedExpanded) {
+                        captionStyleSettingsItems(state = state, onAction = onAction)
+                    }
                 }
 
                 item { Spacer(Modifier.size(4.dp)) }
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_default_service)) }
-                items(SERVICES.size, key = { i -> "svc-${SERVICES[i].id}" }) { i ->
+                items(
+                    SERVICES.size,
+                    key = { i -> "svc-${SERVICES[i].id}" },
+                    contentType = { "player-service" },
+                ) { i ->
                     val svc = SERVICES[i]
                     ServiceRow(
                         title = stringResource(svc.labelRes),
@@ -274,12 +285,28 @@ fun PlayerSettingsScreen(
                     )
                 }
 
-                sponsorBlockSettingsItems(state = state, onAction = onAction)
-
-                item { Spacer(Modifier.size(4.dp)) }
-                danmakuSettingsItems(state = state, onAction = onAction)
-
-                playerGestureSettingsItems(state = state, onAction = onAction)
+                item {
+                    TextButton(
+                        onClick = { advancedExpanded = !advancedExpanded },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            stringResource(
+                                if (advancedExpanded) {
+                                    R.string.settings_player_advanced_hide
+                                } else {
+                                    R.string.settings_player_advanced_show
+                                },
+                            ),
+                        )
+                    }
+                }
+                if (advancedExpanded) {
+                    sponsorBlockSettingsItems(state = state, onAction = onAction)
+                    item { Spacer(Modifier.size(4.dp)) }
+                    danmakuSettingsItems(state = state, onAction = onAction)
+                    playerGestureSettingsItems(state = state, onAction = onAction)
+                }
             }
         }
     }
