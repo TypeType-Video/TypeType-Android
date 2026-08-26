@@ -20,6 +20,7 @@ data class PipePipeRestoreSummary(
 
 enum class TypeTypeBackupCategory(val wireName: String) {
     Subscriptions("subscriptions"),
+    SubscriptionGroups("subscriptionGroups"),
     History("history"),
     Playlists("playlists"),
     WatchLater("watchLater"),
