@@ -27,7 +27,7 @@ class NotificationsBadgeViewModel @Inject constructor(
 
     val state = repository.observeBadge().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
         initialValue = NotificationBadge(),
     )
 
@@ -60,6 +60,7 @@ class NotificationsBadgeViewModel @Inject constructor(
     }
 
     private companion object {
+        const val STOP_TIMEOUT_MILLIS = 5_000L
         const val MIN_REFRESH_INTERVAL_NANOS = 1_000_000_000L
     }
 }
