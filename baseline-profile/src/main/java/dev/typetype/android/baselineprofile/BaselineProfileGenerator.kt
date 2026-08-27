@@ -26,6 +26,7 @@ class BaselineProfileGenerator {
         val STARTUP_RULE = Regex(
             "^[HSP]*Ldev/typetype/android/" +
                 "(MainActivity|MainViewModel|TypeTypeApp|AppShellKt|AppNavHostKt|" +
+                "DefaultLandingRouteKt|StartupLandingStore|AccessTokenStore|" +
                 "SetupNavigationKt|" +
                 "Hilt_MainActivity|Hilt_TypeTypeApp)(\\$|;)",
         )
