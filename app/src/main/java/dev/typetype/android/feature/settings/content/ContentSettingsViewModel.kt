@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.error.UserErrorMapper
+import dev.typetype.android.data.account.ActiveAccountScope
+import dev.typetype.android.data.preferences.StartupLandingStore
 import dev.typetype.android.domain.usersettings.UserSettings
 import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import javax.inject.Inject
@@ -20,6 +22,8 @@ import kotlinx.coroutines.launch
 class ContentSettingsViewModel @Inject constructor(
     private val repository: UserSettingsRepository,
     private val errorMapper: UserErrorMapper,
+    private val activeAccountScope: ActiveAccountScope,
+    private val startupLandingStore: StartupLandingStore,
 ) : ViewModel() {
     private val feedback = MutableStateFlow(ContentSettingsFeedback())
 
@@ -62,7 +66,13 @@ class ContentSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             feedback.update { it.copy(isUpdating = true, errorMessage = null, errorRequestId = null) }
             repository.update { it.updatedBy(action) }.fold(
-                onSuccess = { feedback.update { it.copy(isUpdating = false) } },
+                onSuccess = {
+                    if (action is ContentSettingsAction.SetDefaultLandingPage) {
+                        val scope = activeAccountScope.require()
+                        startupLandingStore.setLandingPage(scope, action.page)
+                    }
+                    feedback.update { it.copy(isUpdating = false) }
+                },
                 onFailure = { failure -> showFailure(failure, isUpdating = false) },
             )
         }

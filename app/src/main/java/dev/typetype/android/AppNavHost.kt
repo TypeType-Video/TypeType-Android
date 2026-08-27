@@ -63,8 +63,7 @@ import kotlinx.coroutines.flow.collectLatest
 fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
     val navController: NavHostController = rememberNavController()
     val playerHostController = remember { mainViewModel.playerHostController }
-    val serverBaseUrl by mainViewModel.currentServerBaseUrl.collectAsStateWithLifecycle()
-    val currentServerId by mainViewModel.currentServerId.collectAsStateWithLifecycle()
+    val currentServer by mainViewModel.currentServer.collectAsStateWithLifecycle()
     val currentProfile by mainViewModel.currentProfile.collectAsStateWithLifecycle()
     val appPreferences by mainViewModel.preferences.collectAsStateWithLifecycle()
     val navigationTransitionMillis = when (appPreferences.appearanceMotion) {
@@ -118,10 +117,10 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
         navController.navigateToChannel(channelUrl)
     }
 
-    val avatarUrl = remember(currentProfile, serverBaseUrl) {
+    val avatarUrl = remember(currentProfile, currentServer) {
         val p = currentProfile ?: return@remember null
         resolveProfileAvatarUrl(
-            serverBaseUrl = serverBaseUrl,
+            serverBaseUrl = currentServer?.baseUrl,
             avatarUrl = p.avatarUrl,
             avatarType = p.avatarType,
             avatarCode = p.avatarCode,
@@ -131,7 +130,7 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
     val avatarFallback = currentProfile?.publicUsername?.firstOrNull()?.toString()
 
     CompositionLocalProvider(
-        LocalServerBaseUrl provides serverBaseUrl,
+        LocalServerBaseUrl provides currentServer?.baseUrl,
         LocalDeArrowBranding provides deArrowEnvironment,
     ) {
     AppShell(
@@ -262,7 +261,7 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
                     onAddInstance = { navController.navigate(AddServerRoute) },
                 )
             }
-            profileDestinations(navController, currentServerId)
+            profileDestinations(navController, currentServer?.id)
             composable<AppearanceRoute> {
                 AppearanceRouteScreen(
                     onNavigateBack = { navController.popBackStack() },
