@@ -22,8 +22,16 @@ internal fun playerCommentsFlow(
     .flatMapLatest { url ->
         if (url.isNullOrBlank()) flowOf(PagingData.empty())
         else Pager(
-            config = PagingConfig(pageSize = 30, prefetchDistance = 10, enablePlaceholders = false),
+            config = COMMENTS_PAGING_CONFIG,
             pagingSourceFactory = { CommentsPagingSource(repository, url) },
         ).flow
     }
     .cachedIn(scope)
+
+internal val COMMENTS_PAGING_CONFIG = PagingConfig(
+    pageSize = 30,
+    initialLoadSize = 60,
+    prefetchDistance = 10,
+    maxSize = 240,
+    enablePlaceholders = false,
+)
