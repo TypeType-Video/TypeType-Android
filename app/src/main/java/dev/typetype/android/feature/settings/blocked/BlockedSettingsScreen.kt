@@ -2,6 +2,7 @@ package dev.typetype.android.feature.settings.blocked
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -33,7 +35,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,6 +58,7 @@ import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.actions.BlockedItem
 import dev.typetype.android.domain.actions.BlockedKeyword
 import dev.typetype.android.feature.settings.SettingsDetailTopBar
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 fun BlockedSettingsRoute(
@@ -66,6 +71,26 @@ fun BlockedSettingsRoute(
     var videoLimit by remember { mutableIntStateOf(BLOCKED_PAGE_SIZE) }
     val visibleChannels = state.channels.take(channelLimit)
     val visibleVideos = state.videos.take(videoLimit)
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(listState, state.channels, state.videos) {
+        snapshotFlow {
+            val layoutInfo = listState.layoutInfo
+            val lastIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
+            lastIndex >= layoutInfo.totalItemsCount - 2
+        }.distinctUntilChanged().collect { isNearEnd ->
+            if (!isNearEnd) return@collect
+
+            channelLimit = minOf(
+                channelLimit + BLOCKED_PAGE_SIZE,
+                maxOf(state.channels.size, BLOCKED_PAGE_SIZE),
+            )
+            videoLimit = minOf(
+                videoLimit + BLOCKED_PAGE_SIZE,
+                maxOf(state.videos.size, BLOCKED_PAGE_SIZE),
+            )
+        }
+    }
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
             SettingsDetailTopBar(
@@ -73,6 +98,7 @@ fun BlockedSettingsRoute(
                 onNavigateBack = onNavigateBack,
             )
             LazyColumn(
+                state = listState,
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -116,9 +142,7 @@ fun BlockedSettingsRoute(
                     }
                     if (state.channels.size > channelLimit) {
                         item(key = "load-more-channels") {
-                            LoadMoreRow {
-                                channelLimit += BLOCKED_PAGE_SIZE
-                            }
+                            Box(modifier = Modifier.height(BLOCKED_LOAD_SENTINEL_DP)) {}
                         }
                     }
                 }
@@ -141,25 +165,11 @@ fun BlockedSettingsRoute(
                     }
                     if (state.videos.size > videoLimit) {
                         item(key = "load-more-videos") {
-                            LoadMoreRow {
-                                videoLimit += BLOCKED_PAGE_SIZE
-                            }
+                            Box(modifier = Modifier.height(BLOCKED_LOAD_SENTINEL_DP)) {}
                         }
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun LoadMoreRow(onClick: () -> Unit) {
-    Box(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        TextButton(onClick = onClick) {
-            Text(stringResource(R.string.settings_blocked_load_more))
         }
     }
 }
@@ -222,6 +232,7 @@ private fun BlockedKeywordRow(item: BlockedKeyword, onUnblock: () -> Unit) {
 }
 
 private const val BLOCKED_PAGE_SIZE = 50
+private val BLOCKED_LOAD_SENTINEL_DP = 48.dp
 
 @Composable
 private fun EmptyRow(text: String) {
