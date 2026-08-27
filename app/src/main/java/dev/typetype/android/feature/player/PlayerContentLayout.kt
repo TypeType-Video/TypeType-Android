@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.remember
@@ -24,6 +25,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 
 internal const val PLAYER_SINGLE_COLUMN_LAYOUT_TAG = "player_single_column_layout"
@@ -53,7 +55,7 @@ internal fun playerContentLayoutMode(
 internal fun PlayerContentLayout(
     isFullscreen: Boolean,
     isInPip: Boolean = false,
-    hostTransitionProgress: Float = 0f,
+    hostTransitionProgress: () -> Float = { 0f },
     modifier: Modifier = Modifier,
     viewport: @Composable (Modifier) -> Unit,
     details: @Composable (Modifier) -> Unit,
@@ -64,11 +66,25 @@ internal fun PlayerContentLayout(
             currentViewport(viewportModifier)
         }
     }
+    val density = LocalDensity.current
+    val miniWidthPx = with(density) { MINI_VIDEO_WIDTH.toPx() }
+    val miniHeightPx = with(density) { MINI_VIDEO_HEIGHT.toPx() }
+    val miniStartPx = with(density) { MINI_VIDEO_START.toPx() }
+    val miniTopPx = with(density) { MINI_VIDEO_TOP.toPx() }
+    val detailsHidden by remember(hostTransitionProgress) {
+        derivedStateOf { hostTransitionProgress() >= 0.99f }
+    }
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         when (playerContentLayoutMode(maxWidth.value, maxHeight.value, isFullscreen, isInPip)) {
             PlayerContentLayoutMode.Fullscreen -> retainedViewport(
                 Modifier
-                    .playerViewportTransition(hostTransitionProgress)
+                    .playerViewportTransition(
+                        progress = hostTransitionProgress,
+                        miniWidthPx = miniWidthPx,
+                        miniHeightPx = miniHeightPx,
+                        miniStartPx = miniStartPx,
+                        miniTopPx = miniTopPx,
+                    )
                     .fillMaxSize(),
             )
             PlayerContentLayoutMode.SingleColumn -> {
@@ -80,7 +96,13 @@ internal fun PlayerContentLayout(
                 ) {
                     retainedViewport(
                         Modifier
-                            .playerViewportTransition(hostTransitionProgress)
+                            .playerViewportTransition(
+                                progress = hostTransitionProgress,
+                                miniWidthPx = miniWidthPx,
+                                miniHeightPx = miniHeightPx,
+                                miniStartPx = miniStartPx,
+                                miniTopPx = miniTopPx,
+                            )
                             .fillMaxWidth()
                             .aspectRatio(VIDEO_ASPECT_RATIO)
                             .testTag(PLAYER_VIEWPORT_TAG),
@@ -88,7 +110,8 @@ internal fun PlayerContentLayout(
                     details(
                         Modifier
                             .fillMaxWidth()
-                            .playerDetailsTransition(hostTransitionProgress),
+                            .playerDetailsTransition(hostTransitionProgress)
+                            .then(if (detailsHidden) Modifier.clearAndSetSemantics { } else Modifier),
                     )
                 }
             }
@@ -106,7 +129,13 @@ internal fun PlayerContentLayout(
                     ) {
                         retainedViewport(
                             Modifier
-                                .playerViewportTransition(hostTransitionProgress)
+                                .playerViewportTransition(
+                                    progress = hostTransitionProgress,
+                                    miniWidthPx = miniWidthPx,
+                                    miniHeightPx = miniHeightPx,
+                                    miniStartPx = miniStartPx,
+                                    miniTopPx = miniTopPx,
+                                )
                                 .fillMaxWidth()
                                 .aspectRatio(VIDEO_ASPECT_RATIO)
                                 .testTag(PLAYER_VIEWPORT_TAG),
@@ -117,7 +146,8 @@ internal fun PlayerContentLayout(
                             .weight(DETAILS_PANE_WEIGHT)
                             .fillMaxHeight()
                             .verticalScroll(rememberScrollState())
-                            .playerDetailsTransition(hostTransitionProgress),
+                            .playerDetailsTransition(hostTransitionProgress)
+                            .then(if (detailsHidden) Modifier.clearAndSetSemantics { } else Modifier),
                     )
                 }
             }
@@ -125,31 +155,27 @@ internal fun PlayerContentLayout(
     }
 }
 
-private fun Modifier.playerViewportTransition(progress: Float): Modifier = composed {
-    val fraction = progress.coerceIn(0f, 1f)
-    val density = LocalDensity.current
-    val miniWidthPx = with(density) { MINI_VIDEO_WIDTH.toPx() }
-    val miniHeightPx = with(density) { MINI_VIDEO_HEIGHT.toPx() }
-    val miniStartPx = with(density) { MINI_VIDEO_START.toPx() }
-    val miniTopPx = with(density) { MINI_VIDEO_TOP.toPx() }
-    val shape = RoundedCornerShape(MINI_VIDEO_CORNER * fraction)
-    graphicsLayer {
-        val targetScaleX = miniWidthPx / size.width.coerceAtLeast(1f)
-        val targetScaleY = miniHeightPx / size.height.coerceAtLeast(1f)
-        scaleX = 1f + (targetScaleX - 1f) * fraction
-        scaleY = 1f + (targetScaleY - 1f) * fraction
-        translationX = miniStartPx * fraction
-        translationY = miniTopPx * fraction
-        transformOrigin = TransformOrigin(0f, 0f)
-        this.shape = shape
-        clip = fraction > 0f
-    }
+private fun Modifier.playerViewportTransition(
+    progress: () -> Float,
+    miniWidthPx: Float,
+    miniHeightPx: Float,
+    miniStartPx: Float,
+    miniTopPx: Float,
+): Modifier = graphicsLayer {
+    val fraction = progress().coerceIn(0f, 1f)
+    val targetScaleX = miniWidthPx / size.width.coerceAtLeast(1f)
+    val targetScaleY = miniHeightPx / size.height.coerceAtLeast(1f)
+    scaleX = 1f + (targetScaleX - 1f) * fraction
+    scaleY = 1f + (targetScaleY - 1f) * fraction
+    translationX = miniStartPx * fraction
+    translationY = miniTopPx * fraction
+    transformOrigin = TransformOrigin(0f, 0f)
+    this.shape = RoundedCornerShape(MINI_VIDEO_CORNER * fraction)
+    clip = fraction > 0f
 }
 
-private fun Modifier.playerDetailsTransition(progress: Float): Modifier {
-    val fraction = progress.coerceIn(0f, 1f)
-    return graphicsLayer { alpha = 1f - fraction }
-        .then(if (fraction >= 0.99f) Modifier.clearAndSetSemantics { } else Modifier)
+private fun Modifier.playerDetailsTransition(progress: () -> Float): Modifier = graphicsLayer {
+    alpha = 1f - progress().coerceIn(0f, 1f)
 }
 
 private const val VIDEO_ASPECT_RATIO = 16f / 9f

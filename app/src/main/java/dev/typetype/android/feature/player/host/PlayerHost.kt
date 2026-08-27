@@ -158,10 +158,10 @@ fun PlayerHost(
                         onClose = onClosePlayback,
                     )
                 },
-                expandedContent = { transition ->
+                expandedContent = { transitionProgress ->
                     PlayerRouteScreen(
                         isFullscreen = isFullscreen,
-                        hostTransitionProgress = transition.progress,
+                        hostTransitionProgress = transitionProgress,
                         onFullscreenChange = requestFullscreen,
                         onNavigateBack = { controller.collapseExpanded() },
                         onOpenAccounts = {

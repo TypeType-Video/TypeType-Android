@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -77,7 +78,7 @@ internal fun PlayerSurfaceBox(
     captionStyles: CaptionStyles = CaptionStyles(),
     danmakuState: PlayerDanmakuState = PlayerDanmakuState(),
     onDanmakuAction: (PlayerDanmakuAction) -> Unit = {},
-    hostTransitionProgress: Float = 0f,
+    hostTransitionProgress: () -> Float = { 0f },
 ) {
     val activity = LocalActivity.current
     val context = LocalContext.current
@@ -136,8 +137,15 @@ internal fun PlayerSurfaceBox(
 
     val presentationState = rememberPresentationState(player, keepContentOnReset = true)
     val surfaceKey = rememberPlayerSurfaceKey(stream.id)
-    val transitionProgress = hostTransitionProgress.coerceIn(0f, 1f)
-    val chromeModifier = Modifier.graphicsLayer { alpha = 1f - transitionProgress }
+    val chromeModifier = Modifier.graphicsLayer {
+        alpha = 1f - hostTransitionProgress().coerceIn(0f, 1f)
+    }
+    val gesturesVisible by remember(hostTransitionProgress) {
+        derivedStateOf { hostTransitionProgress() < 0.01f }
+    }
+    val controlsAllowedByProgress by remember(hostTransitionProgress) {
+        derivedStateOf { hostTransitionProgress() < 0.99f }
+    }
     PlayerFullscreenExitGestureBox(
         enabled = isFullscreen && playbackStatus.acceptsInput && !isInPip,
         onGestureFeedback = {
@@ -195,7 +203,7 @@ internal fun PlayerSurfaceBox(
         )
 
         if (!isInPip && playbackStatus.acceptsInput && !accessibleControls &&
-            transitionProgress < 0.01f
+            gesturesVisible
         ) {
             PlayerGestureLayer(
                 player = player,
@@ -239,7 +247,7 @@ internal fun PlayerSurfaceBox(
         }
 
         AnimatedVisibility(
-            visible = transitionProgress < 0.99f &&
+            visible = controlsAllowedByProgress &&
                 (controlsVisible || accessibleControls) &&
                 !isInPip && playbackStatus.acceptsInput,
             enter = fadeIn(),
