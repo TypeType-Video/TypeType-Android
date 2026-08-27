@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.androidx.navigation.safeargs) apply false
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.compose.compiler) apply false
+    alias(libs.plugins.aboutlibraries) apply false
 }
 
 tasks.register<Delete>("clean") {

@@ -18,6 +18,7 @@ import dev.typetype.android.core.ui.branding.DeArrowBrandingViewModel
 import dev.typetype.android.core.ui.branding.LocalDeArrowBranding
 import dev.typetype.android.core.ui.components.resolveProfileAvatarUrl
 import dev.typetype.android.core.ui.navigation.AboutRoute
+import dev.typetype.android.core.ui.navigation.LicensesRoute
 import dev.typetype.android.core.ui.navigation.AccountsRoute
 import dev.typetype.android.core.ui.navigation.AddServerRoute
 import dev.typetype.android.core.ui.navigation.BlockedSettingsRoute
@@ -300,6 +301,7 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
             composable<AboutRoute> {
                 AboutScreen(
                     onNavigateBack = { navController.popBackStack() },
+                    onOpenLicenses = { navController.navigate(LicensesRoute) },
                 )
             }
             channelAndPodcastDestinations(

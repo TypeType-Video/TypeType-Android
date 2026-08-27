@@ -1,6 +1,7 @@
 package dev.typetype.android.feature.settings.about
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -39,6 +41,7 @@ import dev.typetype.android.feature.settings.SettingsDetailTopBar
 @Composable
 fun AboutScreen(
     onNavigateBack: () -> Unit,
+    onOpenLicenses: () -> Unit,
     viewModel: AboutViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -70,6 +73,14 @@ fun AboutScreen(
                     }
                 }
                 item { Spacer(Modifier.size(8.dp)) }
+                item {
+                    InfoCard {
+                        LicenseEntry(
+                            label = stringResource(R.string.settings_licenses_title),
+                            onClick = onOpenLicenses,
+                        )
+                    }
+                }
                 item {
                     AboutVersionsSection(
                         versions = state.componentVersions,
@@ -152,6 +163,27 @@ private fun InfoCard(content: @Composable ColumnScope.() -> Unit) {
     ) {
         content()
     }
+}
+
+@Composable
+private fun LicenseEntry(
+    label: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+    }
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 }
 
 @Composable

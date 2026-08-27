@@ -271,6 +271,7 @@
     <string name="download_item_video_quality">Video up to %1$dp</string>
     <string name="download_item_audio_only">Audio only</string>
     <string name="settings_about_title">About</string>
+    <string name="settings_licenses_title">Open source licenses</string>
     <string name="third_party_notice_title">Third-party notice</string>
     <string name="third_party_komi_store_name">Komi Store</string>
     <string name="third_party_komi_store_description">Appearance and theme patterns are inspired by Komi Store, licensed under Apache-2.0.</string>
