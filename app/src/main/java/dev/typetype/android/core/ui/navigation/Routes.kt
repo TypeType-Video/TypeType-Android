@@ -75,6 +75,9 @@ data object BlockedSettingsRoute
 data object AboutRoute
 
 @Serializable
+data object LicensesRoute
+
+@Serializable
 data class PlayerRoute(val videoUrl: String)
 
 @Serializable
