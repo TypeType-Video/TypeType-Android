@@ -21,7 +21,7 @@ class AccessTokenStore @Inject constructor(
 ) : ScopedAccessTokenStore {
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    private val aead: Aead = run {
+    private val aead: Aead by lazy {
         AeadConfig.register()
         AndroidKeysetManager.Builder()
             .withSharedPref(context, KEYSET_NAME, PREFS_NAME)
@@ -43,6 +43,12 @@ class AccessTokenStore @Inject constructor(
     @Synchronized
     override fun getAccessToken(serverId: String, accountId: String): String? =
         readToken(serverId, accountId)
+
+    @Synchronized
+    fun hasAccessToken(serverId: String, accountId: String): Boolean =
+        prefs.contains(tokenKey(serverId, accountId)) ||
+            prefs.contains(serverTokenKey(serverId)) ||
+            prefs.contains(KEY_ACCESS_TOKEN)
 
     @Synchronized
     fun setAccessToken(serverId: String, token: String?) {
@@ -94,7 +100,7 @@ class AccessTokenStore @Inject constructor(
     }
 
     private fun migrateServerToken(serverId: String, accountId: String): String? {
-        val oldKey = "access_token_$serverId"
+        val oldKey = serverTokenKey(serverId)
         val encoded = prefs.getString(oldKey, null) ?: return null
         val token = decrypt(encoded, "typetype.android:$serverId".toByteArray(Charsets.UTF_8))
         prefs.edit { remove(oldKey) }
@@ -121,6 +127,8 @@ class AccessTokenStore @Inject constructor(
             .joinToString(separator = "") { byte -> "%02x".format(byte.toInt() and 0xff) }
         return "access_token_$digest"
     }
+
+    private fun serverTokenKey(serverId: String): String = "access_token_$serverId"
 
     private fun associatedData(serverId: String, accountId: String): ByteArray =
         "typetype.android:$serverId:$accountId".toByteArray(Charsets.UTF_8)
