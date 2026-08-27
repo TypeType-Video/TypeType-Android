@@ -234,10 +234,10 @@ class PlayerHostMotionLayoutTest {
                     },
                     onProgressChange = {},
                     miniContent = { Text("Mini controls") },
-                    expandedContent = { transition ->
+                    expandedContent = { transitionProgress ->
                         PlayerContentLayout(
                             isFullscreen = false,
-                            hostTransitionProgress = transition.progress,
+                            hostTransitionProgress = transitionProgress,
                             modifier = Modifier.fillMaxSize(),
                             viewport = { modifier ->
                                 Box(modifier) {
@@ -254,7 +254,7 @@ class PlayerHostMotionLayoutTest {
                                             viewportWidths += it.width
                                         },
                                     )
-                                    if (transition.progress < 0.01f) {
+                                    if (transitionProgress() < 0.01f) {
                                         PlayerGestureLayer(
                                             player = player,
                                             state = remember { PlayerGestureState() },

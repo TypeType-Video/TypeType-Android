@@ -78,10 +78,10 @@ class PlayerFullscreenGestureIntegrationTest {
                     },
                     onProgressChange = {},
                     miniContent = { Box(Modifier.testTag(MINI_CONTENT_TAG)) },
-                    expandedContent = { transition ->
+                    expandedContent = { transitionProgress ->
                         PlayerContentLayout(
                             isFullscreen = isFullscreen,
-                            hostTransitionProgress = transition.progress,
+                            hostTransitionProgress = transitionProgress,
                             viewport = { viewportModifier ->
                                 Box(viewportModifier) {
                                     PlayerGestureLayer(

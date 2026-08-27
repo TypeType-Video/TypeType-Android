@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -21,8 +22,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.platform.LocalContext
 import androidx.paging.PagingData
 import dev.typetype.android.domain.comments.Comment
@@ -67,7 +71,7 @@ fun LoadedPlayer(
     prepareSabrPlayback: PrepareSabrPlayback,
     loadSubtitleCues: LoadSubtitleCues,
     isFullscreen: Boolean,
-    hostTransitionProgress: Float = 0f,
+    hostTransitionProgress: () -> Float = { 0f },
     onFullscreenChange: (Boolean) -> Unit,
     onNavigateBack: () -> Unit,
     onOpenAccounts: () -> Unit,
@@ -186,14 +190,23 @@ fun LoadedPlayer(
     )
 
     val expandedTopPadding = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding()
+    val expandedTopPaddingPx = with(LocalDensity.current) { expandedTopPadding.toPx() }
+    val autoplayVisible by remember(hostTransitionProgress) {
+        derivedStateOf { hostTransitionProgress() < 0.01f }
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .then(
-                if (isFullscreen) Modifier else Modifier.padding(
-                    top = expandedTopPadding * (1f - hostTransitionProgress.coerceIn(0f, 1f)),
-                ),
+                if (isFullscreen) {
+                    Modifier
+                } else {
+                    Modifier.playerTopProgressPadding(
+                        maxTopPx = expandedTopPaddingPx,
+                        progress = hostTransitionProgress,
+                    )
+                }
             ),
     ) {
         PlayerContentLayout(
@@ -260,7 +273,7 @@ fun LoadedPlayer(
                     } else {
                         CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     }
-                    autoplayCountdown?.takeIf { hostTransitionProgress < 0.01f }?.let {
+                    autoplayCountdown?.takeIf { autoplayVisible }?.let {
                         AutoplayCountdownOverlay(
                             state = it,
                             modifier = Modifier.fillMaxSize(),
@@ -308,4 +321,24 @@ fun LoadedPlayer(
         onDismissDownload = { downloadPickerVisible = false },
         onAction = onAction,
     )
+}
+
+private fun Modifier.playerTopProgressPadding(
+    maxTopPx: Float,
+    progress: () -> Float,
+): Modifier = layout { measurable, constraints ->
+    val topPx = (maxTopPx * (1f - progress().coerceIn(0f, 1f))).roundToInt()
+    val maxHeight = if (constraints.hasBoundedHeight) {
+        (constraints.maxHeight - topPx).coerceAtLeast(0)
+    } else {
+        constraints.maxHeight
+    }
+    val childConstraints = constraints.copy(
+        minHeight = constraints.minHeight.coerceAtMost(maxHeight),
+        maxHeight = maxHeight,
+    )
+    val placeable = measurable.measure(childConstraints)
+    layout(placeable.width, placeable.height + topPx) {
+        placeable.placeRelative(0, topPx)
+    }
 }

@@ -64,10 +64,10 @@ class PlayerHostBenchmarkActivity : ComponentActivity() {
                         },
                         onProgressChange = {},
                         miniContent = { Text("Benchmark mini player") },
-                        expandedContent = { transition ->
+                        expandedContent = { transitionProgress ->
                             PlayerContentLayout(
                                 isFullscreen = false,
-                                hostTransitionProgress = transition.progress,
+                                hostTransitionProgress = transitionProgress,
                                 modifier = Modifier.fillMaxSize(),
                                 viewport = { modifier ->
                                     AndroidView(
