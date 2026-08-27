@@ -154,7 +154,6 @@ internal fun ExportPanel(
                         emphasized = true,
                         onClick = onDownloadArtifact,
                     )
-                    PanelButton(stringResource(R.string.portability_new_export), onClick = onResetJob)
                     PanelButton(
                         stringResource(R.string.portability_download_report),
                         enabled = true,
