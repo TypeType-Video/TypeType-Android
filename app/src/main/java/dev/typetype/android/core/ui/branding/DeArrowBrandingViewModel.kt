@@ -20,10 +20,12 @@ class DeArrowBrandingViewModel @Inject constructor(
     val settings: StateFlow<UserSettings> = userSettingsRepository.observe()
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.Eagerly,
+            started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
             initialValue = UserSettings(),
         )
 
     suspend fun load(sourceUrl: String, durationSeconds: Long): Result<DeArrowItem?> =
         deArrowRepository.load(sourceUrl, durationSeconds)
 }
+
+private const val STOP_TIMEOUT_MILLIS = 5_000L
