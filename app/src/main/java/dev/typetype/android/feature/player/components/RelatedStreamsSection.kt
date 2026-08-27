@@ -1,7 +1,9 @@
 package dev.typetype.android.feature.player.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -15,7 +17,11 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -37,6 +43,8 @@ fun RelatedStreamsSection(
     val visibleVideos = videos.filterNot { menuScope.isHidden(it) }
     if (visibleVideos.isEmpty()) return
     var visibleCount by remember(videos) { mutableIntStateOf(INITIAL_RELATED_VIDEO_COUNT) }
+    val view = LocalView.current
+    var loaderNearViewport by remember(videos) { mutableStateOf(false) }
     val videosToRender = visibleVideos.take(visibleCount)
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -71,15 +79,25 @@ fun RelatedStreamsSection(
             )
         }
         if (visibleVideos.size > visibleCount) {
-            TextButton(onClick = {
-                visibleCount = (visibleCount + RELATED_VIDEO_PAGE_SIZE)
-                    .coerceAtMost(visibleVideos.size)
-            }) {
-                Text(stringResource(R.string.player_show_more_recommendations))
+            LaunchedEffect(loaderNearViewport, visibleCount) {
+                if (loaderNearViewport && visibleVideos.size > visibleCount) {
+                    visibleCount = (visibleCount + RELATED_VIDEO_PAGE_SIZE)
+                        .coerceAtMost(visibleVideos.size)
+                }
             }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .onGloballyPositioned { layoutCoordinates ->
+                        loaderNearViewport = layoutCoordinates.positionInRoot().y <=
+                            view.height + RELATED_AUTO_LOAD_MARGIN_PX
+                    },
+            )
         }
     }
 }
 
 private const val INITIAL_RELATED_VIDEO_COUNT = 6
 private const val RELATED_VIDEO_PAGE_SIZE = 12
+private const val RELATED_AUTO_LOAD_MARGIN_PX = 420f
