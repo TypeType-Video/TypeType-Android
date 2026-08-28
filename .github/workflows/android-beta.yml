@@ -12,7 +12,6 @@ on:
       - '*.gradle.kts'
       - 'gradle.properties'
       - 'settings.gradle.kts'
-      - '.github/workflows/android-beta.yml'
   workflow_dispatch:
 
 permissions:
