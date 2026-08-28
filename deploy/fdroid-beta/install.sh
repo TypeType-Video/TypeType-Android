@@ -10,6 +10,7 @@ source_dir="$(cd "$(dirname "$0")" && pwd)"
 signing_dir=/srv/fdroid-beta/signing
 secrets_dir=/srv/fdroid-beta/secrets
 public_dir=/srv/fdroid-beta/public
+image=typetype-fdroidserver:beta-patched
 
 install -d -o debian -g debian -m 0755 /srv/fdroid-beta
 install -d -o debian -g debian -m 0700 "$signing_dir/state" "$secrets_dir" "$signing_dir/tmp"
@@ -17,6 +18,8 @@ install -d -o debian -g debian -m 0755 "$public_dir"
 install -d -o debian -g debian -m 0755 "$signing_dir/metadata/dev.typetype.android/en-US/changelogs"
 install -d -o debian -g debian -m 0755 "$signing_dir/repo"
 install -d -o debian -g debian -m 0755 "$signing_dir/repo/icons"
+
+docker build -t "$image" "$source_dir"
 
 install -o debian -g debian -m 0755 "$source_dir/sync-github-beta-release.sh" "$signing_dir/sync-github-beta-release.sh"
 install -o debian -g debian -m 0755 "$source_dir/webhook.py" "$signing_dir/typetype-fdroid-beta-webhook.py"

@@ -6,7 +6,7 @@ repo_dir=/srv/fdroid-beta/signing
 state_dir=$repo_dir/state
 public_dir=/srv/fdroid-beta/public
 github_repo=TypeType-Video/TypeType-Android
-image=registry.gitlab.com/fdroid/docker-executable-fdroidserver@sha256:2ad114edee50aad92fcc83fe7d801d8922780a021db070ae9f4c49f6f647c037
+image=typetype-fdroidserver:beta-patched
 
 exec 8>"$state_dir/sync.lock"
 flock 8
