@@ -68,8 +68,16 @@ Play Services.
 
 ### F-Droid
 
-Use the official TypeType F-Droid repository to install the app and receive
-stable updates:
+TypeType Android is one application distributed through two F-Droid channels:
+
+- **Stable** receives tested releases and is the recommended channel for normal
+  use.
+- **Beta** receives prerelease builds for testing newer changes.
+
+Both channels use the same application package and signing certificate, so they
+update the same TypeType installation instead of installing a second app. Add
+only Stable for normal use, or add both repositories to receive Beta updates
+when available. Choose a channel from the official TypeType F-Droid setup page:
 
 1. Open the [TypeType F-Droid setup page](https://typetype.video/fdroid/) on
    your Android device, or scan its QR code.
