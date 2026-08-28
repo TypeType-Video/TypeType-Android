@@ -12,6 +12,17 @@ on:
       - '*.gradle.kts'
       - 'gradle.properties'
       - 'settings.gradle.kts'
+  pull_request:
+    branches:
+      - beta
+    paths:
+      - 'app/**'
+      - 'player/**'
+      - 'baseline-profile/**'
+      - 'gradle/**'
+      - '*.gradle.kts'
+      - 'gradle.properties'
+      - 'settings.gradle.kts'
   workflow_dispatch:
 
 permissions:
@@ -172,6 +183,7 @@ jobs:
           retention-days: 30
 
       - name: Publish GitHub prerelease
+        if: ${{ github.event_name != 'pull_request' }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
