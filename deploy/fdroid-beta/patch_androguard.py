@@ -38,4 +38,11 @@ if new in source:
 source, replacements = pattern.subn(new, source, count=1)
 if replacements != 1:
     raise SystemExit("Expected Androguard resource parser block was not found")
+
+reserved_field = '''        if self.res1 != 0:
+            raise ResParserError("res1 must be zero!")
+'''
+if reserved_field not in source:
+    raise SystemExit("Expected Androguard type-spec check was not found")
+source = source.replace(reserved_field, "", 1)
 path.write_text(source, encoding="utf-8")

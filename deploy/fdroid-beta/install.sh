@@ -13,6 +13,7 @@ public_dir=/srv/fdroid-beta/public
 image=typetype-fdroidserver:beta-patched
 
 install -d -o debian -g debian -m 0755 /srv/fdroid-beta
+install -d -o debian -g debian -m 0755 "$signing_dir"
 install -d -o debian -g debian -m 0700 "$signing_dir/state" "$secrets_dir" "$signing_dir/tmp"
 install -d -o debian -g debian -m 0755 "$public_dir"
 install -d -o debian -g debian -m 0755 "$signing_dir/metadata/dev.typetype.android/en-US/changelogs"
@@ -60,6 +61,19 @@ repo_url: https://typetype.video/fdroid/android-beta/repo
 repo_name: TypeType Beta
 repo_description: Beta builds for the TypeType Android client.
 EOF
+fi
+
+if grep -q '^repo_icon:' "$signing_dir/config.yml"; then
+  sed -i 's#^repo_icon:.*#repo_icon: icon.png#' "$signing_dir/config.yml"
+else
+  printf '%s\n' 'repo_icon: icon.png' >> "$signing_dir/config.yml"
+fi
+
+stable_icon=/srv/fdroid/signing/metadata/dev.typetype.android/en-US/images/icon.png
+if [ -s "$stable_icon" ]; then
+  install -o debian -g debian -m 0644 "$stable_icon" \
+    "$signing_dir/metadata/dev.typetype.android/en-US/images/icon.png"
+  install -o debian -g debian -m 0644 "$stable_icon" "$signing_dir/icon.png"
 fi
 
 if [ ! -s "$signing_dir/metadata/dev.typetype.android.yml" ]; then

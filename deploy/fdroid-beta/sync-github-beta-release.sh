@@ -26,6 +26,10 @@ release_id="$(jq -er '.id' <<<"$release_json")"
 release_tag="$(jq -er '.tag_name' <<<"$release_json")"
 release_notes="$(jq -er '.body // ""' <<<"$release_json")"
 
+if [ -f "${state_dir}/published-beta-release-id" ] && [ "$(<"${state_dir}/published-beta-release-id")" = "$release_id" ]; then
+  exit 0
+fi
+
 mapfile -t apk_assets < <(
   jq -er '.assets[] | select(.name | endswith(".apk")) | "\(.id)\t\(.name)"' <<<"$release_json"
 )
@@ -134,8 +138,8 @@ else
 fi
 
 install -d -m 0755 "${repo_dir}/repo/icons"
-if [ -f "${repo_dir}/metadata/dev.typetype.android/en-US/images/icon.png" ]; then
-  install -m 0644 "${repo_dir}/metadata/dev.typetype.android/en-US/images/icon.png" "${repo_dir}/repo/icons/icon.png"
+if [ ! -s "${repo_dir}/icon.png" ] && [ -f "${repo_dir}/metadata/dev.typetype.android/en-US/images/icon.png" ]; then
+  install -m 0644 "${repo_dir}/metadata/dev.typetype.android/en-US/images/icon.png" "${repo_dir}/icon.png"
 fi
 
 docker run --rm --entrypoint python3 --user "$(id -u):$(id -g)" \
