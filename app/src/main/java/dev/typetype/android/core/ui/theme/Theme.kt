@@ -1,54 +1,129 @@
 package dev.typetype.android.core.ui.theme
 
+import android.os.Build
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.Shapes
+import androidx.compose.material3.Typography
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import dev.typetype.android.domain.preferences.AccentColor
-
-private fun darkSchemeFor(accent: Color, accentSoft: Color) = darkColorScheme(
-    primary = accent,
-    onPrimary = Zinc950,
-    primaryContainer = accent,
-    onPrimaryContainer = Zinc950,
-    secondary = accent,
-    onSecondary = White,
-    secondaryContainer = Zinc800,
-    onSecondaryContainer = Zinc100,
-    tertiary = accentSoft,
-    onTertiary = Zinc950,
-    background = Zinc950,
-    onBackground = Zinc100,
-    surface = Zinc900,
-    onSurface = Zinc100,
-    surfaceVariant = Zinc800,
-    onSurfaceVariant = Zinc400,
-    surfaceContainerHigh = Zinc800,
-    surfaceContainerHighest = Zinc700,
-    outline = Zinc800,
-    outlineVariant = Zinc700,
-    error = Red400,
-    onError = White,
-    errorContainer = Red500,
-    onErrorContainer = White,
-)
-
-private fun colorsFor(accentColor: AccentColor): Pair<Color, Color> = when (accentColor) {
-    AccentColor.Red -> AccentRed to Red300
-    AccentColor.Blue -> AccentBlue to Blue300
-    AccentColor.Yellow -> AccentYellow to Color(0xFFFDE68A)
-    AccentColor.Green -> AccentGreen to Color(0xFF86EFAC)
-    AccentColor.Purple -> AccentPurple to Color(0xFFE9D5FF)
-    AccentColor.Violet -> AccentViolet to Color(0xFFC4B5FD)
-    AccentColor.Monochrome -> AccentMonochrome to Zinc300
-    AccentColor.System -> AccentBlue to Blue300
-}
+import dev.typetype.android.domain.preferences.AppearanceFont
+import dev.typetype.android.domain.preferences.AppearanceMode
+import dev.typetype.android.domain.preferences.AppearancePersonality
+import dev.typetype.android.domain.preferences.AppearanceTheme
+import dev.typetype.android.domain.preferences.AppPreferences
+import dev.typetype.android.core.ui.components.LocalAnimatedStatePlayback
 
 @Composable
 fun TypeTypeTheme(
-    accentColor: AccentColor = AccentColor.Blue,
+    preferences: AppPreferences = AppPreferences(),
     content: @Composable () -> Unit,
 ) {
-    val (accent, accentSoft) = colorsFor(accentColor)
-    MaterialTheme(colorScheme = darkSchemeFor(accent, accentSoft), content = content)
+    val systemDark = isSystemInDarkTheme()
+    val effectiveAmoled = preferences.appearanceAmoled &&
+        preferences.appearanceMode != AppearanceMode.Light
+    val dark = when (preferences.appearanceMode) {
+        AppearanceMode.Light -> false
+        AppearanceMode.Dark -> true
+        AppearanceMode.System -> effectiveAmoled || systemDark
+    }
+    val (accent, accentSoft) = accentColors(preferences.accentColor)
+    val context = LocalContext.current
+    val dynamic = preferences.appearancePersonality == AppearancePersonality.Classic &&
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+        (preferences.appearanceTheme == AppearanceTheme.Dynamic ||
+            (preferences.appearanceTheme == AppearanceTheme.TypeType &&
+                preferences.accentColor == AccentColor.System))
+    val colorScheme = when {
+        preferences.appearancePersonality == AppearancePersonality.Manga ->
+            mangaScheme(
+                preferences.mangaPaper,
+                preferences.appearanceTheme,
+                accent,
+                accentSoft,
+                amoled = effectiveAmoled,
+                isDark = dark,
+            )
+        dark && effectiveAmoled -> themedDarkScheme(
+            preferences.appearanceTheme,
+            accent,
+            accentSoft,
+            amoled = effectiveAmoled,
+        )
+        dynamic && dark -> dynamicDarkColorScheme(context)
+        dynamic -> dynamicLightColorScheme(context)
+        dark -> themedDarkScheme(
+            preferences.appearanceTheme,
+            accent,
+            accentSoft,
+            effectiveAmoled,
+        )
+        else -> themedLightScheme(preferences.appearanceTheme, accent, accentSoft)
+    }
+    val appearance = preferences.toAppearance()
+    CompositionLocalProvider(
+        LocalTypeTypeAppearance provides appearance,
+        LocalAnimatedStatePlayback provides (appearance.transitionMillis > 0),
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            shapes = shapesFor(appearance),
+            typography = typographyFor(preferences.appearanceFont, appearance.isManga),
+            content = content,
+        )
+    }
+}
+
+private fun AppPreferences.toAppearance() = TypeTypeAppearance(
+    personality = appearancePersonality,
+    motion = appearanceMotion,
+    headlineMarker = mangaHeadlineMarker,
+    screentone = mangaScreentone,
+    speedLines = mangaSpeedLines,
+    starburst = mangaStarburst,
+    inkedIcons = mangaInkedIcons,
+    panelTilt = mangaPanelTilt,
+)
+
+private fun shapesFor(appearance: TypeTypeAppearance): Shapes = if (appearance.isManga) {
+    Shapes(
+        extraSmall = RoundedCornerShape(0.dp),
+        small = RoundedCornerShape(0.dp),
+        medium = RoundedCornerShape(2.dp),
+        large = RoundedCornerShape(2.dp),
+        extraLarge = RoundedCornerShape(2.dp),
+    )
+} else {
+    Shapes()
+}
+
+private fun typographyFor(font: AppearanceFont, manga: Boolean): Typography {
+    val default = Typography()
+    val displayFamily = when {
+        manga -> FontFamily.Monospace
+        font == AppearanceFont.Expressive -> FontFamily.Serif
+        else -> FontFamily.Default
+    }
+    val titleWeight = if (manga) FontWeight.Black else FontWeight.SemiBold
+    fun title(style: TextStyle) = style.copy(fontFamily = displayFamily, fontWeight = titleWeight)
+    return default.copy(
+        displayLarge = title(default.displayLarge),
+        displayMedium = title(default.displayMedium),
+        displaySmall = title(default.displaySmall),
+        headlineLarge = title(default.headlineLarge),
+        headlineMedium = title(default.headlineMedium),
+        headlineSmall = title(default.headlineSmall),
+        titleLarge = title(default.titleLarge),
+        titleMedium = title(default.titleMedium),
+        titleSmall = title(default.titleSmall),
+    )
 }

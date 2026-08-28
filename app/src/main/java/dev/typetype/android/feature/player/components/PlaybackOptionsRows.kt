@@ -16,7 +16,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
+import dev.typetype.android.core.ui.components.TypeTypeSwitch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -137,7 +137,7 @@ fun PlaybackOptionsToggleRow(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-        Switch(
+        TypeTypeSwitch(
             checked = checked,
             onCheckedChange = null,
             enabled = enabled,

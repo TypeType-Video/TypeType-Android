@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.Verified
@@ -33,6 +32,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.search.SearchChannel
 import dev.typetype.android.domain.search.SearchPlaylist
 import java.text.NumberFormat
@@ -43,6 +44,7 @@ fun SearchChannelCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val serverBaseUrl = LocalServerBaseUrl.current
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -51,7 +53,7 @@ fun SearchChannelCard(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AsyncImage(
-            model = channel.thumbnailUrl,
+            model = buildImageUrl(serverBaseUrl, channel.thumbnailUrl),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.size(72.dp).clip(CircleShape),
@@ -104,6 +106,7 @@ fun SearchPlaylistCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val serverBaseUrl = LocalServerBaseUrl.current
     val countLabel = displayablePlaylistStreamCount(playlist.streamCount)?.let {
         stringResource(R.string.search_playlist_video_count, formatCount(it))
     } ?: stringResource(R.string.search_playlist_type)
@@ -115,17 +118,17 @@ fun SearchPlaylistCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(16f / 9f)
-                .clip(RoundedCornerShape(12.dp)),
+                .clip(MaterialTheme.shapes.medium),
         ) {
             AsyncImage(
-                model = playlist.thumbnailUrl,
+                model = buildImageUrl(serverBaseUrl, playlist.thumbnailUrl),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
             )
             Surface(
                 modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp),
-                shape = RoundedCornerShape(7.dp),
+                shape = MaterialTheme.shapes.small,
                 color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.82f),
             ) {
                 Row(

@@ -7,6 +7,8 @@ import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.gif.AnimatedImageDecoder
 import coil3.gif.GifDecoder
+import coil3.memory.MemoryCache
+import coil3.memoryCacheMaxSizePercentWhileInBackground
 import coil3.svg.SvgDecoder
 import dagger.hilt.android.HiltAndroidApp
 import androidx.hilt.work.HiltWorkerFactory
@@ -32,15 +34,26 @@ class TypeTypeApp : Application(), SingletonImageLoader.Factory, Configuration.P
             .setWorkerFactory(workerFactory)
             .build()
 
-    override fun newImageLoader(context: PlatformContext): ImageLoader =
-        ImageLoader.Builder(context)
-            .components {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    add(AnimatedImageDecoder.Factory())
-                } else {
-                    add(GifDecoder.Factory())
-                }
-                add(SvgDecoder.Factory())
-            }
-            .build()
+    override fun newImageLoader(context: PlatformContext): ImageLoader = createTypeTypeImageLoader(context)
 }
+
+internal fun createTypeTypeImageLoader(context: PlatformContext): ImageLoader =
+    ImageLoader.Builder(context)
+        .memoryCache {
+            MemoryCache.Builder()
+                .maxSizePercent(context, IMAGE_MEMORY_CACHE_PERCENT)
+                .build()
+        }
+        .memoryCacheMaxSizePercentWhileInBackground(BACKGROUND_CACHE_RETAINED_PERCENT)
+        .components {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                add(AnimatedImageDecoder.Factory())
+            } else {
+                add(GifDecoder.Factory())
+            }
+            add(SvgDecoder.Factory())
+        }
+        .build()
+
+private const val IMAGE_MEMORY_CACHE_PERCENT = 0.10
+private const val BACKGROUND_CACHE_RETAINED_PERCENT = 0.50

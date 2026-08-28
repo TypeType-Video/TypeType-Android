@@ -20,6 +20,10 @@ data class PlayerHostStateSnapshot(
     val initialPlayWhenReady: Boolean = true,
     val requestStamp: Long = 0L,
     val playbackClearRequestStamp: Long? = null,
+    val embeddedReturnTarget: PlayerHostTarget = PlayerHostTarget.Hidden,
+    val embeddedReturnVideoUrl: String? = null,
+    val embeddedReturnPositionMillis: Long? = null,
+    val embeddedReturnPlayWhenReady: Boolean = false,
 )
 
 @Singleton
@@ -40,6 +44,27 @@ class PlayerHostController @Inject constructor(
                 initialPlayWhenReady = true,
                 requestStamp = it.requestStamp + 1,
                 playbackClearRequestStamp = null,
+                embeddedReturnTarget = PlayerHostTarget.Hidden,
+                embeddedReturnVideoUrl = null,
+                embeddedReturnPositionMillis = null,
+                embeddedReturnPlayWhenReady = false,
+            )
+        }
+        playbackQueueCoordinator.clear()
+    }
+
+    fun continueWithVideo(url: String) {
+        _state.update {
+            it.copy(
+                videoUrl = url,
+                resumePositionMillis = null,
+                initialPlayWhenReady = true,
+                requestStamp = it.requestStamp + 1,
+                playbackClearRequestStamp = null,
+                embeddedReturnTarget = PlayerHostTarget.Hidden,
+                embeddedReturnVideoUrl = null,
+                embeddedReturnPositionMillis = null,
+                embeddedReturnPlayWhenReady = false,
             )
         }
         playbackQueueCoordinator.clear()
@@ -57,6 +82,10 @@ class PlayerHostController @Inject constructor(
                 initialPlayWhenReady = true,
                 requestStamp = it.requestStamp + 1,
                 playbackClearRequestStamp = null,
+                embeddedReturnTarget = PlayerHostTarget.Hidden,
+                embeddedReturnVideoUrl = null,
+                embeddedReturnPositionMillis = null,
+                embeddedReturnPlayWhenReady = false,
             )
         }
     }
@@ -73,6 +102,10 @@ class PlayerHostController @Inject constructor(
                 initialPlayWhenReady = false,
                 requestStamp = it.requestStamp + 1,
                 playbackClearRequestStamp = null,
+                embeddedReturnTarget = PlayerHostTarget.Hidden,
+                embeddedReturnVideoUrl = null,
+                embeddedReturnPositionMillis = null,
+                embeddedReturnPlayWhenReady = false,
             )
         }
         playbackQueueCoordinator.clear()
@@ -91,11 +124,20 @@ class PlayerHostController @Inject constructor(
                 initialPlayWhenReady = false,
                 requestStamp = it.requestStamp + 1,
                 playbackClearRequestStamp = null,
+                embeddedReturnTarget = PlayerHostTarget.Hidden,
+                embeddedReturnVideoUrl = null,
+                embeddedReturnPositionMillis = null,
+                embeddedReturnPlayWhenReady = false,
             )
         }
     }
 
-    fun openEmbeddedVideo(url: String, autoplay: Boolean) {
+    fun openEmbeddedVideo(
+        url: String,
+        autoplay: Boolean,
+        returnPositionMillis: Long? = null,
+        returnPlayWhenReady: Boolean = false,
+    ) {
         require(url.isNotBlank())
         val current = _state.value
         if (
@@ -104,6 +146,10 @@ class PlayerHostController @Inject constructor(
             current.initialPlayWhenReady == autoplay
         ) return
         _state.update {
+            val returnTarget = when (it.target) {
+                PlayerHostTarget.Mini, PlayerHostTarget.Expanded -> it.target
+                else -> PlayerHostTarget.Hidden
+            }
             it.copy(
                 videoUrl = url,
                 target = PlayerHostTarget.Embedded,
@@ -112,13 +158,67 @@ class PlayerHostController @Inject constructor(
                 initialPlayWhenReady = autoplay,
                 requestStamp = it.requestStamp + 1,
                 playbackClearRequestStamp = null,
+                embeddedReturnTarget = if (it.target == PlayerHostTarget.Embedded) {
+                    it.embeddedReturnTarget
+                } else {
+                    returnTarget
+                },
+                embeddedReturnVideoUrl = if (it.target == PlayerHostTarget.Embedded) {
+                    it.embeddedReturnVideoUrl
+                } else {
+                    it.videoUrl
+                },
+                embeddedReturnPositionMillis = if (it.target == PlayerHostTarget.Embedded) {
+                    it.embeddedReturnPositionMillis
+                } else {
+                    returnPositionMillis
+                },
+                embeddedReturnPlayWhenReady = if (it.target == PlayerHostTarget.Embedded) {
+                    it.embeddedReturnPlayWhenReady
+                } else {
+                    returnPlayWhenReady
+                },
             )
         }
-        playbackQueueCoordinator.clear()
     }
 
     fun closeEmbeddedPlayback() {
-        if (_state.value.target == PlayerHostTarget.Embedded) hide()
+        _state.update { current ->
+            if (current.target != PlayerHostTarget.Embedded) {
+                current
+            } else if (current.embeddedReturnTarget == PlayerHostTarget.Hidden) {
+                val requestStamp = current.requestStamp + 1
+                current.copy(
+                    videoUrl = null,
+                    target = PlayerHostTarget.Hidden,
+                    expandedReturnTarget = PlayerHostTarget.Mini,
+                    resumePositionMillis = null,
+                    initialPlayWhenReady = true,
+                    requestStamp = requestStamp,
+                    playbackClearRequestStamp = requestStamp,
+                    embeddedReturnTarget = PlayerHostTarget.Hidden,
+                    embeddedReturnVideoUrl = null,
+                    embeddedReturnPositionMillis = null,
+                    embeddedReturnPlayWhenReady = false,
+                )
+            } else {
+                current.copy(
+                    videoUrl = current.embeddedReturnVideoUrl,
+                    target = current.embeddedReturnTarget,
+                    expandedReturnTarget = PlayerHostTarget.Mini,
+                    resumePositionMillis = current.embeddedReturnPositionMillis,
+                    initialPlayWhenReady = current.embeddedReturnPlayWhenReady,
+                    requestStamp = current.requestStamp + 1,
+                    embeddedReturnTarget = PlayerHostTarget.Hidden,
+                    embeddedReturnVideoUrl = null,
+                    embeddedReturnPositionMillis = null,
+                    embeddedReturnPlayWhenReady = false,
+                )
+            }
+        }
+        if (_state.value.target == PlayerHostTarget.Hidden) {
+            playbackQueueCoordinator.clear()
+        }
     }
 
     fun expand() {
@@ -161,6 +261,10 @@ class PlayerHostController @Inject constructor(
                 initialPlayWhenReady = true,
                 requestStamp = requestStamp,
                 playbackClearRequestStamp = requestStamp,
+                embeddedReturnTarget = PlayerHostTarget.Hidden,
+                embeddedReturnVideoUrl = null,
+                embeddedReturnPositionMillis = null,
+                embeddedReturnPlayWhenReady = false,
             )
         }
         playbackQueueCoordinator.clear()

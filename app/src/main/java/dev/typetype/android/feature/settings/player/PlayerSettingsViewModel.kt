@@ -7,6 +7,7 @@ import dev.typetype.android.domain.preferences.PreferencesRepository
 import dev.typetype.android.domain.usersettings.DEFAULT_SPONSOR_BLOCK_CATEGORY_ACTIONS
 import dev.typetype.android.domain.usersettings.SponsorBlockMode
 import dev.typetype.android.domain.usersettings.UserSettings
+import dev.typetype.android.domain.usersettings.normalizeQualityName
 import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,9 +33,12 @@ class PlayerSettingsViewModel @Inject constructor(
             ) { prefs, server ->
                 PlayerSettingsState(
                     doubleTapSeekEnabled = prefs.playerDoubleTapSeekEnabled,
+                    doubleTapSeekSeconds = prefs.playerDoubleTapSeekSeconds,
+                    preferredCodec = prefs.playerPreferredCodec,
                     swipeSeekEnabled = prefs.playerSwipeSeekEnabled,
                     swipeBrightnessVolumeEnabled = prefs.playerSwipeBrightnessVolumeEnabled,
                     longPressSpeedEnabled = prefs.playerLongPressSpeedEnabled,
+                    accessibleControlsEnabled = prefs.playerAccessibleControlsEnabled,
                     autoplayEnabled = server.autoplay,
                     autoplayCountdownSeconds = prefs.playerAutoplayCountdownSeconds,
                     skipPlaylistAutoplayScreen = server.skipPlaylistAutoplayScreen,
@@ -43,7 +47,7 @@ class PlayerSettingsViewModel @Inject constructor(
                     danmakuEnabled = prefs.danmakuEnabled,
                     danmakuSpeed = prefs.danmakuSpeed,
                     danmakuSize = prefs.danmakuSize,
-                    defaultQuality = server.defaultQuality,
+                    defaultQuality = normalizeQualityName(server.defaultQuality),
                     defaultPlaybackSpeed = server.defaultPlaybackSpeed,
                     defaultService = server.defaultService,
                     subtitlesEnabled = server.subtitlesEnabled,
@@ -72,12 +76,18 @@ class PlayerSettingsViewModel @Inject constructor(
             when (action) {
                 is PlayerSettingsAction.SetDoubleTapSeek ->
                     preferencesRepository.setPlayerDoubleTapSeekEnabled(action.enabled)
+                is PlayerSettingsAction.SetDoubleTapSeekSeconds ->
+                    preferencesRepository.setPlayerDoubleTapSeekSeconds(action.seconds)
+                is PlayerSettingsAction.SetPreferredCodec ->
+                    preferencesRepository.setPlayerPreferredCodec(action.codec)
                 is PlayerSettingsAction.SetSwipeSeek ->
                     preferencesRepository.setPlayerSwipeSeekEnabled(action.enabled)
                 is PlayerSettingsAction.SetSwipeBrightnessVolume ->
                     preferencesRepository.setPlayerSwipeBrightnessVolumeEnabled(action.enabled)
                 is PlayerSettingsAction.SetLongPressSpeed ->
                     preferencesRepository.setPlayerLongPressSpeedEnabled(action.enabled)
+                is PlayerSettingsAction.SetAccessibleControls ->
+                    preferencesRepository.setPlayerAccessibleControlsEnabled(action.enabled)
                 is PlayerSettingsAction.SetPauseInBackground ->
                     preferencesRepository.setPlayerPauseInBackground(action.enabled)
                 is PlayerSettingsAction.SetDanmakuEnabled ->

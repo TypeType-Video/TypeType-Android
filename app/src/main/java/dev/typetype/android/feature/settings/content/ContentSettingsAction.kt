@@ -9,7 +9,6 @@ sealed interface ContentSettingsAction {
     sealed interface Update : ContentSettingsAction
 
     data class SetDefaultLandingPage(val page: String) : Update
-    data class SetAllHidden(val hidden: Boolean) : Update
     data class SetHideHomeRecommendations(val hidden: Boolean) : Update
     data class SetHideContinueWatching(val hidden: Boolean) : Update
     data class SetHideRelatedVideos(val hidden: Boolean) : Update
@@ -25,18 +24,6 @@ sealed interface ContentSettingsAction {
 internal fun UserSettings.updatedBy(action: ContentSettingsAction.Update): UserSettings =
     when (action) {
         is ContentSettingsAction.SetDefaultLandingPage -> copy(defaultLandingPage = action.page)
-        is ContentSettingsAction.SetAllHidden -> copy(
-            hideHomeRecommendations = action.hidden,
-            hideContinueWatching = action.hidden,
-            hideRelatedVideos = action.hidden,
-            hideComments = action.hidden,
-            hideShorts = action.hidden,
-            hideSubscriptionLiveStreams = if (supportsHideSubscriptionLiveStreams) {
-                action.hidden
-            } else {
-                hideSubscriptionLiveStreams
-            },
-        )
         is ContentSettingsAction.SetHideHomeRecommendations ->
             copy(hideHomeRecommendations = action.hidden)
         is ContentSettingsAction.SetHideContinueWatching ->

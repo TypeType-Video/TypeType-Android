@@ -17,6 +17,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -55,6 +59,34 @@ internal fun SeekHintOverlay(state: PlayerGestureState) {
             progress = animation.value,
             seconds = state.seekHintSeconds.floatValue.toInt(),
         )
+    }
+}
+
+@Composable
+internal fun PlaybackHintOverlay(state: PlayerGestureState) {
+    val playing = state.playbackHintPlaying.value
+    val pulse = state.playbackHintPulse.longValue
+    LaunchedEffect(playing, pulse) {
+        if (playing != null) {
+            kotlinx.coroutines.delay(SEEK_HINT_VISIBLE_MS.toLong())
+            state.playbackHintPlaying.value = null
+        }
+    }
+    if (playing != null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(Color.Black.copy(alpha = 0.68f))
+                    .padding(18.dp),
+            ) {
+                Icon(
+                    imageVector = if (playing) Icons.Filled.PlayArrow else Icons.Filled.Pause,
+                    contentDescription = null,
+                    tint = Color.White,
+                )
+            }
+        }
     }
 }
 

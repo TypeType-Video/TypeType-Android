@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
@@ -43,6 +42,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.library.Playlist
 
 @Composable
@@ -55,6 +56,7 @@ fun PlaylistsTab(
     onRenamePlaylist: (playlistId: String, name: String) -> Unit,
     onDeletePlaylist: (playlistId: String) -> Unit,
 ) {
+    val serverBaseUrl = LocalServerBaseUrl.current
     var dialog by remember { mutableStateOf<PlaylistDialog?>(null) }
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
@@ -86,6 +88,7 @@ fun PlaylistsTab(
                 items(playlists, key = { it.id }) { playlist ->
                     PlaylistListCard(
                         playlist = playlist,
+                        serverBaseUrl = serverBaseUrl,
                         actionsEnabled = !isMutationInFlight,
                         onClick = { onOpenPlaylist(playlist.id) },
                         onRename = { dialog = PlaylistDialog.Rename(playlist) },
@@ -132,6 +135,7 @@ fun PlaylistsTab(
 @Composable
 private fun PlaylistListCard(
     playlist: Playlist,
+    serverBaseUrl: String?,
     actionsEnabled: Boolean,
     onClick: () -> Unit,
     onRename: () -> Unit,
@@ -153,12 +157,12 @@ private fun PlaylistListCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(16f / 9f)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(MaterialTheme.shapes.medium)
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
             playlist.videos.firstOrNull()?.thumbnailUrl?.let { cover ->
                 AsyncImage(
-                    model = cover,
+                    model = buildImageUrl(serverBaseUrl, cover),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),
@@ -177,7 +181,7 @@ private fun PlaylistListCard(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(8.dp)
-                    .clip(RoundedCornerShape(6.dp))
+                    .clip(MaterialTheme.shapes.small)
                     .background(MaterialTheme.colorScheme.background.copy(alpha = 0.85f))
                     .padding(horizontal = 8.dp, vertical = 3.dp),
             ) {
@@ -219,7 +223,7 @@ private fun PlaylistActionsMenu(
             onClick = onExpand,
             enabled = enabled,
             modifier = Modifier
-                .clip(RoundedCornerShape(20.dp))
+                .clip(MaterialTheme.shapes.large)
                 .background(MaterialTheme.colorScheme.background.copy(alpha = 0.85f)),
         ) {
             Icon(

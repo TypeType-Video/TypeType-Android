@@ -5,9 +5,12 @@ import dev.typetype.android.domain.usersettings.SponsorBlockMode
 
 sealed interface PlayerSettingsAction {
     data class SetDoubleTapSeek(val enabled: Boolean) : PlayerSettingsAction
+    data class SetDoubleTapSeekSeconds(val seconds: Int) : PlayerSettingsAction
+    data class SetPreferredCodec(val codec: String) : PlayerSettingsAction
     data class SetSwipeSeek(val enabled: Boolean) : PlayerSettingsAction
     data class SetSwipeBrightnessVolume(val enabled: Boolean) : PlayerSettingsAction
     data class SetLongPressSpeed(val enabled: Boolean) : PlayerSettingsAction
+    data class SetAccessibleControls(val enabled: Boolean) : PlayerSettingsAction
     data class SetAutoplay(val enabled: Boolean) : PlayerSettingsAction
     data class SetAutoplayCountdown(val seconds: Int) : PlayerSettingsAction
     data class SetSkipPlaylistAutoplayScreen(val enabled: Boolean) : PlayerSettingsAction

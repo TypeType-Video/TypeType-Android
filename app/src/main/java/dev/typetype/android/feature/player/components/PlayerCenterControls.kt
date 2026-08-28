@@ -27,12 +27,17 @@ import dev.typetype.android.R
 internal fun PlayerCenterControls(
     player: Player,
     isFullscreen: Boolean,
+    compact: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val playPauseState = rememberPlayPauseButtonState(player)
     val seekBackState = rememberSeekBackButtonState(player)
     val seekForwardState = rememberSeekForwardButtonState(player)
-    val spacing = if (isFullscreen) 44.dp else 26.dp
+    val spacing = when {
+        isFullscreen -> 44.dp
+        compact -> 18.dp
+        else -> 26.dp
+    }
 
     Row(
         modifier = modifier,
@@ -44,16 +49,34 @@ internal fun PlayerCenterControls(
             contentDescription = stringResource(R.string.player_rewind),
             enabled = seekBackState.isEnabled,
             onClick = { seekBackState.onClick() },
-            buttonSize = if (isFullscreen) 62.dp else 50.dp,
-            iconSize = if (isFullscreen) 32.dp else 26.dp,
+            buttonSize = when {
+                isFullscreen -> 62.dp
+                compact -> 40.dp
+                else -> 50.dp
+            },
+            iconSize = when {
+                isFullscreen -> 32.dp
+                compact -> 22.dp
+                else -> 26.dp
+            },
         )
         PlayerCenterButton(
             iconRes = if (playPauseState.showPlay) R.drawable.ic_play else R.drawable.ic_pause,
-            contentDescription = stringResource(R.string.player_play_pause),
+            contentDescription = stringResource(
+                if (playPauseState.showPlay) R.string.player_play else R.string.player_pause,
+            ),
             enabled = playPauseState.isEnabled,
             onClick = { playPauseState.onClick() },
-            buttonSize = if (isFullscreen) 74.dp else 62.dp,
-            iconSize = if (isFullscreen) 48.dp else 38.dp,
+            buttonSize = when {
+                isFullscreen -> 74.dp
+                compact -> 48.dp
+                else -> 62.dp
+            },
+            iconSize = when {
+                isFullscreen -> 48.dp
+                compact -> 30.dp
+                else -> 38.dp
+            },
             prominent = true,
         )
         PlayerCenterButton(
@@ -61,8 +84,16 @@ internal fun PlayerCenterControls(
             contentDescription = stringResource(R.string.player_forward),
             enabled = seekForwardState.isEnabled,
             onClick = { seekForwardState.onClick() },
-            buttonSize = if (isFullscreen) 62.dp else 50.dp,
-            iconSize = if (isFullscreen) 32.dp else 26.dp,
+            buttonSize = when {
+                isFullscreen -> 62.dp
+                compact -> 40.dp
+                else -> 50.dp
+            },
+            iconSize = when {
+                isFullscreen -> 32.dp
+                compact -> 22.dp
+                else -> 26.dp
+            },
         )
     }
 }

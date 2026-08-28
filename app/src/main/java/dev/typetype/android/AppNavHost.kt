@@ -18,6 +18,7 @@ import dev.typetype.android.core.ui.branding.DeArrowBrandingViewModel
 import dev.typetype.android.core.ui.branding.LocalDeArrowBranding
 import dev.typetype.android.core.ui.components.resolveProfileAvatarUrl
 import dev.typetype.android.core.ui.navigation.AboutRoute
+import dev.typetype.android.core.ui.navigation.LicensesRoute
 import dev.typetype.android.core.ui.navigation.AccountsRoute
 import dev.typetype.android.core.ui.navigation.AddServerRoute
 import dev.typetype.android.core.ui.navigation.BlockedSettingsRoute
@@ -27,8 +28,6 @@ import dev.typetype.android.core.ui.navigation.PublicPlaylistRoute
 import dev.typetype.android.core.ui.navigation.ProfileSettingsRoute
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
 import dev.typetype.android.core.ui.navigation.AppearanceRoute
-import dev.typetype.android.core.ui.navigation.ChannelRoute
-import dev.typetype.android.core.ui.navigation.channelNavigationUrl
 import dev.typetype.android.core.ui.navigation.ContentSettingsRoute
 import dev.typetype.android.core.ui.navigation.HomeRoute
 import dev.typetype.android.core.ui.navigation.LoginRoute
@@ -65,9 +64,14 @@ import kotlinx.coroutines.flow.collectLatest
 fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
     val navController: NavHostController = rememberNavController()
     val playerHostController = remember { mainViewModel.playerHostController }
-    val serverBaseUrl by mainViewModel.currentServerBaseUrl.collectAsStateWithLifecycle()
-    val currentServerId by mainViewModel.currentServerId.collectAsStateWithLifecycle()
+    val currentServer by mainViewModel.currentServer.collectAsStateWithLifecycle()
     val currentProfile by mainViewModel.currentProfile.collectAsStateWithLifecycle()
+    val appPreferences by mainViewModel.preferences.collectAsStateWithLifecycle()
+    val navigationTransitionMillis = when (appPreferences.appearanceMotion) {
+        dev.typetype.android.domain.preferences.AppearanceMotion.Full -> 280
+        dev.typetype.android.domain.preferences.AppearanceMotion.Subtle -> 140
+        dev.typetype.android.domain.preferences.AppearanceMotion.Off -> 0
+    }
     val notificationBadge by rememberNotificationBadge()
     val deArrowViewModel = hiltViewModel<DeArrowBrandingViewModel>()
     val playerViewModel = hiltViewModel<PlayerViewModel>()
@@ -111,15 +115,13 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
     }
 
     val onOpenChannel: (String) -> Unit = { channelUrl ->
-        navController.navigate(ChannelRoute(channelUrl = channelNavigationUrl(channelUrl))) {
-            launchSingleTop = true
-        }
+        navController.navigateToChannel(channelUrl)
     }
 
-    val avatarUrl = remember(currentProfile, serverBaseUrl) {
+    val avatarUrl = remember(currentProfile, currentServer) {
         val p = currentProfile ?: return@remember null
         resolveProfileAvatarUrl(
-            serverBaseUrl = serverBaseUrl,
+            serverBaseUrl = currentServer?.baseUrl,
             avatarUrl = p.avatarUrl,
             avatarType = p.avatarType,
             avatarCode = p.avatarCode,
@@ -129,7 +131,7 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
     val avatarFallback = currentProfile?.publicUsername?.firstOrNull()?.toString()
 
     CompositionLocalProvider(
-        LocalServerBaseUrl provides serverBaseUrl,
+        LocalServerBaseUrl provides currentServer?.baseUrl,
         LocalDeArrowBranding provides deArrowEnvironment,
     ) {
     AppShell(
@@ -145,6 +147,7 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
         avatarUrl = avatarUrl,
         avatarFallbackLetter = avatarFallback,
         showShorts = !deArrowSettings.hideShorts,
+        accessiblePlayerControls = appPreferences.playerAccessibleControlsEnabled,
         onPlayVideo = onPlayVideo,
         onOpenChannel = onOpenChannel,
         onClosePlayback = mainViewModel::closePlayback,
@@ -156,25 +159,25 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
             enterTransition = {
                 slideIntoContainer(
                     AnimatedContentTransitionScope.SlideDirection.Left,
-                    animationSpec = tween(280),
+                    animationSpec = tween(navigationTransitionMillis),
                 )
             },
             exitTransition = {
                 slideOutOfContainer(
                     AnimatedContentTransitionScope.SlideDirection.Left,
-                    animationSpec = tween(280),
+                    animationSpec = tween(navigationTransitionMillis),
                 )
             },
             popEnterTransition = {
                 slideIntoContainer(
                     AnimatedContentTransitionScope.SlideDirection.Right,
-                    animationSpec = tween(280),
+                    animationSpec = tween(navigationTransitionMillis),
                 )
             },
             popExitTransition = {
                 slideOutOfContainer(
                     AnimatedContentTransitionScope.SlideDirection.Right,
-                    animationSpec = tween(280),
+                    animationSpec = tween(navigationTransitionMillis),
                 )
             },
         ) {
@@ -259,7 +262,7 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
                     onAddInstance = { navController.navigate(AddServerRoute) },
                 )
             }
-            profileDestinations(navController, currentServerId)
+            profileDestinations(navController, currentServer?.id)
             composable<AppearanceRoute> {
                 AppearanceRouteScreen(
                     onNavigateBack = { navController.popBackStack() },
@@ -298,6 +301,7 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
             composable<AboutRoute> {
                 AboutScreen(
                     onNavigateBack = { navController.popBackStack() },
+                    onOpenLicenses = { navController.navigate(LicensesRoute) },
                 )
             }
             channelAndPodcastDestinations(

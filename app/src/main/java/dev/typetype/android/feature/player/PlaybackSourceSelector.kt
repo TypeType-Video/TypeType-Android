@@ -105,8 +105,8 @@ private data class VideoCandidate(
 )
 
 private val recommendedVideoComparator = compareBy<VideoCandidate> { it.decoder.rank }
-    .thenBy { it.source.codecReliability() }
     .thenBy { it.source.height }
+    .thenBy { it.smartCodecPriority() }
     .thenBy { it.source.fps }
     .thenBy { it.source.bitrate ?: 0 }
 
@@ -130,4 +130,20 @@ private fun StreamVideoSource.codecReliability(): Int {
         mimeType.substringBefore(';').trim().equals("video/mp4", ignoreCase = true) -> 4
         else -> 0
     }
+}
+
+private fun VideoCandidate.smartCodecPriority(): Int = when (decoder) {
+    DecoderSupport.Hardware -> when (source.codecSelectionKey()) {
+        AV1_CODEC_KEY -> 4
+        VP9_CODEC_KEY -> 3
+        H264_CODEC_KEY -> 2
+        else -> 1
+    }
+    DecoderSupport.Software -> when (source.codecSelectionKey()) {
+        H264_CODEC_KEY -> 4
+        VP9_CODEC_KEY -> 3
+        AV1_CODEC_KEY -> 2
+        else -> 1
+    }
+    DecoderSupport.Unsupported -> 0
 }

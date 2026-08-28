@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -68,7 +67,11 @@ internal fun LazyListScope.sponsorBlockSettingsItems(
                 },
             )
         }
-        items(SPONSOR_BLOCK_CATEGORIES.size, key = { "sponsor-${SPONSOR_BLOCK_CATEGORIES[it].key}" }) {
+        items(
+            SPONSOR_BLOCK_CATEGORIES.size,
+            key = { "sponsor-${SPONSOR_BLOCK_CATEGORIES[it].key}" },
+            contentType = { "sponsor-category" },
+        ) {
             val category = SPONSOR_BLOCK_CATEGORIES[it]
             DropdownRow(
                 title = stringResource(category.labelResource),
@@ -165,7 +168,7 @@ private fun SponsorBlockMinimumDurationRow(
             suffix = { Text(stringResource(R.string.settings_player_seconds_short)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true,
-            shape = RoundedCornerShape(10.dp),
+            shape = MaterialTheme.shapes.medium,
         )
     }
 }

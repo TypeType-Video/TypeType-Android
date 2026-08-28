@@ -60,9 +60,6 @@ data object ProfileSettingsRoute
 data object ImportDataRoute
 
 @Serializable
-data object YoutubeSessionRoute
-
-@Serializable
 data object RssFeedsRoute
 
 @Serializable
@@ -76,6 +73,9 @@ data object BlockedSettingsRoute
 
 @Serializable
 data object AboutRoute
+
+@Serializable
+data object LicensesRoute
 
 @Serializable
 data class PlayerRoute(val videoUrl: String)

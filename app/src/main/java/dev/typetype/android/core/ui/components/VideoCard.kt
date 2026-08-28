@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Icon
@@ -42,6 +41,8 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.branding.rememberVideoBranding
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.feed.VideoAvailability
 import dev.typetype.android.domain.feed.availabilityAt
@@ -59,6 +60,7 @@ fun VideoCard(
 ) {
     var menuVisible by remember { mutableStateOf(false) }
     var availabilityVisible by remember { mutableStateOf(false) }
+    val serverBaseUrl = LocalServerBaseUrl.current
     val availability = video.availabilityAt(System.currentTimeMillis())
     val metadata = video.metadataText()
     val branding = rememberVideoBranding(
@@ -85,11 +87,11 @@ fun VideoCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(16f / 9f)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(MaterialTheme.shapes.medium)
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
             AsyncImage(
-                model = branding.thumbnailUrl,
+                model = buildImageUrl(serverBaseUrl, branding.thumbnailUrl),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
@@ -122,7 +124,7 @@ fun VideoCard(
                     }
                 }
             AsyncImage(
-                model = video.uploaderAvatarUrl,
+                model = buildImageUrl(serverBaseUrl, video.uploaderAvatarUrl),
                 contentDescription = if (onChannelClick != null) {
                     stringResource(R.string.video_open_channel_accessibility, video.uploaderName)
                 } else {
@@ -185,7 +187,7 @@ fun VideoCard(
 private fun WatchedBadge(modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(6.dp))
+            .clip(MaterialTheme.shapes.small)
             .background(Color.Black.copy(alpha = 0.7f))
             .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,

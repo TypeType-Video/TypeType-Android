@@ -8,7 +8,14 @@ import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import dev.typetype.android.domain.preferences.AccentColor
+import dev.typetype.android.domain.preferences.AppearanceFont
+import dev.typetype.android.domain.preferences.AppearanceMode
+import dev.typetype.android.domain.preferences.AppearanceMotion
+import dev.typetype.android.domain.preferences.AppearancePersonality
+import dev.typetype.android.domain.preferences.AppearanceTheme
 import dev.typetype.android.domain.preferences.AppPreferences
+import dev.typetype.android.domain.preferences.MangaHeadlineMarker
+import dev.typetype.android.domain.preferences.MangaPaper
 import dev.typetype.android.domain.preferences.PreferencesRepository
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -25,12 +32,30 @@ class DataStorePreferencesRepository @Inject constructor(
             accentColor = prefs[KEY_ACCENT_COLOR]
                 ?.let { runCatching { AccentColor.valueOf(it) }.getOrNull() }
                 ?: AccentColor.Blue,
+            appearancePersonality = prefs.enum(KEY_APPEARANCE_PERSONALITY, AppearancePersonality.Classic),
+            appearanceMode = prefs.enum(KEY_APPEARANCE_MODE, AppearanceMode.System),
+            appearanceAmoled = prefs[KEY_APPEARANCE_AMOLED] ?: false,
+            appearanceTheme = prefs.enum(KEY_APPEARANCE_THEME, AppearanceTheme.TypeType),
+            appearanceFont = prefs.enum(KEY_APPEARANCE_FONT, AppearanceFont.System),
+            appearanceMotion = prefs.enum(KEY_APPEARANCE_MOTION, AppearanceMotion.Subtle),
+            mangaPaper = prefs.enum(KEY_MANGA_PAPER, MangaPaper.Day),
+            mangaHeadlineMarker = prefs.enum(KEY_MANGA_HEADLINE_MARKER, MangaHeadlineMarker.Stamp),
+            mangaScreentone = prefs[KEY_MANGA_SCREENTONE] ?: true,
+            mangaSpeedLines = prefs[KEY_MANGA_SPEED_LINES] ?: true,
+            mangaStarburst = prefs[KEY_MANGA_STARBURST] ?: true,
+            mangaInkedIcons = prefs[KEY_MANGA_INKED_ICONS] ?: true,
+            mangaPanelTilt = prefs[KEY_MANGA_PANEL_TILT] ?: false,
             playerDoubleTapSeekEnabled = prefs[KEY_PLAYER_DOUBLE_TAP_SEEK] ?: true,
+            playerDoubleTapSeekSeconds = (prefs[KEY_PLAYER_DOUBLE_TAP_SEEK_SECONDS] ?: 10)
+                .takeIf(ALLOWED_DOUBLE_TAP_SEEK_SECONDS::contains) ?: 10,
+            playerPreferredCodec = prefs[KEY_PLAYER_PREFERRED_CODEC]
+                ?.takeIf(ALLOWED_PLAYER_CODECS::contains) ?: "recommended",
             playerSwipeSeekEnabled = prefs[KEY_PLAYER_SWIPE_SEEK] ?: true,
             playerSwipeBrightnessVolumeEnabled = prefs[KEY_PLAYER_SWIPE_BRIGHT_VOL] ?: true,
             playerPlaybackBrightnessPercent = prefs[KEY_PLAYER_PLAYBACK_BRIGHTNESS]
                 ?.coerceIn(0, 100),
             playerLongPressSpeedEnabled = prefs[KEY_PLAYER_LONG_PRESS_SPEED] ?: true,
+            playerAccessibleControlsEnabled = prefs[KEY_PLAYER_ACCESSIBLE_CONTROLS] ?: false,
             playerAutoplayEnabled = prefs[KEY_PLAYER_AUTOPLAY] ?: true,
             playerAutoplayCountdownSeconds = (
                 prefs[KEY_PLAYER_AUTOPLAY_COUNTDOWN] ?: DEFAULT_AUTOPLAY_COUNTDOWN_SECONDS
@@ -47,8 +72,46 @@ class DataStorePreferencesRepository @Inject constructor(
         dataStore.edit { it[KEY_ACCENT_COLOR] = accentColor.name }
     }
 
+    override suspend fun setAppearancePersonality(personality: AppearancePersonality) =
+        store(KEY_APPEARANCE_PERSONALITY, personality.name)
+
+    override suspend fun setAppearanceMode(mode: AppearanceMode) = store(KEY_APPEARANCE_MODE, mode.name)
+
+    override suspend fun setAppearanceAmoled(enabled: Boolean) = store(KEY_APPEARANCE_AMOLED, enabled)
+
+    override suspend fun setAppearanceTheme(theme: AppearanceTheme) = store(KEY_APPEARANCE_THEME, theme.name)
+
+    override suspend fun setAppearanceFont(font: AppearanceFont) = store(KEY_APPEARANCE_FONT, font.name)
+
+    override suspend fun setAppearanceMotion(motion: AppearanceMotion) = store(KEY_APPEARANCE_MOTION, motion.name)
+
+    override suspend fun setMangaPaper(paper: MangaPaper) = store(KEY_MANGA_PAPER, paper.name)
+
+    override suspend fun setMangaHeadlineMarker(marker: MangaHeadlineMarker) =
+        store(KEY_MANGA_HEADLINE_MARKER, marker.name)
+
+    override suspend fun setMangaScreentone(enabled: Boolean) = store(KEY_MANGA_SCREENTONE, enabled)
+
+    override suspend fun setMangaSpeedLines(enabled: Boolean) = store(KEY_MANGA_SPEED_LINES, enabled)
+
+    override suspend fun setMangaStarburst(enabled: Boolean) = store(KEY_MANGA_STARBURST, enabled)
+
+    override suspend fun setMangaInkedIcons(enabled: Boolean) = store(KEY_MANGA_INKED_ICONS, enabled)
+
+    override suspend fun setMangaPanelTilt(enabled: Boolean) = store(KEY_MANGA_PANEL_TILT, enabled)
+
     override suspend fun setPlayerDoubleTapSeekEnabled(enabled: Boolean) {
         dataStore.edit { it[KEY_PLAYER_DOUBLE_TAP_SEEK] = enabled }
+    }
+
+    override suspend fun setPlayerDoubleTapSeekSeconds(seconds: Int) {
+        val value = seconds.takeIf(ALLOWED_DOUBLE_TAP_SEEK_SECONDS::contains) ?: 10
+        dataStore.edit { it[KEY_PLAYER_DOUBLE_TAP_SEEK_SECONDS] = value }
+    }
+
+    override suspend fun setPlayerPreferredCodec(codec: String) {
+        val value = codec.takeIf(ALLOWED_PLAYER_CODECS::contains) ?: "recommended"
+        dataStore.edit { it[KEY_PLAYER_PREFERRED_CODEC] = value }
     }
 
     override suspend fun setPlayerSwipeSeekEnabled(enabled: Boolean) {
@@ -65,6 +128,10 @@ class DataStorePreferencesRepository @Inject constructor(
 
     override suspend fun setPlayerLongPressSpeedEnabled(enabled: Boolean) {
         dataStore.edit { it[KEY_PLAYER_LONG_PRESS_SPEED] = enabled }
+    }
+
+    override suspend fun setPlayerAccessibleControlsEnabled(enabled: Boolean) {
+        dataStore.edit { it[KEY_PLAYER_ACCESSIBLE_CONTROLS] = enabled }
     }
 
     override suspend fun setPlayerAutoplayEnabled(enabled: Boolean) {
@@ -100,13 +167,37 @@ class DataStorePreferencesRepository @Inject constructor(
         dataStore.edit { it[KEY_DANMAKU_SIZE] = size.coerceIn(0.5f, 2f) }
     }
 
+    private suspend fun store(key: Preferences.Key<String>, value: String) {
+        dataStore.edit { it[key] = value }
+    }
+
+    private suspend fun store(key: Preferences.Key<Boolean>, value: Boolean) {
+        dataStore.edit { it[key] = value }
+    }
+
     private companion object {
         val KEY_ACCENT_COLOR = stringPreferencesKey("accent_color")
+        val KEY_APPEARANCE_PERSONALITY = stringPreferencesKey("appearance_personality")
+        val KEY_APPEARANCE_MODE = stringPreferencesKey("appearance_mode")
+        val KEY_APPEARANCE_AMOLED = booleanPreferencesKey("appearance_amoled")
+        val KEY_APPEARANCE_THEME = stringPreferencesKey("appearance_theme")
+        val KEY_APPEARANCE_FONT = stringPreferencesKey("appearance_font")
+        val KEY_APPEARANCE_MOTION = stringPreferencesKey("appearance_motion")
+        val KEY_MANGA_PAPER = stringPreferencesKey("manga_paper")
+        val KEY_MANGA_HEADLINE_MARKER = stringPreferencesKey("manga_headline_marker")
+        val KEY_MANGA_SCREENTONE = booleanPreferencesKey("manga_screentone")
+        val KEY_MANGA_SPEED_LINES = booleanPreferencesKey("manga_speed_lines")
+        val KEY_MANGA_STARBURST = booleanPreferencesKey("manga_starburst")
+        val KEY_MANGA_INKED_ICONS = booleanPreferencesKey("manga_inked_icons")
+        val KEY_MANGA_PANEL_TILT = booleanPreferencesKey("manga_panel_tilt")
         val KEY_PLAYER_DOUBLE_TAP_SEEK = booleanPreferencesKey("player_double_tap_seek")
+        val KEY_PLAYER_DOUBLE_TAP_SEEK_SECONDS = intPreferencesKey("player_double_tap_seek_seconds")
+        val KEY_PLAYER_PREFERRED_CODEC = stringPreferencesKey("player_preferred_codec")
         val KEY_PLAYER_SWIPE_SEEK = booleanPreferencesKey("player_swipe_seek")
         val KEY_PLAYER_SWIPE_BRIGHT_VOL = booleanPreferencesKey("player_swipe_bright_vol")
         val KEY_PLAYER_PLAYBACK_BRIGHTNESS = intPreferencesKey("player_playback_brightness")
         val KEY_PLAYER_LONG_PRESS_SPEED = booleanPreferencesKey("player_long_press_speed")
+        val KEY_PLAYER_ACCESSIBLE_CONTROLS = booleanPreferencesKey("player_accessible_controls")
         val KEY_PLAYER_AUTOPLAY = booleanPreferencesKey("player_autoplay")
         val KEY_PLAYER_AUTOPLAY_COUNTDOWN = intPreferencesKey("player_autoplay_countdown_seconds")
         val KEY_PLAYER_AUDIO_ONLY_PLAYBACK = booleanPreferencesKey("player_audio_only_playback")
@@ -116,5 +207,12 @@ class DataStorePreferencesRepository @Inject constructor(
         val KEY_DANMAKU_SIZE = floatPreferencesKey("player_danmaku_size")
         const val DEFAULT_AUTOPLAY_COUNTDOWN_SECONDS = 10
         const val MAX_AUTOPLAY_COUNTDOWN_SECONDS = 60
+        val ALLOWED_DOUBLE_TAP_SEEK_SECONDS = setOf(5, 10, 15, 20, 30)
+        val ALLOWED_PLAYER_CODECS = setOf("recommended", "av1", "vp9", "h264")
     }
 }
+
+private inline fun <reified T : Enum<T>> Preferences.enum(
+    key: Preferences.Key<String>,
+    fallback: T,
+): T = this[key]?.let { stored -> enumValues<T>().firstOrNull { it.name == stored } } ?: fallback

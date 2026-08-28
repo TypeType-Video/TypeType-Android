@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -14,8 +17,11 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.media3.ui.PlayerView
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertSame
 import org.junit.Rule
 import org.junit.Test
 
@@ -54,6 +60,74 @@ class PlayerContentLayoutComposeTest {
         assertTrue(viewport.bottom <= details.top)
         assertNodeCount(PLAYER_SINGLE_COLUMN_LAYOUT_TAG, 1)
         assertNodeCount(PLAYER_TWO_PANE_LAYOUT_TAG, 0)
+    }
+
+    @Test
+    fun fullscreenLayoutRetainsTheNativePlayerView() {
+        var isFullscreen by mutableStateOf(false)
+        var createdViews = 0
+        lateinit var firstView: PlayerView
+        lateinit var currentView: PlayerView
+        composeRule.setContent {
+            MaterialTheme {
+                Box(Modifier.requiredWidth(400.dp).requiredHeight(600.dp)) {
+                    PlayerContentLayout(
+                        isFullscreen = isFullscreen,
+                        modifier = Modifier.fillMaxSize(),
+                        viewport = { modifier ->
+                            AndroidView(
+                                factory = { context ->
+                                    PlayerView(context).also {
+                                        createdViews += 1
+                                        if (createdViews == 1) firstView = it
+                                    }
+                                },
+                                update = { currentView = it },
+                                modifier = modifier,
+                            )
+                        },
+                        details = { Box(it.height(300.dp)) },
+                    )
+                }
+            }
+        }
+        composeRule.waitForIdle()
+        assertEquals(1, createdViews)
+
+        composeRule.runOnIdle { isFullscreen = true }
+        composeRule.waitForIdle()
+        assertEquals(1, createdViews)
+        assertSame(firstView, currentView)
+
+        composeRule.runOnIdle { isFullscreen = false }
+        composeRule.waitForIdle()
+        assertEquals(1, createdViews)
+    }
+
+    @Test
+    fun pictureInPictureShowsOnlyTheVideoAfterDetailsWereScrolled() {
+        var isInPip by mutableStateOf(false)
+        composeRule.setContent {
+            MaterialTheme {
+                Box(Modifier.requiredWidth(400.dp).requiredHeight(600.dp)) {
+                    PlayerContentLayout(
+                        isFullscreen = false,
+                        isInPip = isInPip,
+                        modifier = Modifier.fillMaxSize(),
+                        viewport = { Box(it.testTag(VIEWPORT_TAG)) },
+                        details = { Box(it.height(900.dp).testTag(DETAILS_TAG)) },
+                    )
+                }
+            }
+        }
+
+        composeRule.runOnIdle { isInPip = true }
+        composeRule.waitForIdle()
+
+        val viewport = bounds(VIEWPORT_TAG)
+        assertEquals(0f, viewport.top, 1f)
+        assertEquals(600.dp.value, with(composeRule.density) { viewport.height.toDp().value }, 1f)
+        assertNodeCount(DETAILS_TAG, 0)
     }
 
     private fun setLayout(width: Dp, height: Dp) {

@@ -91,7 +91,7 @@ class PlayerHostControllerTest {
     }
 
     @Test
-    fun `leaving Shorts only closes embedded playback`() {
+    fun `leaving Shorts without previous playback hides embedded playback`() {
         val controller = PlayerHostController(FakePlaybackQueueController())
         controller.openEmbeddedVideo("short", autoplay = true)
         controller.closeEmbeddedPlayback()
@@ -99,6 +99,43 @@ class PlayerHostControllerTest {
 
         controller.openVideo("video")
         controller.closeEmbeddedPlayback()
+        assertEquals(PlayerHostTarget.Expanded, controller.state.value.target)
+    }
+
+    @Test
+    fun `leaving Shorts restores the mini player that opened it`() {
+        val controller = PlayerHostController(FakePlaybackQueueController())
+        controller.openVideo("video")
+        controller.minimize()
+
+        controller.openEmbeddedVideo(
+            url = "short",
+            autoplay = true,
+            returnPositionMillis = 18_000L,
+            returnPlayWhenReady = true,
+        )
+        controller.openEmbeddedVideo(
+            url = "next-short",
+            autoplay = true,
+            returnPositionMillis = 2_000L,
+            returnPlayWhenReady = false,
+        )
+        controller.closeEmbeddedPlayback()
+
+        assertEquals(PlayerHostTarget.Mini, controller.state.value.target)
+        assertEquals("video", controller.state.value.videoUrl)
+        assertEquals(18_000L, controller.state.value.resumePositionMillis)
+        assertTrue(controller.state.value.initialPlayWhenReady)
+    }
+
+    @Test
+    fun `leaving Shorts restores an expanded player`() {
+        val controller = PlayerHostController(FakePlaybackQueueController())
+        controller.openVideo("video")
+
+        controller.openEmbeddedVideo("short", autoplay = true)
+        controller.closeEmbeddedPlayback()
+
         assertEquals(PlayerHostTarget.Expanded, controller.state.value.target)
     }
 
@@ -124,6 +161,32 @@ class PlayerHostControllerTest {
         controller.collapseExpanded()
 
         assertEquals(PlayerHostTarget.Mini, controller.state.value.target)
+    }
+
+    @Test
+    fun `autoplay keeps the mini player minimized`() {
+        val controller = PlayerHostController(FakePlaybackQueueController())
+        controller.openVideo("first")
+        controller.minimize()
+
+        controller.continueWithVideo("second")
+
+        val state = controller.state.value
+        assertEquals("second", state.videoUrl)
+        assertEquals(PlayerHostTarget.Mini, state.target)
+        assertNull(state.resumePositionMillis)
+        assertTrue(state.initialPlayWhenReady)
+    }
+
+    @Test
+    fun `autoplay keeps the expanded player expanded`() {
+        val controller = PlayerHostController(FakePlaybackQueueController())
+        controller.openVideo("first")
+
+        controller.continueWithVideo("second")
+
+        assertEquals("second", controller.state.value.videoUrl)
+        assertEquals(PlayerHostTarget.Expanded, controller.state.value.target)
     }
 }
 

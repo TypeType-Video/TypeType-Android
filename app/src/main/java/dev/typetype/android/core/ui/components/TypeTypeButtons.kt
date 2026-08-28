@@ -3,7 +3,7 @@ package dev.typetype.android.core.ui.components
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -14,6 +14,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import dev.typetype.android.core.ui.theme.LocalTypeTypeAppearance
 
 @Composable
 fun TypeTypePrimaryButton(
@@ -23,11 +24,13 @@ fun TypeTypePrimaryButton(
     enabled: Boolean = true,
     isLoading: Boolean = false,
 ) {
+    val appearance = LocalTypeTypeAppearance.current
     Button(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
         enabled = enabled && !isLoading,
-        shape = RoundedCornerShape(10.dp),
+        shape = MaterialTheme.shapes.medium,
+        border = if (appearance.isManga) BorderStroke(2.dp, MaterialTheme.colorScheme.outline) else null,
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -71,11 +74,13 @@ fun TypeTypeSecondaryButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
+    val appearance = LocalTypeTypeAppearance.current
     OutlinedButton(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
         enabled = enabled,
-        shape = RoundedCornerShape(10.dp),
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(if (appearance.isManga) 2.dp else 1.dp, MaterialTheme.colorScheme.outline),
     ) {
         Text(text = text, modifier = Modifier.padding(vertical = 4.dp))
     }

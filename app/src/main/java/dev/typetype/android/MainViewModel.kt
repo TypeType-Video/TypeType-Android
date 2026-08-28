@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.typetype.android.data.network.AccessTokenStore
 import dev.typetype.android.data.account.ActiveAccountScope
+import dev.typetype.android.data.account.AccountScope
+import dev.typetype.android.data.preferences.StartupLandingStore
 import dev.typetype.android.domain.actions.VideoActionsRepository
 import dev.typetype.android.domain.auth.AuthRepository
 import dev.typetype.android.domain.auth.SessionStatus
@@ -19,6 +21,7 @@ import dev.typetype.android.domain.playback.PlaybackQueueRepository
 import dev.typetype.android.domain.playback.PlaybackQueueSnapshot
 import dev.typetype.android.domain.playback.PlaybackResume
 import dev.typetype.android.domain.profile.ProfileRepository
+import dev.typetype.android.domain.server.Server
 import dev.typetype.android.domain.server.ServerRepository
 import dev.typetype.android.domain.subscriptions.SubscriptionsRepository
 import dev.typetype.android.domain.usersettings.UserSettings
@@ -60,6 +63,7 @@ class MainViewModel @Inject constructor(
     private val subscriptionsRepository: SubscriptionsRepository,
     private val libraryRepository: LibraryRepository,
     private val activeAccountScope: ActiveAccountScope,
+    private val startupLandingStore: StartupLandingStore,
     private val playbackResumeRepository: PlaybackResumeRepository,
     private val playbackQueueRepository: PlaybackQueueRepository,
     private val crashReportRepository: CrashReportRepository,
@@ -73,23 +77,14 @@ class MainViewModel @Inject constructor(
     val preferences: StateFlow<AppPreferences> = preferencesRepository.observe()
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.Eagerly,
+            started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
             initialValue = AppPreferences(),
         )
 
-    val currentServerBaseUrl: StateFlow<String?> = serverRepository.observeCurrentServer()
-        .map { it?.baseUrl }
+    val currentServer: StateFlow<Server?> = serverRepository.observeCurrentServer()
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = null,
-        )
-
-    val currentServerId: StateFlow<String?> = serverRepository.observeCurrentServer()
-        .map { it?.id }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
+            started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
             initialValue = null,
         )
 
@@ -97,7 +92,7 @@ class MainViewModel @Inject constructor(
         profileRepository.observe()
             .stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.Eagerly,
+                started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
                 initialValue = null,
             )
 
@@ -121,14 +116,41 @@ class MainViewModel @Inject constructor(
                     activeAccountScope.observe().first()?.accountId
                 }
             }
-            val sessionStatus = if (initial == null) {
-                SessionStatus.Invalid
-            } else {
-                withTimeoutOrNull(SESSION_VALIDATION_TIMEOUT_MS) {
-                    authRepository.validateSession()
-                } ?: SessionStatus.Unknown
+            val accountScope = initial?.let { server ->
+                selectedAccountId?.let { accountId -> AccountScope(server.id, accountId) }
             }
-            val isAuthenticated = initial != null && sessionStatus != SessionStatus.Invalid
+            val cachedLandingPage = accountScope
+                ?.let { startupLandingStore.observeLandingPage(it).first() }
+                .orEmpty()
+            val hasPersistedSession = accountScope != null &&
+                tokenStore.hasAccessToken(initial.id, selectedAccountId.orEmpty())
+            val sessionStatus = when {
+                initial == null || !hasPersistedSession -> SessionStatus.Invalid
+                else -> SessionStatus.Unknown
+            }
+            val startRoute = startupRoute(
+                serverId = initial?.id,
+                accountId = selectedAccountId,
+                sessionStatus = sessionStatus,
+                defaultLandingPage = cachedLandingPage,
+            )
+            _state.update {
+                it.copy(
+                    isLoading = false,
+                    startRoute = startRoute,
+                )
+            }
+
+            if (initial == null || !hasPersistedSession) {
+                if (initial != null) tokenStore.setAccessToken(initial.id, null)
+                return@launch
+            }
+
+            val scope = requireNotNull(accountScope)
+            val refreshedSessionStatus = withTimeoutOrNull(SESSION_VALIDATION_TIMEOUT_MS) {
+                authRepository.validateSession()
+            } ?: SessionStatus.Unknown
+            val isAuthenticated = refreshedSessionStatus != SessionStatus.Invalid
             val initialSettings = if (isAuthenticated) {
                 withTimeoutOrNull(USER_SETTINGS_TIMEOUT_MS) {
                     userSettingsRepository.current().getOrNull()
@@ -136,34 +158,30 @@ class MainViewModel @Inject constructor(
             } else {
                 null
             }
-            if (initial != null && sessionStatus == SessionStatus.Invalid) {
-                tokenStore.setAccessToken(initial.id, null)
+            initialSettings?.let { settings ->
+                startupLandingStore.setLandingPage(scope, settings.defaultLandingPage)
             }
-            val startRoute = startupRoute(
-                serverId = initial?.id,
-                accountId = selectedAccountId,
-                sessionStatus = sessionStatus,
-                defaultLandingPage = initialSettings?.defaultLandingPage.orEmpty(),
-            )
             val playbackRestore = if (isAuthenticated && initialSettings != null) {
                 withTimeoutOrNull(PLAYBACK_RESTORE_TIMEOUT_MS) {
                     loadPlaybackRestore(initialSettings)
                 }
             } else null
-            _state.update { it.copy(isLoading = false, startRoute = startRoute) }
-            if (isAuthenticated) {
-                val externalUrl = pendingVideoRequest.setReady(true)
-                if (externalUrl == null) {
-                    playbackRestore?.let(::applyPlaybackRestore)
-                } else {
-                    playerHostController.openVideo(externalUrl)
-                }
-                launch { videoActionsRepository.refreshBlocked() }
-                if (initialSettings == null) launch { userSettingsRepository.refresh() }
-                launch { profileRepository.refresh() }
-                launch { subscriptionsRepository.refresh() }
-                launch { libraryRepository.resumePendingWrites() }
+            if (!isAuthenticated) {
+                tokenStore.setAccessToken(initial.id, null)
+                eventsChannel.send(MainEvent.NavigateToLogin(initial.id))
+                return@launch
             }
+            val externalUrl = pendingVideoRequest.setReady(true)
+            if (externalUrl == null) {
+                playbackRestore?.let(::applyPlaybackRestore)
+            } else {
+                playerHostController.openVideo(externalUrl)
+            }
+            launch { videoActionsRepository.refreshBlocked() }
+            if (initialSettings == null) launch { userSettingsRepository.refresh() }
+            launch { profileRepository.refresh() }
+            launch { subscriptionsRepository.refresh() }
+            launch { libraryRepository.resumePendingWrites() }
         }
     }
 
@@ -172,6 +190,7 @@ class MainViewModel @Inject constructor(
         const val SESSION_VALIDATION_TIMEOUT_MS = 6_000L
         const val USER_SETTINGS_TIMEOUT_MS = 4_000L
         const val PLAYBACK_RESTORE_TIMEOUT_MS = 4_000L
+        const val STOP_TIMEOUT_MILLIS = 5_000L
     }
 
     fun signOut() {

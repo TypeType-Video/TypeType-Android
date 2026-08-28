@@ -20,8 +20,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
@@ -36,6 +40,10 @@ import dev.typetype.android.core.ui.components.DropdownRow
 import dev.typetype.android.core.ui.components.ServiceRow
 import dev.typetype.android.core.ui.components.SettingsSectionHeader
 import dev.typetype.android.core.ui.components.SwitchRow
+import dev.typetype.android.feature.player.AV1_CODEC_KEY
+import dev.typetype.android.feature.player.H264_CODEC_KEY
+import dev.typetype.android.feature.player.RECOMMENDED_CODEC_KEY
+import dev.typetype.android.feature.player.VP9_CODEC_KEY
 import dev.typetype.android.feature.settings.SettingsDetailTopBar
 
 private val QUALITY_OPTIONS = listOf("144p", "240p", "360p", "480p", "720p", "1080p", "1440p", "2160p")
@@ -96,6 +104,13 @@ fun PlayerSettingsScreen(
     onNavigateBack: () -> Unit,
     onAction: (PlayerSettingsAction) -> Unit,
 ) {
+    var advancedExpanded by rememberSaveable { mutableStateOf(false) }
+    val codecOptions = listOf(
+        RECOMMENDED_CODEC_KEY to stringResource(R.string.playback_options_smart),
+        AV1_CODEC_KEY to stringResource(R.string.playback_options_codec_av1),
+        VP9_CODEC_KEY to stringResource(R.string.playback_options_codec_vp9),
+        H264_CODEC_KEY to stringResource(R.string.playback_options_codec_h264),
+    )
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
@@ -168,6 +183,15 @@ fun PlayerSettingsScreen(
                 }
                 item {
                     DropdownRow(
+                        title = stringResource(R.string.settings_player_default_codec),
+                        subtitle = stringResource(R.string.settings_player_default_codec_subtitle),
+                        options = codecOptions,
+                        selectedKey = state.preferredCodec,
+                        onSelect = { onAction(PlayerSettingsAction.SetPreferredCodec(it)) },
+                    )
+                }
+                item {
+                    DropdownRow(
                         title = stringResource(R.string.settings_player_default_quality),
                         subtitle = stringResource(R.string.settings_player_default_quality_subtitle),
                         options = QUALITY_OPTIONS.map { it to it },
@@ -196,7 +220,6 @@ fun PlayerSettingsScreen(
                         onCheckedChange = { onAction(PlayerSettingsAction.SetPauseInBackground(it)) },
                     )
                 }
-
                 if (state.defaultService == 0) {
                     item { Spacer(Modifier.size(4.dp)) }
                     item { SettingsSectionHeader(stringResource(R.string.settings_player_section_subtitles)) }
@@ -240,12 +263,18 @@ fun PlayerSettingsScreen(
                             onCheckedChange = { onAction(PlayerSettingsAction.SetPreferOriginalLanguage(it)) },
                         )
                     }
-                    captionStyleSettingsItems(state = state, onAction = onAction)
+                    if (advancedExpanded) {
+                        captionStyleSettingsItems(state = state, onAction = onAction)
+                    }
                 }
 
                 item { Spacer(Modifier.size(4.dp)) }
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_default_service)) }
-                items(SERVICES.size, key = { i -> "svc-${SERVICES[i].id}" }) { i ->
+                items(
+                    SERVICES.size,
+                    key = { i -> "svc-${SERVICES[i].id}" },
+                    contentType = { "player-service" },
+                ) { i ->
                     val svc = SERVICES[i]
                     ServiceRow(
                         title = stringResource(svc.labelRes),
@@ -256,44 +285,27 @@ fun PlayerSettingsScreen(
                     )
                 }
 
-                sponsorBlockSettingsItems(state = state, onAction = onAction)
-
-                item { Spacer(Modifier.size(4.dp)) }
-                danmakuSettingsItems(state = state, onAction = onAction)
-
-                item { Spacer(Modifier.size(4.dp)) }
-                item { SettingsSectionHeader(stringResource(R.string.settings_player_section_gestures)) }
                 item {
-                    SwitchRow(
-                        title = stringResource(R.string.settings_player_double_tap_seek),
-                        subtitle = stringResource(R.string.settings_player_double_tap_seek_subtitle),
-                        checked = state.doubleTapSeekEnabled,
-                        onCheckedChange = { onAction(PlayerSettingsAction.SetDoubleTapSeek(it)) },
-                    )
+                    TextButton(
+                        onClick = { advancedExpanded = !advancedExpanded },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            stringResource(
+                                if (advancedExpanded) {
+                                    R.string.settings_player_advanced_hide
+                                } else {
+                                    R.string.settings_player_advanced_show
+                                },
+                            ),
+                        )
+                    }
                 }
-                item {
-                    SwitchRow(
-                        title = stringResource(R.string.settings_player_swipe_seek),
-                        subtitle = stringResource(R.string.settings_player_swipe_seek_subtitle),
-                        checked = state.swipeSeekEnabled,
-                        onCheckedChange = { onAction(PlayerSettingsAction.SetSwipeSeek(it)) },
-                    )
-                }
-                item {
-                    SwitchRow(
-                        title = stringResource(R.string.settings_player_swipe_brightness_volume),
-                        subtitle = stringResource(R.string.settings_player_swipe_brightness_volume_subtitle),
-                        checked = state.swipeBrightnessVolumeEnabled,
-                        onCheckedChange = { onAction(PlayerSettingsAction.SetSwipeBrightnessVolume(it)) },
-                    )
-                }
-                item {
-                    SwitchRow(
-                        title = stringResource(R.string.settings_player_long_press_speed),
-                        subtitle = stringResource(R.string.settings_player_long_press_speed_subtitle),
-                        checked = state.longPressSpeedEnabled,
-                        onCheckedChange = { onAction(PlayerSettingsAction.SetLongPressSpeed(it)) },
-                    )
+                if (advancedExpanded) {
+                    sponsorBlockSettingsItems(state = state, onAction = onAction)
+                    item { Spacer(Modifier.size(4.dp)) }
+                    danmakuSettingsItems(state = state, onAction = onAction)
+                    playerGestureSettingsItems(state = state, onAction = onAction)
                 }
             }
         }

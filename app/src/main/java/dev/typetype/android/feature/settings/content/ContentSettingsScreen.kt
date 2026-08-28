@@ -21,9 +21,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -58,16 +55,6 @@ fun ContentSettingsScreen(
     onNavigateBack: () -> Unit,
 ) {
     val controlsEnabled = !state.isLoading && !state.isUpdating
-    var confirmHideEverything by rememberSaveable { mutableStateOf(false) }
-    if (confirmHideEverything) {
-        HideEverythingConfirmation(
-            onConfirm = {
-                confirmHideEverything = false
-                onAction(ContentSettingsAction.SetAllHidden(true))
-            },
-            onDismiss = { confirmHideEverything = false },
-        )
-    }
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
             SettingsDetailTopBar(
@@ -121,21 +108,6 @@ fun ContentSettingsScreen(
                     deArrowRows(state, controlsEnabled, onAction)
                 }
                 item { SettingsSectionHeader(stringResource(R.string.settings_content_visibility)) }
-                item {
-                    SwitchRow(
-                        title = stringResource(R.string.settings_content_hide_everything),
-                        subtitle = stringResource(R.string.settings_content_hide_everything_subtitle),
-                        checked = state.areAllSurfacesHidden(),
-                        onCheckedChange = { hidden ->
-                            if (hidden) {
-                                confirmHideEverything = true
-                            } else {
-                                onAction(ContentSettingsAction.SetAllHidden(false))
-                            }
-                        },
-                        enabled = controlsEnabled,
-                    )
-                }
                 item {
                     ContentVisibilitySwitch(
                         title = R.string.settings_content_hide_continue,

@@ -43,6 +43,7 @@ class PlayerFullscreenEffectTest {
                 activity = composeRule.activity,
                 isFullscreen = fullscreen.value,
                 locksLandscape = true,
+                restoresPortraitOnExit = true,
             )
         }
         composeRule.waitForIdle()
@@ -93,7 +94,7 @@ class PlayerFullscreenEffectTest {
         }
         composeRule.runOnIdle {
             assertEquals(
-                ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED,
+                ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT,
                 composeRule.activity.requestedOrientation,
             )
             assertFalse(hasNoLimitsFlag())

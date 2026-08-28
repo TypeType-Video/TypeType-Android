@@ -49,6 +49,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.branding.rememberVideoBranding
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.playback.PlaybackQueueEntry
 import dev.typetype.android.domain.playback.PlaybackQueueState
 
@@ -57,6 +59,7 @@ internal fun PlaybackQueueControls(
     state: PlaybackQueueState,
     viewModel: PlaybackQueueViewModel = hiltViewModel(),
 ) {
+    val serverBaseUrl = LocalServerBaseUrl.current
     var sheetVisible by remember { mutableStateOf(false) }
     if (!state.isActive) return
     Row(
@@ -102,6 +105,7 @@ internal fun PlaybackQueueControls(
     if (sheetVisible) {
         PlaybackQueueSheet(
             state = state,
+            serverBaseUrl = serverBaseUrl,
             onPlay = {
                 sheetVisible = false
                 viewModel.play(it)
@@ -120,6 +124,7 @@ internal fun PlaybackQueueControls(
 @Composable
 private fun PlaybackQueueSheet(
     state: PlaybackQueueState,
+    serverBaseUrl: String?,
     onPlay: (Int) -> Unit,
     onRetry: () -> Unit,
     onPlayNext: (Int) -> Unit,
@@ -144,6 +149,7 @@ private fun PlaybackQueueSheet(
                 ) { index, entry ->
                     PlaybackQueueRow(
                         entry = entry,
+                        serverBaseUrl = serverBaseUrl,
                         isCurrent = index == state.currentIndex,
                         canPlayNext = index != state.currentIndex + 1,
                         onClick = { onPlay(index) },
@@ -176,6 +182,7 @@ private fun PlaybackQueueSheet(
 @Composable
 private fun PlaybackQueueRow(
     entry: PlaybackQueueEntry,
+    serverBaseUrl: String?,
     isCurrent: Boolean,
     canPlayNext: Boolean,
     onClick: () -> Unit,
@@ -207,7 +214,7 @@ private fun PlaybackQueueRow(
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
             AsyncImage(
-                model = branding.thumbnailUrl,
+                model = buildImageUrl(serverBaseUrl, branding.thumbnailUrl),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.matchParentSize(),

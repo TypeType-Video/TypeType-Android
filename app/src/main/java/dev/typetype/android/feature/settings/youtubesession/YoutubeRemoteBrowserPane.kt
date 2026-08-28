@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -73,7 +72,7 @@ internal fun YoutubeRemoteBrowserPane(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(16f / 9f)
-                .background(Color.Black, RoundedCornerShape(14.dp))
+                .background(Color.Black, MaterialTheme.shapes.large)
                 .onSizeChanged { size ->
                     containerSize = size
                     remoteViewport(size).let { viewport ->

@@ -46,6 +46,7 @@ class FullscreenOrientationStateTest {
         )
 
         assertTrue(rotated.state.locksLandscape)
+        assertTrue(rotated.state.restoresPortraitOnExit)
         assertNull(rotated.fullscreenRequest)
     }
 
@@ -55,6 +56,9 @@ class FullscreenOrientationStateTest {
             fullscreen = false,
             orientation = DeviceOrientation.Landscape,
         )
+
+        assertTrue(exited.state.restoresPortraitOnExit)
+
         val environment = exited.state.onEnvironmentChanged(
             orientation = DeviceOrientation.Landscape,
             hasFullscreenMedia = true,

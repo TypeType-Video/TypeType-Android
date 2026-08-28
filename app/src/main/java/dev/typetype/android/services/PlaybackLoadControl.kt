@@ -1,23 +1,56 @@
 package dev.typetype.android.services
 
+import android.app.ActivityManager
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
 
 @UnstableApi
-internal fun createPlaybackLoadControl(): DefaultLoadControl =
+internal fun createPlaybackLoadControl(activityManager: ActivityManager): DefaultLoadControl =
+    createPlaybackLoadControl(
+        playbackBufferPolicy(
+            memoryClassMb = activityManager.memoryClass,
+            isLowRamDevice = activityManager.isLowRamDevice,
+        ),
+    )
+
+@UnstableApi
+internal fun createPlaybackLoadControl(policy: PlaybackBufferPolicy): DefaultLoadControl =
     DefaultLoadControl.Builder()
         .setBufferDurationsMs(
-            MIN_BUFFER_MS,
-            MAX_BUFFER_MS,
-            BUFFER_FOR_PLAYBACK_MS,
-            BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS,
+            policy.minBufferMs,
+            policy.maxBufferMs,
+            policy.bufferForPlaybackMs,
+            policy.bufferForPlaybackAfterRebufferMs,
         )
-        .setPrioritizeTimeOverSizeThresholds(true)
-        .setBackBuffer(BACK_BUFFER_MS, true)
+        .setTargetBufferBytes(policy.targetBufferBytes)
+        .setPrioritizeTimeOverSizeThresholds(false)
+        .setBackBuffer(policy.backBufferMs, true)
         .build()
 
-private const val MIN_BUFFER_MS = 30_000
-private const val MAX_BUFFER_MS = 30_000
-private const val BUFFER_FOR_PLAYBACK_MS = 2_000
-private const val BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS = 3_000
-private const val BACK_BUFFER_MS = 30_000
+internal fun playbackBufferPolicy(
+    memoryClassMb: Int,
+    isLowRamDevice: Boolean,
+): PlaybackBufferPolicy {
+    val targetBufferBytes = when {
+        isLowRamDevice || memoryClassMb < MEMORY_CLASS_128_MB -> LOW_RAM_TARGET_BUFFER_BYTES
+        memoryClassMb < MEMORY_CLASS_192_MB -> MEDIUM_HEAP_TARGET_BUFFER_BYTES
+        else -> LARGE_HEAP_TARGET_BUFFER_BYTES
+    }
+    return PlaybackBufferPolicy(targetBufferBytes = targetBufferBytes)
+}
+
+internal data class PlaybackBufferPolicy(
+    val minBufferMs: Int = 15_000,
+    val maxBufferMs: Int = 30_000,
+    val bufferForPlaybackMs: Int = 2_000,
+    val bufferForPlaybackAfterRebufferMs: Int = 3_000,
+    val backBufferMs: Int = 15_000,
+    val targetBufferBytes: Int,
+)
+
+private const val MEMORY_CLASS_128_MB = 128
+private const val MEMORY_CLASS_192_MB = 192
+private const val MEBIBYTE = 1024 * 1024
+private const val LOW_RAM_TARGET_BUFFER_BYTES = 32 * MEBIBYTE
+private const val MEDIUM_HEAP_TARGET_BUFFER_BYTES = 64 * MEBIBYTE
+private const val LARGE_HEAP_TARGET_BUFFER_BYTES = 96 * MEBIBYTE

@@ -29,6 +29,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.stream.Chapter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,6 +41,7 @@ fun ChaptersSheet(
     onChapterClick: (Chapter) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val serverBaseUrl = LocalServerBaseUrl.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -56,10 +59,11 @@ fun ChaptersSheet(
                     modifier = Modifier.padding(vertical = 8.dp),
                 )
             }
-            items(chapters, key = { it.startMs }) { chapter ->
+            items(chapters, key = { it.startMs }, contentType = { "chapter" }) { chapter ->
                 val isCurrent = isChapterActive(chapter, chapters, currentPositionMs)
                 ChapterRow(
                     chapter = chapter,
+                    serverBaseUrl = serverBaseUrl,
                     isCurrent = isCurrent,
                     onClick = { onChapterClick(chapter) },
                 )
@@ -69,7 +73,12 @@ fun ChaptersSheet(
 }
 
 @Composable
-private fun ChapterRow(chapter: Chapter, isCurrent: Boolean, onClick: () -> Unit) {
+private fun ChapterRow(
+    chapter: Chapter,
+    serverBaseUrl: String?,
+    isCurrent: Boolean,
+    onClick: () -> Unit,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -86,7 +95,7 @@ private fun ChapterRow(chapter: Chapter, isCurrent: Boolean, onClick: () -> Unit
                     .background(MaterialTheme.colorScheme.surfaceVariant),
             ) {
                 AsyncImage(
-                    model = chapter.previewUrl,
+                    model = buildImageUrl(serverBaseUrl, chapter.previewUrl),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxWidth(),

@@ -87,7 +87,7 @@ class MainActivity : ComponentActivity(), PictureInPictureActionStateOwner {
         registerPipReceiver()
         setContent {
             val preferences by viewModel.preferences.collectAsStateWithLifecycle()
-            TypeTypeTheme(accentColor = preferences.accentColor) {
+            TypeTypeTheme(preferences = preferences) {
                 val state by viewModel.state.collectAsStateWithLifecycle()
                 val startRoute = state.startRoute
                 val pendingCrashReport = state.pendingCrashReport

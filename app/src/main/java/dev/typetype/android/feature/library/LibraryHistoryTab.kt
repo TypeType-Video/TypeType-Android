@@ -19,7 +19,6 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -55,6 +54,8 @@ import dev.typetype.android.core.ui.components.VideoDurationBadge
 import dev.typetype.android.core.ui.components.AnimatedLoader
 import dev.typetype.android.core.ui.components.FullScreenLoader
 import dev.typetype.android.core.ui.components.VideoMoreActionsButton
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.library.HistoryItem
 import dev.typetype.android.domain.library.VideoMeta
 import dev.typetype.android.feature.library.components.rememberVideoMetas
@@ -79,6 +80,7 @@ fun HistoryTab(
     onLoadMore: () -> Unit,
 ) {
     val items = pagingData.collectAsLazyPagingItems()
+    val serverBaseUrl = LocalServerBaseUrl.current
     var pendingRemoval by remember { mutableStateOf<HistoryItem?>(null) }
     if (items.itemCount == 0 && isRefreshing) {
         FullScreenLoader()
@@ -126,6 +128,7 @@ fun HistoryTab(
                 HistoryRow(
                     item = item,
                     meta = metas[item.url],
+                    serverBaseUrl = serverBaseUrl,
                     onClick = { onPlayVideo(item.url) },
                     onOpenChannel = onOpenChannel,
                     onPlayNext = { onPlayNext(item) },
@@ -158,6 +161,7 @@ fun HistoryTab(
 private fun HistoryRow(
     item: HistoryItem,
     meta: VideoMeta?,
+    serverBaseUrl: String?,
     onClick: () -> Unit,
     onOpenChannel: (String) -> Unit,
     onPlayNext: () -> Unit,
@@ -193,11 +197,11 @@ private fun HistoryRow(
             modifier = Modifier
                 .width(160.dp)
                 .aspectRatio(16f / 9f)
-                .clip(RoundedCornerShape(10.dp))
+                .clip(MaterialTheme.shapes.medium)
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
             AsyncImage(
-                model = branding.thumbnailUrl,
+                model = buildImageUrl(serverBaseUrl, branding.thumbnailUrl),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
@@ -231,7 +235,7 @@ private fun HistoryRow(
                             }
                         }
                     AsyncImage(
-                        model = avatarUrl,
+                        model = buildImageUrl(serverBaseUrl, avatarUrl),
                         contentDescription = channelActionDescription,
                         contentScale = ContentScale.Crop,
                         modifier = avatarModifier,

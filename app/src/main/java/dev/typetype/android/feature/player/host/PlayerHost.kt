@@ -15,14 +15,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.session.MediaController
 import dev.typetype.android.feature.player.PlayerFullscreenEffect
 import dev.typetype.android.feature.player.PlayerRoute as PlayerRouteScreen
 import dev.typetype.android.feature.player.components.rememberIsInPipMode
+import dev.typetype.android.feature.player.components.rememberAccessiblePlayerControls
 
 private val MINI_PLAYER_HEIGHT = 64.dp
 internal const val PLAYER_HOST_OVERLAY_TAG = "player_host_overlay"
@@ -37,12 +40,15 @@ fun PlayerHost(
     onOpenChannel: (channelUrl: String) -> Unit,
     onOpenAccounts: () -> Unit,
     onClosePlayback: () -> Unit,
+    accessibleControlsEnabled: Boolean = false,
     onTransitionProgressChange: (Float) -> Unit = {},
     content: @Composable () -> Unit,
 ) {
     val state by controller.state.collectAsStateWithLifecycle()
     val density = LocalDensity.current
     val isInPip by rememberIsInPipMode()
+    val accessibleControls = rememberAccessiblePlayerControls(accessibleControlsEnabled)
+    val hapticFeedback = LocalHapticFeedback.current
     val activity = LocalActivity.current
     val configuration = LocalConfiguration.current
     val orientation = when (configuration.orientation) {
@@ -78,6 +84,7 @@ fun PlayerHost(
             activity = activity,
             isFullscreen = isFullscreen,
             locksLandscape = fullscreenOrientationState.locksLandscape,
+            restoresPortraitOnExit = fullscreenOrientationState.restoresPortraitOnExit,
         )
 
         LaunchedEffect(orientation, hasFullscreenMedia, allowsRotationFullscreen, isFullscreen) {
@@ -120,7 +127,7 @@ fun PlayerHost(
                 miniAnchorPx = miniAnchorPx,
                 containerHeightPx = containerHeightPx,
                 miniHeightPx = miniHeightPx,
-                dragEnabled = !isFullscreen && !isInPip,
+                dragEnabled = !isInPip && !accessibleControls && !isFullscreen,
                 miniContentEnabled = !isInPip,
                 onTargetSettled = { target ->
                     when (target) {
@@ -128,12 +135,21 @@ fun PlayerHost(
                             if (controller.state.value.target != target) controller.expand()
                         }
                         PlayerHostTarget.Mini -> {
+                            if (isFullscreen) requestFullscreen(false)
                             if (controller.state.value.target != target) controller.minimize()
                         }
                         else -> Unit
                     }
                 },
                 onProgressChange = onTransitionProgressChange,
+                onDragAnchorCrossed = {
+                    hapticFeedback.performHapticFeedback(
+                        HapticFeedbackType.GestureThresholdActivate,
+                    )
+                },
+                onDragSettled = {
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                },
                 miniContent = {
                     MiniPlayerRuntime(
                         controller = mediaController,
@@ -142,9 +158,10 @@ fun PlayerHost(
                         onClose = onClosePlayback,
                     )
                 },
-                expandedContent = { transitionModifier ->
+                expandedContent = { transitionProgress ->
                     PlayerRouteScreen(
                         isFullscreen = isFullscreen,
+                        hostTransitionProgress = transitionProgress,
                         onFullscreenChange = requestFullscreen,
                         onNavigateBack = { controller.collapseExpanded() },
                         onOpenAccounts = {
@@ -152,11 +169,12 @@ fun PlayerHost(
                             onOpenAccounts()
                         },
                         onPlayVideo = { url -> controller.openVideo(url) },
+                        onAutoplayVideo = { url -> controller.continueWithVideo(url) },
                         onOpenChannel = { url ->
                             controller.minimize()
                             onOpenChannel(url)
                         },
-                        modifier = transitionModifier,
+                        modifier = Modifier.fillMaxSize(),
                     )
                 },
             )

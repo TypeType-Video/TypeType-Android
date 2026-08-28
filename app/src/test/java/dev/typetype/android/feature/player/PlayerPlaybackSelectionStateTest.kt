@@ -90,6 +90,20 @@ class PlayerPlaybackSelectionStateTest {
     }
 
     @Test
+    fun `persisted codec initializes a recreated selection state`() {
+        val recreated = PlayerPlaybackSelectionState(
+            stream = stream(),
+            defaultAudioLanguage = "",
+            subtitlesEnabled = false,
+            defaultSubtitleLanguage = "",
+            preferOriginalLanguage = false,
+            preferredCodec = VP9_CODEC_KEY,
+        )
+
+        assertEquals(VP9_CODEC_KEY, recreated.selectedCodec)
+    }
+
+    @Test
     fun `server playback speed is applied and bounded`() {
         val configured = PlayerPlaybackSelectionState(
             stream = stream(),

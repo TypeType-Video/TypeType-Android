@@ -20,7 +20,6 @@ import kotlinx.coroutines.launch
 data class SettingsState(
     val accountFeaturesAvailable: Boolean = false,
     val rssAvailable: Boolean = false,
-    val youtubeSessionAvailable: Boolean = false,
 )
 
 @HiltViewModel
@@ -44,8 +43,6 @@ class SettingsViewModel @Inject constructor(
                     mutableState.update {
                         it.copy(
                             rssAvailable = server?.rss?.enabled == true,
-                            youtubeSessionAvailable =
-                                server?.youtubeRemoteLoginSupported == true,
                         )
                     }
                 }

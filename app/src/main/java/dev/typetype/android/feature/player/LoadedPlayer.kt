@@ -6,23 +6,27 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.platform.LocalContext
 import androidx.paging.PagingData
 import dev.typetype.android.domain.comments.Comment
@@ -36,6 +40,8 @@ import dev.typetype.android.feature.player.components.AudioOnlyPlaybackDefault
 import dev.typetype.android.feature.player.components.LocalMediaController
 import dev.typetype.android.feature.player.components.PlayerGestureConfig
 import dev.typetype.android.feature.player.components.PlayerSurfaceBox
+import dev.typetype.android.feature.player.components.rememberIsInPipMode
+import dev.typetype.android.feature.player.components.rememberAudioOnlyPlaybackState
 import dev.typetype.android.feature.player.components.rememberPlaybackChapters
 import kotlinx.coroutines.flow.Flow
 import kotlin.math.roundToInt
@@ -53,6 +59,7 @@ fun LoadedPlayer(
     playbackBrightnessPercent: Int?,
     autoplayCountdownSeconds: Int,
     audioOnlyPlaybackDefault: Boolean?,
+    preferredCodec: String,
     userSettings: UserSettings,
     playlists: List<Playlist>,
     playlistPickerVisible: Boolean,
@@ -64,10 +71,12 @@ fun LoadedPlayer(
     prepareSabrPlayback: PrepareSabrPlayback,
     loadSubtitleCues: LoadSubtitleCues,
     isFullscreen: Boolean,
+    hostTransitionProgress: () -> Float = { 0f },
     onFullscreenChange: (Boolean) -> Unit,
     onNavigateBack: () -> Unit,
     onOpenAccounts: () -> Unit,
     onPlayVideo: (videoUrl: String) -> Unit,
+    onAutoplayVideo: (videoUrl: String) -> Unit = onPlayVideo,
     onOpenChannel: (channelUrl: String) -> Unit = {},
     isSubscribed: Boolean = false,
     subscriptionInFlight: Boolean = false,
@@ -77,12 +86,14 @@ fun LoadedPlayer(
     onAction: (PlayerAction) -> Unit = {},
 ) {
     val controller = LocalMediaController.current
+    val isInPip by rememberIsInPipMode()
     val context = LocalContext.current
     val codecSupport = remember(context.applicationContext) {
         DevicePlaybackCodecSupport(context.applicationContext)
     }
     var commentsVisible by remember { mutableStateOf(false) }
     var downloadPickerVisible by remember { mutableStateOf(false) }
+    var codecFallbackGeneration by remember(stream.id) { mutableLongStateOf(0L) }
     val selections = rememberPlayerPlaybackSelectionState(
         stream = stream,
         defaultQuality = userSettings.defaultQuality,
@@ -91,9 +102,17 @@ fun LoadedPlayer(
         defaultSubtitleLanguage = userSettings.defaultSubtitleLanguage,
         preferOriginalLanguage = userSettings.preferOriginalLanguage,
         defaultPlaybackSpeed = userSettings.defaultPlaybackSpeed,
+        preferredCodec = preferredCodec,
     )
     val sponsorBlockPolicy = rememberSponsorBlockPlaybackPolicy(stream, userSettings)
     val playbackChapters = rememberPlaybackChapters(stream.chapters, sponsorBlockPolicy)
+    val audioOnlyState = controller?.let {
+        rememberAudioOnlyPlaybackState(
+            controller = it,
+            stream = stream,
+            default = AudioOnlyPlaybackDefault(videoUrl, audioOnlyPlaybackDefault),
+        )
+    }
     var pipSourceRect by remember(stream.id) { mutableStateOf<Rect?>(null) }
     val activity = LocalActivity.current
     val autoplayCountdown = rememberPlayerAutoplayCountdown(
@@ -108,7 +127,7 @@ fun LoadedPlayer(
         onToggleQueueAutoplayPause = {
             onAction(PlayerAction.OnToggleQueueAutoplayPause)
         },
-        onPlayVideo = onPlayVideo,
+        onPlayVideo = onAutoplayVideo,
     )
 
     LaunchedEffect(
@@ -116,6 +135,7 @@ fun LoadedPlayer(
         stream.requestScope,
         controller,
         playbackBindGeneration,
+        codecFallbackGeneration,
         selections.selectedCodec,
         selections.selectedQuality,
         selections.selectedAudioKey,
@@ -148,6 +168,13 @@ fun LoadedPlayer(
         controller?.setPlaybackSpeed(selections.selectedSpeed)
     }
 
+    RuntimeCodecFallbackEffect(
+        player = controller,
+        enabled = selections.selectedCodec == RECOMMENDED_CODEC_KEY,
+        codecSupport = codecSupport,
+        onFallback = { codecFallbackGeneration += 1L },
+    )
+
     PlayerSubtitleSelectionEffect(
         player = controller,
         selectedSubtitleKey = selections.selectedSubtitleKey,
@@ -162,19 +189,30 @@ fun LoadedPlayer(
         onSaveProgress = { onAction(PlayerAction.OnSaveProgress(it)) },
     )
 
+    val expandedTopPadding = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding()
+    val expandedTopPaddingPx = with(LocalDensity.current) { expandedTopPadding.toPx() }
+    val autoplayVisible by remember(hostTransitionProgress) {
+        derivedStateOf { hostTransitionProgress() < 0.01f }
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .then(
-                if (isFullscreen) Modifier
-                else Modifier.windowInsetsPadding(
-                    WindowInsets.safeDrawing.only(WindowInsetsSides.Top),
-                ),
+                if (isFullscreen) {
+                    Modifier
+                } else {
+                    Modifier.playerTopProgressPadding(
+                        maxTopPx = expandedTopPaddingPx,
+                        progress = hostTransitionProgress,
+                    )
+                }
             ),
     ) {
         PlayerContentLayout(
             isFullscreen = isFullscreen,
+            isInPip = isInPip,
+            hostTransitionProgress = hostTransitionProgress,
             viewport = { viewportModifier ->
                 Box(
                     modifier = viewportModifier
@@ -195,14 +233,17 @@ fun LoadedPlayer(
                         PlayerSurfaceBox(
                             player = controller,
                             stream = stream,
-                            audioOnlyDefault = AudioOnlyPlaybackDefault(videoUrl, audioOnlyPlaybackDefault),
+                            audioOnlyState = requireNotNull(audioOnlyState),
                             selectedCodec = selections.selectedCodec,
                             selectedQuality = selections.selectedQuality,
                             selectedAudioKey = selections.selectedAudioKey,
                             selectedSubtitleKey = selections.selectedSubtitleKey,
                             selectedSpeed = selections.selectedSpeed,
                             codecSupport = codecSupport,
-                            onSelectCodec = selections::selectCodec,
+                            onSelectCodec = {
+                                selections.selectCodec(it)
+                                onAction(PlayerAction.OnSetPreferredCodec(it))
+                            },
                             onSelectQuality = selections::selectQuality,
                             onSelectAudio = selections::selectAudio,
                             onSelectSubtitle = selections::selectSubtitle,
@@ -226,12 +267,13 @@ fun LoadedPlayer(
                             captionStyles = userSettings.captionStyles,
                             danmakuState = danmakuState,
                             onDanmakuAction = onDanmakuAction,
+                            hostTransitionProgress = hostTransitionProgress,
                             modifier = Modifier.fillMaxSize(),
                         )
                     } else {
                         CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     }
-                    autoplayCountdown?.let {
+                    autoplayCountdown?.takeIf { autoplayVisible }?.let {
                         AutoplayCountdownOverlay(
                             state = it,
                             modifier = Modifier.fillMaxSize(),
@@ -251,6 +293,7 @@ fun LoadedPlayer(
                     isSubscribed = isSubscribed,
                     subscriptionInFlight = subscriptionInFlight,
                     downloadInFlight = downloadInFlight,
+                    audioOnlyState = audioOnlyState,
                     onAction = onAction,
                     onShowComments = { commentsVisible = true },
                     onShowDownloads = { downloadPickerVisible = true },
@@ -278,4 +321,24 @@ fun LoadedPlayer(
         onDismissDownload = { downloadPickerVisible = false },
         onAction = onAction,
     )
+}
+
+private fun Modifier.playerTopProgressPadding(
+    maxTopPx: Float,
+    progress: () -> Float,
+): Modifier = layout { measurable, constraints ->
+    val topPx = (maxTopPx * (1f - progress().coerceIn(0f, 1f))).roundToInt()
+    val maxHeight = if (constraints.hasBoundedHeight) {
+        (constraints.maxHeight - topPx).coerceAtLeast(0)
+    } else {
+        constraints.maxHeight
+    }
+    val childConstraints = constraints.copy(
+        minHeight = constraints.minHeight.coerceAtMost(maxHeight),
+        maxHeight = maxHeight,
+    )
+    val placeable = measurable.measure(childConstraints)
+    layout(placeable.width, placeable.height + topPx) {
+        placeable.placeRelative(0, topPx)
+    }
 }

@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
@@ -38,6 +37,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.channel.Channel
 
 private val BannerAspectRatio = 16f / 6f
@@ -51,6 +52,7 @@ internal fun ChannelHeader(
     onToggleSubscribe: () -> Unit,
     onNavigateBack: () -> Unit,
 ) {
+    val serverBaseUrl = LocalServerBaseUrl.current
     Column(modifier = Modifier.fillMaxWidth()) {
         if (channel.bannerUrl.isNullOrBlank()) {
             ChannelBackButton(onNavigateBack = onNavigateBack)
@@ -62,7 +64,7 @@ internal fun ChannelHeader(
                     .background(MaterialTheme.colorScheme.surfaceVariant),
             ) {
                 AsyncImage(
-                    model = channel.bannerUrl,
+                    model = buildImageUrl(serverBaseUrl, channel.bannerUrl.orEmpty()),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),
@@ -76,7 +78,7 @@ internal fun ChannelHeader(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             AsyncImage(
-                model = channel.avatarUrl,
+                model = buildImageUrl(serverBaseUrl, channel.avatarUrl),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -148,7 +150,7 @@ private fun SubscribeButton(isSubscribed: Boolean, enabled: Boolean, onClick: ()
     Button(
         onClick = onClick,
         enabled = enabled,
-        shape = RoundedCornerShape(20.dp),
+        shape = MaterialTheme.shapes.large,
         colors = ButtonDefaults.buttonColors(
             containerColor = if (isSubscribed) {
                 MaterialTheme.colorScheme.surfaceVariant

@@ -8,6 +8,7 @@ import dev.typetype.android.domain.stream.Stream
 @Composable
 internal fun DeArrowAudioOnlyPoster(
     stream: Stream,
+    isPlaying: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val branding = rememberVideoBranding(
@@ -19,6 +20,7 @@ internal fun DeArrowAudioOnlyPoster(
     AudioOnlyPoster(
         thumbnailUrl = branding.thumbnailUrl,
         title = branding.title,
+        isPlaying = isPlaying,
         modifier = modifier,
     )
 }

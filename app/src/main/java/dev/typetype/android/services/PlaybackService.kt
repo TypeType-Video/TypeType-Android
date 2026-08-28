@@ -1,5 +1,6 @@
 package dev.typetype.android.services
 
+import android.app.ActivityManager
 import android.app.PendingIntent
 import android.content.Intent
 import dagger.hilt.android.AndroidEntryPoint
@@ -7,7 +8,6 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
 import androidx.media3.session.CommandButton
@@ -168,17 +168,18 @@ class PlaybackService : MediaSessionService() {
         playbackClock: SabrPlaybackClock,
         recoveryDispatcher: SabrPlaybackRecoveryDispatcher,
     ): ExoPlayer {
+        val activityManager = requireNotNull(getSystemService(ActivityManager::class.java))
         val audioAttributes = AudioAttributes.Builder()
             .setUsage(C.USAGE_MEDIA)
             .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
             .build()
-        val renderersFactory = DefaultRenderersFactory(this)
+        val renderersFactory = PlaybackRenderersFactory(this)
             .setEnableDecoderFallback(true)
         return ExoPlayer.Builder(this, renderersFactory)
             .setAudioAttributes(audioAttributes, true)
             .setHandleAudioBecomingNoisy(true)
             .setWakeMode(C.WAKE_MODE_NETWORK)
-            .setLoadControl(createPlaybackLoadControl())
+            .setLoadControl(createPlaybackLoadControl(activityManager))
             .setMediaSourceFactory(
                 MergedStreamMediaSourceFactory(
                     this,

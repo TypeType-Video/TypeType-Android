@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Icon
@@ -35,6 +34,8 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.branding.rememberVideoBranding
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.library.PlaylistVideo
 import dev.typetype.android.domain.library.VideoMeta
 
@@ -50,6 +51,7 @@ fun PlaylistVideoCard(
     onChannelClick: ((channelUrl: String) -> Unit)? = null,
     onMoreClick: (() -> Unit)? = null,
 ) {
+    val serverBaseUrl = LocalServerBaseUrl.current
     val avatarUrl = video.channelAvatarUrl.takeIf { it.isNotBlank() }
         ?: meta?.channelAvatarUrl?.takeIf { it.isNotBlank() }
     val channelName = video.channelName.takeIf { it.isNotBlank() }
@@ -79,11 +81,11 @@ fun PlaylistVideoCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(16f / 9f)
-                .clip(RoundedCornerShape(14.dp))
+                .clip(MaterialTheme.shapes.medium)
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
             AsyncImage(
-                model = branding.thumbnailUrl,
+                model = buildImageUrl(serverBaseUrl, branding.thumbnailUrl),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
@@ -98,7 +100,7 @@ fun PlaylistVideoCard(
                     modifier = Modifier
                         .align(Alignment.TopStart)
                         .padding(8.dp)
-                        .clip(RoundedCornerShape(6.dp))
+                        .clip(MaterialTheme.shapes.small)
                         .background(Color.Black.copy(alpha = 0.7f))
                         .padding(horizontal = 8.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -147,7 +149,7 @@ fun PlaylistVideoCard(
                         }
                     }
                 AsyncImage(
-                    model = avatarUrl,
+                    model = avatarUrl?.let { buildImageUrl(serverBaseUrl, it) },
                     contentDescription = channelActionDescription,
                     contentScale = ContentScale.Crop,
                     modifier = avatarModifier,

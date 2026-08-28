@@ -11,7 +11,9 @@ import androidx.compose.ui.test.down
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.moveTo
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -66,6 +68,22 @@ class PlayerTimeBarGestureTest {
         }
     }
 
+    @Test
+    fun accessibilityActionCommitsRequestedPosition() {
+        val scrubbed = mutableListOf<Long>()
+        val committed = mutableListOf<Long>()
+        showTimeline(scrubbed::add, committed::add) {}
+
+        composeRule.onNodeWithTag(TIMELINE_TAG).performSemanticsAction(
+            SemanticsActions.SetProgress,
+        ) { setProgress -> setProgress(45_000f) }
+
+        composeRule.runOnIdle {
+            assertEquals(45_000L, scrubbed.single())
+            assertEquals(45_000L, committed.single())
+        }
+    }
+
     private fun showTimeline(
         onScrub: (Long) -> Unit,
         onScrubFinished: (Long) -> Unit,
@@ -81,6 +99,8 @@ class PlayerTimeBarGestureTest {
                     onScrub = onScrub,
                     onScrubFinished = onScrubFinished,
                     onScrubCancelled = onScrubCancelled,
+                    accessibilityLabel = "Playback position",
+                    accessibilityStateDescription = "0:10 of 1:00",
                     modifier = Modifier
                         .size(width = 240.dp, height = 36.dp)
                         .testTag(TIMELINE_TAG),

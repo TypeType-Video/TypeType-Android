@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ExpandMore
@@ -22,6 +21,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -145,7 +145,7 @@ private fun ChannelSearchField(
                 onSubmit()
             },
         ),
-        shape = RoundedCornerShape(14.dp),
+        shape = MaterialTheme.shapes.large,
         modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
     )
 }
@@ -164,7 +164,7 @@ private fun <T> ChannelMenuButton(
     Box {
         OutlinedButton(
             onClick = { expanded = true },
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.medium,
             modifier = Modifier.semantics {
                 contentDescription = accessibilityLabel
                 stateDescription = label
