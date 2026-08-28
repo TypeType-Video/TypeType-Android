@@ -26,8 +26,8 @@ android {
         applicationId = "dev.typetype.android"
         minSdk = 23
         targetSdk = 37
-versionCode = 10701
-versionName = "1.7.0-beta.2"
+        versionCode = 10702
+        versionName = "1.7.0-beta.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         resValue("string", "app_name", "TypeType")
     }
@@ -50,7 +50,7 @@ versionName = "1.7.0-beta.2"
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true
-            isShrinkResources = true
+            isShrinkResources = false
             signingConfig = signingConfigs.findByName("release")?.takeIf { it.storeFile != null }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
