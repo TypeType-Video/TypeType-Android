@@ -1,0 +1,25 @@
+[Unit]
+Description=Receive signed GitHub prerelease webhooks for TypeType F-Droid beta
+Wants=network-online.target
+Requires=srv-fdroid.mount
+After=network-online.target srv-fdroid.mount
+
+[Service]
+Type=simple
+User=debian
+Group=debian
+ExecStart=/usr/bin/python3 /srv/fdroid-beta/signing/typetype-fdroid-beta-webhook.py
+Restart=always
+RestartSec=5s
+RuntimeDirectory=typetype-fdroid-beta-webhook
+RuntimeDirectoryMode=0700
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadOnlyPaths=/srv/fdroid-beta/signing
+RestrictAddressFamilies=AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

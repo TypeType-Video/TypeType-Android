@@ -1,0 +1,179 @@
+name: Android Beta
+
+on:
+  push:
+    branches:
+      - beta
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-beta
+  cancel-in-progress: false
+
+env:
+  CI: true
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
+  GRADLE_OPTS: -Dorg.gradle.workers.max=8 -Dorg.gradle.daemon.idletimeout=900000
+  ANDROID_HOME: /opt/android-sdk
+  ANDROID_SDK_ROOT: /opt/android-sdk
+  JAVA_HOME: /usr/lib/jvm/java-26-openjdk
+  GRADLE_USER_HOME: /var/tmp/typetype-android-gradle-user-home
+  GITHUB_REPO: TypeType-Video/TypeType-Android
+
+jobs:
+  release:
+    runs-on: [self-hosted, Linux, X64, arko, android]
+    timeout-minutes: 35
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Install Android SDK platform
+        run: |
+          platform="$ANDROID_HOME/platforms/android-37.0"
+          (
+            flock 9
+            if [ ! -f "$platform/android.jar" ]; then
+              rm -rf "$platform"
+              "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+                --sdk_root="$ANDROID_HOME" \
+                "platforms;android-37.0"
+            fi
+            test -f "$platform/android.jar"
+          ) 9>"$ANDROID_HOME/.platform-install.lock"
+
+      - name: Validate beta release version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version_name="$(sed -nE 's/^[[:space:]]*versionName = "([^"]+)"/\1/p' app/build.gradle.kts)"
+          version_code="$(sed -nE 's/^[[:space:]]*versionCode = ([0-9]+)/\1/p' app/build.gradle.kts)"
+          release_tag="v${version_name}"
+
+          [[ "$version_name" =~ ^[0-9]+\.[0-9]+\.[0-9]+-beta\.[1-9][0-9]*$ ]]
+          [[ "$version_code" =~ ^[1-9][0-9]*$ ]]
+
+          latest_code="$(
+            gh api \
+              -H 'Accept: application/vnd.github+json' \
+              --paginate "repos/${GITHUB_REPO}/releases" \
+              --jq '.[] | select(.draft == false and .prerelease == true) | .assets[]?.name | capture("^dev\\.typetype\\.android_(?<code>[0-9]+)\\.apk$").code' \
+              2>/dev/null | sort -nu | tail -n 1
+          )"
+          latest_code="${latest_code:-0}"
+
+          if [ "$version_code" -le "$latest_code" ]; then
+            echo "versionCode $version_code must be greater than latest beta $latest_code" >&2
+            exit 1
+          fi
+
+          if gh api "repos/${GITHUB_REPO}/git/ref/tags/${release_tag}" > /dev/null 2>&1; then
+            echo "Tag ${release_tag} already exists" >&2
+            exit 1
+          fi
+
+          {
+            echo "RELEASE_VERSION=${version_name}"
+            echo "RELEASE_CODE=${version_code}"
+            echo "RELEASE_TAG=${release_tag}"
+          } >> "$GITHUB_ENV"
+
+      - name: Prepare signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          test -n "$ANDROID_KEYSTORE_PASSWORD"
+          test -n "$ANDROID_KEY_ALIAS"
+          test -n "$ANDROID_KEY_PASSWORD"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > release.keystore
+          {
+            printf 'storeFile=%s\n' "$PWD/release.keystore"
+            printf 'storePassword=%s\n' "$PWD/release.keystore"
+            printf 'keyAlias=%s\n' "$ANDROID_KEY_ALIAS"
+            printf 'keyPassword=%s\n' "$ANDROID_KEY_PASSWORD"
+          } > keystore.properties
+
+      - name: Verify and build beta release
+        timeout-minutes: 25
+        run: |
+          ./gradlew --build-cache --stacktrace \
+            :baseline-profile:assemble \
+            :player:testDebugUnitTest \
+            :app:testDebugUnitTest \
+            :player:lintDebug \
+            :app:lintDebug \
+            :app:assembleDebug \
+            :app:assembleRelease
+
+      - name: Upload lint report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: typetype-beta-lint-report
+          path: |
+            app/build/reports/lint-results-debug.html
+            player/build/reports/lint-results-debug.html
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Verify and prepare beta APK
+        run: |
+          mkdir -p artifacts
+          apk="$(find app/build/outputs/apk/release -name '*.apk' | head -n 1)"
+          test -n "$apk"
+          build_tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+          test -n "$build_tools"
+
+          "$build_tools/zipalign" -c -P 16 -v 4 "$apk"
+          "$build_tools/apksigner" verify --verbose --print-certs "$apk"
+
+          apk_application_id="$("$ANDROID_HOME/cmdline-tools/latest/bin/apkanalyzer" manifest application-id "$apk")"
+          apk_version="$("$ANDROID_HOME/cmdline-tools/latest/bin/apkanalyzer" manifest version-name "$apk")"
+          apk_code="$("$ANDROID_HOME/cmdline-tools/latest/bin/apkanalyzer" manifest version-code "$apk")"
+          test "$apk_application_id" = "dev.typetype.android"
+          test "$apk_version" = "$RELEASE_VERSION"
+          test "$apk_code" = "$RELEASE_CODE"
+
+          cp "$apk" "artifacts/dev.typetype.android_${RELEASE_CODE}.apk"
+          (
+            cd artifacts
+            sha256sum "dev.typetype.android_${RELEASE_CODE}.apk" \
+              > "dev.typetype.android_${RELEASE_CODE}.apk.sha256"
+            sha256sum -c "dev.typetype.android_${RELEASE_CODE}.apk.sha256"
+          )
+
+      - name: Upload beta APK
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: typetype-beta-apk
+          path: |
+            artifacts/*.apk
+            artifacts/*.sha256
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 30
+
+      - name: Publish GitHub prerelease
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: TypeType Android ${{ env.RELEASE_VERSION }}
+          body: ${{ github.event.head_commit.message }}
+          prerelease: true
+          make_latest: false
+          generate_release_notes: false
+          target_commitish: beta
+          files: |
+            artifacts/*.apk
+            artifacts/*.sha256
+          fail_on_unmatched_files: true

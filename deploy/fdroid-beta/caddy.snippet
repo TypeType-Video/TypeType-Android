@@ -1,0 +1,20 @@
+@betaHook path /hooks/fdroid-beta
+reverse_proxy @betaHook 127.0.0.1:19091
+
+@betaRepositoryRoot path /fdroid/android-beta/repo
+redir @betaRepositoryRoot /fdroid/android-beta/repo/ 308
+
+@betaIndex path /fdroid/android-beta/repo/index.jar /fdroid/android-beta/repo/index.xml /fdroid/android-beta/repo/index-v1.jar /fdroid/android-beta/repo/index-v1.json /fdroid/android-beta/repo/index-v2.json /fdroid/android-beta/repo/entry.jar /fdroid/android-beta/repo/entry.json /fdroid/android-beta/repo/diff/*
+header @betaIndex Cache-Control "no-cache"
+
+@betaPackages path /fdroid/android-beta/repo/*.apk
+header @betaPackages Cache-Control "public, max-age=31536000, immutable"
+
+handle_path /fdroid/android-beta/repo/* {
+	header {
+		Cache-Control "no-store"
+		Cloudflare-CDN-Cache-Control "no-store"
+	}
+	root * /srv/fdroid-beta/public/repo
+	file_server
+}

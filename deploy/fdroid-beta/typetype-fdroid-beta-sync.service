@@ -1,0 +1,19 @@
+[Unit]
+Description=Publish the latest TypeType Android prerelease to F-Droid beta
+Wants=network-online.target
+Requires=srv-fdroid.mount docker.service
+After=network-online.target srv-fdroid.mount docker.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+User=debian
+Group=debian
+Environment=HOME=/home/debian
+WorkingDirectory=/srv/fdroid-beta/signing
+ExecStartPre=-/usr/bin/rm -f /run/typetype-fdroid-beta-webhook/sync
+ExecStart=/srv/fdroid-beta/signing/sync-github-beta-release.sh
+UMask=0077
+TimeoutStartSec=20min
+Restart=on-failure
+RestartSec=5min
