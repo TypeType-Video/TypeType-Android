@@ -12,9 +12,8 @@ exec 8>"$state_dir/sync.lock"
 flock 8
 
 release_json="$(
-  gh api \
-    -H 'Accept: application/vnd.github+json' \
-    --paginate "repos/${github_repo}/releases" |
+  curl -fsSL --retry 5 \
+    "https://api.github.com/repos/${github_repo}/releases?per_page=100" |
     jq -c '[.[] | select(.draft == false and .prerelease == true)] | first // empty'
 )"
 
@@ -38,13 +37,14 @@ fi
 
 IFS=$'\t' read -r apk_id apk_name <<<"${apk_assets[0]}"
 checksum_name="${apk_name}.sha256"
-checksum_id="$(jq -er --arg name "$checksum_name" '.assets[] | select(.name == $name) | .id' <<<"$release_json")"
+download_url="https://github.com/${github_repo}/releases/download/${release_tag}/${apk_name}"
+checksum_url="https://github.com/${github_repo}/releases/download/${release_tag}/${checksum_name}"
 
 stage_dir="$(mktemp -d "$state_dir/release.XXXXXX")"
 trap 'rm -rf "$stage_dir"' EXIT
 
-gh api -H 'Accept: application/octet-stream' "repos/${github_repo}/releases/assets/${apk_id}" > "${stage_dir}/${apk_name}"
-gh api -H 'Accept: application/octet-stream' "repos/${github_repo}/releases/assets/${checksum_id}" > "${stage_dir}/${checksum_name}"
+curl -fL --retry 5 -o "${stage_dir}/${apk_name}" "$download_url"
+curl -fL --retry 5 -o "${stage_dir}/${checksum_name}" "$checksum_url"
 (
   cd "$stage_dir"
   sha256sum -c "$checksum_name"
