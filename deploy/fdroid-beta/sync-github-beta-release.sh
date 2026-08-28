@@ -67,14 +67,9 @@ badging="$(/usr/bin/aapt dump badging "${stage_dir}/${apk_name}")"
 package_name=
 version_code=
 version_name=
-IFS= read -r package_line <<<"$badging"
-for field in $package_line; do
-  case "$field" in
-    name=*) package_name=${field#name=\'}; package_name=${package_name%\'} ;;
-    versionCode=*) version_code=${field#versionCode=\'} ;;
-    versionName=*) version_name=${field#versionName=\'}; version_name=${version_name%\'} ;;
-  esac
-done
+package_name="$(printf '%s\n' "$badging" | sed -nE "s/^package: name='([^']+)'.*/\1/p")"
+version_code="$(printf '%s\n' "$badging" | sed -nE "s/^package:.*versionCode='([0-9]+)'.*/\1/p")"
+version_name="$(printf '%s\n' "$badging" | sed -nE "s/^package:.*versionName='([^']+)'.*/\1/p")"
 
 if [ "$package_name" != 'dev.typetype.android' ]; then
   echo "Unexpected package: ${package_name}" >&2
