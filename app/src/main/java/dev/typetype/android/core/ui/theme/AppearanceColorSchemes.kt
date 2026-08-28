@@ -169,12 +169,14 @@ internal fun mangaScheme(
     amoled: Boolean,
     isDark: Boolean,
 ): ColorScheme {
-    val dark = isDark || amoled
+    val usesPaperSurfaces = theme == AppearanceTheme.TypeType || theme == AppearanceTheme.Dynamic
+    val darkMode = isDark || amoled
+    val darkSurface = if (usesPaperSurfaces) darkMode || paper != MangaPaper.Day else darkMode
     val background = if (amoled) {
         Color.Black
     } else {
         when (paper) {
-            MangaPaper.Day -> Color(0xFFFFFDF5)
+            MangaPaper.Day -> if (darkMode) Color(0xFF211F1A) else Color(0xFFFFFDF5)
             MangaPaper.Night -> Color.Black
             MangaPaper.Nord -> Color(0xFF2E3440)
         }
@@ -183,18 +185,17 @@ internal fun mangaScheme(
         Color.Black
     } else {
         when (paper) {
-            MangaPaper.Day -> Color(0xFFFFFAE8)
+            MangaPaper.Day -> if (darkMode) Color(0xFF302B23) else Color(0xFFFFFAE8)
             MangaPaper.Night -> Color(0xFF121212)
             MangaPaper.Nord -> Color(0xFF3B4252)
         }
     }
-    val ink = if (dark) Color(0xFFF5F3EA) else Color(0xFF171717)
-    val base = if (dark) {
+    val ink = if (darkSurface) Color(0xFFF5F3EA) else Color(0xFF171717)
+    val base = if (darkSurface) {
         themedDarkScheme(theme, accent, accentSoft, amoled = false)
     } else {
         themedLightScheme(theme, accent, accentSoft)
     }
-    val usesPaperSurfaces = theme == AppearanceTheme.TypeType || theme == AppearanceTheme.Dynamic
     val activeBackground = if (amoled) Color.Black
     else if (usesPaperSurfaces) background else base.background
     val activeSurface = if (amoled) Color.Black
@@ -222,7 +223,7 @@ internal fun mangaScheme(
         surfaceBright = activeSurface,
         outline = ink,
         outlineVariant = ink.copy(alpha = 0.42f),
-        error = if (dark) Red300 else Red600,
-        onError = if (dark) Color.Black else White,
+        error = if (darkSurface) Red300 else Red600,
+        onError = if (darkSurface) Color.Black else White,
     )
 }
