@@ -6,6 +6,7 @@ import java.io.IOException
 internal class PlaybackWindowCoordinator(
     private val loader: PlaybackWindowLoader,
     private val tasks: PlaybackTaskDispatcher,
+    private val seekSettleDelayMs: Long = SEEK_SETTLE_DELAY_MS,
 ) {
     constructor(
         loader: PlaybackWindowLoader,
@@ -13,6 +14,7 @@ internal class PlaybackWindowCoordinator(
     ) : this(loader, HandlerPlaybackTaskDispatcher(playbackHandler))
 
     private var activeLoad: PlaybackLoadCancellation? = null
+    private var deferredSeek: Runnable? = null
     private val listeners = linkedSetOf<Listener>()
     private var released = false
     private var failure: IOException? = null
@@ -50,12 +52,24 @@ internal class PlaybackWindowCoordinator(
 
     fun seek(positionUs: Long) {
         if (released) return
+        val shouldSettle = isSeeking || deferredSeek != null
         operationId++
         activeLoad?.cancel()
         activeLoad = null
+        deferredSeek?.let(tasks::remove)
+        deferredSeek = null
         isSeeking = true
         failure = null
-        startSeek(positionUs)
+        if (shouldSettle) {
+            val task = Runnable {
+                deferredSeek = null
+                if (!released) startSeek(positionUs)
+            }
+            deferredSeek = task
+            tasks.postDelayed(task, seekSettleDelayMs)
+        } else {
+            startSeek(positionUs)
+        }
     }
 
     fun maybeThrowError() {
@@ -67,6 +81,8 @@ internal class PlaybackWindowCoordinator(
         operationId++
         activeLoad?.cancel()
         activeLoad = null
+        deferredSeek?.let(tasks::remove)
+        deferredSeek = null
         isSeeking = false
         listeners.clear()
         loader.release()
@@ -114,6 +130,10 @@ internal class PlaybackWindowCoordinator(
 
 internal interface PlaybackTaskDispatcher {
     fun post(task: Runnable)
+
+    fun postDelayed(task: Runnable, delayMs: Long)
+
+    fun remove(task: Runnable)
 }
 
 private class HandlerPlaybackTaskDispatcher(
@@ -122,4 +142,14 @@ private class HandlerPlaybackTaskDispatcher(
     override fun post(task: Runnable) {
         handler.post(task)
     }
+
+    override fun postDelayed(task: Runnable, delayMs: Long) {
+        handler.postDelayed(task, delayMs)
+    }
+
+    override fun remove(task: Runnable) {
+        handler.removeCallbacks(task)
+    }
 }
+
+private const val SEEK_SETTLE_DELAY_MS = 80L
