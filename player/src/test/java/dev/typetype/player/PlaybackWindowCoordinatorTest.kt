@@ -18,7 +18,7 @@ class PlaybackWindowCoordinatorTest {
     }
 
     @Test
-    fun `repeated seeks start immediately and only the latest result wins`() {
+    fun `repeated seeks coalesce and only the latest position starts`() {
         val loader = RecordingLoader()
         val dispatcher = RecordingDispatcher()
         val coordinator = PlaybackWindowCoordinator(loader, dispatcher)
@@ -27,15 +27,17 @@ class PlaybackWindowCoordinatorTest {
         coordinator.seek(20_000L)
         coordinator.seek(30_000L)
 
-        assertEquals(listOf(10_000L, 20_000L, 30_000L), loader.seekPositions)
-        assertTrue(loader.cancellations.take(2).all { it.cancelled })
+        assertEquals(listOf(10_000L), loader.seekPositions)
+        assertTrue(loader.cancellations.single().cancelled)
 
-        loader.callbacks[1](Result.success(playbackWindow(generation = 2L)))
         loader.callbacks[0](Result.success(playbackWindow(generation = 1L)))
-        loader.callbacks[2](Result.success(playbackWindow(generation = 3L)))
+        dispatcher.runPosted()
+        dispatcher.runDelayed()
+        loader.callbacks[1](Result.success(playbackWindow(generation = 2L)))
         dispatcher.runPosted()
 
-        assertEquals(3L, coordinator.window?.generation)
+        assertEquals(listOf(10_000L, 30_000L), loader.seekPositions)
+        assertEquals(2L, coordinator.window?.generation)
     }
 
     @Test
@@ -48,6 +50,7 @@ class PlaybackWindowCoordinatorTest {
         coordinator.seek(20_000L)
         loader.callbacks.first()(Result.failure(IOException("cancelled")))
         dispatcher.runPosted()
+        dispatcher.runDelayed()
 
         coordinator.maybeThrowError()
         loader.callbacks.last()(Result.success(playbackWindow(generation = 2L)))
@@ -67,7 +70,7 @@ class PlaybackWindowCoordinatorTest {
         coordinator.seek(20_000L)
         coordinator.load(15_000L)
 
-        assertEquals(listOf(10_000L, 20_000L), loader.seekPositions)
+        assertEquals(listOf(10_000L), loader.seekPositions)
         assertEquals(0, loader.loadCount)
     }
 
@@ -80,7 +83,8 @@ class PlaybackWindowCoordinatorTest {
         coordinator.seek(10_000L)
         coordinator.seek(20_000L)
         coordinator.release()
-        assertEquals(listOf(10_000L, 20_000L), loader.seekPositions)
+        dispatcher.runDelayed()
+        assertEquals(listOf(10_000L), loader.seekPositions)
         assertTrue(loader.cancellations.all { it.cancelled })
         assertTrue(loader.released)
     }
@@ -104,22 +108,21 @@ class PlaybackWindowCoordinatorTest {
     }
 
     @Test
-    fun `rapid seek results cannot overtake the final request`() {
+    fun `rapid seeks produce one immediate and one final request`() {
         val loader = RecordingLoader()
         val dispatcher = RecordingDispatcher()
         val coordinator = PlaybackWindowCoordinator(loader, dispatcher)
 
         repeat(5_000) { index -> coordinator.seek(index * 1_000L) }
-        (0 until 5_000).shuffled(Random(15)).forEach { index ->
-            loader.callbacks[index](
-                Result.success(playbackWindow(generation = index.toLong())),
-            )
+        dispatcher.runDelayed()
+        listOf(0, 1).shuffled(Random(15)).forEach { index ->
+            loader.callbacks[index](Result.success(playbackWindow(generation = index.toLong())))
         }
         dispatcher.runPosted()
 
-        assertEquals(5_000, loader.seekPositions.size)
-        assertTrue(loader.cancellations.dropLast(1).all { it.cancelled })
-        assertEquals(4_999L, coordinator.window?.generation)
+        assertEquals(listOf(0L, 4_999_000L), loader.seekPositions)
+        assertTrue(loader.cancellations.first().cancelled)
+        assertEquals(1L, coordinator.window?.generation)
     }
 }
 
@@ -193,12 +196,25 @@ private class RecordingCancellation : PlaybackLoadCancellation {
 
 private class RecordingDispatcher : PlaybackTaskDispatcher {
     private val posted = mutableListOf<Runnable>()
+    private val delayed = mutableListOf<Runnable>()
 
     override fun post(task: Runnable) {
         posted += task
     }
 
+    override fun postDelayed(task: Runnable, delayMs: Long) {
+        delayed += task
+    }
+
+    override fun remove(task: Runnable) {
+        delayed -= task
+    }
+
     fun runPosted() {
         posted.toList().also(posted::removeAll).forEach(Runnable::run)
+    }
+
+    fun runDelayed() {
+        delayed.toList().also(delayed::removeAll).forEach(Runnable::run)
     }
 }
