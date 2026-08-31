@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -61,6 +63,7 @@ internal fun CommentsPanel(
     onLoadReplies: (Comment) -> Unit,
     onLoadMore: () -> Unit,
     onDismiss: () -> Unit,
+    onSeekTimestamp: ((Long) -> Unit)? = null,
 ) {
     val closeFocus = androidx.compose.runtime.remember { FocusRequester() }
     LaunchedEffect(Unit) { closeFocus.requestFocus() }
@@ -120,6 +123,7 @@ internal fun CommentsPanel(
                                 replies = state.replies[comment.id].orEmpty(),
                                 loadingReplies = comment.id in state.loadingReplies,
                                 onLoadReplies = { onLoadReplies(comment) },
+                                onSeekTimestamp = onSeekTimestamp,
                             )
                         }
                         if (state.canLoadMore || state.loadingMore) {
@@ -146,6 +150,7 @@ private fun TvComment(
     replies: List<Comment>,
     loadingReplies: Boolean,
     onLoadReplies: () -> Unit,
+    onSeekTimestamp: ((Long) -> Unit)?,
 ) {
     var expanded by remember(comment.id) { mutableStateOf(false) }
     var showReplies by remember(comment.id) { mutableStateOf(false) }
@@ -191,6 +196,7 @@ private fun TvComment(
                         maxLines = if (expanded) Int.MAX_VALUE else 5,
                         overflow = TextOverflow.Ellipsis,
                     )
+                    onSeekTimestamp?.let { CommentTimestampActions(comment.text, it) }
                     if (canExpand) {
                         Text(
                             if (expanded) "Show less" else "Show more",
@@ -236,8 +242,25 @@ private fun TvComment(
                             color = Color.White,
                         )
                         Text(reply.text, color = Color.White.copy(alpha = .82f), style = MaterialTheme.typography.bodyMedium)
+                        onSeekTimestamp?.let { CommentTimestampActions(reply.text, it) }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CommentTimestampActions(text: String, onSeekTimestamp: (Long) -> Unit) {
+    val timestamps = remember(text) { text.commentTimestamps() }
+    if (timestamps.isEmpty()) return
+    Row(
+        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        timestamps.forEach { timestamp ->
+            Button(onClick = { onSeekTimestamp(timestamp.seconds * 1_000L) }) {
+                Text(timestamp.label)
             }
         }
     }

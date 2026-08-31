@@ -242,6 +242,7 @@ internal fun PlayerScreen(
                 },
                 onLoadMoreComments = onLoadMoreComments,
                 onLoadCommentReplies = onLoadCommentReplies,
+                onSeekTimestamp = { position -> TypeTypePlaybackService.seek(context, position) },
                 onPlayQueueItem = onPlayQueueItem,
                 onSelectVideoTrack = onSelectVideoTrack,
                 onSelectAudioTrack = onSelectAudioTrack,
