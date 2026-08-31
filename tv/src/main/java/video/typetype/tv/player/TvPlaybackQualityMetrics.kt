@@ -4,6 +4,7 @@ package video.typetype.tv.player
 
 import android.os.SystemClock
 import androidx.media3.common.Player
+import androidx.media3.exoplayer.DecoderCounters
 import androidx.media3.exoplayer.analytics.AnalyticsListener
 
 internal data class TvPlaybackQualitySnapshot(
@@ -11,6 +12,7 @@ internal data class TvPlaybackQualitySnapshot(
     val playedMilliseconds: Long,
     val rebufferMilliseconds: Long,
     val droppedVideoFrames: Long,
+    val renderedVideoFrames: Long,
 )
 
 internal class TvPlaybackQualityMetrics : AnalyticsListener {
@@ -21,6 +23,7 @@ internal class TvPlaybackQualityMetrics : AnalyticsListener {
     private var playedMilliseconds = 0L
     private var rebufferMilliseconds = 0L
     private var droppedVideoFrames = 0L
+    private var renderedVideoFrames = 0L
 
     fun onPlaybackRequested(now: Long = SystemClock.elapsedRealtime()) {
         playStartedAt = now
@@ -30,6 +33,7 @@ internal class TvPlaybackQualityMetrics : AnalyticsListener {
         playedMilliseconds = 0L
         rebufferMilliseconds = 0L
         droppedVideoFrames = 0L
+        renderedVideoFrames = 0L
     }
 
     fun onPlaybackStateChanged(state: Int, now: Long = SystemClock.elapsedRealtime()) {
@@ -72,6 +76,18 @@ internal class TvPlaybackQualityMetrics : AnalyticsListener {
         onDroppedVideoFramesCount(droppedFrames)
     }
 
+    override fun onVideoDisabled(
+        eventTime: AnalyticsListener.EventTime,
+        counters: DecoderCounters,
+    ) {
+        counters.ensureUpdated()
+        onRenderedVideoFramesCount(counters.renderedOutputBufferCount)
+    }
+
+    fun onRenderedVideoFramesCount(renderedFrames: Int) {
+        renderedVideoFrames += renderedFrames.coerceAtLeast(0).toLong()
+    }
+
     fun onDroppedVideoFramesCount(droppedFrames: Int) {
         droppedVideoFrames += droppedFrames.coerceAtLeast(0).toLong()
     }
@@ -89,6 +105,7 @@ internal class TvPlaybackQualityMetrics : AnalyticsListener {
             playedMilliseconds = played,
             rebufferMilliseconds = rebuffered,
             droppedVideoFrames = droppedVideoFrames,
+            renderedVideoFrames = renderedVideoFrames,
         )
     }
 
