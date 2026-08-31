@@ -42,6 +42,8 @@ env:
   ANDROID_SDK_ROOT: /opt/android-sdk
   JAVA_HOME: /usr/lib/jvm/java-26-openjdk
   GRADLE_USER_HOME: /var/tmp/typetype-android-gradle-user-home
+  TYPETYPE_SDK_PATH: .ci/TypeType-SDK
+  TYPETYPE_SDK_REVISION: 1a8d5c6769f473953dbd705e6ff0bf307b60a15e
 
 jobs:
   verify:
@@ -51,6 +53,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
+
+      - name: Checkout TypeType SDK
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: TypeType-Video/TypeType-SDK
+          ref: ${{ env.TYPETYPE_SDK_REVISION }}
+          path: .ci/TypeType-SDK
 
       - name: Install Android SDK platform
         run: |
@@ -73,16 +82,21 @@ jobs:
             :baseline-profile:assemble \
             :player:testDebugUnitTest \
             :app:testDebugUnitTest \
+            :tv:testDebugUnitTest \
             :player:lintDebug \
             :app:lintDebug \
+            :tv:lintDebug \
             :app:assembleDebug \
-            :app:assembleRelease
+            :app:assembleRelease \
+            :tv:assembleDebug
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v7.0.1
         with:
           name: typetype-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            tv/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           compression-level: 0
           retention-days: 14
@@ -95,6 +109,7 @@ jobs:
           path: |
             app/build/reports/lint-results-debug.html
             player/build/reports/lint-results-debug.html
+            tv/build/reports/lint-results-debug.html
           if-no-files-found: ignore
           retention-days: 14
 
@@ -107,6 +122,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
+
+      - name: Checkout TypeType SDK
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: TypeType-Video/TypeType-SDK
+          ref: ${{ env.TYPETYPE_SDK_REVISION }}
+          path: .ci/TypeType-SDK
 
       - name: Install Android SDK platform
         run: |
@@ -160,10 +182,13 @@ jobs:
             :baseline-profile:assemble \
             :player:testDebugUnitTest \
             :app:testDebugUnitTest \
+            :tv:testDebugUnitTest \
             :player:lintDebug \
             :app:lintDebug \
+            :tv:lintDebug \
             :app:assembleDebug \
-            :app:assembleRelease
+            :app:assembleRelease \
+            :tv:assembleDebug
 
       - name: Upload lint report
         if: ${{ always() }}
@@ -173,6 +198,7 @@ jobs:
           path: |
             app/build/reports/lint-results-debug.html
             player/build/reports/lint-results-debug.html
+            tv/build/reports/lint-results-debug.html
           if-no-files-found: ignore
           retention-days: 14
 
