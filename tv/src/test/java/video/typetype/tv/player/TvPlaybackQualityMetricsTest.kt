@@ -22,6 +22,16 @@ public class TvPlaybackQualityMetricsTest {
     }
 
     @Test
+    public fun measuresStartupFromThePlaybackRequest() {
+        val metrics = TvPlaybackQualityMetrics()
+        metrics.onPlaybackRequested(now = 1_000L)
+        metrics.onIsPlayingChanged(true, now = 1_050L)
+        metrics.onRenderedFirstFrameAt(1_420L)
+
+        assertEquals(420L, metrics.snapshot(now = 1_500L).startupMilliseconds)
+    }
+
+    @Test
     public fun clampsNegativeDroppedFrameCounts() {
         val metrics = TvPlaybackQualityMetrics()
         metrics.onDroppedVideoFramesCount(-2)
