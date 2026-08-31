@@ -84,6 +84,7 @@ public class TypeTypePlaybackService : MediaSessionService() {
 
     override fun onDestroy() {
         sponsorBlockController?.stop()
+        logSabrMetrics(sourceHandle)
         sourceHandle?.close()
         serviceScope.cancel()
         session.release()
@@ -115,6 +116,7 @@ public class TypeTypePlaybackService : MediaSessionService() {
         sponsorBlockController = null
         player.stop()
         player.clearMediaItems()
+        logSabrMetrics(sourceHandle)
         sourceHandle?.close()
         sourceHandle = null
         currentRequest = null
@@ -197,6 +199,7 @@ public class TypeTypePlaybackService : MediaSessionService() {
             prepared.handle.close()
             throw failure
         }
+        logSabrMetrics(previous)
         previous?.close()
     }
 
