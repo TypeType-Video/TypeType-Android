@@ -33,6 +33,8 @@ Gradle wrapper.
 ```sh
 git switch dev
 ./gradlew :app:assembleDebug
+# Android TV
+./gradlew :tv:assembleDebug
 ```
 
 On first launch, the app asks for a TypeType instance. Use your own test
@@ -67,6 +69,8 @@ the contract advertised by the selected TypeType instance.
 | `player` | TypeType playback integration for Media3 |
 | `app/src/test` | JVM unit and repository tests |
 | `app/src/androidTest` | Room, Compose, platform, and device tests |
+| `tv/src/main` | Native Android TV UI, navigation, focus, and playback |
+| `tv/src/test` | Android TV JVM unit tests |
 
 Most changes only touch one or two of these areas. As a rule of thumb,
 composables render state, repositories decide how data is loaded and cached,
@@ -119,6 +123,15 @@ Before opening a pull request, run the same core checks as CI:
   :app:lintDebug \
   :app:assembleDebug \
   :app:assembleRelease
+```
+
+For TV changes, also run:
+
+```sh
+./gradlew --no-daemon \
+  :tv:testDebugUnitTest \
+  :tv:lintDebug \
+  :tv:assembleDebug
 ```
 
 Add the checks that make sense for your change. You are not expected to own
