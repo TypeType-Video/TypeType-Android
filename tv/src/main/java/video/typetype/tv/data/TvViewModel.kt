@@ -128,7 +128,6 @@ public class TvViewModel(
             home = emptyList(),
             trending = emptyList(),
             shorts = emptyList(),
-            bigBuckBunny = null,
             searchPage = null,
             searchQuery = "",
             searchSuggestions = emptyList(),
