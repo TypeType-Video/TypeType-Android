@@ -31,8 +31,10 @@ internal class TvPlaybackCodecSupport(context: Context) {
                 .apply { if (source.frameRate > 0) setFrameRate(source.frameRate.toFloat()) }
                 .build()
             try {
-                MediaCodecUtil.getDecoderInfos(mimeType, false, false)
-                    .any { it.isFormatSupported(applicationContext, format) }
+                val supportedDecoders = MediaCodecUtil.getDecoderInfos(mimeType, false, false)
+                    .filter { it.isFormatSupported(applicationContext, format) }
+                supportedDecoders.isNotEmpty() &&
+                    (!source.isHighDefinitionAv1() || supportedDecoders.any { it.hardwareAccelerated })
             } catch (_: MediaCodecUtil.DecoderQueryException) {
                 false
             }
@@ -46,6 +48,9 @@ internal class TvPlaybackCodecSupport(context: Context) {
         val frameRate: Int,
     )
 }
+
+private fun StreamVideo.isHighDefinitionAv1(): Boolean =
+    codec.orEmpty().startsWith("av01", ignoreCase = true) && height > 720
 
 private fun StreamVideo.videoMimeType(): String? =
     MimeTypes.getVideoMediaMimeType(codec.orEmpty())
