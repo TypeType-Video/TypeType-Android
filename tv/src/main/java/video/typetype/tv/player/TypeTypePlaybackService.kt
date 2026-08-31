@@ -40,6 +40,7 @@ public class TypeTypePlaybackService : MediaSessionService() {
     private lateinit var session: MediaSession
     private lateinit var client: TypeTypeClient
     private var sourceHandle: PlaybackMediaSourceHandle? = null
+    private val qualityMetrics = TvPlaybackQualityMetrics()
     private var currentRequest: TvPlaybackRequest? = null
     private var currentSubtitle: SubtitleTrack? = null
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -57,6 +58,12 @@ public class TypeTypePlaybackService : MediaSessionService() {
         player.addListener(object : Player.Listener {
             override fun onPlayerError(error: PlaybackException) = handlePlayerError(error)
 
+            override fun onPlaybackStateChanged(playbackState: Int) =
+                qualityMetrics.onPlaybackStateChanged(playbackState)
+
+            override fun onIsPlayingChanged(isPlaying: Boolean) =
+                qualityMetrics.onIsPlayingChanged(isPlaying)
+
             override fun onPositionDiscontinuity(
                 oldPosition: Player.PositionInfo,
                 newPosition: Player.PositionInfo,
@@ -67,6 +74,7 @@ public class TypeTypePlaybackService : MediaSessionService() {
                 }
             }
         })
+        player.addAnalyticsListener(qualityMetrics)
         session = MediaSession.Builder(this, player).build()
     }
 
@@ -85,6 +93,7 @@ public class TypeTypePlaybackService : MediaSessionService() {
     override fun onDestroy() {
         sponsorBlockController?.stop()
         logSabrMetrics(sourceHandle)
+        logTvPlaybackQuality(qualityMetrics)
         sourceHandle?.close()
         serviceScope.cancel()
         session.release()
@@ -117,6 +126,7 @@ public class TypeTypePlaybackService : MediaSessionService() {
         player.stop()
         player.clearMediaItems()
         logSabrMetrics(sourceHandle)
+        logTvPlaybackQuality(qualityMetrics)
         sourceHandle?.close()
         sourceHandle = null
         currentRequest = null
