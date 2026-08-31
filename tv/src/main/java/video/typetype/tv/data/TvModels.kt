@@ -57,7 +57,6 @@ public data class TvAppState(
     val selectedSubscriptionGroupId: String? = null,
     val subscriptionFeed: List<Video> = emptyList(),
     val shorts: List<Video> = emptyList(),
-    val bigBuckBunny: Video? = null,
     val isLoadingLibrary: Boolean = false,
     val searchPage: SearchPage? = null,
     val searchQuery: String = "",

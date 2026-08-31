@@ -17,7 +17,6 @@ internal fun TvAppState.navigationRelated(video: Video): List<Video> {
             addAll(favorites.map { it.video })
         }
         else -> buildList {
-            bigBuckBunny?.let(::add)
             addAll(home)
             addAll(trending)
             addAll(shorts)
