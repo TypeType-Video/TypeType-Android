@@ -72,6 +72,9 @@ private fun TvViewModel.openVideo(video: Video, service: ServiceId, autoPlay: Bo
                     isLoadingDetails = false,
                 )
                 if (autoPlay) startPlayback()
+                if (!mutableState.value.settings.hideRelatedVideos && streamWithNavigation.relatedStreams.isEmpty()) {
+                    loadRecommendationNavigation(video, service)
+                }
             }
             is TypeTypeResult.Failure -> {
                 if (mutableState.value.selectedVideo?.url != video.url) return@launch
@@ -84,4 +87,25 @@ private fun TvViewModel.openVideo(video: Video, service: ServiceId, autoPlay: Bo
     }
 }
 
+private fun TvViewModel.loadRecommendationNavigation(video: Video, service: ServiceId) {
+    if (mutableState.value.authStatus != TvAuthStatus.AUTHENTICATED) return
+    viewModelScope.launch {
+        val result = withTimeoutOrNull(RECOMMENDATIONS_LOAD_TIMEOUT_MILLISECONDS) {
+            client.recommendations.home(service, limit = RECOMMENDATIONS_LIMIT)
+        } ?: return@launch
+        val recommendations = (result as? TypeTypeResult.Success)?.value?.items
+            ?.navigationRelated(video).orEmpty()
+        if (recommendations.isEmpty()) return@launch
+        val current = mutableState.value
+        val stream = current.stream ?: return@launch
+        if (current.selectedVideo?.url != video.url ||
+            current.settings.hideRelatedVideos ||
+            stream.relatedStreams.isNotEmpty()
+        ) return@launch
+        mutableState.value = current.copy(stream = stream.copy(relatedStreams = recommendations))
+    }
+}
+
 private const val DETAILS_LOAD_TIMEOUT_MILLISECONDS = 60_000L
+private const val RECOMMENDATIONS_LOAD_TIMEOUT_MILLISECONDS = 10_000L
+private const val RECOMMENDATIONS_LIMIT = 18

@@ -22,10 +22,13 @@ internal fun TvAppState.navigationRelated(video: Video): List<Video> {
             addAll(shorts)
         }
     }
-    return candidates.distinctBy(Video::id).filterNot { it.id == video.id }.take(MAX_NAVIGATION_RELATED)
+    return candidates.navigationRelated(video)
 }
 
 internal fun StreamDetails.withNavigationRelated(fallback: List<Video>): StreamDetails =
     if (relatedStreams.isNotEmpty() || fallback.isEmpty()) this else copy(relatedStreams = fallback)
+
+internal fun List<Video>.navigationRelated(video: Video): List<Video> =
+    distinctBy(Video::id).filterNot { it.id == video.id }.take(MAX_NAVIGATION_RELATED)
 
 private const val MAX_NAVIGATION_RELATED = 20
