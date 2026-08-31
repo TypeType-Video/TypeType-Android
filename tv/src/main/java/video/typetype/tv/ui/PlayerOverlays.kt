@@ -52,6 +52,7 @@ internal fun BoxScope.PlayerOverlays(
     onSkipSponsor: (TvSponsorBlockSegment) -> Unit,
     onLoadMoreComments: () -> Unit,
     onLoadCommentReplies: (Comment) -> Unit,
+    onSeekTimestamp: (Long) -> Unit,
     onPlayQueueItem: (Video) -> Unit,
     onSelectVideoTrack: (Int, Long) -> Unit,
     onSelectAudioTrack: (Int, String?, Long) -> Unit,
@@ -126,6 +127,7 @@ internal fun BoxScope.PlayerOverlays(
             onLoadReplies = onLoadCommentReplies,
             onLoadMore = onLoadMoreComments,
             onDismiss = onDismissComments,
+            onSeekTimestamp = onSeekTimestamp,
         )
     }
     AnimatedVisibility(
