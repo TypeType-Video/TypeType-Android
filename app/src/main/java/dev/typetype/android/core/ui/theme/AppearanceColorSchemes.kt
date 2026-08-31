@@ -87,6 +87,18 @@ internal fun themedDarkScheme(
     )
 }
 
+internal fun ColorScheme.withAmoledSurfaces(): ColorScheme = copy(
+    background = Color.Black,
+    surface = Color.Black,
+    surfaceContainerLowest = Color.Black,
+    surfaceContainerLow = Color.Black,
+    surfaceContainer = Color.Black,
+    surfaceContainerHigh = Color.Black,
+    surfaceContainerHighest = Color.Black,
+    surfaceDim = Color.Black,
+    surfaceBright = Color.Black,
+)
+
 internal fun themedLightScheme(
     theme: AppearanceTheme,
     accent: Color,

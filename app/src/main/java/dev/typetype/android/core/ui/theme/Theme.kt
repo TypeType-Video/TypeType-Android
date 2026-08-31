@@ -43,6 +43,11 @@ fun TypeTypeTheme(
         (preferences.appearanceTheme == AppearanceTheme.Dynamic ||
             (preferences.appearanceTheme == AppearanceTheme.TypeType &&
                 preferences.accentColor == AccentColor.System))
+    val dynamicScheme = when {
+        dynamic && dark -> dynamicDarkColorScheme(context)
+        dynamic -> dynamicLightColorScheme(context)
+        else -> null
+    }
     val colorScheme = when {
         preferences.appearancePersonality == AppearancePersonality.Manga ->
             mangaScheme(
@@ -53,14 +58,8 @@ fun TypeTypeTheme(
                 amoled = effectiveAmoled,
                 isDark = dark,
             )
-        dark && effectiveAmoled -> themedDarkScheme(
-            preferences.appearanceTheme,
-            accent,
-            accentSoft,
-            amoled = effectiveAmoled,
-        )
-        dynamic && dark -> dynamicDarkColorScheme(context)
-        dynamic -> dynamicLightColorScheme(context)
+        dynamicScheme != null && effectiveAmoled -> dynamicScheme.withAmoledSurfaces()
+        dynamicScheme != null -> dynamicScheme
         dark -> themedDarkScheme(
             preferences.appearanceTheme,
             accent,
