@@ -25,8 +25,9 @@ internal fun rememberPlayerSurfaceKey(streamId: String): String {
     DisposableEffect(lifecycleOwner, streamId) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
-                Lifecycle.Event.ON_STOP -> refreshGate.invalidate()
-                Lifecycle.Event.ON_START -> if (refreshGate.refresh()) epoch += 1
+                Lifecycle.Event.ON_START -> if (refreshGate.consumeScreenOff()) {
+                    epoch += 1
+                }
                 else -> Unit
             }
         }
@@ -37,12 +38,12 @@ internal fun rememberPlayerSurfaceKey(streamId: String): String {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 when (intent.action) {
-                    Intent.ACTION_SCREEN_OFF -> refreshGate.invalidate()
+                    Intent.ACTION_SCREEN_OFF -> refreshGate.markScreenOff()
                     Intent.ACTION_SCREEN_ON,
                     Intent.ACTION_USER_PRESENT,
                     -> if (
                         lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED) &&
-                        refreshGate.refresh()
+                        refreshGate.consumeScreenOff()
                     ) {
                         epoch += 1
                     }
@@ -66,15 +67,15 @@ internal fun rememberPlayerSurfaceKey(streamId: String): String {
 }
 
 internal class PlayerSurfaceRefreshGate {
-    private var invalid = false
+    private var screenOff = false
 
-    fun invalidate() {
-        invalid = true
+    fun markScreenOff() {
+        screenOff = true
     }
 
-    fun refresh(): Boolean {
-        if (!invalid) return false
-        invalid = false
+    fun consumeScreenOff(): Boolean {
+        if (!screenOff) return false
+        screenOff = false
         return true
     }
 }
