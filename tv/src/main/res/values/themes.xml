@@ -1,8 +1,0 @@
-<resources>
-    <style name="Theme.TypeTypeTV" parent="android:style/Theme.Material.NoActionBar">
-        <item name="android:fontFamily">sans</item>
-        <item name="android:windowActionModeOverlay">true</item>
-        <item name="android:colorAccent">#8AB4F8</item>
-        <item name="android:windowFullscreen">true</item>
-    </style>
-</resources>
