@@ -3,6 +3,11 @@ package video.typetype.tv.player
 import video.typetype.sdk.media3.ManifestProtocol
 import video.typetype.sdk.media3.SabrPlaybackRequest
 
+internal data class TvVideoTrack(
+    val itag: Int,
+    val mimeType: String,
+)
+
 internal data class TvPlaybackRequest(
     val sessionId: String,
     val videoId: String,
@@ -17,6 +22,7 @@ internal data class TvPlaybackRequest(
     val startTimeMilliseconds: Long,
     val videoMimeType: String?,
     val audioMimeType: String?,
+    val videoTracks: List<TvVideoTrack>,
     val manifestUrl: String?,
     val manifestProtocol: ManifestProtocol?,
     val audioOnlyUrl: String?,

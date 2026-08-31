@@ -21,6 +21,8 @@ internal const val GENERATION = "generation"
 internal const val START_TIME = "start_time"
 internal const val VIDEO_MIME = "video_mime"
 internal const val AUDIO_MIME = "audio_mime"
+internal const val VIDEO_TRACK_ITAGS = "video_track_itags"
+internal const val VIDEO_TRACK_MIMES = "video_track_mimes"
 internal const val MANIFEST_URL = "manifest_url"
 internal const val MANIFEST_PROTOCOL = "manifest_protocol"
 internal const val AUDIO_ONLY_URL = "audio_only_url"
@@ -55,6 +57,11 @@ internal fun Intent.toPlaybackRequest(): TvPlaybackRequest? {
     if (audioOnlyUrl != null && audioOnlyMime == null) return null
     val videoMime = getStringExtra(VIDEO_MIME)
     val audioMime = getStringExtra(AUDIO_MIME)
+    val trackItags = getIntArrayExtra(VIDEO_TRACK_ITAGS)?.toList().orEmpty()
+    val trackMimes = getStringArrayListExtra(VIDEO_TRACK_MIMES)?.toList().orEmpty()
+    val videoTracks = trackItags.zip(trackMimes).mapNotNull { (itag, mime) ->
+        itag.takeIf { it > 0 }?.let { TvVideoTrack(it, mime) }
+    }
     val videoItag = getIntExtra(VIDEO_ITAG, -1).takeIf { it > 0 }
     val audioItag = getIntExtra(AUDIO_ITAG, -1).takeIf { it > 0 }
     if (manifestUrl == null && audioOnlyUrl == null &&
@@ -74,6 +81,7 @@ internal fun Intent.toPlaybackRequest(): TvPlaybackRequest? {
         startTimeMilliseconds = getLongExtra(START_TIME, 0L),
         videoMimeType = videoMime,
         audioMimeType = audioMime,
+        videoTracks = videoTracks,
         manifestUrl = manifestUrl,
         manifestProtocol = manifestProtocol,
         audioOnlyUrl = audioOnlyUrl,
