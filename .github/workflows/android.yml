@@ -42,6 +42,7 @@ env:
   ANDROID_SDK_ROOT: /opt/android-sdk
   JAVA_HOME: /usr/lib/jvm/java-26-openjdk
   GRADLE_USER_HOME: /var/tmp/typetype-android-gradle-user-home
+  TYPETYPE_SDK_PATH: .ci/TypeType-SDK
 
 jobs:
   verify:
@@ -69,20 +70,34 @@ jobs:
       - name: Verify Android project
         timeout-minutes: 25
         run: |
-          ./gradlew --build-cache --stacktrace \
-            :baseline-profile:assemble \
-            :player:testDebugUnitTest \
-            :app:testDebugUnitTest \
-            :player:lintDebug \
-            :app:lintDebug \
-            :app:assembleDebug \
+          set -euo pipefail
+          tasks=(
+            :baseline-profile:assemble
+            :player:testDebugUnitTest
+            :app:testDebugUnitTest
+            :player:lintDebug
+            :app:lintDebug
+            :app:assembleDebug
             :app:assembleRelease
+          )
+          if [[ -f "$TYPETYPE_SDK_PATH/settings.gradle.kts" ]]; then
+            tasks+=(
+              :tv:testDebugUnitTest
+              :tv:lintDebug
+              :tv:assembleDebug
+            )
+          else
+            echo "::notice::TV verification skipped because the private TypeType-SDK checkout is unavailable."
+          fi
+          ./gradlew --build-cache --stacktrace "${tasks[@]}"
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v7.0.1
         with:
           name: typetype-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            tv/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           compression-level: 0
           retention-days: 14
@@ -95,6 +110,7 @@ jobs:
           path: |
             app/build/reports/lint-results-debug.html
             player/build/reports/lint-results-debug.html
+            tv/build/reports/lint-results-debug.html
           if-no-files-found: ignore
           retention-days: 14
 
@@ -156,14 +172,26 @@ jobs:
       - name: Verify Android project and build release
         timeout-minutes: 25
         run: |
-          ./gradlew --build-cache --stacktrace \
-            :baseline-profile:assemble \
-            :player:testDebugUnitTest \
-            :app:testDebugUnitTest \
-            :player:lintDebug \
-            :app:lintDebug \
-            :app:assembleDebug \
+          set -euo pipefail
+          tasks=(
+            :baseline-profile:assemble
+            :player:testDebugUnitTest
+            :app:testDebugUnitTest
+            :player:lintDebug
+            :app:lintDebug
+            :app:assembleDebug
             :app:assembleRelease
+          )
+          if [[ -f "$TYPETYPE_SDK_PATH/settings.gradle.kts" ]]; then
+            tasks+=(
+              :tv:testDebugUnitTest
+              :tv:lintDebug
+              :tv:assembleDebug
+            )
+          else
+            echo "::notice::TV verification skipped because the private TypeType-SDK checkout is unavailable."
+          fi
+          ./gradlew --build-cache --stacktrace "${tasks[@]}"
 
       - name: Upload lint report
         if: ${{ always() }}
@@ -173,6 +201,7 @@ jobs:
           path: |
             app/build/reports/lint-results-debug.html
             player/build/reports/lint-results-debug.html
+            tv/build/reports/lint-results-debug.html
           if-no-files-found: ignore
           retention-days: 14
 

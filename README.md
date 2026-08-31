@@ -29,6 +29,10 @@ require Google Play Services.
 TypeType Android uses the TypeType Server selected during setup for extraction,
 playback sessions, recommendations, synchronization, and downloads.
 
+The Android TV client is part of this repository in the `tv` module. It is a
+separate native TV application that uses the same TypeType SDK and server
+contracts as the mobile client.
+
 ## Screenshots
 
 | Welcome | Add an instance | Home |
@@ -49,6 +53,19 @@ playback sessions, recommendations, synchronization, and downloads.
 - Use chapters, SponsorBlock, comments, related videos, the queue, and the
   sleep timer.
 - Download supported videos and import existing data.
+
+## Android TV
+
+Build the TV client with the included Gradle wrapper:
+
+```sh
+./gradlew :tv:assembleDebug
+```
+
+The TV module targets Android TV devices from API 23 onward and keeps its TV
+navigation, focus behavior, layouts, and playback presentation independent from
+the mobile UI. Local builds automatically use a sibling `TypeType-SDK`
+checkout; set `TYPETYPE_SDK_PATH` when the SDK is stored elsewhere.
 
 ## Install
 
