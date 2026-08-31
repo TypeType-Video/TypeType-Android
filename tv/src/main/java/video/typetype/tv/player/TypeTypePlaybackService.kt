@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.media3.common.Player
-import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaController
 import androidx.media3.session.MediaSession
@@ -29,6 +28,7 @@ import video.typetype.sdk.media3.PlaybackMediaSourceHandle
 import video.typetype.tv.BuildConfig
 import video.typetype.tv.data.TypeTypeTvClient
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -55,14 +55,7 @@ public class TypeTypePlaybackService : MediaSessionService() {
     override fun onCreate() {
         super.onCreate()
         client = TypeTypeTvClient.create(this, BuildConfig.TYPETYPE_INSTANCE_URL)
-        player = ExoPlayer.Builder(this)
-            .setLoadControl(
-                DefaultLoadControl.Builder()
-                    .setBufferDurationsMs(15_000, 30_000, 1_000, 2_500)
-                    .setBackBuffer(30_000, false)
-                    .build(),
-            )
-            .build()
+        player = createTvExoPlayer(this)
         player.addListener(object : Player.Listener {
             override fun onPositionDiscontinuity(
                 oldPosition: Player.PositionInfo,
@@ -85,6 +78,7 @@ public class TypeTypePlaybackService : MediaSessionService() {
         if (intent?.action == ACTION_SEEK) {
             seek(intent.getLongExtra(SEEK_TIME, 0L).coerceAtLeast(0L))
         }
+        if (intent?.action == ACTION_RETRY) retryPlayback()
         return super.onStartCommand(intent, flags, startId)
     }
 
@@ -129,6 +123,29 @@ public class TypeTypePlaybackService : MediaSessionService() {
         playbackJob?.cancel()
         seekJob?.cancel()
         stopSelf()
+    }
+
+    private fun retryPlayback() {
+        val request = currentRequest ?: return
+        val position = player.currentPosition.coerceAtLeast(0L)
+        playbackJob?.cancel()
+        seekJob?.cancel()
+        sponsorBlockController?.stop()
+        playbackJob = serviceScope.launch {
+            try {
+                player.stop()
+                replaceMediaSource(request, currentSubtitle, position, true)
+                startSponsorBlock(request)
+                startProgressUpdates()
+                startPlaybackPositionUpdates()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                session.setSessionExtras(Bundle().apply {
+                    putString(PLAYBACK_ERROR_EXTRA, failure.message ?: "Playback retry failed")
+                })
+            }
+        }
     }
 
     private suspend fun replaceMediaSource(
@@ -279,6 +296,12 @@ public class TypeTypePlaybackService : MediaSessionService() {
                 Intent(context, TypeTypePlaybackService::class.java)
                     .setAction(ACTION_SEEK)
                     .putExtra(SEEK_TIME, positionMilliseconds.coerceAtLeast(0L)),
+            )
+        }
+
+        public fun retry(context: Context) {
+            context.startService(
+                Intent(context, TypeTypePlaybackService::class.java).setAction(ACTION_RETRY),
             )
         }
 

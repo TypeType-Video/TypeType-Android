@@ -184,10 +184,14 @@ internal fun PlayerScreen(
                 )
             }
             playerSession.playbackError?.let { message ->
-                NoServerMedia(message) {
-                    TypeTypePlaybackService.stop(context)
-                    onClose()
-                }
+                NoServerMedia(
+                    message = message,
+                    onRetry = { TypeTypePlaybackService.retry(context) },
+                    onClose = {
+                        TypeTypePlaybackService.stop(context)
+                        onClose()
+                    },
+                )
             }
             PlayerOverlays(
                 video = video,
