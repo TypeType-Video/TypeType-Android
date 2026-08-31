@@ -22,6 +22,16 @@ internal class TvPlaybackQualityMetrics : AnalyticsListener {
     private var rebufferMilliseconds = 0L
     private var droppedVideoFrames = 0L
 
+    fun onPlaybackRequested(now: Long = SystemClock.elapsedRealtime()) {
+        playStartedAt = now
+        firstFrameAt = UNSET
+        playingSince = UNSET
+        rebufferingSince = UNSET
+        playedMilliseconds = 0L
+        rebufferMilliseconds = 0L
+        droppedVideoFrames = 0L
+    }
+
     fun onPlaybackStateChanged(state: Int, now: Long = SystemClock.elapsedRealtime()) {
         if (firstFrameAt == UNSET) return
         if (state == Player.STATE_BUFFERING && rebufferingSince == UNSET) {

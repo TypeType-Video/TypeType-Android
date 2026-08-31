@@ -111,6 +111,7 @@ public class TypeTypePlaybackService : MediaSessionService() {
             currentRequest = request
             lowerFormatRecoveryAttempts = 0
             currentSubtitle = subtitle
+            qualityMetrics.onPlaybackRequested()
             player.setPlaybackSpeed(request.playbackSpeed)
             player.volume = request.playbackVolume
             replaceMediaSource(request, subtitle, request.startTimeMilliseconds, true)
