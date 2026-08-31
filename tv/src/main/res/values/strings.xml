@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">TypeType TV</string>
+    <string name="loading">Loading TypeType</string>
+    <string name="connection_error">The TypeType instance could not be reached.</string>
+    <string name="open_video">Open video</string>
+    <string name="play">Play</string>
+    <string name="back">Back</string>
+    <string name="home">Home</string>
+    <string name="search">Search</string>
+    <string name="library">Library</string>
+    <string name="settings">Settings</string>
+    <string name="appearance">Appearance</string>
+    <string name="classic">Classic</string>
+    <string name="manga">Manga</string>
+    <string name="instance_source">Connected to TypeType</string>
+    <string name="no_media">No server media is available for this video.</string>
+</resources>
