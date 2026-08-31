@@ -5,6 +5,7 @@ import video.typetype.sdk.core.Video
 
 internal fun TvAppState.navigationRelated(video: Video): List<Video> {
     val candidates = when {
+        selectedVideo != null -> stream?.relatedStreams.orEmpty()
         selectedPlaylist != null -> selectedPlaylist.videos
         selectedUserPlaylist != null -> selectedUserPlaylist.videos
         selectedPodcast != null -> selectedPodcast.episodes
