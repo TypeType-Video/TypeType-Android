@@ -25,6 +25,7 @@ import video.typetype.sdk.core.SubtitleTrack
 import video.typetype.sdk.core.UserSettings
 import video.typetype.sdk.core.Video
 import video.typetype.tv.player.SUBTITLE_ERROR_EXTRA
+import video.typetype.tv.player.PLAYBACK_ERROR_EXTRA
 import video.typetype.tv.player.TypeTypePlaybackService
 
 internal class PlayerSessionBinding {
@@ -50,7 +51,12 @@ internal class PlayerSessionBinding {
 
     fun onPlayerError(error: PlaybackException) {
         playbackFailed = true
-        playbackError = error.cause?.message ?: error.message
+        playbackError = (error.cause?.message ?: error.message.orEmpty()).userMessage()
+    }
+
+    fun onPlaybackReady() {
+        playbackFailed = false
+        playbackError = null
     }
 
     fun onIsPlayingChanged(value: Boolean) {
@@ -63,6 +69,7 @@ internal class PlayerSessionBinding {
         positionMilliseconds = player?.currentPosition?.coerceAtLeast(0L) ?: 0L
         durationMilliseconds = duration.coerceAtLeast(0L)
         subtitleError = player?.sessionExtras?.getString(SUBTITLE_ERROR_EXTRA)
+        player?.sessionExtras?.getString(PLAYBACK_ERROR_EXTRA)?.let { playbackError = it.userMessage() }
     }
 
     fun detach(listener: Player.Listener) {
@@ -70,6 +77,15 @@ internal class PlayerSessionBinding {
         controller?.release()
         controller = null
     }
+}
+
+private fun String.userMessage(): String = when {
+    contains("throttled", ignoreCase = true) ->
+        "The server is temporarily throttling playback."
+    contains("SABR", ignoreCase = true) ||
+        contains("Invalid integer size", ignoreCase = true) ->
+        "The server returned an invalid media segment."
+    else -> ifBlank { "Playback could not be started." }
 }
 
 @Composable
@@ -106,6 +122,7 @@ internal fun rememberPlayerSessionBinding(
             override fun onPlayerError(error: PlaybackException) = state.onPlayerError(error)
 
             override fun onPlaybackStateChanged(playbackState: Int) {
+                if (playbackState == Player.STATE_READY) state.onPlaybackReady()
                 if (playbackState == Player.STATE_ENDED && !state.playbackFailed) latestEnded()
             }
 

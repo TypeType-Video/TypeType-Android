@@ -28,6 +28,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.painterResource
@@ -116,6 +121,16 @@ private fun NavigationTab(
     }
     Surface(
         modifier = Modifier.focusRequester(focusRequester).then(directionalFocus)
+            .onPreviewKeyEvent { event ->
+                if (destination == selected && contentFocusRequester != null &&
+                    event.type == KeyEventType.KeyDown && event.key == Key.DirectionDown
+                ) {
+                    contentFocusRequester.requestFocus()
+                    true
+                } else {
+                    false
+                }
+            }
             .graphicsLayer { scaleX = scale; scaleY = scale },
         onClick = { onNavigate(destination) },
         interactionSource = interactionSource,

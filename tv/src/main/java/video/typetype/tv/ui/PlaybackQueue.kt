@@ -7,6 +7,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -30,6 +31,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
+import androidx.tv.material3.Button
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.ui.text.style.TextOverflow
 import coil3.compose.AsyncImage
@@ -132,8 +134,14 @@ internal fun PlayerLoading(error: String?) {
 }
 
 @Composable
-internal fun NoServerMedia(message: String? = null, onClose: () -> Unit) {
-    Surface(modifier = Modifier.padding(40.dp), onClick = onClose) {
+internal fun NoServerMedia(
+    message: String? = null,
+    onRetry: () -> Unit,
+    onClose: () -> Unit,
+) {
+    val retryFocusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) { retryFocusRequester.requestFocus() }
+    Surface(modifier = Modifier.padding(40.dp)) {
         Column(
             modifier = Modifier.padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -141,10 +149,17 @@ internal fun NoServerMedia(message: String? = null, onClose: () -> Unit) {
         ) {
             Text(message ?: "No server media is available for this video.", style = MaterialTheme.typography.titleLarge)
             Text(
-                "Press Select to return.",
+                "The server session could not provide media.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Button(
+                    modifier = Modifier.focusRequester(retryFocusRequester),
+                    onClick = onRetry,
+                ) { Text("Try again") }
+                Button(onClick = onClose) { Text("Return") }
+            }
         }
     }
 }
