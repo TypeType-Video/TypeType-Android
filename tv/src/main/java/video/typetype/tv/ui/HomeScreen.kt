@@ -64,6 +64,13 @@ public fun HomeScreen(
         LoadingScreen()
         return
     }
+    if (!state.isLoading && featured.isEmpty()) {
+        EmptyScreen(
+            title = "Nothing to show yet",
+            message = state.errorMessage ?: "Refresh the home screen when your instance is available.",
+        )
+        return
+    }
     Box(modifier = Modifier.fillMaxSize()) {
         CompositionLocalProvider(LocalBringIntoViewSpec provides TvBringIntoViewSpec) {
             LazyColumn(

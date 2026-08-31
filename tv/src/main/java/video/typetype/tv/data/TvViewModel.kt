@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.Job
 import video.typetype.sdk.core.ServiceId
 import video.typetype.sdk.core.TypeTypeClient
@@ -41,8 +42,11 @@ public class TvViewModel(
             mutableState.value = mutableState.value.copy(isLoading = true, errorMessage = null)
             when (val result = client.auth.login(LoginCredentials(identifier, null, password))) {
                 is TypeTypeResult.Success -> {
-                    mutableState.value = mutableState.value.copy(authStatus = TvAuthStatus.AUTHENTICATED)
-                    loadAuthenticatedContent()
+                    mutableState.value = mutableState.value.copy(
+                        authStatus = TvAuthStatus.AUTHENTICATED,
+                        isLoading = false,
+                    )
+                    viewModelScope.launch { loadAuthenticatedContent() }
                 }
                 is TypeTypeResult.Failure -> mutableState.value = mutableState.value.copy(
                     isLoading = false,
@@ -61,8 +65,11 @@ public class TvViewModel(
             mutableState.value = mutableState.value.copy(isLoading = true, errorMessage = null)
             when (val result = client.auth.register(RegistrationRequest(email.trim(), password, name.trim()))) {
                 is TypeTypeResult.Success -> {
-                    mutableState.value = mutableState.value.copy(authStatus = TvAuthStatus.AUTHENTICATED)
-                    loadAuthenticatedContent()
+                    mutableState.value = mutableState.value.copy(
+                        authStatus = TvAuthStatus.AUTHENTICATED,
+                        isLoading = false,
+                    )
+                    viewModelScope.launch { loadAuthenticatedContent() }
                 }
                 is TypeTypeResult.Failure -> mutableState.value = mutableState.value.copy(
                     isLoading = false,
@@ -78,8 +85,11 @@ public class TvViewModel(
             mutableState.value = mutableState.value.copy(isLoading = true, errorMessage = null)
             when (val result = client.auth.guest()) {
                 is TypeTypeResult.Success -> {
-                    mutableState.value = mutableState.value.copy(authStatus = TvAuthStatus.GUEST)
-                    loadHomeContent()
+                    mutableState.value = mutableState.value.copy(
+                        authStatus = TvAuthStatus.GUEST,
+                        isLoading = false,
+                    )
+                    viewModelScope.launch { loadHomeContent() }
                 }
                 is TypeTypeResult.Failure -> mutableState.value = mutableState.value.copy(
                     isLoading = false,
@@ -155,7 +165,9 @@ public class TvViewModel(
 
     private fun restoreSession() {
         viewModelScope.launch {
-            val metadataResult = client.instance.metadata()
+            val metadataResult = withTimeoutOrNull(STARTUP_METADATA_TIMEOUT_MILLISECONDS) {
+                client.instance.metadata()
+            }
             val metadata = (metadataResult as? TypeTypeResult.Success)?.value
             val metadataError = (metadataResult as? TypeTypeResult.Failure)?.error
             val session = client.sessions.current()
@@ -174,9 +186,12 @@ public class TvViewModel(
                 selectedService = availableTvServices(metadata).firstOrNull {
                     it == mutableState.value.selectedService
                 } ?: availableTvServices(metadata).first(),
+                isLoading = false,
             )
             resumePendingDownload(session)
-            if (session.isGuest) loadHomeContent() else loadAuthenticatedContent()
+            viewModelScope.launch {
+                if (session.isGuest) loadHomeContent() else loadAuthenticatedContent()
+            }
         }
     }
 
@@ -279,3 +294,5 @@ public class TvViewModel(
     }
 
 }
+
+private const val STARTUP_METADATA_TIMEOUT_MILLISECONDS = 4_000L
