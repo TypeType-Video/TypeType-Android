@@ -1,0 +1,87 @@
+package video.typetype.tv.data
+
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import video.typetype.sdk.core.ServiceId
+import video.typetype.sdk.core.TypeTypeResult
+import video.typetype.sdk.core.Video
+
+public fun TvViewModel.openVideo(video: Video): Unit =
+    openVideo(video, video.serviceId, autoPlay = false)
+
+public fun TvViewModel.playVideo(video: Video): Unit =
+    openVideo(video, video.serviceId, autoPlay = true)
+
+public fun TvViewModel.openVideo(video: Video, service: ServiceId): Unit =
+    openVideo(video, service, autoPlay = false)
+
+private fun TvViewModel.openVideo(video: Video, service: ServiceId, autoPlay: Boolean) {
+    val navigationRelated = mutableState.value.navigationRelated(video)
+    viewModelScope.launch {
+        mutableState.value = mutableState.value.copy(
+            selectedVideo = video,
+            selectedService = service,
+            stream = null,
+            playback = null,
+            audioOnlyStream = null,
+            selectedSubtitleLanguage = null,
+            selectedSubtitleAuto = false,
+            selectedSubtitleName = null,
+            isLoadingDetails = true,
+            comments = emptyList(),
+            commentsNextPage = null,
+            commentsDisabled = false,
+            commentReplies = emptyMap(),
+            errorMessage = null,
+        )
+        if (!mutableState.value.settings.hideComments) loadInitialComments(video.url)
+        val result = withTimeoutOrNull(DETAILS_LOAD_TIMEOUT_MILLISECONDS) {
+            loadStreamDetails(video.url, service)
+        }
+        if (result == null) {
+            if (mutableState.value.selectedVideo?.url == video.url) {
+                mutableState.value = mutableState.value.copy(
+                    isLoadingDetails = false,
+                    errorMessage = "The video took too long to prepare.\nTry again without leaving this screen.",
+                )
+            }
+            return@launch
+        }
+        when (result) {
+            is TypeTypeResult.Success -> {
+                if (mutableState.value.selectedVideo?.url != video.url) return@launch
+                val streamWithNavigation = result.value.withNavigationRelated(navigationRelated)
+                val visibleStream = if (mutableState.value.settings.hideRelatedVideos) {
+                    streamWithNavigation.copy(relatedStreams = emptyList())
+                } else {
+                    streamWithNavigation
+                }
+                val tracks = visibleStream.selectTvPlaybackTracks(
+                    isVideoSupported,
+                    preferredAudioTrackId = visibleStream.defaultTvAudioTrackId(mutableState.value.settings),
+                    preferredQuality = mutableState.value.settings.defaultQuality,
+                )
+                mutableState.value = mutableState.value.copy(
+                    stream = visibleStream,
+                    supportedVideoItags = visibleStream.videoOnlyStreams
+                        .filter(isVideoSupported).mapTo(mutableSetOf()) { it.itag },
+                    selectedVideoItag = tracks?.video?.itag,
+                    selectedAudioItag = tracks?.audio?.itag,
+                    selectedAudioTrackId = tracks?.audio?.audioTrackId,
+                    isLoadingDetails = false,
+                )
+                if (autoPlay) startPlayback()
+            }
+            is TypeTypeResult.Failure -> {
+                if (mutableState.value.selectedVideo?.url != video.url) return@launch
+                mutableState.value = mutableState.value.copy(
+                    isLoadingDetails = false,
+                    errorMessage = result.error.toUserMessage(),
+                )
+            }
+        }
+    }
+}
+
+private const val DETAILS_LOAD_TIMEOUT_MILLISECONDS = 60_000L
