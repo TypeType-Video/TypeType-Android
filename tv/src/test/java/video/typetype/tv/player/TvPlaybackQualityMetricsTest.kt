@@ -39,4 +39,13 @@ public class TvPlaybackQualityMetricsTest {
 
         assertEquals(3L, metrics.snapshot(now = 100L).droppedVideoFrames)
     }
+
+    @Test
+    public fun recordsRenderedVideoFrames() {
+        val metrics = TvPlaybackQualityMetrics()
+        metrics.onRenderedVideoFramesCount(-2)
+        metrics.onRenderedVideoFramesCount(240)
+
+        assertEquals(240L, metrics.snapshot(now = 100L).renderedVideoFrames)
+    }
 }

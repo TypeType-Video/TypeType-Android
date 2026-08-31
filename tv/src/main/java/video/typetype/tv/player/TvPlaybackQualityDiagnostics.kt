@@ -8,6 +8,7 @@ internal fun logTvPlaybackQuality(metrics: TvPlaybackQualityMetrics) {
         "TypeTypePlayback",
         "quality startupMs=${snapshot.startupMilliseconds ?: -1L} " +
             "playedMs=${snapshot.playedMilliseconds} rebufferMs=${snapshot.rebufferMilliseconds} " +
-            "droppedVideoFrames=${snapshot.droppedVideoFrames}",
+            "droppedVideoFrames=${snapshot.droppedVideoFrames} " +
+            "renderedVideoFrames=${snapshot.renderedVideoFrames}",
     )
 }
