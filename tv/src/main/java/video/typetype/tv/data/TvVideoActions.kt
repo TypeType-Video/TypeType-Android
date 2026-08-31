@@ -17,11 +17,19 @@ public fun TvViewModel.openVideo(video: Video, service: ServiceId): Unit =
     openVideo(video, service, autoPlay = false)
 
 private fun TvViewModel.openVideo(video: Video, service: ServiceId, autoPlay: Boolean) {
-    val navigationRelated = mutableState.value.navigationRelated(video)
+    val previousState = mutableState.value
+    val navigationRelated = previousState.navigationRelated(video)
+    val navigatingFromVideo = previousState.selectedVideo != null
     viewModelScope.launch {
         mutableState.value = mutableState.value.copy(
             selectedVideo = video,
             selectedService = service,
+            selectedChannel = if (navigatingFromVideo) null else previousState.selectedChannel,
+            selectedPlaylist = if (navigatingFromVideo) null else previousState.selectedPlaylist,
+            selectedUserPlaylist = if (navigatingFromVideo) null else previousState.selectedUserPlaylist,
+            selectedPodcast = if (navigatingFromVideo) null else previousState.selectedPodcast,
+            channelPodcasts = if (navigatingFromVideo) null else previousState.channelPodcasts,
+            channelPlaylists = if (navigatingFromVideo) null else previousState.channelPlaylists,
             stream = null,
             playback = null,
             audioOnlyStream = null,
