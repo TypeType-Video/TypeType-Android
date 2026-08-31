@@ -83,6 +83,9 @@ private fun TvViewModel.openVideo(video: Video, service: ServiceId, autoPlay: Bo
                 if (!mutableState.value.settings.hideRelatedVideos && streamWithNavigation.relatedStreams.isEmpty()) {
                     loadRecommendationNavigation(video, service)
                 }
+                if (service == ServiceId.YOUTUBE) {
+                    enrichYoutubeDetails(video, streamWithNavigation)
+                }
             }
             is TypeTypeResult.Failure -> {
                 if (mutableState.value.selectedVideo?.url != video.url) return@launch
@@ -92,6 +95,38 @@ private fun TvViewModel.openVideo(video: Video, service: ServiceId, autoPlay: Bo
                 )
             }
         }
+    }
+}
+
+private fun TvViewModel.enrichYoutubeDetails(video: Video, bootstrap: video.typetype.sdk.core.StreamDetails) {
+    viewModelScope.launch {
+        val full = withTimeoutOrNull(FULL_DETAILS_LOAD_TIMEOUT_MILLISECONDS) {
+            client.catalog.stream(video.url, ServiceId.YOUTUBE)
+        } ?: return@launch
+        val fullStream = (full as? TypeTypeResult.Success)?.value ?: return@launch
+        val current = mutableState.value
+        if (current.selectedVideo?.url != video.url) return@launch
+        val currentRelated = current.stream?.relatedStreams.orEmpty()
+        val relatedFallback = currentRelated.ifEmpty { bootstrap.relatedStreams }
+        val enriched = fullStream.withNavigationRelated(relatedFallback)
+        val visibleStream = if (current.settings.hideRelatedVideos) {
+            enriched.copy(relatedStreams = emptyList())
+        } else {
+            enriched
+        }
+        val tracks = visibleStream.selectTvPlaybackTracks(
+            isVideoSupported,
+            preferredAudioTrackId = visibleStream.defaultTvAudioTrackId(current.settings),
+            preferredQuality = current.settings.defaultQuality,
+        )
+        mutableState.value = current.copy(
+            stream = visibleStream,
+            supportedVideoItags = visibleStream.videoOnlyStreams
+                .filter(isVideoSupported).mapTo(mutableSetOf()) { it.itag },
+            selectedVideoItag = tracks?.video?.itag ?: current.selectedVideoItag,
+            selectedAudioItag = tracks?.audio?.itag ?: current.selectedAudioItag,
+            selectedAudioTrackId = tracks?.audio?.audioTrackId ?: current.selectedAudioTrackId,
+        )
     }
 }
 
@@ -115,5 +150,6 @@ private fun TvViewModel.loadRecommendationNavigation(video: Video, service: Serv
 }
 
 private const val DETAILS_LOAD_TIMEOUT_MILLISECONDS = 60_000L
+private const val FULL_DETAILS_LOAD_TIMEOUT_MILLISECONDS = 30_000L
 private const val RECOMMENDATIONS_LOAD_TIMEOUT_MILLISECONDS = 10_000L
 private const val RECOMMENDATIONS_LIMIT = 18
