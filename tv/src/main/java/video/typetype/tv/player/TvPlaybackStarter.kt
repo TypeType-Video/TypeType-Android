@@ -8,6 +8,7 @@ import video.typetype.sdk.core.StreamDetails
 import video.typetype.sdk.core.SubtitleTrack
 import video.typetype.sdk.core.UserSettings
 import video.typetype.sdk.core.Video
+import video.typetype.sdk.core.isSabrPlaybackTrack
 
 internal object TvPlaybackStarter {
     fun play(
@@ -26,6 +27,9 @@ internal object TvPlaybackStarter {
         val audioItag = session.selectedAudioItag
         val videoMime = videoItag?.let { itag -> stream.videoOnlyStreams.firstOrNull { it.itag == itag }?.mimeType }
         val audioMime = audioItag?.let { itag -> stream.audioStreams.firstOrNull { it.itag == itag }?.mimeType }
+        val videoTracks = stream.videoOnlyStreams.filter { it.isSabrPlaybackTrack() }.map {
+            TvVideoTrack(it.itag, it.mimeType)
+        }
         if (!isManifest && audioOnly == null &&
             (videoItag == null || audioItag == null || videoMime == null || audioMime == null)
         ) return false
@@ -45,6 +49,8 @@ internal object TvPlaybackStarter {
             .putExtra(START_TIME, session.startTimeMilliseconds)
             .putExtra(VIDEO_MIME, videoMime)
             .putExtra(AUDIO_MIME, audioMime)
+            .putExtra(VIDEO_TRACK_ITAGS, videoTracks.map(TvVideoTrack::itag).toIntArray())
+            .putStringArrayListExtra(VIDEO_TRACK_MIMES, ArrayList(videoTracks.map(TvVideoTrack::mimeType)))
             .putExtra(MANIFEST_URL, manifest)
             .putExtra(MANIFEST_PROTOCOL, session.protocol)
             .putExtra(AUDIO_ONLY_URL, audioOnly?.sourceUrl)
