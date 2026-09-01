@@ -28,6 +28,7 @@ internal data class TvPlaybackRequest(
     val audioOnlyUrl: String?,
     val audioOnlyMimeType: String?,
     val audioOnlyKind: String?,
+    val isLive: Boolean,
     val trackProgress: Boolean,
     val playbackSpeed: Float,
     val playbackVolume: Float,
@@ -50,5 +51,6 @@ internal data class TvPlaybackRequest(
         startTimeMilliseconds = startTimeMilliseconds,
         videoMimeType = requireNotNull(videoMimeType),
         audioMimeType = requireNotNull(audioMimeType),
+        isLive = isLive,
     )
 }

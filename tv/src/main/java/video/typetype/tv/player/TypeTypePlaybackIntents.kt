@@ -28,6 +28,7 @@ internal const val MANIFEST_PROTOCOL = "manifest_protocol"
 internal const val AUDIO_ONLY_URL = "audio_only_url"
 internal const val AUDIO_ONLY_MIME = "audio_only_mime"
 internal const val AUDIO_ONLY_KIND = "audio_only_kind"
+internal const val IS_LIVE = "is_live"
 internal const val SUBTITLE_LANGUAGE = "subtitle_language"
 internal const val SUBTITLE_NAME = "subtitle_name"
 internal const val SUBTITLE_AUTO = "subtitle_auto"
@@ -87,6 +88,7 @@ internal fun Intent.toPlaybackRequest(): TvPlaybackRequest? {
         audioOnlyUrl = audioOnlyUrl,
         audioOnlyMimeType = audioOnlyMime,
         audioOnlyKind = getStringExtra(AUDIO_ONLY_KIND),
+        isLive = getBooleanExtra(IS_LIVE, false),
         trackProgress = getBooleanExtra(TRACK_PROGRESS, true),
         playbackSpeed = getFloatExtra(PLAYBACK_SPEED, 1f).coerceIn(.25f, 4f),
         playbackVolume = getFloatExtra(PLAYBACK_VOLUME, 1f).coerceIn(0f, 1f),
