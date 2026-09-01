@@ -56,6 +56,7 @@ internal object TvPlaybackStarter {
             .putExtra(AUDIO_ONLY_URL, audioOnly?.sourceUrl)
             .putExtra(AUDIO_ONLY_MIME, audioOnly?.mimeType)
             .putExtra(AUDIO_ONLY_KIND, audioOnly?.kind)
+            .putExtra(IS_LIVE, stream.isLive)
             .putExtra(TRACK_PROGRESS, !settings.disableWatchHistory)
             .putExtra(PLAYBACK_SPEED, settings.defaultPlaybackSpeed.toFloat().coerceIn(.25f, 4f))
             .putExtra(PLAYBACK_VOLUME, if (settings.muted) 0f else settings.volume.toFloat().coerceIn(0f, 1f))
