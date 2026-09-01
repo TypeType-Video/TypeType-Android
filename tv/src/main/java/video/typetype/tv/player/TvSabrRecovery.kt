@@ -31,6 +31,7 @@ internal suspend fun reopenWithLowerVideoFormat(
             audioItag = request.audioItag,
             audioTrackId = request.audioTrackId,
             startTimeMilliseconds = positionMilliseconds.coerceAtLeast(0L),
+            isLive = request.isLive,
         ),
     )
     val session = (result as? TypeTypeResult.Success)?.value ?: return null
