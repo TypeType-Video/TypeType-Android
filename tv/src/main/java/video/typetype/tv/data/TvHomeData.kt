@@ -3,7 +3,6 @@ package video.typetype.tv.data
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import video.typetype.sdk.core.ChannelRequest
 import video.typetype.sdk.core.ServiceId
 import video.typetype.sdk.core.TypeTypeError
 import video.typetype.sdk.core.TypeTypeResult
@@ -35,7 +34,6 @@ internal suspend fun TvViewModel.loadHomeContent(): Unit = coroutineScope {
         if (settings.hideHomeRecommendations) null else client.recommendations.home(service, limit = 24)
     }
     val trendingDeferred = async { client.catalog.trending(service) }
-    val channelVideosDeferred = async { loadFeaturedChannelVideos(service) }
     val shortsDeferred = async {
         if (settings.hideShorts) null else client.recommendations.shorts(service, limit = 20)
     }
@@ -49,7 +47,6 @@ internal suspend fun TvViewModel.loadHomeContent(): Unit = coroutineScope {
     val metadataResult = metadataDeferred.await()
     val homeResult = homeDeferred.await()
     val trendingResult = trendingDeferred.await()
-    val channelVideos = channelVideosDeferred.await()
     val shortsResult = shortsDeferred.await()
     val subscriptionsResult = subscriptionsDeferred.await()
     val groupsResult = groupsDeferred.await()
@@ -69,33 +66,24 @@ internal suspend fun TvViewModel.loadHomeContent(): Unit = coroutineScope {
         return@coroutineScope
     }
     val current = mutableState.value
-    val serverHome = (homeResult as? TypeTypeResult.Success)?.value?.items?.visibleWith(settings)
+    val serverHome = (homeResult as? TypeTypeResult.Success)?.value?.items
+        ?.visibleForPlayback(service, settings)
         ?: if (settings.hideHomeRecommendations) emptyList() else current.home
-    val featuredHome = channelVideos.plus(serverHome).distinctBy { it.serviceId to it.id.value }.take(24)
     mutableState.value = current.copy(
         metadata = (metadataResult as? TypeTypeResult.Success)?.value ?: current.metadata,
-        home = featuredHome,
-        trending = (trendingResult as? TypeTypeResult.Success)?.value?.visibleWith(settings) ?: current.trending,
+        home = serverHome.take(24),
+        trending = (trendingResult as? TypeTypeResult.Success)?.value?.visibleForPlayback(service, settings)
+            ?: current.trending,
         shorts = (shortsResult as? TypeTypeResult.Success)?.value?.items?.visibleWith(settings)
             ?: if (settings.hideShorts) emptyList() else current.shorts,
         subscriptions = (subscriptionsResult as? TypeTypeResult.Success)?.value ?: current.subscriptions,
         subscriptionGroups = (groupsResult as? TypeTypeResult.Success)?.value ?: current.subscriptionGroups,
-        subscriptionFeed = (feedResult as? TypeTypeResult.Success)?.value?.items?.visibleWith(settings)
+        subscriptionFeed = (feedResult as? TypeTypeResult.Success)?.value?.items
+            ?.visibleForPlayback(service, settings)
             ?: current.subscriptionFeed,
         isLoading = false,
         errorMessage = errors.firstOrNull()?.toUserMessage(),
     )
-}
-
-private suspend fun TvViewModel.loadFeaturedChannelVideos(service: ServiceId): List<video.typetype.sdk.core.Video> {
-    if (service != ServiceId.YOUTUBE) return emptyList()
-    return FEATURED_CHANNEL_URLS.flatMap { channelUrl ->
-        when (val result = client.catalog.channel(ChannelRequest(channelUrl))) {
-            is TypeTypeResult.Success -> result.value.videos
-                .filter { it.durationSeconds > 0L && !it.isLive && !it.isLiveContent && !it.isShortFormContent }
-            is TypeTypeResult.Failure -> emptyList()
-        }
-    }.shuffled().distinctBy { it.id.value }.take(MAX_FEATURED_CHANNEL_VIDEOS)
 }
 
 private fun List<video.typetype.sdk.core.Video>.visibleWith(
@@ -105,11 +93,17 @@ private fun List<video.typetype.sdk.core.Video>.visibleWith(
         (!settings.hideMembersOnlyContent || !video.requiresMembership)
 }
 
-private val FEATURED_CHANNEL_URLS = listOf(
-    "https://www.youtube.com/@MrBeast",
-    "https://www.youtube.com/@cyprien",
-    "https://www.youtube.com/@Squeezie",
-    "https://www.youtube.com/@markiplier",
-)
+internal fun List<video.typetype.sdk.core.Video>.vodVisibleWith(
+    settings: video.typetype.sdk.core.UserSettings,
+): List<video.typetype.sdk.core.Video> = filter { video ->
+    video.durationSeconds > 0L && !video.isLive && !video.isLiveContent && !video.isShortFormContent
+}.visibleWith(settings)
 
-private const val MAX_FEATURED_CHANNEL_VIDEOS = 24
+private fun List<video.typetype.sdk.core.Video>.visibleForPlayback(
+    service: ServiceId,
+    settings: video.typetype.sdk.core.UserSettings,
+): List<video.typetype.sdk.core.Video> = if (service == ServiceId.YOUTUBE) {
+    vodVisibleWith(settings)
+} else {
+    visibleWith(settings)
+}
