@@ -34,6 +34,9 @@ internal suspend fun createTvPlaybackMediaSource(
             ManifestPlaybackRequest(
                 manifestUrl = requireNotNull(request.manifestUrl),
                 protocol = requireNotNull(request.manifestProtocol),
+                requestHeaders = client.sessions.current()?.accessToken?.value
+                    ?.let { mapOf("Authorization" to "Bearer $it") }
+                    .orEmpty(),
             ),
         )
         request.isAudioOnly -> {
