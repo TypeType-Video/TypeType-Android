@@ -3,7 +3,7 @@ package video.typetype.tv.data
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import video.typetype.sdk.core.SearchRequest
+import video.typetype.sdk.core.ServiceId
 import video.typetype.sdk.core.TypeTypeError
 import video.typetype.sdk.core.TypeTypeResult
 
@@ -34,7 +34,6 @@ internal suspend fun TvViewModel.loadHomeContent(): Unit = coroutineScope {
         if (settings.hideHomeRecommendations) null else client.recommendations.home(service, limit = 24)
     }
     val trendingDeferred = async { client.catalog.trending(service) }
-    val bunnyDeferred = async { client.catalog.search(SearchRequest("Big Buck Bunny", service)) }
     val shortsDeferred = async {
         if (settings.hideShorts) null else client.recommendations.shorts(service, limit = 20)
     }
@@ -48,13 +47,12 @@ internal suspend fun TvViewModel.loadHomeContent(): Unit = coroutineScope {
     val metadataResult = metadataDeferred.await()
     val homeResult = homeDeferred.await()
     val trendingResult = trendingDeferred.await()
-    val bunnyResult = bunnyDeferred.await()
     val shortsResult = shortsDeferred.await()
     val subscriptionsResult = subscriptionsDeferred.await()
     val groupsResult = groupsDeferred.await()
     val feedResult = feedDeferred.await()
     val errors = listOfNotNull(
-        metadataResult, homeResult, trendingResult, bunnyResult, shortsResult,
+        metadataResult, homeResult, trendingResult, shortsResult,
         subscriptionsResult, groupsResult, feedResult,
     ).mapNotNull { (it as? TypeTypeResult.Failure)?.error }
     if (errors.firstOrNull() is TypeTypeError.Authentication) {
@@ -68,20 +66,20 @@ internal suspend fun TvViewModel.loadHomeContent(): Unit = coroutineScope {
         return@coroutineScope
     }
     val current = mutableState.value
-    val bunnyPage = bunnyResult as? TypeTypeResult.Success
-    val bunny = bunnyPage?.value?.videos
-        ?.firstOrNull { it.title.contains("big buck bunny", ignoreCase = true) }
+    val serverHome = (homeResult as? TypeTypeResult.Success)?.value?.items
+        ?.visibleForPlayback(service, settings)
+        ?: if (settings.hideHomeRecommendations) emptyList() else current.home
     mutableState.value = current.copy(
         metadata = (metadataResult as? TypeTypeResult.Success)?.value ?: current.metadata,
-        home = (homeResult as? TypeTypeResult.Success)?.value?.items?.visibleWith(settings)
-            ?: if (settings.hideHomeRecommendations) emptyList() else current.home,
-        trending = (trendingResult as? TypeTypeResult.Success)?.value?.visibleWith(settings) ?: current.trending,
-        bigBuckBunny = if (bunnyPage != null) bunny else current.bigBuckBunny,
+        home = serverHome.take(24),
+        trending = (trendingResult as? TypeTypeResult.Success)?.value?.visibleForPlayback(service, settings)
+            ?: current.trending,
         shorts = (shortsResult as? TypeTypeResult.Success)?.value?.items?.visibleWith(settings)
             ?: if (settings.hideShorts) emptyList() else current.shorts,
         subscriptions = (subscriptionsResult as? TypeTypeResult.Success)?.value ?: current.subscriptions,
         subscriptionGroups = (groupsResult as? TypeTypeResult.Success)?.value ?: current.subscriptionGroups,
-        subscriptionFeed = (feedResult as? TypeTypeResult.Success)?.value?.items?.visibleWith(settings)
+        subscriptionFeed = (feedResult as? TypeTypeResult.Success)?.value?.items
+            ?.visibleForPlayback(service, settings)
             ?: current.subscriptionFeed,
         isLoading = false,
         errorMessage = errors.firstOrNull()?.toUserMessage(),
@@ -93,4 +91,19 @@ private fun List<video.typetype.sdk.core.Video>.visibleWith(
 ): List<video.typetype.sdk.core.Video> = filter { video ->
     (!settings.hideSubscriptionLiveStreams || !video.isLive) &&
         (!settings.hideMembersOnlyContent || !video.requiresMembership)
+}
+
+internal fun List<video.typetype.sdk.core.Video>.vodVisibleWith(
+    settings: video.typetype.sdk.core.UserSettings,
+): List<video.typetype.sdk.core.Video> = filter { video ->
+    video.durationSeconds > 0L && !video.isLive && !video.isLiveContent && !video.isShortFormContent
+}.visibleWith(settings)
+
+private fun List<video.typetype.sdk.core.Video>.visibleForPlayback(
+    service: ServiceId,
+    settings: video.typetype.sdk.core.UserSettings,
+): List<video.typetype.sdk.core.Video> = if (service == ServiceId.YOUTUBE) {
+    vodVisibleWith(settings)
+} else {
+    visibleWith(settings)
 }
