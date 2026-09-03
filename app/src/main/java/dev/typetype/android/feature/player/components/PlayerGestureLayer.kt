@@ -8,7 +8,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
-import androidx.compose.material.icons.filled.Brightness6
+import androidx.compose.material.icons.automirrored.filled.VolumeDown
+import androidx.compose.material.icons.automirrored.filled.VolumeMute
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.filled.BrightnessHigh
+import androidx.compose.material.icons.filled.BrightnessLow
+import androidx.compose.material.icons.filled.BrightnessMedium
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -17,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
@@ -30,6 +36,7 @@ import kotlin.math.abs
 
 private const val SEEK_DRAG_MS_PER_PIXEL = 80f
 private const val DIRECTION_LOCK_THRESHOLD_PX = 18f
+private const val LEVEL_DRAG_VIEW_FRACTION = 0.75f
 private const val LONG_PRESS_SPEED_FACTOR = 2f
 
 data class PlayerGestureConfig(
@@ -55,6 +62,8 @@ fun PlayerGestureLayer(
     onExitFullscreenGesture: () -> Unit = {},
     fullscreenExitGestureEnabled: Boolean = true,
     config: PlayerGestureConfig = PlayerGestureConfig(),
+    onBrightnessGestureStart: () -> Float = { state.brightnessFraction.floatValue },
+    onVolumeGestureStart: () -> Float = { state.volumeFraction.floatValue },
 ) {
     var savedSpeed by remember { mutableFloatStateOf(1f) }
     Box(
@@ -118,8 +127,14 @@ fun PlayerGestureLayer(
                             onGestureFeedback()
                             state.dragMode.value = candidate
                             when (candidate) {
-                                DragMode.Brightness -> state.brightnessOverlayActive.value = true
-                                DragMode.Volume -> state.volumeOverlayActive.value = true
+                                DragMode.Brightness -> {
+                                    state.brightnessFraction.floatValue = onBrightnessGestureStart()
+                                    state.brightnessOverlayActive.value = true
+                                }
+                                DragMode.Volume -> {
+                                    state.volumeFraction.floatValue = onVolumeGestureStart()
+                                    state.volumeOverlayActive.value = true
+                                }
                                 DragMode.Seek -> state.seekDragOverlayActive.value = true
                                 DragMode.FullscreenEnter -> Unit
                                 DragMode.FullscreenExit -> Unit
@@ -133,7 +148,10 @@ fun PlayerGestureLayer(
                                 state = state,
                                 mode = mode,
                                 delta = delta,
-                                levelDragRangePx = (size.height * 0.72f).coerceAtLeast(320f),
+                                levelDragRangePx = levelDragRangePx(
+                                    size.width.toFloat(),
+                                    size.height.toFloat(),
+                                ),
                                 onAdjustBrightness = onAdjustBrightness,
                                 onAdjustVolume = onAdjustVolume,
                             )
@@ -206,17 +224,15 @@ fun PlayerGestureLayer(
             visible = state.brightnessOverlayActive.value,
             fraction = state.brightnessFraction.floatValue,
             label = stringResource(R.string.player_gesture_brightness),
-            icon = Icons.Filled.Brightness6,
-            side = GestureSide.Left,
-            modifier = Modifier.align(Alignment.CenterStart),
+            icon = brightnessLevelIcon(state.brightnessFraction.floatValue),
+            modifier = Modifier.align(Alignment.Center),
         )
         PlayerLevelOverlay(
             visible = state.volumeOverlayActive.value,
             fraction = state.volumeFraction.floatValue,
             label = stringResource(R.string.player_gesture_volume),
-            icon = Icons.AutoMirrored.Filled.VolumeUp,
-            side = GestureSide.Right,
-            modifier = Modifier.align(Alignment.CenterEnd),
+            icon = volumeLevelIcon(state.volumeFraction.floatValue),
+            modifier = Modifier.align(Alignment.Center),
         )
         SeekDragOverlay(state = state, durationMs = player.duration)
         SpeedBoostBadge(visible = state.longPressBoostActive.value, factor = LONG_PRESS_SPEED_FACTOR)
@@ -270,12 +286,29 @@ private fun handleDragMode(
 internal fun adjustLevelFraction(current: Float, deltaY: Float, dragRangePx: Float): Float =
     (current - deltaY / dragRangePx.coerceAtLeast(1f)).coerceIn(0f, 1f)
 
-private fun pickDragMode(dragAmount: Offset, startX: Float, width: Float): DragMode = when {
+internal fun levelDragRangePx(width: Float, height: Float): Float =
+    minOf(width, height) * LEVEL_DRAG_VIEW_FRACTION
+
+internal fun brightnessLevelIcon(fraction: Float): ImageVector = when {
+    fraction < 0.25f -> Icons.Filled.BrightnessLow
+    fraction < 0.75f -> Icons.Filled.BrightnessMedium
+    else -> Icons.Filled.BrightnessHigh
+}
+
+internal fun volumeLevelIcon(fraction: Float): ImageVector = when {
+    fraction <= 0f -> Icons.AutoMirrored.Filled.VolumeOff
+    fraction < 0.25f -> Icons.AutoMirrored.Filled.VolumeMute
+    fraction < 0.75f -> Icons.AutoMirrored.Filled.VolumeDown
+    else -> Icons.AutoMirrored.Filled.VolumeUp
+}
+
+internal fun pickDragMode(dragAmount: Offset, startX: Float, width: Float): DragMode = when {
     abs(dragAmount.x) > abs(dragAmount.y) -> DragMode.Seek
     startX in (width * 0.35f)..(width * 0.65f) && dragAmount.y < 0f -> DragMode.FullscreenEnter
     startX in (width * 0.35f)..(width * 0.65f) && dragAmount.y > 0f -> DragMode.FullscreenExit
     startX < width / 2f -> DragMode.Brightness
-    else -> DragMode.Volume
+    startX > width * 2f / 3f -> DragMode.Volume
+    else -> DragMode.None
 }
 
 private fun resetDragState(state: PlayerGestureState) {

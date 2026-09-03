@@ -229,6 +229,28 @@ internal fun PlayerSurfaceBox(
                         }
                     }
                 },
+                onBrightnessGestureStart = {
+                    val fraction = activity?.window?.attributes?.screenBrightness
+                        ?.takeIf { it in 0f..1f }
+                        ?: appliedBrightnessPercent
+                            .takeIf { it in 0..100 }
+                            ?.div(100f)
+                        ?: gestureState.brightnessFraction.floatValue
+                    gestureState.brightnessFraction.floatValue = fraction
+                    fraction
+                },
+                onVolumeGestureStart = {
+                    val fraction = audioManager?.let { manager ->
+                        val maxVolume = manager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+                        if (maxVolume > 0) {
+                            manager.getStreamVolume(AudioManager.STREAM_MUSIC) / maxVolume.toFloat()
+                        } else {
+                            0f
+                        }
+                    } ?: gestureState.volumeFraction.floatValue
+                    gestureState.volumeFraction.floatValue = fraction
+                    fraction
+                },
                 onGestureFeedback = {
                     controlsVisible = false
                     hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
