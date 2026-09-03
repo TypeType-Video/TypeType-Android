@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.navigationBarsIgnoringVisibility
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -104,7 +104,7 @@ fun PlayerControls(
                     if (isFullscreen) {
                         Modifier
                     } else {
-                        Modifier.windowInsetsPadding(WindowInsets.navigationBarsIgnoringVisibility)
+                        Modifier.windowInsetsPadding(WindowInsets.navigationBars)
                     },
                 )
                 .padding(
@@ -174,7 +174,7 @@ private fun BottomBar(
                 },
             )
             .padding(start = if (isFullscreen) 8.dp else 2.dp, end = 2.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Bottom,
     ) {
         PlayerTimeBar(
             player = player,
