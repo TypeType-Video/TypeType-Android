@@ -142,8 +142,7 @@ internal fun AppTopBar(
 
 @Composable
 internal fun AppBottomBar(
-    currentDestination: NavDestination?,
-    fallbackTabRouteQualifiedName: String?,
+    selectedTabRouteQualifiedName: String?,
     onTabClick: (TopLevelTab) -> Unit,
     tabs: List<TopLevelTab> = topLevelTabs,
     modifier: Modifier = Modifier,
@@ -155,10 +154,10 @@ internal fun AppBottomBar(
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
             tabs.forEach { tab: TopLevelTab ->
-                val selected = tab.isSelected(currentDestination, fallbackTabRouteQualifiedName, tabs)
+                val selected = tab.route::class.qualifiedName == selectedTabRouteQualifiedName
                 NavigationBarItem(
                     selected = selected,
-                    onClick = { if (!currentDestination.matchesRoute(tab.route)) onTabClick(tab) },
+                    onClick = { onTabClick(tab) },
                     icon = { Icon(painterResource(tab.iconRes), contentDescription = null) },
                     label = { Text(stringResource(tab.labelRes)) },
                 )
@@ -169,8 +168,7 @@ internal fun AppBottomBar(
 
 @Composable
 internal fun AppNavigationRail(
-    currentDestination: NavDestination?,
-    fallbackTabRouteQualifiedName: String?,
+    selectedTabRouteQualifiedName: String?,
     onTabClick: (TopLevelTab) -> Unit,
     tabs: List<TopLevelTab> = topLevelTabs,
     modifier: Modifier = Modifier,
@@ -184,10 +182,10 @@ internal fun AppNavigationRail(
     ) {
         Spacer(Modifier.weight(1f))
             tabs.forEach { tab: TopLevelTab ->
-            val selected = tab.isSelected(currentDestination, fallbackTabRouteQualifiedName, tabs)
+            val selected = tab.route::class.qualifiedName == selectedTabRouteQualifiedName
             NavigationRailItem(
                 selected = selected,
-                onClick = { if (!currentDestination.matchesRoute(tab.route)) onTabClick(tab) },
+                onClick = { onTabClick(tab) },
                 icon = { Icon(painterResource(tab.iconRes), contentDescription = null) },
                 label = { Text(stringResource(tab.labelRes)) },
             )
@@ -218,16 +216,6 @@ private fun ProfileAvatarButton(
             modifier = Modifier.fillMaxSize().padding(3.dp),
         )
     }
-}
-
-private fun TopLevelTab.isSelected(
-    destination: NavDestination?,
-    fallbackRouteName: String?,
-    tabs: List<TopLevelTab>,
-): Boolean {
-    val direct = destination.matchesRoute(route)
-    val anyDirect = tabs.any { destination.matchesRoute(it.route) }
-    return direct || (!anyDirect && route::class.qualifiedName == fallbackRouteName)
 }
 
 internal fun NavDestination?.matchesRoute(route: Any): Boolean {
