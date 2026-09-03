@@ -56,6 +56,7 @@ fun PlayerControls(
         )
         BottomScrim(
             compact = compactControls,
+            isFullscreen = isFullscreen,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
         PlayerTopBar(
@@ -99,11 +100,17 @@ fun PlayerControls(
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .testTag(PLAYER_BOTTOM_CONTROLS_TAG)
-                .windowInsetsPadding(WindowInsets.navigationBarsIgnoringVisibility)
+                .then(
+                    if (isFullscreen) {
+                        Modifier
+                    } else {
+                        Modifier.windowInsetsPadding(WindowInsets.navigationBarsIgnoringVisibility)
+                    },
+                )
                 .padding(
                     start = if (isFullscreen) 12.dp else 4.dp,
                     end = if (isFullscreen) 8.dp else 4.dp,
-                    bottom = if (isFullscreen) 12.dp else 0.dp,
+                    bottom = if (isFullscreen) 6.dp else 0.dp,
                 ),
         )
     }
@@ -124,11 +131,21 @@ private fun TopScrim(compact: Boolean, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun BottomScrim(compact: Boolean, modifier: Modifier = Modifier) {
+private fun BottomScrim(
+    compact: Boolean,
+    isFullscreen: Boolean,
+    modifier: Modifier = Modifier,
+) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(if (compact) 88.dp else 152.dp)
+            .height(
+                when {
+                    isFullscreen -> 116.dp
+                    compact -> 88.dp
+                    else -> 152.dp
+                },
+            )
             .background(
                 Brush.verticalGradient(
                     colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.72f)),

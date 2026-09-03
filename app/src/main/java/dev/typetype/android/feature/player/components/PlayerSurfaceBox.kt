@@ -127,8 +127,15 @@ internal fun PlayerSurfaceBox(
     LaunchedEffect(accessibleControls) {
         if (accessibleControls) controlsVisible = true
     }
-    LaunchedEffect(controlsVisible, playbackStatus.isPlaying, accessibleControls) {
+    val isSeekDragging = gestureState.dragMode.value == DragMode.Seek
+    LaunchedEffect(
+        controlsVisible,
+        playbackStatus.isPlaying,
+        accessibleControls,
+        isSeekDragging,
+    ) {
         if (controlsVisible && playbackStatus.isPlaying && !accessibleControls) {
+            if (isSeekDragging) return@LaunchedEffect
             delay(AUTO_HIDE_DELAY_MS)
             controlsVisible = false
         }
