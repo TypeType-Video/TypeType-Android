@@ -144,7 +144,7 @@ internal fun AppTopBar(
 internal fun AppBottomBar(
     currentDestination: NavDestination?,
     fallbackTabRouteQualifiedName: String?,
-    onTabClick: (Any) -> Unit,
+    onTabClick: (TopLevelTab) -> Unit,
     tabs: List<TopLevelTab> = topLevelTabs,
     modifier: Modifier = Modifier,
 ) {
@@ -154,11 +154,11 @@ internal fun AppBottomBar(
             modifier = Modifier.testTag(APP_BOTTOM_NAVIGATION_TAG),
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
-            tabs.forEach { tab ->
+            tabs.forEach { tab: TopLevelTab ->
                 val selected = tab.isSelected(currentDestination, fallbackTabRouteQualifiedName, tabs)
                 NavigationBarItem(
                     selected = selected,
-                    onClick = { if (!currentDestination.matchesRoute(tab.route)) onTabClick(tab.route) },
+                    onClick = { if (!currentDestination.matchesRoute(tab.route)) onTabClick(tab) },
                     icon = { Icon(painterResource(tab.iconRes), contentDescription = null) },
                     label = { Text(stringResource(tab.labelRes)) },
                 )
@@ -171,7 +171,7 @@ internal fun AppBottomBar(
 internal fun AppNavigationRail(
     currentDestination: NavDestination?,
     fallbackTabRouteQualifiedName: String?,
-    onTabClick: (Any) -> Unit,
+    onTabClick: (TopLevelTab) -> Unit,
     tabs: List<TopLevelTab> = topLevelTabs,
     modifier: Modifier = Modifier,
 ) {
@@ -183,11 +183,11 @@ internal fun AppNavigationRail(
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
         Spacer(Modifier.weight(1f))
-        tabs.forEach { tab ->
+            tabs.forEach { tab: TopLevelTab ->
             val selected = tab.isSelected(currentDestination, fallbackTabRouteQualifiedName, tabs)
             NavigationRailItem(
                 selected = selected,
-                onClick = { if (!currentDestination.matchesRoute(tab.route)) onTabClick(tab.route) },
+                onClick = { if (!currentDestination.matchesRoute(tab.route)) onTabClick(tab) },
                 icon = { Icon(painterResource(tab.iconRes), contentDescription = null) },
                 label = { Text(stringResource(tab.labelRes)) },
             )
