@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -47,6 +46,7 @@ fun PlayerControls(
     isPipAvailable: Boolean = false,
     chaptersAvailable: Boolean = false,
     sponsorBlockSegments: List<SponsorBlockSegment> = emptyList(),
+    seekPreviewPositionMs: Long? = null,
 ) {
     BoxWithConstraints(modifier = modifier) {
         val compactControls = !isFullscreen && maxHeight < COMPACT_CONTROLS_HEIGHT
@@ -91,6 +91,7 @@ fun PlayerControls(
         BottomBar(
             player = player,
             sponsorBlockSegments = sponsorBlockSegments,
+            seekPreviewPositionMs = seekPreviewPositionMs,
             isFullscreen = isFullscreen,
             compact = compactControls,
             onToggleFullscreen = onToggleFullscreen,
@@ -98,13 +99,7 @@ fun PlayerControls(
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .testTag(PLAYER_BOTTOM_CONTROLS_TAG)
-                .then(
-                    if (isFullscreen) {
-                        Modifier.windowInsetsPadding(WindowInsets.navigationBarsIgnoringVisibility)
-                    } else {
-                        Modifier
-                    },
-                )
+                .windowInsetsPadding(WindowInsets.navigationBarsIgnoringVisibility)
                 .padding(
                     start = if (isFullscreen) 12.dp else 4.dp,
                     end = if (isFullscreen) 8.dp else 4.dp,
@@ -146,16 +141,12 @@ private fun BottomScrim(compact: Boolean, modifier: Modifier = Modifier) {
 private fun BottomBar(
     player: Player,
     sponsorBlockSegments: List<SponsorBlockSegment>,
+    seekPreviewPositionMs: Long?,
     isFullscreen: Boolean,
     compact: Boolean,
     onToggleFullscreen: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val backgroundModifier = if (isFullscreen) {
-        Modifier.background(Color.Black.copy(alpha = 0.34f), RoundedCornerShape(14.dp))
-    } else {
-        Modifier
-    }
     Row(
         modifier = modifier
             .height(
@@ -165,13 +156,13 @@ private fun BottomBar(
                     else -> 40.dp
                 },
             )
-            .then(backgroundModifier)
             .padding(start = if (isFullscreen) 8.dp else 2.dp, end = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         PlayerTimeBar(
             player = player,
             segments = sponsorBlockSegments,
+            previewPositionMs = seekPreviewPositionMs,
             compact = !isFullscreen,
             modifier = Modifier.weight(1f),
         )

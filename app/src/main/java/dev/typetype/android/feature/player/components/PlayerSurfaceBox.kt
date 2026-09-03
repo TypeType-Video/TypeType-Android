@@ -39,6 +39,7 @@ import dev.typetype.android.feature.player.PlayerDanmakuState
 import dev.typetype.android.feature.player.SponsorBlockPlaybackPolicy
 import dev.typetype.android.feature.player.key
 import dev.typetype.android.feature.player.state.PlayerGestureState
+import dev.typetype.android.feature.player.state.DragMode
 import dev.typetype.android.feature.player.state.ResizeMode
 import dev.typetype.android.feature.player.state.next
 import kotlinx.coroutines.delay
@@ -252,7 +253,7 @@ internal fun PlayerSurfaceBox(
                     fraction
                 },
                 onGestureFeedback = {
-                    controlsVisible = false
+                    controlsVisible = gestureState.dragMode.value == DragMode.Seek
                     hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 },
                 isFullscreen = isFullscreen,
@@ -299,6 +300,8 @@ internal fun PlayerSurfaceBox(
                 isPipAvailable = isPipAvailable,
                 chaptersAvailable = chapters.isNotEmpty(),
                 sponsorBlockSegments = sponsorBlockPolicy.visibleSegments,
+                seekPreviewPositionMs = gestureState.seekDragTargetMs.longValue
+                    .takeIf { gestureState.seekDragOverlayActive.value },
                 modifier = chromeModifier.fillMaxSize(),
             )
         }
