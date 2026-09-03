@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.navigationBarsIgnoringVisibility
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -56,6 +56,7 @@ fun PlayerControls(
         )
         BottomScrim(
             compact = compactControls,
+            isFullscreen = isFullscreen,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
         PlayerTopBar(
@@ -99,11 +100,17 @@ fun PlayerControls(
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .testTag(PLAYER_BOTTOM_CONTROLS_TAG)
-                .windowInsetsPadding(WindowInsets.navigationBarsIgnoringVisibility)
+                .then(
+                    if (isFullscreen) {
+                        Modifier
+                    } else {
+                        Modifier.windowInsetsPadding(WindowInsets.navigationBars)
+                    },
+                )
                 .padding(
                     start = if (isFullscreen) 12.dp else 4.dp,
                     end = if (isFullscreen) 8.dp else 4.dp,
-                    bottom = if (isFullscreen) 12.dp else 0.dp,
+                    bottom = if (isFullscreen) 6.dp else 0.dp,
                 ),
         )
     }
@@ -124,11 +131,21 @@ private fun TopScrim(compact: Boolean, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun BottomScrim(compact: Boolean, modifier: Modifier = Modifier) {
+private fun BottomScrim(
+    compact: Boolean,
+    isFullscreen: Boolean,
+    modifier: Modifier = Modifier,
+) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(if (compact) 88.dp else 152.dp)
+            .height(
+                when {
+                    isFullscreen -> 116.dp
+                    compact -> 88.dp
+                    else -> 152.dp
+                },
+            )
             .background(
                 Brush.verticalGradient(
                     colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.72f)),
@@ -157,7 +174,7 @@ private fun BottomBar(
                 },
             )
             .padding(start = if (isFullscreen) 8.dp else 2.dp, end = 2.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Bottom,
     ) {
         PlayerTimeBar(
             player = player,
