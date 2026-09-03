@@ -38,8 +38,8 @@ public fun HomeScreen(
     heroFocusRequester: FocusRequester,
     subscriptionGroupActions: TvSubscriptionGroupActions?,
 ) {
-    val featured = remember(state.home, state.bigBuckBunny, state.trending) {
-        listOfNotNull(state.bigBuckBunny).plus(state.home).plus(state.trending)
+    val featured = remember(state.home, state.trending) {
+        state.home.plus(state.trending)
             .distinctBy { it.serviceId to it.id.value }
             .take(FEATURED_COUNT)
     }
