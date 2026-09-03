@@ -41,8 +41,10 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavHostController
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import dev.typetype.android.core.ui.navigation.HomeRoute
+import dev.typetype.android.core.ui.navigation.ChannelRoute
 import dev.typetype.android.core.ui.navigation.LibraryRoute
 import dev.typetype.android.core.ui.navigation.SearchRoute
 import dev.typetype.android.core.ui.navigation.SubscriptionsRoute
@@ -172,6 +174,52 @@ class AppShellAdaptiveTest {
 
         composeRule.onNodeWithText("Home content").assertIsDisplayed()
         composeRule.onNodeWithText("Search content").assertDoesNotExist()
+    }
+
+    @Test
+    fun selectingActiveTabReturnsToTheOriginalTabPage() {
+        var navController: NavHostController? = null
+        composeRule.setContent {
+            val controller = rememberNavController()
+            navController = controller
+            AppShell(
+                navController = controller,
+                playerHostController = PlayerHostController(FakePlaybackQueueController()),
+                onOpenSearch = {},
+                onOpenSettings = {},
+                onPlayVideo = {},
+                onOpenChannel = {},
+                onOpenAccounts = {},
+                onClosePlayback = {},
+            ) { contentModifier ->
+                NavHost(
+                    navController = controller,
+                    startDestination = HomeRoute,
+                    modifier = contentModifier,
+                ) {
+                    composable<HomeRoute> { androidx.compose.material3.Text("Home content") }
+                    composable<SubscriptionsRoute> {
+                        androidx.compose.material3.Text("Subscriptions content")
+                    }
+                    composable<ChannelRoute> {
+                        androidx.compose.material3.Text("Channel content")
+                    }
+                    composable<LibraryRoute> { androidx.compose.material3.Text("Library content") }
+                }
+            }
+        }
+
+        composeRule.onNodeWithText("Subscriptions").performClick()
+        composeRule.onNodeWithText("Subscriptions content").assertIsDisplayed()
+
+        composeRule.runOnIdle {
+            navController?.navigateToChannel("https://example.com/channel")
+        }
+        composeRule.onNodeWithText("Channel content").assertIsDisplayed()
+
+        composeRule.onNodeWithText("Subscriptions").performClick()
+        composeRule.onNodeWithText("Subscriptions content").assertIsDisplayed()
+        composeRule.onNodeWithText("Channel content").assertDoesNotExist()
     }
 
     @Test
