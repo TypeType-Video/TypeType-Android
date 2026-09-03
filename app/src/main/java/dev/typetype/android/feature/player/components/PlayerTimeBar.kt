@@ -62,12 +62,15 @@ fun PlayerTimeBar(
     modifier: Modifier = Modifier,
     segments: List<SponsorBlockSegment> = emptyList(),
     compact: Boolean = false,
+    previewPositionMs: Long? = null,
 ) {
     val progressState = rememberProgressStateWithTickInterval(player, TICK_INTERVAL_MS)
     var scrubPositionMs by remember { mutableStateOf<Long?>(null) }
 
     val durationMs = progressState.durationMs.coerceAtLeast(0L)
-    val displayedPosMs = scrubPositionMs ?: progressState.currentPositionMs.coerceIn(0L, durationMs)
+    val displayedPosMs = scrubPositionMs
+        ?: previewPositionMs?.takeIf { durationMs > 0L }
+        ?: progressState.currentPositionMs.coerceIn(0L, durationMs)
     val positionLabel = formatPlayerTime(displayedPosMs)
     val durationLabel = formatPlayerTime(durationMs)
 
@@ -136,7 +139,7 @@ internal fun TimelineTrack(
     modifier: Modifier = Modifier,
 ) {
     val activeColor = MaterialTheme.colorScheme.primary
-    val inactiveColor = Color.White.copy(alpha = 0.3f)
+    val inactiveColor = Color.Black.copy(alpha = 0.38f)
     Box(
         modifier = modifier
             .semantics {
@@ -209,7 +212,7 @@ internal fun TimelineTrack(
                 )
             }
             drawRoundRect(
-                color = activeColor,
+                color = Color.White,
                 topLeft = Offset(
                     x = playerTimeBarThumbStartX(
                         progressX = progressX,

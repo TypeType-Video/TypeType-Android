@@ -5,15 +5,11 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -135,38 +131,6 @@ private fun SeekTapWave(
 }
 
 @Composable
-internal fun SeekDragOverlay(state: PlayerGestureState, durationMs: Long) {
-    if (!state.seekDragOverlayActive.value) return
-    val target = state.seekDragTargetMs.longValue
-    val delta = target - state.seekDragStartMs.longValue
-    val sign = if (delta >= 0) "+" else "-"
-    val deltaSec = abs(delta) / 1000
-    val targetText = formatTimeMs(target)
-    val durationText = if (durationMs > 0) " / ${formatTimeMs(durationMs)}" else ""
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(
-            modifier = Modifier
-                .width(288.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .background(Color.Black.copy(alpha = 0.72f))
-                .padding(horizontal = 18.dp, vertical = 14.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(
-                text = "${sign}${deltaSec}s ($targetText$durationText)",
-                color = Color.White,
-                style = MaterialTheme.typography.titleMedium,
-            )
-            SeekWave(
-                fraction = if (durationMs > 0L) target / durationMs.toFloat() else 0f,
-                modifier = Modifier.fillMaxWidth().height(32.dp),
-            )
-        }
-    }
-}
-
-@Composable
 internal fun SpeedBoostBadge(visible: Boolean, factor: Float) {
     if (!visible) return
     Box(modifier = Modifier.fillMaxSize()) {
@@ -185,43 +149,4 @@ internal fun SpeedBoostBadge(visible: Boolean, factor: Float) {
             )
         }
     }
-}
-
-@Composable
-private fun SeekWave(
-    fraction: Float,
-    modifier: Modifier = Modifier,
-) {
-    val activeColor = MaterialTheme.colorScheme.primary
-    Canvas(modifier = modifier) {
-        val centerY = size.height / 2f
-        val progressX = size.width * fraction.coerceIn(0f, 1f)
-        val bars = 32
-        val spacing = size.width / bars
-        repeat(bars) { index ->
-            val x = spacing * (index + 0.5f)
-            val amplitude = 0.2f + abs(sin(index * 0.82f)) * 0.8f
-            val halfHeight = size.height * amplitude * 0.42f
-            drawLine(
-                color = if (x <= progressX) activeColor else Color.White.copy(alpha = 0.3f),
-                start = Offset(x, centerY - halfHeight),
-                end = Offset(x, centerY + halfHeight),
-                strokeWidth = if (x <= progressX) 3.dp.toPx() else 2.dp.toPx(),
-                cap = StrokeCap.Round,
-            )
-        }
-        drawCircle(
-            color = activeColor,
-            radius = 4.dp.toPx(),
-            center = Offset(progressX, centerY),
-        )
-    }
-}
-
-private fun formatTimeMs(ms: Long): String {
-    val totalSec = ms / 1000
-    val h = totalSec / 3600
-    val m = (totalSec % 3600) / 60
-    val s = totalSec % 60
-    return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%d:%02d".format(m, s)
 }
