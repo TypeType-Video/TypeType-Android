@@ -90,7 +90,7 @@ fun AppShell(
             currentDestination?.hasRoute<SearchRoute>() == true ||
             currentDestination?.hasRoute<NotificationsRoute>() == true
     )
-    var activeTabRoute by rememberSaveable { mutableStateOf<String?>(null) }
+    var selectedTabRoute by rememberSaveable { mutableStateOf<String?>(null) }
     var isPlayerFullscreen by remember { mutableStateOf(false) }
     var playerTransitionProgress by remember { mutableFloatStateOf(0f) }
     val playerHostState by playerHostController.state.collectAsStateWithLifecycle()
@@ -103,9 +103,13 @@ fun AppShell(
     )
     LaunchedEffect(currentDestination) {
         topLevelTabs.firstOrNull { currentDestination.matchesRoute(it.route) }?.let {
-            activeTabRoute = it.route::class.qualifiedName
+            selectedTabRoute = it.route::class.qualifiedName
         }
     }
+    val selectedTabRouteQualifiedName = selectedTabRoute
+        ?: topLevelTabs.firstOrNull { currentDestination.matchesRoute(it.route) }
+            ?.route
+            ?.let { it::class.qualifiedName }
 
     val mediaController = rememberMediaController().value
     val snackbarHostState = remember { SnackbarHostState() }
@@ -119,10 +123,10 @@ fun AppShell(
             Row(modifier = Modifier.fillMaxSize()) {
                 if (usesNavigationRail && showsNavigation && appChromeVisible) {
                     AppNavigationRail(
-                        currentDestination = currentDestination,
-                        fallbackTabRouteQualifiedName = activeTabRoute,
+                        selectedTabRouteQualifiedName = selectedTabRouteQualifiedName,
                         onTabClick = { tab: TopLevelTab ->
-                            navController.navigateTopLevel(tab.route, activeTabRoute)
+                            selectedTabRoute = tab.route::class.qualifiedName
+                            navController.navigateTopLevel(tab.route, selectedTabRoute)
                         },
                         tabs = navigationTabs,
                     )
@@ -163,10 +167,10 @@ fun AppShell(
                         bottomBar = {
                             if (!usesNavigationRail && showsNavigation) {
                                 AppBottomBar(
-                                    currentDestination = currentDestination,
-                                    fallbackTabRouteQualifiedName = activeTabRoute,
+                                    selectedTabRouteQualifiedName = selectedTabRouteQualifiedName,
                                     onTabClick = { tab: TopLevelTab ->
-                                        navController.navigateTopLevel(tab.route, activeTabRoute)
+                                        selectedTabRoute = tab.route::class.qualifiedName
+                                        navController.navigateTopLevel(tab.route, selectedTabRoute)
                                     },
                                     tabs = navigationTabs,
                                     modifier = Modifier.playerChrome(phoneChromeAlpha),
