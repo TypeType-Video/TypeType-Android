@@ -234,7 +234,6 @@ fun PlayerGestureLayer(
             icon = volumeLevelIcon(state.volumeFraction.floatValue),
             modifier = Modifier.align(Alignment.Center),
         )
-        SeekDragOverlay(state = state, durationMs = player.duration)
         SpeedBoostBadge(visible = state.longPressBoostActive.value, factor = LONG_PRESS_SPEED_FACTOR)
     }
 }
