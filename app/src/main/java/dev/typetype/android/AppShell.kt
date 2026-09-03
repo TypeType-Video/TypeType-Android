@@ -121,7 +121,9 @@ fun AppShell(
                     AppNavigationRail(
                         currentDestination = currentDestination,
                         fallbackTabRouteQualifiedName = activeTabRoute,
-                        onTabClick = navController::navigateTopLevel,
+                        onTabClick = { tab: TopLevelTab ->
+                            navController.navigateTopLevel(tab.route, activeTabRoute)
+                        },
                         tabs = navigationTabs,
                     )
                 }
@@ -163,7 +165,9 @@ fun AppShell(
                                 AppBottomBar(
                                     currentDestination = currentDestination,
                                     fallbackTabRouteQualifiedName = activeTabRoute,
-                                    onTabClick = navController::navigateTopLevel,
+                                    onTabClick = { tab: TopLevelTab ->
+                                        navController.navigateTopLevel(tab.route, activeTabRoute)
+                                    },
                                     tabs = navigationTabs,
                                     modifier = Modifier.playerChrome(phoneChromeAlpha),
                                 )
@@ -234,7 +238,16 @@ internal fun playerPhoneChromeAlpha(
     else -> 0f
 }
 
-private fun NavHostController.navigateTopLevel(route: Any) {
+private fun NavHostController.navigateTopLevel(
+    route: Any,
+    activeTabRouteQualifiedName: String?,
+) {
+    val currentDestination = currentDestination
+    if (currentDestination.matchesRoute(route)) return
+
+    val isSameTab = activeTabRouteQualifiedName == route::class.qualifiedName
+    if (isSameTab && popBackStack(route = route, inclusive = false, saveState = true)) return
+
     if (currentDestination?.hasRoute<SearchRoute>() == true) {
         popBackStack()
     }
