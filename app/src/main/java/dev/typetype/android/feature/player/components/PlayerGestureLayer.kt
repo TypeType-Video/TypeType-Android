@@ -124,8 +124,8 @@ fun PlayerGestureLayer(
                             }
                             if (!allowed) continue
                             mode = candidate
-                            onGestureFeedback()
                             state.dragMode.value = candidate
+                            onGestureFeedback()
                             when (candidate) {
                                 DragMode.Brightness -> {
                                     state.brightnessFraction.floatValue = onBrightnessGestureStart()
