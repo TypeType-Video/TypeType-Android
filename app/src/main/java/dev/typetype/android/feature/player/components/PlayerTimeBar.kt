@@ -63,6 +63,7 @@ fun PlayerTimeBar(
     segments: List<SponsorBlockSegment> = emptyList(),
     compact: Boolean = false,
     previewPositionMs: Long? = null,
+    onScrubbingChange: (Boolean) -> Unit = {},
 ) {
     val progressState = rememberProgressStateWithTickInterval(player, TICK_INTERVAL_MS)
     var scrubPositionMs by remember { mutableStateOf<Long?>(null) }
@@ -95,12 +96,19 @@ fun PlayerTimeBar(
             durationMs = durationMs,
             segments = segments,
             compact = compact,
-            onScrub = { scrubPositionMs = it },
+            onScrub = {
+                onScrubbingChange(true)
+                scrubPositionMs = it
+            },
             onScrubFinished = { targetMs ->
                 player.seekTo(targetMs)
+                onScrubbingChange(false)
                 scrubPositionMs = null
             },
-            onScrubCancelled = { scrubPositionMs = null },
+            onScrubCancelled = {
+                onScrubbingChange(false)
+                scrubPositionMs = null
+            },
             accessibilityLabel = stringResource(R.string.player_timeline),
             accessibilityStateDescription = stringResource(
                 R.string.player_timeline_position,

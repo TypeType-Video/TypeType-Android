@@ -47,6 +47,7 @@ fun PlayerControls(
     chaptersAvailable: Boolean = false,
     sponsorBlockSegments: List<SponsorBlockSegment> = emptyList(),
     seekPreviewPositionMs: Long? = null,
+    onTimelineScrubbingChange: (Boolean) -> Unit = {},
 ) {
     BoxWithConstraints(modifier = modifier) {
         val compactControls = !isFullscreen && maxHeight < COMPACT_CONTROLS_HEIGHT
@@ -93,6 +94,7 @@ fun PlayerControls(
             player = player,
             sponsorBlockSegments = sponsorBlockSegments,
             seekPreviewPositionMs = seekPreviewPositionMs,
+            onTimelineScrubbingChange = onTimelineScrubbingChange,
             isFullscreen = isFullscreen,
             compact = compactControls,
             onToggleFullscreen = onToggleFullscreen,
@@ -159,6 +161,7 @@ private fun BottomBar(
     player: Player,
     sponsorBlockSegments: List<SponsorBlockSegment>,
     seekPreviewPositionMs: Long?,
+    onTimelineScrubbingChange: (Boolean) -> Unit,
     isFullscreen: Boolean,
     compact: Boolean,
     onToggleFullscreen: () -> Unit,
@@ -174,13 +177,14 @@ private fun BottomBar(
                 },
             )
             .padding(start = if (isFullscreen) 8.dp else 2.dp, end = 2.dp),
-        verticalAlignment = Alignment.Bottom,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         PlayerTimeBar(
             player = player,
             segments = sponsorBlockSegments,
             previewPositionMs = seekPreviewPositionMs,
             compact = !isFullscreen,
+            onScrubbingChange = onTimelineScrubbingChange,
             modifier = Modifier.weight(1f),
         )
         IconButton(

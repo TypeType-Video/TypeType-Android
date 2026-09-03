@@ -93,6 +93,7 @@ internal fun PlayerSurfaceBox(
     var controlsVisible by remember { mutableStateOf(true) }
     var optionsVisible by remember { mutableStateOf(false) }
     var chaptersVisible by remember { mutableStateOf(false) }
+    var timelineScrubbing by remember { mutableStateOf(false) }
     val accessibleControls = rememberAccessiblePlayerControls(
         gestureConfig.accessibleControlsEnabled,
     )
@@ -133,9 +134,10 @@ internal fun PlayerSurfaceBox(
         playbackStatus.isPlaying,
         accessibleControls,
         isSeekDragging,
+        timelineScrubbing,
     ) {
         if (controlsVisible && playbackStatus.isPlaying && !accessibleControls) {
-            if (isSeekDragging) return@LaunchedEffect
+            if (isSeekDragging || timelineScrubbing) return@LaunchedEffect
             delay(AUTO_HIDE_DELAY_MS)
             controlsVisible = false
         }
@@ -309,6 +311,7 @@ internal fun PlayerSurfaceBox(
                 sponsorBlockSegments = sponsorBlockPolicy.visibleSegments,
                 seekPreviewPositionMs = gestureState.seekDragTargetMs.longValue
                     .takeIf { gestureState.seekDragOverlayActive.value },
+                onTimelineScrubbingChange = { timelineScrubbing = it },
                 modifier = chromeModifier.fillMaxSize(),
             )
         }
