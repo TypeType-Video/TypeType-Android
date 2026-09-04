@@ -177,11 +177,7 @@ private fun BottomBar(
                 },
             )
             .padding(start = if (isFullscreen) 8.dp else 2.dp, end = 2.dp),
-        verticalAlignment = if (isFullscreen) {
-            Alignment.CenterVertically
-        } else {
-            Alignment.Bottom
-        },
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         PlayerTimeBar(
             player = player,
