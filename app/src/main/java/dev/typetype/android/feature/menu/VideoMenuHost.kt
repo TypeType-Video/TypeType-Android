@@ -1,6 +1,5 @@
 package dev.typetype.android.feature.menu
 
-import android.content.Intent
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -19,7 +18,7 @@ import dev.typetype.android.core.ui.components.LocalAppSnackbarHost
 import dev.typetype.android.core.ui.components.VideoMenuAction
 import dev.typetype.android.core.ui.components.VideoMenuItemState
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
-import dev.typetype.android.core.ui.share.buildShareUrl
+import dev.typetype.android.core.ui.share.showShareChooser
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.navigation.canonicalVideoIdentity
 import dev.typetype.android.domain.actions.titleMatchesBlockedKeyword
@@ -126,11 +125,7 @@ fun rememberVideoMenuScope(
             )
             VideoMenuAction.Download -> downloadVideo = video
             VideoMenuAction.Share -> {
-                val intent = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, buildShareUrl(serverBaseUrl, video.url))
-                }
-                context.startActivity(Intent.createChooser(intent, shareChooserTitle))
+                showShareChooser(context, serverBaseUrl, video.url, shareChooserTitle)
             }
             VideoMenuAction.OpenChannel -> onOpenChannel(video.uploaderUrl)
             VideoMenuAction.BlockVideo -> viewModel.blockVideo(video)

@@ -6,6 +6,22 @@ import org.junit.Test
 class ShareUrlsTest {
 
     @Test
+    fun sharesCanonicalProviderSourceLinks() {
+        assertEquals(
+            "https://www.youtube.com/watch?v=AbCdEfGhI_1",
+            buildSourceShareUrl("AbCdEfGhI_1"),
+        )
+        assertEquals(
+            "https://www.bilibili.com/video/BV1UbX3B2EZQ?p=3",
+            buildSourceShareUrl("BV1UbX3B2EZQ?p=3"),
+        )
+        assertEquals(
+            "https://www.nicovideo.jp/watch/sm46525483",
+            buildSourceShareUrl("sm46525483"),
+        )
+    }
+
+    @Test
     fun sharesCompactPublicWatchRoutes() {
         assertEquals(
             "https://watch.example/watch?v=dQw4w9WgXcQ",
