@@ -4,14 +4,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -29,6 +31,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -36,6 +42,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.R
@@ -89,12 +96,8 @@ fun LoginScreen(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.systemBars)
-                .imePadding(),
-        ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            LoginBackdrop()
             IconButton(
                 onClick = { onAction(LoginAction.OnBackClick) },
                 modifier = Modifier.padding(8.dp),
@@ -109,10 +112,30 @@ fun LoginScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 24.dp)
+                    .widthIn(max = 480.dp)
+                    .align(Alignment.Center)
+                    .imePadding()
                     .padding(top = 72.dp, bottom = 24.dp)
                     .verticalScroll(scrollState),
                 verticalArrangement = Arrangement.Top,
             ) {
+                Surface(
+                    modifier = Modifier
+                        .size(88.dp)
+                        .align(Alignment.CenterHorizontally),
+                    shape = RoundedCornerShape(24.dp),
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Image(
+                            painter = painterResource(R.drawable.ic_typetype_brand),
+                            contentDescription = null,
+                            modifier = Modifier.size(56.dp),
+                        )
+                    }
+                }
+                Spacer(Modifier.height(20.dp))
                 SectionHeader(text = stringResource(R.string.setup_section))
                 Spacer(Modifier.height(8.dp))
                 Text(
@@ -266,5 +289,34 @@ fun LoginScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun LoginBackdrop() {
+    val colors = MaterialTheme.colorScheme
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        val radius = maxOf(size.width, size.height) * 0.7f
+        drawCircle(
+            color = colors.primary.copy(alpha = 0.12f),
+            radius = radius,
+            center = Offset(size.width * 1.02f, -size.height * 0.08f),
+        )
+        drawCircle(
+            color = colors.tertiary.copy(alpha = 0.09f),
+            radius = radius * 0.72f,
+            center = Offset(-size.width * 0.08f, size.height * 0.98f),
+        )
+        drawCircle(
+            color = Color.White.copy(
+                alpha = if (colors.background.luminance() > 0.5f) {
+                    0.08f
+                } else {
+                    0.025f
+                },
+            ),
+            radius = radius * 0.42f,
+            center = Offset(size.width * 0.78f, size.height * 0.72f),
+        )
     }
 }
