@@ -22,14 +22,17 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
-import dev.typetype.android.core.ui.share.showShareChooser
+import dev.typetype.android.core.ui.share.ShareChooserSheet
 
 @Composable
 fun PlayerInteractionRow(
@@ -47,9 +50,8 @@ fun PlayerInteractionRow(
     audioOnlyChanging: Boolean = false,
     onToggleAudioOnly: () -> Unit = {},
 ) {
-    val context = LocalContext.current
-    val shareChooserTitle = stringResource(R.string.video_menu_share_chooser)
     val serverBaseUrl = LocalServerBaseUrl.current
+    var shareSheetOpen by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -102,9 +104,14 @@ fun PlayerInteractionRow(
         PlayerActionButton(
             icon = Icons.Filled.Share,
             contentDescription = stringResource(R.string.video_menu_share),
-            onClick = {
-                showShareChooser(context, serverBaseUrl, shareUrl, shareChooserTitle)
-            },
+            onClick = { shareSheetOpen = true },
+        )
+    }
+    if (shareSheetOpen) {
+        ShareChooserSheet(
+            serverBaseUrl = serverBaseUrl,
+            videoUrl = shareUrl,
+            onDismiss = { shareSheetOpen = false },
         )
     }
 }

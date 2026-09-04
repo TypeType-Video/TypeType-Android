@@ -20,7 +20,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -40,7 +39,7 @@ import dev.typetype.android.feature.menu.VideoMenuHandlerViewModel
 import dev.typetype.android.feature.menu.blockVideoUrl
 import dev.typetype.android.feature.menu.removeFromPlaylist
 import dev.typetype.android.feature.menu.toggleWatchedUrl
-import dev.typetype.android.core.ui.share.showShareChooser
+import dev.typetype.android.core.ui.share.ShareChooserSheet
 
 @Composable
 fun PlaylistRoute(
@@ -194,10 +193,9 @@ internal fun PlaylistScreen(
                 }
             }
         }
-        val context = LocalContext.current
-        val shareChooserTitle = stringResource(R.string.video_menu_share_chooser)
         val serverBaseUrl = dev.typetype.android.core.ui.share.LocalServerBaseUrl.current
         var pendingMenu by remember { mutableStateOf<PlaylistVideo?>(null) }
+        var shareVideoUrl by remember { mutableStateOf<String?>(null) }
         val urlsMissingInfo = visible
             .filter { it.channelAvatarUrl.isBlank() || it.channelName.isBlank() }
             .map { it.url }
@@ -252,11 +250,16 @@ internal fun PlaylistScreen(
                         isCurrentlyWatched = video.url in watchedUrls,
                     )
                 },
-                onShare = {
-                    showShareChooser(context, serverBaseUrl, video.url, shareChooserTitle)
-                },
+                onShare = { shareVideoUrl = video.url },
                 onBlockVideo = { menuVm.blockVideoUrl(video.url) },
                 onDismiss = { pendingMenu = null },
+            )
+        }
+        shareVideoUrl?.let { videoUrl ->
+            ShareChooserSheet(
+                serverBaseUrl = serverBaseUrl,
+                videoUrl = videoUrl,
+                onDismiss = { shareVideoUrl = null },
             )
         }
     }
