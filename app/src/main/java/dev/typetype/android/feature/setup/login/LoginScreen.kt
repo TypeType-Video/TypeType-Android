@@ -4,8 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,16 +22,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.font.FontWeight
@@ -42,12 +36,11 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.SectionHeader
-import dev.typetype.android.core.ui.components.TypeTypeCard
+import dev.typetype.android.core.ui.components.TypeTypeAuthBackdrop
 import dev.typetype.android.core.ui.components.TypeTypePrimaryButton
 import dev.typetype.android.core.ui.components.TypeTypeSecondaryButton
 import dev.typetype.android.core.ui.components.TypeTypeTextField
@@ -92,12 +85,8 @@ fun LoginScreen(
     onAction: (LoginAction) -> Unit,
 ) {
     val scrollState = rememberScrollState()
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
-    ) {
+    TypeTypeAuthBackdrop {
         Box(modifier = Modifier.fillMaxSize()) {
-            LoginBackdrop()
             IconButton(
                 onClick = { onAction(LoginAction.OnBackClick) },
                 modifier = Modifier.padding(8.dp),
@@ -119,22 +108,13 @@ fun LoginScreen(
                     .verticalScroll(scrollState),
                 verticalArrangement = Arrangement.Top,
             ) {
-                Surface(
+                Image(
                     modifier = Modifier
-                        .size(88.dp)
+                        .size(76.dp)
                         .align(Alignment.CenterHorizontally),
-                    shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Image(
-                            painter = painterResource(R.drawable.ic_typetype_brand),
-                            contentDescription = null,
-                            modifier = Modifier.size(56.dp),
-                        )
-                    }
-                }
+                    painter = painterResource(R.drawable.ic_typetype_brand),
+                    contentDescription = stringResource(R.string.about_app_name),
+                )
                 Spacer(Modifier.height(20.dp))
                 SectionHeader(text = stringResource(R.string.setup_section))
                 Spacer(Modifier.height(8.dp))
@@ -193,7 +173,7 @@ fun LoginScreen(
                     }
                     Spacer(Modifier.height(16.dp))
                 }
-                if (state.localLoginEnabled) TypeTypeCard {
+                if (state.localLoginEnabled) {
                     TypeTypeTextField(
                         value = state.identifier,
                         onValueChange = { onAction(LoginAction.OnIdentifierChange(it)) },
@@ -289,34 +269,5 @@ fun LoginScreen(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun LoginBackdrop() {
-    val colors = MaterialTheme.colorScheme
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        val radius = maxOf(size.width, size.height) * 0.7f
-        drawCircle(
-            color = colors.primary.copy(alpha = 0.12f),
-            radius = radius,
-            center = Offset(size.width * 1.02f, -size.height * 0.08f),
-        )
-        drawCircle(
-            color = colors.tertiary.copy(alpha = 0.09f),
-            radius = radius * 0.72f,
-            center = Offset(-size.width * 0.08f, size.height * 0.98f),
-        )
-        drawCircle(
-            color = Color.White.copy(
-                alpha = if (colors.background.luminance() > 0.5f) {
-                    0.08f
-                } else {
-                    0.025f
-                },
-            ),
-            radius = radius * 0.42f,
-            center = Offset(size.width * 0.78f, size.height * 0.72f),
-        )
     }
 }
