@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
@@ -54,6 +55,8 @@ private val THUMB_WIDTH = 14.dp
 private val THUMB_HEIGHT = 14.dp
 private val COMPACT_THUMB_WIDTH = 10.dp
 private val COMPACT_THUMB_HEIGHT = 10.dp
+private val SCRUBBING_TRACK_HEIGHT = 6.dp
+private val SCRUBBING_THUMB_SIZE = 22.dp
 
 @OptIn(markerClass = [UnstableApi::class])
 @Composable
@@ -72,6 +75,7 @@ fun PlayerTimeBar(
     val displayedPosMs = scrubPositionMs
         ?: previewPositionMs?.takeIf { durationMs > 0L }
         ?: progressState.currentPositionMs.coerceIn(0L, durationMs)
+    val emphasized = scrubPositionMs != null || previewPositionMs != null
     val positionLabel = formatPlayerTime(displayedPosMs)
     val durationLabel = formatPlayerTime(durationMs)
 
@@ -96,6 +100,7 @@ fun PlayerTimeBar(
             durationMs = durationMs,
             segments = segments,
             compact = compact,
+            emphasized = emphasized,
             onScrub = {
                 onScrubbingChange(true)
                 scrubPositionMs = it
@@ -139,6 +144,8 @@ internal fun TimelineTrack(
     durationMs: Long,
     segments: List<SponsorBlockSegment>,
     compact: Boolean,
+    emphasized: Boolean = false,
+    interactive: Boolean = true,
     onScrub: (Long) -> Unit,
     onScrubFinished: (Long) -> Unit,
     onScrubCancelled: () -> Unit,
@@ -148,8 +155,8 @@ internal fun TimelineTrack(
 ) {
     val activeColor = MaterialTheme.colorScheme.primary
     val inactiveColor = Color.Black.copy(alpha = 0.38f)
-    Box(
-        modifier = modifier
+    val timelineModifier = if (interactive) {
+        modifier
             .semantics {
                 contentDescription = accessibilityLabel
                 stateDescription = accessibilityStateDescription
@@ -185,12 +192,27 @@ internal fun TimelineTrack(
                     onDragEnd = { onScrubFinished(lastTargetMs) },
                     onDragCancel = onScrubCancelled,
                 )
-            },
+            }
+    } else {
+        modifier
+    }
+    Box(
+        modifier = timelineModifier,
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val trackHeight = if (compact) COMPACT_TRACK_HEIGHT.toPx() else TRACK_HEIGHT.toPx()
-            val thumbWidth = if (compact) COMPACT_THUMB_WIDTH.toPx() else THUMB_WIDTH.toPx()
-            val thumbHeight = if (compact) COMPACT_THUMB_HEIGHT.toPx() else THUMB_HEIGHT.toPx()
+            val targetTrackHeight = when {
+                emphasized -> SCRUBBING_TRACK_HEIGHT
+                compact -> COMPACT_TRACK_HEIGHT
+                else -> TRACK_HEIGHT
+            }
+            val targetThumbSize = when {
+                emphasized -> SCRUBBING_THUMB_SIZE
+                compact -> COMPACT_THUMB_WIDTH
+                else -> THUMB_WIDTH
+            }
+            val trackHeight = targetTrackHeight.toPx()
+            val thumbWidth = targetThumbSize.toPx()
+            val thumbHeight = targetThumbSize.toPx()
             val trackTop = (size.height - trackHeight) / 2f
             val trackRadius = trackHeight / 2f
             val progress = if (durationMs > 0) positionMs.toFloat() / durationMs.toFloat() else 0f
@@ -243,6 +265,35 @@ internal fun playerTimeBarThumbStartX(
 ): Float {
     val maximumStartX = (trackWidth - thumbWidth).coerceAtLeast(0f)
     return (progressX - thumbWidth / 2f).coerceIn(0f, maximumStartX)
+}
+
+@Composable
+internal fun PlayerSeekScrubOverlay(
+    player: Player,
+    positionMs: Long,
+    segments: List<SponsorBlockSegment>,
+    isFullscreen: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier = modifier.height(if (isFullscreen) 52.dp else 40.dp)) {
+        TimelineTrack(
+            positionMs = positionMs,
+            durationMs = player.duration.coerceAtLeast(0L),
+            segments = segments,
+            compact = false,
+            emphasized = true,
+            interactive = false,
+            onScrub = {},
+            onScrubFinished = {},
+            onScrubCancelled = {},
+            accessibilityLabel = "",
+            accessibilityStateDescription = "",
+            modifier = Modifier
+                .align(Alignment.Center)
+                .fillMaxSize()
+                .padding(horizontal = 4.dp),
+        )
+    }
 }
 
 private fun Float.toPositionMs(width: Float, durationMs: Long): Long {

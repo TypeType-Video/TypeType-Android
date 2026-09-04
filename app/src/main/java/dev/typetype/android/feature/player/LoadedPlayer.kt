@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.derivedStateOf
@@ -189,8 +188,6 @@ fun LoadedPlayer(
         onSaveProgress = { onAction(PlayerAction.OnSaveProgress(it)) },
     )
 
-    val expandedTopPadding = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding()
-    val expandedTopPaddingPx = with(LocalDensity.current) { expandedTopPadding.toPx() }
     val autoplayVisible by remember(hostTransitionProgress) {
         derivedStateOf { hostTransitionProgress() < 0.01f }
     }
@@ -198,16 +195,6 @@ fun LoadedPlayer(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .then(
-                if (isFullscreen) {
-                    Modifier
-                } else {
-                    Modifier.playerTopProgressPadding(
-                        maxTopPx = expandedTopPaddingPx,
-                        progress = hostTransitionProgress,
-                    )
-                }
-            ),
     ) {
         PlayerContentLayout(
             isFullscreen = isFullscreen,
@@ -321,24 +308,4 @@ fun LoadedPlayer(
         onDismissDownload = { downloadPickerVisible = false },
         onAction = onAction,
     )
-}
-
-private fun Modifier.playerTopProgressPadding(
-    maxTopPx: Float,
-    progress: () -> Float,
-): Modifier = layout { measurable, constraints ->
-    val topPx = (maxTopPx * (1f - progress().coerceIn(0f, 1f))).roundToInt()
-    val maxHeight = if (constraints.hasBoundedHeight) {
-        (constraints.maxHeight - topPx).coerceAtLeast(0)
-    } else {
-        constraints.maxHeight
-    }
-    val childConstraints = constraints.copy(
-        minHeight = constraints.minHeight.coerceAtMost(maxHeight),
-        maxHeight = maxHeight,
-    )
-    val placeable = measurable.measure(childConstraints)
-    layout(placeable.width, placeable.height + topPx) {
-        placeable.placeRelative(0, topPx)
-    }
 }

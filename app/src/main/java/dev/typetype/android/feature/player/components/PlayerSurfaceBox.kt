@@ -9,6 +9,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -24,6 +29,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.ui.compose.state.rememberPresentationState
@@ -262,7 +268,7 @@ internal fun PlayerSurfaceBox(
                     fraction
                 },
                 onGestureFeedback = {
-                    controlsVisible = gestureState.dragMode.value == DragMode.Seek
+                    controlsVisible = false
                     hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 },
                 isFullscreen = isFullscreen,
@@ -275,6 +281,31 @@ internal fun PlayerSurfaceBox(
                 fullscreenExitGestureEnabled = false,
                 config = gestureConfig,
                 modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        AnimatedVisibility(
+            visible = gestureState.seekDragOverlayActive.value,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier.align(Alignment.BottomCenter),
+        ) {
+            PlayerSeekScrubOverlay(
+                player = player,
+                positionMs = gestureState.seekDragTargetMs.longValue,
+                segments = sponsorBlockPolicy.visibleSegments,
+                isFullscreen = isFullscreen,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(
+                        if (isFullscreen) {
+                            Modifier.padding(start = 12.dp, end = 8.dp, bottom = 6.dp)
+                        } else {
+                            Modifier
+                                .windowInsetsPadding(WindowInsets.navigationBars)
+                                .padding(start = 4.dp, end = 4.dp)
+                        },
+                    ),
             )
         }
 
