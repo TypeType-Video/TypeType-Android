@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -108,13 +107,6 @@ fun PlayerControls(
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .testTag(PLAYER_BOTTOM_CONTROLS_TAG)
-                .then(
-                    if (isFullscreen) {
-                        Modifier
-                    } else {
-                        Modifier.windowInsetsPadding(WindowInsets.navigationBars)
-                    },
-                )
                 .padding(
                     start = if (isFullscreen) 12.dp else 4.dp,
                     end = if (isFullscreen) 8.dp else 4.dp,
@@ -185,7 +177,11 @@ private fun BottomBar(
                 },
             )
             .padding(start = if (isFullscreen) 8.dp else 2.dp, end = 2.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = if (isFullscreen) {
+            Alignment.CenterVertically
+        } else {
+            Alignment.Bottom
+        },
     ) {
         PlayerTimeBar(
             player = player,
@@ -221,4 +217,5 @@ private fun BottomBar(
 internal const val PLAYER_TOP_CONTROLS_TAG = "player_top_controls"
 internal const val PLAYER_CENTER_CONTROLS_TAG = "player_center_controls"
 internal const val PLAYER_BOTTOM_CONTROLS_TAG = "player_bottom_controls"
+internal const val PLAYER_CONTROLS_VIEWPORT_TAG = "player_controls_viewport"
 private val COMPACT_CONTROLS_HEIGHT = 180.dp
