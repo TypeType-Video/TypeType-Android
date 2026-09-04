@@ -1,6 +1,5 @@
 package dev.typetype.android.feature.library
 
-import android.content.Intent
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -24,7 +23,7 @@ import dev.typetype.android.core.ui.components.LocalAppSnackbarHost
 import dev.typetype.android.core.ui.components.PlaylistVideoActionsSheet
 import dev.typetype.android.core.ui.components.PlaylistVideoCard
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
-import dev.typetype.android.core.ui.share.buildShareUrl
+import dev.typetype.android.core.ui.share.showShareChooser
 import dev.typetype.android.domain.library.PlaylistVideo
 import dev.typetype.android.feature.library.components.rememberVideoMetas
 import dev.typetype.android.feature.menu.VideoMenuEvent
@@ -104,11 +103,7 @@ fun PlaylistContextTab(
             onRemoveFromList = { onRemove(video) },
             onToggleWatched = { onToggleWatched(video, video.url in watchedUrls) },
             onShare = {
-                val intent = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, buildShareUrl(serverBaseUrl, video.url))
-                }
-                context.startActivity(Intent.createChooser(intent, shareChooserTitle))
+                showShareChooser(context, serverBaseUrl, video.url, shareChooserTitle)
             },
             onBlockVideo = { onBlockVideo(video) },
             onDismiss = { pendingMenu = null },

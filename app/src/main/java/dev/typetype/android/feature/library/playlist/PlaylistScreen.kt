@@ -1,6 +1,5 @@
 package dev.typetype.android.feature.library.playlist
 
-import android.content.Intent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -41,6 +40,7 @@ import dev.typetype.android.feature.menu.VideoMenuHandlerViewModel
 import dev.typetype.android.feature.menu.blockVideoUrl
 import dev.typetype.android.feature.menu.removeFromPlaylist
 import dev.typetype.android.feature.menu.toggleWatchedUrl
+import dev.typetype.android.core.ui.share.showShareChooser
 
 @Composable
 fun PlaylistRoute(
@@ -253,17 +253,7 @@ internal fun PlaylistScreen(
                     )
                 },
                 onShare = {
-                    val intent = Intent(Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        putExtra(
-                            Intent.EXTRA_TEXT,
-                            dev.typetype.android.core.ui.share.buildShareUrl(
-                                serverBaseUrl,
-                                video.url,
-                            ),
-                        )
-                    }
-                    context.startActivity(Intent.createChooser(intent, shareChooserTitle))
+                    showShareChooser(context, serverBaseUrl, video.url, shareChooserTitle)
                 },
                 onBlockVideo = { menuVm.blockVideoUrl(video.url) },
                 onDismiss = { pendingMenu = null },
