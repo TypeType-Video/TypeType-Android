@@ -923,6 +923,12 @@
     <string name="video_menu_share_chooser">Share via</string>
     <string name="video_menu_share_typetype">Share TypeType link</string>
     <string name="video_menu_share_source">Share %1$s link</string>
+    <string name="video_menu_share_sheet_title">Share this video</string>
+    <string name="video_menu_share_sheet_description">Choose which link you want to share.</string>
+    <string name="video_menu_share_target_typetype">TypeType</string>
+    <string name="video_menu_share_target_source">%1$s</string>
+    <string name="video_menu_share_target_typetype_description">Open with this TypeType instance</string>
+    <string name="video_menu_share_target_source_description">Open the original %1$s video</string>
     <string name="video_more_actions">Video actions</string>
     <string name="video_open_channel_accessibility">Open %1$s channel</string>
     <string name="video_open_accessibility">Open %1$s</string>
