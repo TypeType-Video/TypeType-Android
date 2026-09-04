@@ -49,6 +49,40 @@ class ShareUrlsTest {
     }
 
     @Test
+    fun offersTypeTypeAndOriginalProviderLinks() {
+        assertEquals(
+            listOf(
+                ShareChoice(
+                    target = ShareTarget.TypeType,
+                    url = "https://watch.example/watch?v=dQw4w9WgXcQ",
+                ),
+                ShareChoice(
+                    target = ShareTarget.Source,
+                    url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                    providerName = "YouTube",
+                ),
+            ),
+            buildShareChoices(
+                "https://watch.example/api",
+                "https://youtube.com/watch?v=dQw4w9WgXcQ",
+            ),
+        )
+    }
+
+    @Test
+    fun offersOnlyTypeTypeLinkForUnknownProvider() {
+        assertEquals(
+            listOf(
+                ShareChoice(
+                    target = ShareTarget.TypeType,
+                    url = "https://watch.example/watch?v=https%3A%2F%2Fexample.com%2Fvideo",
+                ),
+            ),
+            buildShareChoices("https://watch.example/api", "https://example.com/video"),
+        )
+    }
+
+    @Test
     fun proxiesRemoteImagesThroughTheActiveServer() {
         assertEquals(
             "https://watch.example/api/proxy?url=https%3A%2F%2Fi.ytimg.com%2Fvi%2Fabc%2Fhqdefault.jpg",

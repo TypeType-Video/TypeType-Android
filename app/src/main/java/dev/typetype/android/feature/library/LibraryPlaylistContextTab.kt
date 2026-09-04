@@ -13,7 +13,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -23,7 +22,7 @@ import dev.typetype.android.core.ui.components.LocalAppSnackbarHost
 import dev.typetype.android.core.ui.components.PlaylistVideoActionsSheet
 import dev.typetype.android.core.ui.components.PlaylistVideoCard
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
-import dev.typetype.android.core.ui.share.showShareChooser
+import dev.typetype.android.core.ui.share.ShareChooserSheet
 import dev.typetype.android.domain.library.PlaylistVideo
 import dev.typetype.android.feature.library.components.rememberVideoMetas
 import dev.typetype.android.feature.menu.VideoMenuEvent
@@ -67,10 +66,9 @@ fun PlaylistContextTab(
         EmptyTab(emptyMessageFor(filter, emptyDefault))
         return
     }
-    val context = LocalContext.current
-    val shareChooserTitle = stringResource(R.string.video_menu_share_chooser)
     val serverBaseUrl = LocalServerBaseUrl.current
     var pendingMenu by remember { mutableStateOf<PlaylistVideo?>(null) }
+    var shareVideoUrl by remember { mutableStateOf<String?>(null) }
     val urlsMissingInfo = items
         .filter { it.channelAvatarUrl.isBlank() || it.channelName.isBlank() }
         .map { it.url }
@@ -102,11 +100,16 @@ fun PlaylistContextTab(
             onAddToQueue = { onAddToQueue(video) },
             onRemoveFromList = { onRemove(video) },
             onToggleWatched = { onToggleWatched(video, video.url in watchedUrls) },
-            onShare = {
-                showShareChooser(context, serverBaseUrl, video.url, shareChooserTitle)
-            },
+            onShare = { shareVideoUrl = video.url },
             onBlockVideo = { onBlockVideo(video) },
             onDismiss = { pendingMenu = null },
+        )
+    }
+    shareVideoUrl?.let { videoUrl ->
+        ShareChooserSheet(
+            serverBaseUrl = serverBaseUrl,
+            videoUrl = videoUrl,
+            onDismiss = { shareVideoUrl = null },
         )
     }
 }
