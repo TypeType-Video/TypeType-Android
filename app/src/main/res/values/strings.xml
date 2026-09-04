@@ -921,6 +921,8 @@
     <string name="video_menu_block_video">Block video</string>
     <string name="video_menu_block_channel">Block channel</string>
     <string name="video_menu_share_chooser">Share via</string>
+    <string name="video_menu_share_typetype">Share TypeType link</string>
+    <string name="video_menu_share_source">Share %1$s link</string>
     <string name="video_more_actions">Video actions</string>
     <string name="video_open_channel_accessibility">Open %1$s channel</string>
     <string name="video_open_accessibility">Open %1$s</string>
