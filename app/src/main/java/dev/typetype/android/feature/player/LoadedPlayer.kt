@@ -5,6 +5,7 @@ import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.padding
@@ -25,7 +26,6 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.platform.LocalContext
 import androidx.paging.PagingData
 import dev.typetype.android.domain.comments.Comment
@@ -188,6 +188,8 @@ fun LoadedPlayer(
         onSaveProgress = { onAction(PlayerAction.OnSaveProgress(it)) },
     )
 
+    val expandedTopPadding = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding()
+    val expandedTopPaddingPx = with(LocalDensity.current) { expandedTopPadding.toPx() }
     val autoplayVisible by remember(hostTransitionProgress) {
         derivedStateOf { hostTransitionProgress() < 0.01f }
     }
@@ -195,6 +197,16 @@ fun LoadedPlayer(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .then(
+                if (isFullscreen) {
+                    Modifier
+                } else {
+                    Modifier.playerTopProgressPadding(
+                        maxTopPx = expandedTopPaddingPx,
+                        progress = hostTransitionProgress,
+                    )
+                },
+            ),
     ) {
         PlayerContentLayout(
             isFullscreen = isFullscreen,
