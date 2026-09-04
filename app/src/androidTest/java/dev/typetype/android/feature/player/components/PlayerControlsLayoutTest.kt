@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
@@ -15,6 +16,7 @@ import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import java.lang.reflect.Proxy
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -29,7 +31,11 @@ class PlayerControlsLayoutTest {
     fun portraitControlsDoNotOverlapInsideShortVideoViewport() {
         val player = controlsLayoutPlayer()
         composeRule.setContent {
-            Box(Modifier.size(width = 360.dp, height = 202.dp)) {
+            Box(
+                Modifier
+                    .size(width = 360.dp, height = 202.dp)
+                    .testTag(PLAYER_CONTROLS_VIEWPORT_TAG),
+            ) {
                 PlayerControls(
                     player = player,
                     title = "Portrait controls",
@@ -50,9 +56,14 @@ class PlayerControlsLayoutTest {
         val bottom = composeRule.onNodeWithTag(PLAYER_BOTTOM_CONTROLS_TAG, useUnmergedTree = true)
             .fetchSemanticsNode()
             .boundsInRoot
+        val viewport = composeRule.onNodeWithTag(
+            PLAYER_CONTROLS_VIEWPORT_TAG,
+            useUnmergedTree = true,
+        ).fetchSemanticsNode().boundsInRoot
 
         assertTrue("Top controls overlap center controls", top.bottom <= center.top)
         assertTrue("Center controls overlap bottom controls", center.bottom <= bottom.top)
+        assertEquals("Portrait controls stop at the viewport bottom", viewport.bottom, bottom.bottom, 1f)
     }
 }
 
