@@ -1,6 +1,5 @@
 package dev.typetype.android.feature.player
 
-import android.content.Intent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -30,7 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
-import dev.typetype.android.core.ui.share.buildShareUrl
+import dev.typetype.android.core.ui.share.showShareChooser
 
 @Composable
 fun PlayerInteractionRow(
@@ -104,11 +103,7 @@ fun PlayerInteractionRow(
             icon = Icons.Filled.Share,
             contentDescription = stringResource(R.string.video_menu_share),
             onClick = {
-                val intent = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, buildShareUrl(serverBaseUrl, shareUrl))
-                }
-                context.startActivity(Intent.createChooser(intent, shareChooserTitle))
+                showShareChooser(context, serverBaseUrl, shareUrl, shareChooserTitle)
             },
         )
     }
