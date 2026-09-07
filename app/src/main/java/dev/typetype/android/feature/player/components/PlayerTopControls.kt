@@ -40,17 +40,18 @@ internal fun PlayerTopBar(
     isPipAvailable: Boolean,
     chaptersAvailable: Boolean,
     compact: Boolean = false,
+    expanded: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-        BackButton(onNavigateBack, compact)
+        BackButton(onNavigateBack, compact, expanded)
         if (isFullscreen) {
             Text(
                 text = title,
                 color = Color.White,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.titleMedium,
+                style = if (expanded) MaterialTheme.typography.titleLarge else MaterialTheme.typography.titleMedium,
                 modifier = Modifier.weight(1f),
             )
         } else {
@@ -66,20 +67,23 @@ internal fun PlayerTopBar(
             isPipAvailable,
             chaptersAvailable,
             compact,
+            expanded,
         )
     }
 }
 
 @Composable
-private fun BackButton(onNavigateBack: () -> Unit, compact: Boolean) {
+private fun BackButton(onNavigateBack: () -> Unit, compact: Boolean, expanded: Boolean) {
     OverlayIconButton(
         onClick = onNavigateBack,
         compact = compact,
+        expanded = expanded,
         modifier = Modifier.padding(if (compact) 4.dp else 8.dp),
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
             contentDescription = stringResource(R.string.player_back),
+            modifier = Modifier.size(if (expanded) 32.dp else 24.dp),
             tint = Color.White,
         )
     }
@@ -96,42 +100,47 @@ private fun TopActions(
     isPipAvailable: Boolean,
     chaptersAvailable: Boolean,
     compact: Boolean,
+    expanded: Boolean,
 ) {
     Row(
         modifier = Modifier.padding(if (compact) 4.dp else 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (isFullscreen) {
-            OverlayIconButton(onCycleResizeMode, compact = compact) {
+            OverlayIconButton(onCycleResizeMode, compact = compact, expanded = expanded) {
                 Icon(
                     imageVector = resizeMode.icon(),
                     contentDescription = stringResource(R.string.player_resize_mode),
+                    modifier = Modifier.size(if (expanded) 32.dp else 24.dp),
                     tint = Color.White,
                 )
             }
         }
         if (isPipAvailable) {
-            OverlayIconButton(onEnterPip, compact = compact) {
+            OverlayIconButton(onEnterPip, compact = compact, expanded = expanded) {
                 Icon(
                     painter = painterResource(R.drawable.ic_pip),
                     contentDescription = stringResource(R.string.player_pip),
+                    modifier = Modifier.size(if (expanded) 32.dp else 24.dp),
                     tint = Color.White,
                 )
             }
         }
         if (chaptersAvailable) {
-            OverlayIconButton(onOpenChapters, compact = compact) {
+            OverlayIconButton(onOpenChapters, compact = compact, expanded = expanded) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.List,
                     contentDescription = stringResource(R.string.player_chapters),
+                    modifier = Modifier.size(if (expanded) 32.dp else 24.dp),
                     tint = Color.White,
                 )
             }
         }
-        OverlayIconButton(onOpenOptions, compact = compact) {
+        OverlayIconButton(onOpenOptions, compact = compact, expanded = expanded) {
             Icon(
                 imageVector = Icons.Filled.Settings,
                 contentDescription = stringResource(R.string.player_playback_options),
+                modifier = Modifier.size(if (expanded) 32.dp else 24.dp),
                 tint = Color.White,
             )
         }
@@ -143,11 +152,18 @@ private fun OverlayIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     compact: Boolean = false,
+    expanded: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     IconButton(
         onClick = onClick,
-        modifier = modifier.padding(2.dp).size(if (compact) 36.dp else 40.dp),
+        modifier = modifier.padding(2.dp).size(
+            when {
+                expanded -> 64.dp
+                compact -> 36.dp
+                else -> 40.dp
+            },
+        ),
         content = content,
     )
 }
