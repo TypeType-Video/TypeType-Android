@@ -1,6 +1,12 @@
 package dev.typetype.android.feature.podcast
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -11,6 +17,7 @@ import dev.typetype.android.domain.podcast.Podcast
 import dev.typetype.android.feature.menu.VideoMenuScope
 import org.junit.Rule
 import org.junit.Test
+import org.junit.Assert.assertTrue
 
 class PodcastScreenStateTest {
     @get:Rule
@@ -37,8 +44,32 @@ class PodcastScreenStateTest {
 
     @Test
     fun emptyPodcastHasAnExplicitState() {
+        showEmptyPodcast(400.dp)
+        composeRule.onNodeWithText("This podcast has no available episodes.").assertIsDisplayed()
+    }
+
+    @Test
+    fun tabletKeepsPodcastIdentityBesideEpisodes() {
+        showEmptyPodcast(1200.dp)
+        val title = composeRule.onNodeWithText("Podcast").fetchSemanticsNode().boundsInRoot
+        val content = composeRule.onNodeWithText("This podcast has no available episodes.")
+            .fetchSemanticsNode().boundsInRoot
+        assertTrue(title.right < content.left)
+    }
+
+    @Test
+    fun narrowWindowKeepsPodcastIdentityAboveEpisodes() {
+        showEmptyPodcast(400.dp)
+        val title = composeRule.onNodeWithText("Podcast").fetchSemanticsNode().boundsInRoot
+        val content = composeRule.onNodeWithText("This podcast has no available episodes.")
+            .fetchSemanticsNode().boundsInRoot
+        assertTrue(title.bottom < content.top)
+    }
+
+    private fun showEmptyPodcast(width: Dp) {
         composeRule.setContent {
             TypeTypeTheme {
+                Box(Modifier.requiredWidth(width).requiredHeight(650.dp)) {
                 PodcastContentGrid(
                     state = PodcastState(isLoading = false, podcast = podcast()),
                     onPlayVideo = {},
@@ -47,9 +78,9 @@ class PodcastScreenStateTest {
                     onLoadMore = {},
                     menuScope = emptyMenuScope(),
                 )
+                }
             }
         }
-        composeRule.onNodeWithText("This podcast has no available episodes.").assertIsDisplayed()
     }
 
     private fun showScreen(state: PodcastState) {
