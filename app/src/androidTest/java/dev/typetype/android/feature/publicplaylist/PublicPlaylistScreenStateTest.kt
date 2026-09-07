@@ -1,6 +1,12 @@
 package dev.typetype.android.feature.publicplaylist
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -11,6 +17,7 @@ import dev.typetype.android.domain.search.SearchPlaylist
 import dev.typetype.android.feature.menu.VideoMenuScope
 import org.junit.Rule
 import org.junit.Test
+import org.junit.Assert.assertTrue
 
 class PublicPlaylistScreenStateTest {
     @get:Rule
@@ -37,8 +44,32 @@ class PublicPlaylistScreenStateTest {
 
     @Test
     fun emptyPlaylistHasAnExplicitState() {
+        showEmptyPlaylist(400.dp)
+        composeRule.onNodeWithText("This playlist has no available videos.").assertIsDisplayed()
+    }
+
+    @Test
+    fun tabletKeepsPlaylistIdentityBesideItsContent() {
+        showEmptyPlaylist(1200.dp)
+        val title = composeRule.onNodeWithText("Playlist").fetchSemanticsNode().boundsInRoot
+        val content = composeRule.onNodeWithText("This playlist has no available videos.")
+            .fetchSemanticsNode().boundsInRoot
+        assertTrue(title.right < content.left)
+    }
+
+    @Test
+    fun narrowWindowKeepsPlaylistIdentityAboveItsContent() {
+        showEmptyPlaylist(400.dp)
+        val title = composeRule.onNodeWithText("Playlist").fetchSemanticsNode().boundsInRoot
+        val content = composeRule.onNodeWithText("This playlist has no available videos.")
+            .fetchSemanticsNode().boundsInRoot
+        assertTrue(title.bottom < content.top)
+    }
+
+    private fun showEmptyPlaylist(width: Dp) {
         composeRule.setContent {
             TypeTypeTheme {
+                Box(Modifier.requiredWidth(width).requiredHeight(650.dp)) {
                 PublicPlaylistContentGrid(
                     state = PublicPlaylistState(isLoading = false, playlist = playlist()),
                     onPlayVideo = {},
@@ -48,9 +79,9 @@ class PublicPlaylistScreenStateTest {
                     onToggleSaved = {},
                     menuScope = emptyMenuScope(),
                 )
+                }
             }
         }
-        composeRule.onNodeWithText("This playlist has no available videos.").assertIsDisplayed()
     }
 
     private fun showScreen(state: PublicPlaylistState) {

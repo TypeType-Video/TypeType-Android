@@ -139,7 +139,6 @@ class SettingsScreenAccessibilityTest {
         R.string.accounts_title,
         R.string.settings_profile_title,
         R.string.settings_import_title,
-        R.string.youtube_session_settings_title,
         R.string.rss_settings_title,
         R.string.settings_appearance_title,
         R.string.settings_content_title,
