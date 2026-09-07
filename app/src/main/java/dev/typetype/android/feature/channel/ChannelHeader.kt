@@ -3,6 +3,7 @@ package dev.typetype.android.feature.channel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -52,6 +53,27 @@ internal fun ChannelHeader(
     onToggleSubscribe: () -> Unit,
     onNavigateBack: () -> Unit,
 ) {
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        ChannelHeaderContent(
+            channel = channel,
+            isSubscribed = isSubscribed,
+            subscribeInFlight = subscribeInFlight,
+            onToggleSubscribe = onToggleSubscribe,
+            onNavigateBack = onNavigateBack,
+            expanded = maxWidth >= 600.dp,
+        )
+    }
+}
+
+@Composable
+private fun ChannelHeaderContent(
+    channel: Channel,
+    isSubscribed: Boolean,
+    subscribeInFlight: Boolean,
+    onToggleSubscribe: () -> Unit,
+    onNavigateBack: () -> Unit,
+    expanded: Boolean,
+) {
     val serverBaseUrl = LocalServerBaseUrl.current
     Column(modifier = Modifier.fillMaxWidth()) {
         if (channel.bannerUrl.isNullOrBlank()) {
@@ -60,7 +82,10 @@ internal fun ChannelHeader(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(BannerAspectRatio)
+                    .then(
+                        if (expanded) Modifier.height(220.dp)
+                        else Modifier.aspectRatio(BannerAspectRatio),
+                    )
                     .background(MaterialTheme.colorScheme.surfaceVariant),
             ) {
                 AsyncImage(
@@ -82,12 +107,12 @@ internal fun ChannelHeader(
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(AvatarSize)
+                    .size(if (expanded) 88.dp else AvatarSize)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surfaceVariant),
             )
             Column(modifier = Modifier.weight(1f)) {
-                ChannelName(channel)
+                ChannelName(channel, expanded)
                 Spacer(Modifier.height(2.dp))
                 Text(
                     text = formatSubscribers(channel.subscriberCount),
@@ -99,6 +124,7 @@ internal fun ChannelHeader(
                 isSubscribed = isSubscribed,
                 enabled = !subscribeInFlight,
                 onClick = onToggleSubscribe,
+                expanded = expanded,
             )
         }
     }
@@ -120,11 +146,11 @@ private fun ChannelBackButton(onNavigateBack: () -> Unit) {
 }
 
 @Composable
-private fun ChannelName(channel: Channel) {
+private fun ChannelName(channel: Channel, expanded: Boolean) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
             text = channel.name,
-            style = MaterialTheme.typography.titleMedium.copy(
+            style = (if (expanded) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.titleMedium).copy(
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = (-0.2).sp,
             ),
@@ -146,7 +172,7 @@ private fun ChannelName(channel: Channel) {
 }
 
 @Composable
-private fun SubscribeButton(isSubscribed: Boolean, enabled: Boolean, onClick: () -> Unit) {
+private fun SubscribeButton(isSubscribed: Boolean, enabled: Boolean, onClick: () -> Unit, expanded: Boolean) {
     Button(
         onClick = onClick,
         enabled = enabled,
@@ -160,7 +186,7 @@ private fun SubscribeButton(isSubscribed: Boolean, enabled: Boolean, onClick: ()
             contentColor = MaterialTheme.colorScheme.onSurface,
         ),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
-        modifier = Modifier.height(34.dp),
+        modifier = Modifier.height(if (expanded) 48.dp else 34.dp),
     ) {
         Text(
             text = stringResource(
