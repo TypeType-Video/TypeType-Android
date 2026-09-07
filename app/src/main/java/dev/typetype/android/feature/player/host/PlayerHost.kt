@@ -40,6 +40,8 @@ fun PlayerHost(
     onOpenChannel: (channelUrl: String) -> Unit,
     onOpenAccounts: () -> Unit,
     onClosePlayback: () -> Unit,
+    modifier: Modifier = Modifier,
+    reserveNavigationBarInset: Boolean = true,
     accessibleControlsEnabled: Boolean = false,
     onTransitionProgressChange: (Float) -> Unit = {},
     content: @Composable () -> Unit,
@@ -60,9 +62,12 @@ fun PlayerHost(
         stateSaver = FullscreenOrientationState.Saver,
     ) { mutableStateOf(FullscreenOrientationState()) }
 
-    val navigationBarsBottom = WindowInsets.navigationBars.asPaddingValues()
-        .calculateBottomPadding()
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+    val navigationBarsBottom = if (reserveNavigationBarInset) {
+        WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    } else {
+        0.dp
+    }
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val containerHeightPx = constraints.maxHeight.toFloat().coerceAtLeast(1f)
         val miniHeightPx = with(density) { MINI_PLAYER_HEIGHT.toPx() }
         val bottomBarPx = with(density) { bottomBarHeightDp.dp.toPx() }

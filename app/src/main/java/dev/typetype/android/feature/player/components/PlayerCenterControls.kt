@@ -28,12 +28,14 @@ internal fun PlayerCenterControls(
     player: Player,
     isFullscreen: Boolean,
     compact: Boolean = false,
+    expanded: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val playPauseState = rememberPlayPauseButtonState(player)
     val seekBackState = rememberSeekBackButtonState(player)
     val seekForwardState = rememberSeekForwardButtonState(player)
     val spacing = when {
+        expanded -> 48.dp
         isFullscreen -> 44.dp
         compact -> 18.dp
         else -> 26.dp
@@ -50,11 +52,13 @@ internal fun PlayerCenterControls(
             enabled = seekBackState.isEnabled,
             onClick = { seekBackState.onClick() },
             buttonSize = when {
+                expanded -> 72.dp
                 isFullscreen -> 62.dp
                 compact -> 40.dp
                 else -> 50.dp
             },
             iconSize = when {
+                expanded -> 40.dp
                 isFullscreen -> 32.dp
                 compact -> 22.dp
                 else -> 26.dp
@@ -68,11 +72,13 @@ internal fun PlayerCenterControls(
             enabled = playPauseState.isEnabled,
             onClick = { playPauseState.onClick() },
             buttonSize = when {
+                expanded -> 96.dp
                 isFullscreen -> 74.dp
                 compact -> 48.dp
                 else -> 62.dp
             },
             iconSize = when {
+                expanded -> 60.dp
                 isFullscreen -> 48.dp
                 compact -> 30.dp
                 else -> 38.dp
@@ -85,11 +91,13 @@ internal fun PlayerCenterControls(
             enabled = seekForwardState.isEnabled,
             onClick = { seekForwardState.onClick() },
             buttonSize = when {
+                expanded -> 72.dp
                 isFullscreen -> 62.dp
                 compact -> 40.dp
                 else -> 50.dp
             },
             iconSize = when {
+                expanded -> 40.dp
                 isFullscreen -> 32.dp
                 compact -> 22.dp
                 else -> 26.dp

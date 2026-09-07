@@ -280,6 +280,12 @@ fun LoadedPlayer(
                     }
                 }
             },
+            recommendations = { recommendationsModifier ->
+                PlayerRecommendations(
+                    stream, userSettings, onPlayVideo, onOpenChannel, onAction,
+                    recommendationsModifier,
+                )
+            },
             details = { detailsModifier ->
                 PlayerDetails(
                     stream = stream,
@@ -296,7 +302,6 @@ fun LoadedPlayer(
                     onAction = onAction,
                     onShowComments = { commentsVisible = true },
                     onShowDownloads = { downloadPickerVisible = true },
-                    onPlayVideo = onPlayVideo,
                     onOpenChannel = onOpenChannel,
                     onToggleSubscription = onToggleSubscription,
                     modifier = detailsModifier,
