@@ -8,12 +8,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.navigationBarsIgnoringVisibility
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -47,68 +45,76 @@ fun PlayerControls(
     isPipAvailable: Boolean = false,
     chaptersAvailable: Boolean = false,
     sponsorBlockSegments: List<SponsorBlockSegment> = emptyList(),
+    seekPreviewPositionMs: Long? = null,
+    timelineScrubbing: Boolean = false,
+    onTimelineScrubbingChange: (Boolean) -> Unit = {},
 ) {
     BoxWithConstraints(modifier = modifier) {
         val compactControls = !isFullscreen && maxHeight < COMPACT_CONTROLS_HEIGHT
-        TopScrim(
-            compact = compactControls,
-            modifier = Modifier.align(Alignment.TopCenter),
-        )
+        val expandedControls = maxWidth >= 600.dp && maxHeight >= 300.dp
+        if (!timelineScrubbing) {
+            TopScrim(
+                compact = compactControls,
+                modifier = Modifier.align(Alignment.TopCenter),
+            )
+        }
         BottomScrim(
             compact = compactControls,
+            isFullscreen = isFullscreen,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
-        PlayerTopBar(
-            title = title,
-            onNavigateBack = onNavigateBack,
-            onOpenChapters = onOpenChapters,
-            onOpenOptions = onOpenOptions,
-            onEnterPip = onEnterPip,
-            onCycleResizeMode = onCycleResizeMode,
-            resizeMode = resizeMode,
-            isFullscreen = isFullscreen,
-            isPipAvailable = isPipAvailable,
-            chaptersAvailable = chaptersAvailable,
-            compact = compactControls,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth()
-                .testTag(PLAYER_TOP_CONTROLS_TAG)
-                .then(
-                    if (isFullscreen) {
-                        Modifier.windowInsetsPadding(WindowInsets.statusBars)
-                    } else {
-                        Modifier
-                    },
-                ),
-        )
-        PlayerCenterControls(
-            player = player,
-            isFullscreen = isFullscreen,
-            compact = compactControls,
-            modifier = Modifier.align(Alignment.Center).testTag(PLAYER_CENTER_CONTROLS_TAG),
-        )
+        if (!timelineScrubbing) {
+            PlayerTopBar(
+                title = title,
+                onNavigateBack = onNavigateBack,
+                onOpenChapters = onOpenChapters,
+                onOpenOptions = onOpenOptions,
+                onEnterPip = onEnterPip,
+                onCycleResizeMode = onCycleResizeMode,
+                resizeMode = resizeMode,
+                isFullscreen = isFullscreen,
+                isPipAvailable = isPipAvailable,
+                chaptersAvailable = chaptersAvailable,
+                compact = compactControls,
+                expanded = expandedControls,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .testTag(PLAYER_TOP_CONTROLS_TAG)
+                    .then(
+                        if (isFullscreen) {
+                            Modifier.windowInsetsPadding(WindowInsets.statusBars)
+                        } else {
+                            Modifier
+                        },
+                    ),
+            )
+            PlayerCenterControls(
+                player = player,
+                expanded = expandedControls,
+                isFullscreen = isFullscreen,
+                compact = compactControls,
+                modifier = Modifier.align(Alignment.Center).testTag(PLAYER_CENTER_CONTROLS_TAG),
+            )
+        }
         BottomBar(
             player = player,
             sponsorBlockSegments = sponsorBlockSegments,
+            seekPreviewPositionMs = seekPreviewPositionMs,
+            timelineScrubbing = timelineScrubbing,
+            onTimelineScrubbingChange = onTimelineScrubbingChange,
             isFullscreen = isFullscreen,
             compact = compactControls,
+            expanded = expandedControls,
             onToggleFullscreen = onToggleFullscreen,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .testTag(PLAYER_BOTTOM_CONTROLS_TAG)
-                .then(
-                    if (isFullscreen) {
-                        Modifier.windowInsetsPadding(WindowInsets.navigationBarsIgnoringVisibility)
-                    } else {
-                        Modifier
-                    },
-                )
                 .padding(
                     start = if (isFullscreen) 12.dp else 4.dp,
                     end = if (isFullscreen) 8.dp else 4.dp,
-                    bottom = if (isFullscreen) 12.dp else 0.dp,
+                    bottom = if (isFullscreen) 6.dp else 0.dp,
                 ),
         )
     }
@@ -129,11 +135,21 @@ private fun TopScrim(compact: Boolean, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun BottomScrim(compact: Boolean, modifier: Modifier = Modifier) {
+private fun BottomScrim(
+    compact: Boolean,
+    isFullscreen: Boolean,
+    modifier: Modifier = Modifier,
+) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(if (compact) 88.dp else 152.dp)
+            .height(
+                when {
+                    isFullscreen -> 116.dp
+                    compact -> 88.dp
+                    else -> 152.dp
+                },
+            )
             .background(
                 Brush.verticalGradient(
                     colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.72f)),
@@ -146,52 +162,59 @@ private fun BottomScrim(compact: Boolean, modifier: Modifier = Modifier) {
 private fun BottomBar(
     player: Player,
     sponsorBlockSegments: List<SponsorBlockSegment>,
+    seekPreviewPositionMs: Long?,
+    timelineScrubbing: Boolean,
+    onTimelineScrubbingChange: (Boolean) -> Unit,
     isFullscreen: Boolean,
     compact: Boolean,
+    expanded: Boolean,
     onToggleFullscreen: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val backgroundModifier = if (isFullscreen) {
-        Modifier.background(Color.Black.copy(alpha = 0.34f), RoundedCornerShape(14.dp))
-    } else {
-        Modifier
-    }
+    // I SPEND 2 HOURS FIGURING OUT HOW TO ALIGN THIS FREAKING SEEKBAR WITH THE BUTTON FULLSCREEN IM SUCH A FAILURE
     Row(
         modifier = modifier
             .height(
                 when {
+                    expanded -> 72.dp
                     isFullscreen -> 52.dp
                     compact -> 36.dp
                     else -> 40.dp
                 },
             )
-            .then(backgroundModifier)
             .padding(start = if (isFullscreen) 8.dp else 2.dp, end = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         PlayerTimeBar(
             player = player,
             segments = sponsorBlockSegments,
-            compact = !isFullscreen,
+            previewPositionMs = seekPreviewPositionMs,
+            compact = !isFullscreen && !expanded,
+            expanded = expanded,
+            onScrubbingChange = onTimelineScrubbingChange,
             modifier = Modifier.weight(1f),
         )
-        IconButton(
-            onClick = onToggleFullscreen,
-            modifier = Modifier.size(
-                when {
-                    isFullscreen -> 48.dp
-                    compact -> 36.dp
-                    else -> 40.dp
-                },
-            ),
-        ) {
-            Icon(
-                painter = painterResource(
-                    if (isFullscreen) R.drawable.ic_fullscreen_exit else R.drawable.ic_fullscreen,
+        if (!timelineScrubbing) {
+            IconButton(
+                onClick = onToggleFullscreen,
+                modifier = Modifier.size(
+                    when {
+                        expanded -> 64.dp
+                        isFullscreen -> 48.dp
+                        compact -> 36.dp
+                        else -> 40.dp
+                    },
                 ),
-                contentDescription = stringResource(R.string.player_fullscreen),
-                tint = Color.White,
-            )
+            ) {
+                Icon(
+                    painter = painterResource(
+                        if (isFullscreen) R.drawable.ic_fullscreen_exit else R.drawable.ic_fullscreen,
+                    ),
+                    contentDescription = stringResource(R.string.player_fullscreen),
+                    tint = Color.White,
+                    modifier = Modifier.size(if (expanded) 36.dp else 24.dp),
+                )
+            }
         }
     }
 }
@@ -199,4 +222,5 @@ private fun BottomBar(
 internal const val PLAYER_TOP_CONTROLS_TAG = "player_top_controls"
 internal const val PLAYER_CENTER_CONTROLS_TAG = "player_center_controls"
 internal const val PLAYER_BOTTOM_CONTROLS_TAG = "player_bottom_controls"
+internal const val PLAYER_CONTROLS_VIEWPORT_TAG = "player_controls_viewport"
 private val COMPACT_CONTROLS_HEIGHT = 180.dp
