@@ -51,6 +51,7 @@ fun PlayerControls(
 ) {
     BoxWithConstraints(modifier = modifier) {
         val compactControls = !isFullscreen && maxHeight < COMPACT_CONTROLS_HEIGHT
+        val expandedControls = maxWidth >= 600.dp && maxHeight >= 300.dp
         if (!timelineScrubbing) {
             TopScrim(
                 compact = compactControls,
@@ -75,6 +76,7 @@ fun PlayerControls(
                 isPipAvailable = isPipAvailable,
                 chaptersAvailable = chaptersAvailable,
                 compact = compactControls,
+                expanded = expandedControls,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
@@ -89,6 +91,7 @@ fun PlayerControls(
             )
             PlayerCenterControls(
                 player = player,
+                expanded = expandedControls,
                 isFullscreen = isFullscreen,
                 compact = compactControls,
                 modifier = Modifier.align(Alignment.Center).testTag(PLAYER_CENTER_CONTROLS_TAG),
@@ -102,6 +105,7 @@ fun PlayerControls(
             onTimelineScrubbingChange = onTimelineScrubbingChange,
             isFullscreen = isFullscreen,
             compact = compactControls,
+            expanded = expandedControls,
             onToggleFullscreen = onToggleFullscreen,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -163,6 +167,7 @@ private fun BottomBar(
     onTimelineScrubbingChange: (Boolean) -> Unit,
     isFullscreen: Boolean,
     compact: Boolean,
+    expanded: Boolean,
     onToggleFullscreen: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -171,6 +176,7 @@ private fun BottomBar(
         modifier = modifier
             .height(
                 when {
+                    expanded -> 72.dp
                     isFullscreen -> 52.dp
                     compact -> 36.dp
                     else -> 40.dp
@@ -183,7 +189,8 @@ private fun BottomBar(
             player = player,
             segments = sponsorBlockSegments,
             previewPositionMs = seekPreviewPositionMs,
-            compact = !isFullscreen,
+            compact = !isFullscreen && !expanded,
+            expanded = expanded,
             onScrubbingChange = onTimelineScrubbingChange,
             modifier = Modifier.weight(1f),
         )
@@ -192,6 +199,7 @@ private fun BottomBar(
                 onClick = onToggleFullscreen,
                 modifier = Modifier.size(
                     when {
+                        expanded -> 64.dp
                         isFullscreen -> 48.dp
                         compact -> 36.dp
                         else -> 40.dp
@@ -204,6 +212,7 @@ private fun BottomBar(
                     ),
                     contentDescription = stringResource(R.string.player_fullscreen),
                     tint = Color.White,
+                    modifier = Modifier.size(if (expanded) 36.dp else 24.dp),
                 )
             }
         }
