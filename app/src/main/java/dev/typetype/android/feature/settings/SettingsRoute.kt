@@ -21,10 +21,12 @@ fun SettingsRoute(
     onOpenBlocked: () -> Unit,
     onOpenAbout: () -> Unit,
     onSignOut: () -> Unit,
+    selectedTitleRes: Int? = null,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     SettingsScreen(
+        selectedTitleRes = selectedTitleRes,
         onNavigateBack = onNavigateBack,
         onOpenAccounts = onOpenAccounts,
         onOpenProfile = onOpenProfile,

@@ -1,5 +1,9 @@
 package dev.typetype.android
 
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.navigationBars
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -142,25 +146,30 @@ internal fun AppTopBar(
 
 @Composable
 internal fun AppBottomBar(
-    currentDestination: NavDestination?,
-    fallbackTabRouteQualifiedName: String?,
-    onTabClick: (Any) -> Unit,
+    selectedTabRouteQualifiedName: String?,
+    onTabClick: (TopLevelTab) -> Unit,
     tabs: List<TopLevelTab> = topLevelTabs,
     modifier: Modifier = Modifier,
+    expanded: Boolean = false,
 ) {
     androidx.compose.foundation.layout.Column(modifier = modifier) {
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
         NavigationBar(
-            modifier = Modifier.testTag(APP_BOTTOM_NAVIGATION_TAG),
+            modifier = Modifier.testTag(APP_BOTTOM_NAVIGATION_TAG)
+                .then(if (expanded) Modifier.height(
+                    96.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding(),
+                ) else Modifier),
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
-            tabs.forEach { tab ->
-                val selected = tab.isSelected(currentDestination, fallbackTabRouteQualifiedName, tabs)
+            tabs.forEach { tab: TopLevelTab ->
+                val selected = tab.route::class.qualifiedName == selectedTabRouteQualifiedName
                 NavigationBarItem(
                     selected = selected,
-                    onClick = { if (!currentDestination.matchesRoute(tab.route)) onTabClick(tab.route) },
-                    icon = { Icon(painterResource(tab.iconRes), contentDescription = null) },
-                    label = { Text(stringResource(tab.labelRes)) },
+                    onClick = { onTabClick(tab) },
+                    icon = { Icon(painterResource(tab.iconRes), contentDescription = null,
+                        modifier = Modifier.size(if (expanded) 32.dp else 24.dp)) },
+                    label = { Text(stringResource(tab.labelRes), style = if (expanded)
+                        MaterialTheme.typography.titleSmall else MaterialTheme.typography.labelMedium) },
                 )
             }
         }
@@ -169,9 +178,8 @@ internal fun AppBottomBar(
 
 @Composable
 internal fun AppNavigationRail(
-    currentDestination: NavDestination?,
-    fallbackTabRouteQualifiedName: String?,
-    onTabClick: (Any) -> Unit,
+    selectedTabRouteQualifiedName: String?,
+    onTabClick: (TopLevelTab) -> Unit,
     tabs: List<TopLevelTab> = topLevelTabs,
     modifier: Modifier = Modifier,
 ) {
@@ -183,11 +191,11 @@ internal fun AppNavigationRail(
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
         Spacer(Modifier.weight(1f))
-        tabs.forEach { tab ->
-            val selected = tab.isSelected(currentDestination, fallbackTabRouteQualifiedName, tabs)
+            tabs.forEach { tab: TopLevelTab ->
+            val selected = tab.route::class.qualifiedName == selectedTabRouteQualifiedName
             NavigationRailItem(
                 selected = selected,
-                onClick = { if (!currentDestination.matchesRoute(tab.route)) onTabClick(tab.route) },
+                onClick = { onTabClick(tab) },
                 icon = { Icon(painterResource(tab.iconRes), contentDescription = null) },
                 label = { Text(stringResource(tab.labelRes)) },
             )
@@ -218,16 +226,6 @@ private fun ProfileAvatarButton(
             modifier = Modifier.fillMaxSize().padding(3.dp),
         )
     }
-}
-
-private fun TopLevelTab.isSelected(
-    destination: NavDestination?,
-    fallbackRouteName: String?,
-    tabs: List<TopLevelTab>,
-): Boolean {
-    val direct = destination.matchesRoute(route)
-    val anyDirect = tabs.any { destination.matchesRoute(it.route) }
-    return direct || (!anyDirect && route::class.qualifiedName == fallbackRouteName)
 }
 
 internal fun NavDestination?.matchesRoute(route: Any): Boolean {
