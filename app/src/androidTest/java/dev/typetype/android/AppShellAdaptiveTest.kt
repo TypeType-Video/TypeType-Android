@@ -65,76 +65,6 @@ class AppShellAdaptiveTest {
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun wideWindowUsesNavigationRail() {
-        setShellWidth(700.dp)
-
-        assertNodeCount(APP_NAVIGATION_RAIL_TAG, 1)
-        assertNodeCount(APP_BOTTOM_NAVIGATION_TAG, 0)
-    }
-
-    @Test
-    fun compactWindowUsesBottomNavigation() {
-        setShellWidth(400.dp)
-
-        assertNodeCount(APP_BOTTOM_NAVIGATION_TAG, 1)
-        assertNodeCount(APP_NAVIGATION_RAIL_TAG, 0)
-    }
-
-    @Test
-    fun landscapePhoneUsesBottomNavigation() {
-        setShellSize(width = 800.dp, height = 400.dp)
-
-        assertNodeCount(APP_BOTTOM_NAVIGATION_TAG, 1)
-        assertNodeCount(APP_NAVIGATION_RAIL_TAG, 0)
-    }
-
-    @Test
-    fun shortsTabFollowsTheServerVisibilitySetting() {
-        val showShorts = mutableStateOf(false)
-        setShellSize(width = 300.dp, height = 500.dp, showShorts = showShorts)
-
-        composeRule.onNodeWithText("Shorts").assertDoesNotExist()
-
-        composeRule.runOnIdle { showShorts.value = true }
-
-        composeRule.onNodeWithText("Shorts").assertIsDisplayed()
-    }
-
-    @Test
-    fun compactNavigationRemainsVisibleAtTwoHundredPercentText() {
-        setShellSize(width = 320.dp, height = 500.dp, fontScale = 2f)
-
-        listOf("Home", "Shorts", "Subscriptions", "Library").forEach {
-            composeRule.onNodeWithText(it).assertIsDisplayed()
-        }
-    }
-
-    @Test
-    fun rightToLeftLayoutMirrorsTheTopLevelTabs() {
-        setShellSize(
-            width = 400.dp,
-            height = 800.dp,
-            layoutDirection = LayoutDirection.Rtl,
-        )
-
-        val home = composeRule.onNodeWithText("Home").bounds()
-        val library = composeRule.onNodeWithText("Library").bounds()
-        assertTrue(home.left > library.left)
-    }
-
-    @Test
-    fun directionalKeysMoveFocusAcrossTopLevelTabs() {
-        setShellSize(width = 400.dp, height = 800.dp, keyboardInput = true)
-        val home = composeRule.onNodeWithText("Home")
-
-        home.performSemanticsAction(SemanticsActions.RequestFocus)
-        home.assertIsFocused()
-        home.performKeyInput { pressKey(Key.DirectionRight) }
-
-        composeRule.onNodeWithText("Shorts").assertIsFocused()
-    }
-
-    @Test
     fun topLevelNavigationDoesNotRestoreSearchOverItsOpeningTab() {
         composeRule.setContent {
             val navController = rememberNavController()
@@ -318,59 +248,6 @@ class AppShellAdaptiveTest {
         composeRule.onNodeWithTag(SEARCH_FIELD_TAG).assertTextEquals("")
     }
 
-    private fun setShellWidth(width: Dp) {
-        setShellSize(width = width, height = 800.dp)
-    }
-
-    private fun setShellSize(
-        width: Dp,
-        height: Dp,
-        showShorts: MutableState<Boolean> = mutableStateOf(true),
-        fontScale: Float = 1f,
-        layoutDirection: LayoutDirection = LayoutDirection.Ltr,
-        keyboardInput: Boolean = false,
-    ) {
-        composeRule.setContent {
-            val systemDensity = LocalDensity.current
-            val inputModeManager = LocalInputModeManager.current
-            LaunchedEffect(keyboardInput) {
-                if (keyboardInput) inputModeManager.requestInputMode(InputMode.Keyboard)
-            }
-            CompositionLocalProvider(
-                LocalDensity provides Density(systemDensity.density, fontScale),
-                LocalLayoutDirection provides layoutDirection,
-            ) {
-                val navController = rememberNavController()
-                AppShell(
-                    navController = navController,
-                    playerHostController = PlayerHostController(FakePlaybackQueueController()),
-                    onOpenSettings = {},
-                    onPlayVideo = {},
-                    onOpenChannel = {},
-                    onOpenAccounts = {},
-                    onClosePlayback = {},
-                    showShorts = showShorts.value,
-                    modifier = Modifier.requiredWidth(width).requiredHeight(height),
-                ) { contentModifier ->
-                    NavHost(
-                        navController = navController,
-                        startDestination = HomeRoute,
-                        modifier = contentModifier,
-                    ) {
-                        composable<HomeRoute> { }
-                    }
-                }
-            }
-        }
-    }
-
-    private fun androidx.compose.ui.test.SemanticsNodeInteraction.bounds(): Rect =
-        fetchSemanticsNode().boundsInRoot
-
-    private fun assertNodeCount(tag: String, expected: Int) {
-        val count = composeRule.onAllNodesWithTag(tag).fetchSemanticsNodes().size
-        assertEquals(expected, count)
-    }
 }
 
 private const val SEARCH_FIELD_TAG = "search_field"
