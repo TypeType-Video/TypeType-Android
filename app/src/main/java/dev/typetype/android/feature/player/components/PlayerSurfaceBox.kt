@@ -4,13 +4,8 @@ import android.media.AudioManager
 import android.graphics.Rect
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.OptIn
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -215,132 +210,66 @@ internal fun PlayerSurfaceBox(
             modifier = chromeModifier.align(Alignment.Center),
         )
 
-        if (!isInPip && playbackStatus.acceptsInput && !accessibleControls &&
-            gesturesVisible
-        ) {
-            PlayerGestureLayer(
-                player = player,
-                state = gestureState,
-                onSingleTap = {
-                    controlsVisible = !controlsVisible
-                },
-                onAdjustBrightness = { fraction ->
-                    val percent = (fraction * 100).toInt()
-                    if (percent != appliedBrightnessPercent) activity?.window?.let { window ->
-                        appliedBrightnessPercent = percent
-                        onPlaybackBrightnessChange(percent)
-                        window.applyPlaybackBrightness(percent)
-                    }
-                },
-                onAdjustVolume = { fraction ->
-                    audioManager?.let { manager ->
-                        val maxVolume = manager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-                        val target = (fraction * maxVolume).toInt().coerceIn(0, maxVolume)
-                        if (target != appliedVolumeLevel) {
-                            appliedVolumeLevel = target
-                            manager.setStreamVolume(AudioManager.STREAM_MUSIC, target, 0)
-                        }
-                    }
-                },
-                onBrightnessGestureStart = {
-                    val fraction = activity?.window?.attributes?.screenBrightness
-                        ?.takeIf { it in 0f..1f }
-                        ?: appliedBrightnessPercent
-                            .takeIf { it in 0..100 }
-                            ?.div(100f)
-                        ?: gestureState.brightnessFraction.floatValue
-                    gestureState.brightnessFraction.floatValue = fraction
-                    fraction
-                },
-                onVolumeGestureStart = {
-                    val fraction = audioManager?.let { manager ->
-                        val maxVolume = manager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-                        if (maxVolume > 0) {
-                            manager.getStreamVolume(AudioManager.STREAM_MUSIC) / maxVolume.toFloat()
-                        } else {
-                            0f
-                        }
-                    } ?: gestureState.volumeFraction.floatValue
-                    gestureState.volumeFraction.floatValue = fraction
-                    fraction
-                },
-                onGestureFeedback = {
-                    controlsVisible = false
-                    hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                },
-                isFullscreen = isFullscreen,
-                onEnterFullscreenGesture = {
-                    if (!isFullscreen) onToggleFullscreen()
-                },
-                onExitFullscreenGesture = {
-                    if (isFullscreen) onToggleFullscreen()
-                },
-                fullscreenExitGestureEnabled = false,
-                config = gestureConfig,
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
+        PlayerSurfaceGestureLayer(
+            player = player,
+            state = gestureState,
+            activity = activity,
+            audioManager = audioManager,
+            hapticFeedback = hapticFeedback,
+            playbackStatus = playbackStatus,
+            isInPip = isInPip,
+            isFullscreen = isFullscreen,
+            accessibleControls = accessibleControls,
+            gesturesVisible = gesturesVisible,
+            controlsVisible = controlsVisible,
+            config = gestureConfig,
+            appliedBrightnessPercent = appliedBrightnessPercent,
+            onAppliedBrightnessChange = { appliedBrightnessPercent = it },
+            onPlaybackBrightnessChange = onPlaybackBrightnessChange,
+            appliedVolumeLevel = appliedVolumeLevel,
+            onAppliedVolumeChange = { appliedVolumeLevel = it },
+            onControlsVisibleChange = { controlsVisible = it },
+            onToggleFullscreen = onToggleFullscreen,
+            modifier = Modifier.fillMaxSize(),
+        )
 
-        AnimatedVisibility(
-            visible = gestureState.seekDragOverlayActive.value,
-            enter = fadeIn(),
-            exit = fadeOut(),
-            modifier = Modifier.align(Alignment.BottomCenter),
-        ) {
-            PlayerSeekScrubOverlay(
-                player = player,
-                positionMs = gestureState.seekDragTargetMs.longValue,
-                segments = sponsorBlockPolicy.visibleSegments,
-                isFullscreen = isFullscreen,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .then(
-                        if (isFullscreen) {
-                            Modifier.padding(start = 12.dp, end = 8.dp, bottom = 6.dp)
-                        } else {
-                            Modifier.padding(start = 4.dp, end = 4.dp)
-                        },
-                    ),
-            )
-        }
-
-        AnimatedVisibility(
-            visible = controlsAllowedByProgress &&
-                (controlsVisible || accessibleControls) &&
-                !isInPip && playbackStatus.acceptsInput,
-            enter = fadeIn(),
-            exit = fadeOut(),
-        ) {
-            PlayerControls(
-                player = player,
-                title = stream.title,
-                onNavigateBack = onNavigateBack,
-                onOpenOptions = { optionsVisible = true },
-                onOpenChapters = { chaptersVisible = true },
-                onEnterPip = {
-                    controlsVisible = false
-                    enterPictureInPicture(
-                        activity,
-                        isPlaying = playbackStatus.isPlaying,
-                        audioOnlyAvailable = audioOnlyState.available,
-                        sourceRect = pipSourceRect,
-                    )
-                },
-                onToggleFullscreen = onToggleFullscreen,
-                onCycleResizeMode = {
-                    gestureState.resizeMode.value = gestureState.resizeMode.value.next()
-                },
-                resizeMode = gestureState.resizeMode.value,
-                isFullscreen = isFullscreen,
-                isPipAvailable = isPipAvailable,
-                chaptersAvailable = chapters.isNotEmpty(),
-                sponsorBlockSegments = sponsorBlockPolicy.visibleSegments,
-                seekPreviewPositionMs = gestureState.seekDragTargetMs.longValue
-                    .takeIf { gestureState.seekDragOverlayActive.value },
-                onTimelineScrubbingChange = { timelineScrubbing = it },
-                modifier = chromeModifier.fillMaxSize(),
-            )
-        }
+        PlayerSurfaceChrome(
+            player = player,
+            title = stream.title,
+            sponsorBlockSegments = sponsorBlockPolicy.visibleSegments,
+            seekPreviewPositionMs = gestureState.seekDragTargetMs.longValue
+                .takeIf { gestureState.seekDragOverlayActive.value },
+            seekDragOverlayVisible = gestureState.seekDragOverlayActive.value,
+            seekDragPositionMs = gestureState.seekDragTargetMs.longValue,
+            isFullscreen = isFullscreen,
+            isInPip = isInPip,
+            controlsAllowedByProgress = controlsAllowedByProgress,
+            controlsVisible = controlsVisible,
+            accessibleControls = accessibleControls,
+            acceptsInput = playbackStatus.acceptsInput,
+            timelineScrubbing = timelineScrubbing,
+            onTimelineScrubbingChange = { timelineScrubbing = it },
+            onNavigateBack = onNavigateBack,
+            onOpenOptions = { optionsVisible = true },
+            onOpenChapters = { chaptersVisible = true },
+            onEnterPip = {
+                controlsVisible = false
+                enterPictureInPicture(
+                    activity,
+                    isPlaying = playbackStatus.isPlaying,
+                    audioOnlyAvailable = audioOnlyState.available,
+                    sourceRect = pipSourceRect,
+                )
+            },
+            onToggleFullscreen = onToggleFullscreen,
+            onCycleResizeMode = {
+                gestureState.resizeMode.value = gestureState.resizeMode.value.next()
+            },
+            resizeMode = gestureState.resizeMode.value,
+            isPipAvailable = isPipAvailable,
+            chaptersAvailable = chapters.isNotEmpty(),
+            modifier = chromeModifier,
+        )
 
         PlayerSurfaceFeedback(
             player = player,
