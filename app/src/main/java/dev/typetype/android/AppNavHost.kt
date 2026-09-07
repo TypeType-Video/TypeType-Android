@@ -152,10 +152,14 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
         onOpenChannel = onOpenChannel,
         onClosePlayback = mainViewModel::closePlayback,
     ) { innerModifier ->
+        AdaptiveSettingsHost(
+            navController = navController,
+            onSignOut = mainViewModel::signOut,
+            modifier = innerModifier,
+        ) {
         NavHost(
             navController = navController,
             startDestination = startRoute,
-            modifier = innerModifier,
             enterTransition = {
                 slideIntoContainer(
                     AnimatedContentTransitionScope.SlideDirection.Left,
@@ -310,6 +314,7 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
                 onPlayVideo = onPlayVideo,
                 onOpenChannel = onOpenChannel,
             )
+        }
         }
     }
     }

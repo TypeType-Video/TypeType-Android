@@ -1,6 +1,9 @@
 package dev.typetype.android.feature.settings
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -63,6 +66,7 @@ fun SettingsScreen(
     onOpenBlocked: () -> Unit = {},
     onOpenAbout: () -> Unit = {},
     onSignOut: () -> Unit,
+    selectedTitleRes: Int? = null,
 ) {
     val entries = buildList {
         add(SettingsEntry(R.string.accounts_title, R.string.accounts_subtitle, Icons.Filled.ManageAccounts, onOpenAccounts))
@@ -102,7 +106,7 @@ fun SettingsScreen(
                 modifier = Modifier.weight(1f),
             ) {
                 items(entries, contentType = { "settings-entry" }) { entry ->
-                    SettingsCategoryRow(entry = entry)
+                    SettingsCategoryRow(entry = entry, selected = selectedTitleRes?.let { it == entry.titleRes })
                     HorizontalDivider(
                         modifier = Modifier.padding(start = 64.dp),
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.48f),
@@ -145,11 +149,18 @@ private fun SettingsTopBar(onNavigateBack: () -> Unit) {
 }
 
 @Composable
-private fun SettingsCategoryRow(entry: SettingsEntry) {
+private fun SettingsCategoryRow(entry: SettingsEntry, selected: Boolean?) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = entry.onClick)
+            .background(
+                if (selected == true) MaterialTheme.colorScheme.secondaryContainer
+                else MaterialTheme.colorScheme.background,
+            )
+            .then(
+                if (selected == null) Modifier.clickable(onClick = entry.onClick)
+                else Modifier.selectable(selected = selected, role = Role.Tab, onClick = entry.onClick),
+            )
             .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

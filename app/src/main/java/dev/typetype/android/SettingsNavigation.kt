@@ -19,6 +19,7 @@ import dev.typetype.android.core.ui.navigation.SettingsRoute
 import dev.typetype.android.core.ui.navigation.StorageSettingsRoute
 import dev.typetype.android.feature.settings.SettingsRoute as SettingsRouteScreen
 import dev.typetype.android.feature.settings.about.LicensesScreen
+import dev.typetype.android.feature.settings.appearance.AppearanceRoute as AppearanceScreen
 import dev.typetype.android.feature.settings.imports.PortabilityRoute as ImportDataRouteScreen
 import dev.typetype.android.feature.settings.rss.RssFeedsRoute as RssFeedsRouteScreen
 
@@ -27,6 +28,9 @@ internal fun NavGraphBuilder.settingsDestinations(
     onSignOut: () -> Unit,
 ) {
     composable<SettingsRoute> {
+        if (LocalSettingsTwoPane.current) {
+            AppearanceScreen(onNavigateBack = { navController.popBackStack() })
+        } else {
         SettingsRouteScreen(
             onNavigateBack = { navController.popBackStack() },
             onOpenAccounts = { navController.navigate(AccountsRoute) },
@@ -43,6 +47,7 @@ internal fun NavGraphBuilder.settingsDestinations(
             onOpenAbout = { navController.navigate(AboutRoute) },
             onSignOut = onSignOut,
         )
+        }
     }
     composable<LicensesRoute> {
         LicensesScreen(

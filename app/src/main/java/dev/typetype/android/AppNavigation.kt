@@ -1,5 +1,9 @@
 package dev.typetype.android
 
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.navigationBars
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -146,11 +150,15 @@ internal fun AppBottomBar(
     onTabClick: (TopLevelTab) -> Unit,
     tabs: List<TopLevelTab> = topLevelTabs,
     modifier: Modifier = Modifier,
+    expanded: Boolean = false,
 ) {
     androidx.compose.foundation.layout.Column(modifier = modifier) {
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
         NavigationBar(
-            modifier = Modifier.testTag(APP_BOTTOM_NAVIGATION_TAG),
+            modifier = Modifier.testTag(APP_BOTTOM_NAVIGATION_TAG)
+                .then(if (expanded) Modifier.height(
+                    96.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding(),
+                ) else Modifier),
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
             tabs.forEach { tab: TopLevelTab ->
@@ -158,8 +166,10 @@ internal fun AppBottomBar(
                 NavigationBarItem(
                     selected = selected,
                     onClick = { onTabClick(tab) },
-                    icon = { Icon(painterResource(tab.iconRes), contentDescription = null) },
-                    label = { Text(stringResource(tab.labelRes)) },
+                    icon = { Icon(painterResource(tab.iconRes), contentDescription = null,
+                        modifier = Modifier.size(if (expanded) 32.dp else 24.dp)) },
+                    label = { Text(stringResource(tab.labelRes), style = if (expanded)
+                        MaterialTheme.typography.titleSmall else MaterialTheme.typography.labelMedium) },
                 )
             }
         }
