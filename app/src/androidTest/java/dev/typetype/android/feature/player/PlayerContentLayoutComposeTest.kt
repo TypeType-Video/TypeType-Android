@@ -30,14 +30,17 @@ class PlayerContentLayoutComposeTest {
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun wideTabletPlacesDetailsBesideThePlayer() {
+    fun wideTabletKeepsDetailsUnderVideoAndRecommendationsBesideIt() {
         setLayout(width = 1280.dp, height = 800.dp)
 
         val viewport = bounds(VIEWPORT_TAG)
         val details = bounds(DETAILS_TAG)
 
-        assertTrue(viewport.right <= details.left)
-        assertTrue(details.top == viewport.top)
+        val recommendations = bounds(RECOMMENDATIONS_TAG)
+        assertTrue(viewport.bottom <= details.top)
+        assertEquals(viewport.left, details.left, 1f)
+        assertTrue(viewport.right <= recommendations.left)
+        assertEquals(viewport.top, recommendations.top, 1f)
         assertNodeCount(PLAYER_TWO_PANE_LAYOUT_TAG, 1)
         assertNodeCount(PLAYER_SINGLE_COLUMN_LAYOUT_TAG, 0)
     }
@@ -143,6 +146,7 @@ class PlayerContentLayoutComposeTest {
                                 Box(Modifier.height(600.dp))
                             }
                         },
+                        recommendations = { Box(it.testTag(RECOMMENDATIONS_TAG).height(600.dp)) },
                     )
                 }
             }
@@ -162,3 +166,4 @@ class PlayerContentLayoutComposeTest {
 
 private const val VIEWPORT_TAG = "player_viewport"
 private const val DETAILS_TAG = "player_details"
+private const val RECOMMENDATIONS_TAG = "player_recommendations"
