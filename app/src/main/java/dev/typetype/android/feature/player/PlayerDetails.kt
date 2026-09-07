@@ -2,7 +2,6 @@ package dev.typetype.android.feature.player
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -38,12 +37,10 @@ internal fun PlayerDetails(
     onAction: (PlayerAction) -> Unit,
     onShowComments: () -> Unit,
     onShowDownloads: () -> Unit,
-    onPlayVideo: (String) -> Unit,
     onOpenChannel: (String) -> Unit,
     onToggleSubscription: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val videoMenuScope = rememberVideoMenuScope(onOpenChannel = onOpenChannel)
     val branding = rememberVideoBranding(
         sourceUrl = videoUrl,
         title = stream.title,
@@ -92,16 +89,26 @@ internal fun PlayerDetails(
             onSubscribeClick = onToggleSubscription,
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-        if (!userSettings.hideRelatedVideos) {
-            RelatedStreamsSection(
-                videos = stream.relatedStreams,
-                onPlayVideo = onPlayVideo,
-                menuScope = videoMenuScope,
-                onOpenChannel = onOpenChannel,
-                autoplayEnabled = userSettings.autoplay,
-                onAutoplayChange = { onAction(PlayerAction.OnSetAutoplay(it)) },
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
     }
+}
+
+@Composable
+internal fun PlayerRecommendations(
+    stream: Stream,
+    userSettings: UserSettings,
+    onPlayVideo: (String) -> Unit,
+    onOpenChannel: (String) -> Unit,
+    onAction: (PlayerAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (userSettings.hideRelatedVideos) return
+    RelatedStreamsSection(
+        videos = stream.relatedStreams,
+        onPlayVideo = onPlayVideo,
+        menuScope = rememberVideoMenuScope(onOpenChannel = onOpenChannel),
+        onOpenChannel = onOpenChannel,
+        autoplayEnabled = userSettings.autoplay,
+        onAutoplayChange = { onAction(PlayerAction.OnSetAutoplay(it)) },
+        modifier = modifier.padding(16.dp),
+    )
 }

@@ -6,6 +6,7 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -65,6 +66,7 @@ fun PlayerTimeBar(
     modifier: Modifier = Modifier,
     segments: List<SponsorBlockSegment> = emptyList(),
     compact: Boolean = false,
+    expanded: Boolean = false,
     previewPositionMs: Long? = null,
     onScrubbingChange: (Boolean) -> Unit = {},
 ) {
@@ -86,12 +88,12 @@ fun PlayerTimeBar(
     ) {
         Text(
             text = positionLabel,
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp),
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = if (expanded) 16.sp else 12.sp),
             color = Color.White,
             modifier = if (compact) {
                 Modifier.widthIn(min = COMPACT_TIME_LABEL_MIN_WIDTH)
             } else {
-                Modifier.width(TIME_LABEL_WIDTH)
+                Modifier.width(if (expanded) 68.dp else TIME_LABEL_WIDTH)
             },
             textAlign = TextAlign.End,
         )
@@ -100,6 +102,7 @@ fun PlayerTimeBar(
             durationMs = durationMs,
             segments = segments,
             compact = compact,
+            expanded = expanded,
             emphasized = emphasized,
             onScrub = {
                 onScrubbingChange(true)
@@ -123,16 +126,16 @@ fun PlayerTimeBar(
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = if (compact) 2.dp else 4.dp)
-                .height(if (compact) COMPACT_TIMELINE_HEIGHT else TIMELINE_HEIGHT),
+                .height(if (expanded) 56.dp else if (compact) COMPACT_TIMELINE_HEIGHT else TIMELINE_HEIGHT),
         )
         Text(
             text = durationLabel,
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp),
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = if (expanded) 16.sp else 12.sp),
             color = Color.White.copy(alpha = 0.7f),
             modifier = if (compact) {
                 Modifier.widthIn(min = COMPACT_TIME_LABEL_MIN_WIDTH)
             } else {
-                Modifier.width(TIME_LABEL_WIDTH)
+                Modifier.width(if (expanded) 68.dp else TIME_LABEL_WIDTH)
             },
         )
     }
@@ -145,6 +148,7 @@ internal fun TimelineTrack(
     segments: List<SponsorBlockSegment>,
     compact: Boolean,
     emphasized: Boolean = false,
+    expanded: Boolean = false,
     interactive: Boolean = true,
     onScrub: (Long) -> Unit,
     onScrubFinished: (Long) -> Unit,
@@ -154,7 +158,7 @@ internal fun TimelineTrack(
     modifier: Modifier = Modifier,
 ) {
     val activeColor = MaterialTheme.colorScheme.primary
-    val inactiveColor = Color.Black.copy(alpha = 0.38f)
+    val inactiveColor = if (expanded) Color.White.copy(alpha = 0.3f) else Color.Black.copy(alpha = 0.38f)
     val timelineModifier = if (interactive) {
         modifier
             .semantics {
@@ -201,11 +205,13 @@ internal fun TimelineTrack(
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val targetTrackHeight = when {
+                expanded -> if (emphasized) 10.dp else 6.dp
                 emphasized -> SCRUBBING_TRACK_HEIGHT
                 compact -> COMPACT_TRACK_HEIGHT
                 else -> TRACK_HEIGHT
             }
             val targetThumbSize = when {
+                expanded -> if (emphasized) 32.dp else 24.dp
                 emphasized -> SCRUBBING_THUMB_SIZE
                 compact -> COMPACT_THUMB_WIDTH
                 else -> THUMB_WIDTH
@@ -275,13 +281,15 @@ internal fun PlayerSeekScrubOverlay(
     isFullscreen: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier = modifier.height(if (isFullscreen) 52.dp else 40.dp)) {
+    BoxWithConstraints(modifier = modifier) {
+        val expanded = maxWidth >= 600.dp
         TimelineTrack(
             positionMs = positionMs,
             durationMs = player.duration.coerceAtLeast(0L),
             segments = segments,
             compact = false,
             emphasized = true,
+            expanded = expanded,
             interactive = false,
             onScrub = {},
             onScrubFinished = {},
@@ -290,7 +298,8 @@ internal fun PlayerSeekScrubOverlay(
             accessibilityStateDescription = "",
             modifier = Modifier
                 .align(Alignment.Center)
-                .fillMaxSize()
+                .fillMaxWidth()
+                .height(if (expanded) 72.dp else if (isFullscreen) 52.dp else 40.dp)
                 .padding(horizontal = 4.dp),
         )
     }
