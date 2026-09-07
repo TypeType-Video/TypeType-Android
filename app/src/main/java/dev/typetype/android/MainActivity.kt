@@ -15,6 +15,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.SideEffect
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.luminance
+import androidx.core.view.WindowCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -88,6 +92,11 @@ class MainActivity : ComponentActivity(), PictureInPictureActionStateOwner {
         setContent {
             val preferences by viewModel.preferences.collectAsStateWithLifecycle()
             TypeTypeTheme(preferences = preferences) {
+                val lightBackground = MaterialTheme.colorScheme.background.luminance() > 0.5f
+                SideEffect {
+                    WindowCompat.getInsetsController(window, window.decorView)
+                        .isAppearanceLightStatusBars = lightBackground
+                }
                 val state by viewModel.state.collectAsStateWithLifecycle()
                 val startRoute = state.startRoute
                 val pendingCrashReport = state.pendingCrashReport

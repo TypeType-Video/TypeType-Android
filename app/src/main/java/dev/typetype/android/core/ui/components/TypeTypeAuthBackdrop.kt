@@ -19,12 +19,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.MaterialTheme
 import dev.typetype.android.R
 
 @Composable
 fun TypeTypeAuthBackdrop(content: @Composable () -> Unit) {
-    val background = MaterialTheme.colorScheme.background
+    val background = androidx.compose.material3.MaterialTheme.colorScheme.background
     val dark = background.luminance() < 0.5f
     Box(Modifier.fillMaxSize().background(background)) {
         Box(
