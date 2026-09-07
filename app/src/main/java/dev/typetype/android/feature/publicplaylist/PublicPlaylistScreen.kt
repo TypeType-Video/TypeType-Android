@@ -2,6 +2,13 @@ package dev.typetype.android.feature.publicplaylist
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -132,53 +139,69 @@ internal fun PublicPlaylistContentGrid(
 ) {
     val playlist = requireNotNull(state.playlist)
     val videos = state.videos.filterNot(menuScope::isHidden)
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = 300.dp),
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        item(span = { GridItemSpan(maxLineSpan) }, key = "playlist-header") {
-            PublicPlaylistHeader(
-                playlist = playlist,
-                loadedCount = videos.size,
-                hasMore = state.nextPage != null,
-                canSave = state.canSave,
-                isSaved = state.savedItemId != null,
-                saveInFlight = state.saveInFlight,
-                saveErrorMessage = state.saveErrorMessage,
-                onPlay = { onPlayQueue(playlist.title, videos, false) },
-                onShuffle = { onPlayQueue(playlist.title, videos, true) },
-                onToggleSaved = onToggleSaved,
-            )
-        }
-        items(videos, key = { it.url }, contentType = { "public-playlist-video" }) { video ->
-            VideoCard(
-                video = video,
-                onClick = { onPlayVideo(video.url) },
-                onChannelClick = { onOpenChannel(video.uploaderUrl) },
-                onMenuAction = { action -> menuScope.onAction(action, video) },
-                menuItemState = menuScope.stateFor(video),
-                modifier = Modifier.padding(horizontal = 8.dp),
-            )
-        }
-        if (videos.isEmpty()) {
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                Text(
-                    text = stringResource(R.string.public_playlist_empty),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.fillMaxWidth().padding(24.dp),
-                )
+    val gridState = rememberLazyGridState()
+    val header: @Composable (Boolean) -> Unit = { stacked ->
+        PublicPlaylistHeader(
+            stacked = stacked,
+            playlist = playlist,
+            loadedCount = videos.size,
+            hasMore = state.nextPage != null,
+            canSave = state.canSave,
+            isSaved = state.savedItemId != null,
+            saveInFlight = state.saveInFlight,
+            saveErrorMessage = state.saveErrorMessage,
+            onPlay = { onPlayQueue(playlist.title, videos, false) },
+            onShuffle = { onPlayQueue(playlist.title, videos, true) },
+            onToggleSaved = onToggleSaved,
+        )
+    }
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val twoPane = maxWidth >= 840.dp && maxHeight >= 480.dp
+        Row(Modifier.fillMaxSize()) {
+            if (twoPane) {
+                Column(Modifier.width(320.dp).fillMaxHeight().verticalScroll(rememberScrollState())) {
+                    header(true)
+                }
             }
-        }
-        item(span = { GridItemSpan(maxLineSpan) }, key = "playlist-pagination") {
-            PublicPlaylistPagination(
-                cursor = state.nextPage,
-                loading = state.isLoadingMore,
-                failed = state.loadMoreError,
-                onLoadMore = onLoadMore,
-            )
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 300.dp),
+                state = gridState,
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                if (!twoPane) {
+                    item(span = { GridItemSpan(maxLineSpan) }, key = "playlist-header") { header(false) }
+                }
+                items(videos, key = { it.url }, contentType = { "public-playlist-video" }) { video ->
+                    VideoCard(
+                        video = video,
+                        onClick = { onPlayVideo(video.url) },
+                        onChannelClick = { onOpenChannel(video.uploaderUrl) },
+                        onMenuAction = { action -> menuScope.onAction(action, video) },
+                        menuItemState = menuScope.stateFor(video),
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                    )
+                }
+                if (videos.isEmpty()) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        Text(
+                            text = stringResource(R.string.public_playlist_empty),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.fillMaxWidth().padding(24.dp),
+                        )
+                    }
+                }
+                item(span = { GridItemSpan(maxLineSpan) }, key = "playlist-pagination") {
+                    PublicPlaylistPagination(
+                        cursor = state.nextPage,
+                        loading = state.isLoadingMore,
+                        failed = state.loadMoreError,
+                        onLoadMore = onLoadMore,
+                    )
+                }
+            }
         }
     }
 }

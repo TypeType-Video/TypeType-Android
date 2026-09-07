@@ -20,7 +20,7 @@ object WindowHelper {
             }
         }
 
-        WindowCompat.setDecorFitsSystemWindows(window, !isFullscreen)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         val noLimits = WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
         if (isFullscreen) {
