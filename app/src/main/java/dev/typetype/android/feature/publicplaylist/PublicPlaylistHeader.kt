@@ -46,21 +46,23 @@ fun PublicPlaylistHeader(
     onPlay: () -> Unit,
     onShuffle: () -> Unit,
     onToggleSaved: () -> Unit,
+    stacked: Boolean = false,
 ) {
     val serverBaseUrl = LocalServerBaseUrl.current
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Row(modifier = Modifier.fillMaxWidth()) {
+        val thumbnail: @Composable (Modifier) -> Unit = { imageModifier ->
             AsyncImage(
                 model = buildImageUrl(serverBaseUrl, playlist.thumbnailUrl),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.width(150.dp).aspectRatio(16f / 9f).clip(RoundedCornerShape(12.dp)),
+                modifier = imageModifier.aspectRatio(16f / 9f).clip(RoundedCornerShape(12.dp)),
             )
-            Spacer(Modifier.width(14.dp))
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        }
+        val identity: @Composable (Modifier) -> Unit = { identityModifier ->
+            Column(modifier = identityModifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = playlist.title,
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
@@ -83,6 +85,16 @@ fun PublicPlaylistHeader(
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+        }
+        if (stacked) {
+            thumbnail(Modifier.fillMaxWidth())
+            identity(Modifier.fillMaxWidth())
+        } else {
+            Row(Modifier.fillMaxWidth()) {
+                thumbnail(Modifier.width(150.dp))
+                Spacer(Modifier.width(14.dp))
+                identity(Modifier.weight(1f))
             }
         }
         Row(

@@ -1,7 +1,14 @@
 package dev.typetype.android
 
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -90,8 +97,10 @@ fun AppShell(
             currentDestination?.hasRoute<SearchRoute>() == true ||
             currentDestination?.hasRoute<NotificationsRoute>() == true
     )
-    var activeTabRoute by rememberSaveable { mutableStateOf<String?>(null) }
+    var selectedTabRoute by rememberSaveable { mutableStateOf<String?>(null) }
     var isPlayerFullscreen by remember { mutableStateOf(false) }
+    var bottomNavigationHeight by remember { mutableStateOf(0.dp) }
+    val density = LocalDensity.current
     var playerTransitionProgress by remember { mutableFloatStateOf(0f) }
     val playerHostState by playerHostController.state.collectAsStateWithLifecycle()
     val appChromeVisible = isAppChromeVisible(playerHostState.target, isPlayerFullscreen)
@@ -103,9 +112,13 @@ fun AppShell(
     )
     LaunchedEffect(currentDestination) {
         topLevelTabs.firstOrNull { currentDestination.matchesRoute(it.route) }?.let {
-            activeTabRoute = it.route::class.qualifiedName
+            selectedTabRoute = it.route::class.qualifiedName
         }
     }
+    val selectedTabRouteQualifiedName = selectedTabRoute
+        ?: topLevelTabs.firstOrNull { currentDestination.matchesRoute(it.route) }
+            ?.route
+            ?.let { it::class.qualifiedName }
 
     val mediaController = rememberMediaController().value
     val snackbarHostState = remember { SnackbarHostState() }
@@ -113,18 +126,10 @@ fun AppShell(
         LocalMediaController provides mediaController,
         LocalAppSnackbarHost provides snackbarHostState,
     ) {
-        BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-            val usesNavigationRail =
+        BoxWithConstraints(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            val tabletLayout =
                 minOf(maxWidth, maxHeight) >= WIDE_NAVIGATION_THRESHOLD
             Row(modifier = Modifier.fillMaxSize()) {
-                if (usesNavigationRail && showsNavigation && appChromeVisible) {
-                    AppNavigationRail(
-                        currentDestination = currentDestination,
-                        fallbackTabRouteQualifiedName = activeTabRoute,
-                        onTabClick = navController::navigateTopLevel,
-                        tabs = navigationTabs,
-                    )
-                }
                 Box(modifier = Modifier.weight(1f)) {
                     Scaffold(
                         contentWindowInsets = if (isPlayerFullscreen || isShorts) {
@@ -133,7 +138,7 @@ fun AppShell(
                             WindowInsets.systemBars
                         },
                         topBar = {
-                            if (isTopLevel && !isShorts && !usesNavigationRail) {
+                            if (isTopLevel && !isShorts && !tabletLayout) {
                                 AppTopBar(
                                     onOpenSearch = onOpenSearch,
                                     onOpenNotifications = onOpenNotifications,
@@ -159,13 +164,20 @@ fun AppShell(
                             }
                         },
                         bottomBar = {
-                            if (!usesNavigationRail && showsNavigation) {
+                            if (showsNavigation && !isPlayerFullscreen) {
                                 AppBottomBar(
-                                    currentDestination = currentDestination,
-                                    fallbackTabRouteQualifiedName = activeTabRoute,
-                                    onTabClick = navController::navigateTopLevel,
+                                    expanded = tabletLayout,
+                                    selectedTabRouteQualifiedName = selectedTabRouteQualifiedName,
+                                    onTabClick = { tab: TopLevelTab ->
+                                        if (tabletLayout && playerHostState.target == PlayerHostTarget.Expanded) {
+                                            playerHostController.minimize()
+                                        }
+                                        navController.navigateTopLevel(tab.route, selectedTabRouteQualifiedName)
+                                        selectedTabRoute = tab.route::class.qualifiedName
+                                    },
                                     tabs = navigationTabs,
-                                    modifier = Modifier.playerChrome(phoneChromeAlpha),
+                                    modifier = (if (tabletLayout) Modifier else Modifier.playerChrome(phoneChromeAlpha))
+                                        .onSizeChanged { bottomNavigationHeight = with(density) { it.height.toDp() } },
                                 )
                             }
                         },
@@ -175,6 +187,7 @@ fun AppShell(
                             Modifier
                                 .fillMaxSize()
                                 .padding(padding)
+                                .consumeWindowInsets(padding)
                                 .padding(
                                     bottom = if (playerHostState.target == PlayerHostTarget.Mini) {
                                         64.dp
@@ -186,8 +199,14 @@ fun AppShell(
                     }
                     PlayerHost(
                         controller = playerHostController,
+                        reserveNavigationBarInset = !tabletLayout || !showsNavigation || isPlayerFullscreen,
+                        modifier = Modifier.padding(
+                            bottom = if (tabletLayout && showsNavigation && !isPlayerFullscreen) bottomNavigationHeight else 0.dp,
+                        ).consumeWindowInsets(PaddingValues(
+                            bottom = if (tabletLayout && showsNavigation && !isPlayerFullscreen) bottomNavigationHeight else 0.dp,
+                        )),
                         bottomBarHeightDp = if (
-                            !usesNavigationRail && showsNavigation
+                            !tabletLayout && showsNavigation && !isPlayerFullscreen
                         ) {
                             NAV_BAR_HEIGHT_DP
                         } else {
@@ -234,7 +253,16 @@ internal fun playerPhoneChromeAlpha(
     else -> 0f
 }
 
-private fun NavHostController.navigateTopLevel(route: Any) {
+internal fun NavHostController.navigateTopLevel(
+    route: Any,
+    activeTabRouteQualifiedName: String?,
+) {
+    val currentDestination = currentDestination
+    if (currentDestination.matchesRoute(route)) return
+
+    val isSameTab = activeTabRouteQualifiedName == route::class.qualifiedName
+    if (isSameTab && popBackStack(route = route, inclusive = false, saveState = true)) return
+
     if (currentDestination?.hasRoute<SearchRoute>() == true) {
         popBackStack()
     }

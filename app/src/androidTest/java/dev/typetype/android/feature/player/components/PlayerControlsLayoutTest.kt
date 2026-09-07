@@ -5,9 +5,14 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.test.assertHeightIsAtLeast
+import androidx.compose.ui.test.onNodeWithContentDescription
+import dev.typetype.android.R
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
@@ -15,6 +20,7 @@ import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import java.lang.reflect.Proxy
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -27,9 +33,32 @@ class PlayerControlsLayoutTest {
 
     @Test
     fun portraitControlsDoNotOverlapInsideShortVideoViewport() {
+        setControls(360.dp, 202.dp)
+        assertControlsDoNotOverlap()
+    }
+
+    @Test
+    fun tabletControlsHaveLargerTargetsWithoutOverlapping() {
+        setControls(720.dp, 405.dp)
+        assertControlsDoNotOverlap()
+        composeRule.onNodeWithTag(PLAYER_CENTER_CONTROLS_TAG)
+            .assertHeightIsAtLeast(96.dp)
+        composeRule.onNodeWithContentDescription(
+            composeRule.activity.getString(R.string.player_fullscreen),
+        ).assertHeightIsAtLeast(64.dp)
+        composeRule.onNodeWithContentDescription(
+            composeRule.activity.getString(R.string.player_playback_options),
+        ).assertHeightIsAtLeast(64.dp)
+    }
+
+    private fun setControls(width: Dp, height: Dp) {
         val player = controlsLayoutPlayer()
         composeRule.setContent {
-            Box(Modifier.size(width = 360.dp, height = 202.dp)) {
+            Box(
+                Modifier
+                    .size(width = width, height = height)
+                    .testTag(PLAYER_CONTROLS_VIEWPORT_TAG),
+            ) {
                 PlayerControls(
                     player = player,
                     title = "Portrait controls",
@@ -40,7 +69,9 @@ class PlayerControlsLayoutTest {
                 )
             }
         }
+    }
 
+    private fun assertControlsDoNotOverlap() {
         val top = composeRule.onNodeWithTag(PLAYER_TOP_CONTROLS_TAG, useUnmergedTree = true)
             .fetchSemanticsNode()
             .boundsInRoot
@@ -50,9 +81,14 @@ class PlayerControlsLayoutTest {
         val bottom = composeRule.onNodeWithTag(PLAYER_BOTTOM_CONTROLS_TAG, useUnmergedTree = true)
             .fetchSemanticsNode()
             .boundsInRoot
+        val viewport = composeRule.onNodeWithTag(
+            PLAYER_CONTROLS_VIEWPORT_TAG,
+            useUnmergedTree = true,
+        ).fetchSemanticsNode().boundsInRoot
 
         assertTrue("Top controls overlap center controls", top.bottom <= center.top)
         assertTrue("Center controls overlap bottom controls", center.bottom <= bottom.top)
+        assertEquals("Portrait controls stop at the viewport bottom", viewport.bottom, bottom.bottom, 1f)
     }
 }
 

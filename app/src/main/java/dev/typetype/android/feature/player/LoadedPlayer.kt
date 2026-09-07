@@ -5,10 +5,10 @@ import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.derivedStateOf
@@ -26,7 +26,6 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.platform.LocalContext
 import androidx.paging.PagingData
 import dev.typetype.android.domain.comments.Comment
@@ -206,7 +205,7 @@ fun LoadedPlayer(
                         maxTopPx = expandedTopPaddingPx,
                         progress = hostTransitionProgress,
                     )
-                }
+                },
             ),
     ) {
         PlayerContentLayout(
@@ -281,6 +280,12 @@ fun LoadedPlayer(
                     }
                 }
             },
+            recommendations = { recommendationsModifier ->
+                PlayerRecommendations(
+                    stream, userSettings, onPlayVideo, onOpenChannel, onAction,
+                    recommendationsModifier,
+                )
+            },
             details = { detailsModifier ->
                 PlayerDetails(
                     stream = stream,
@@ -297,7 +302,6 @@ fun LoadedPlayer(
                     onAction = onAction,
                     onShowComments = { commentsVisible = true },
                     onShowDownloads = { downloadPickerVisible = true },
-                    onPlayVideo = onPlayVideo,
                     onOpenChannel = onOpenChannel,
                     onToggleSubscription = onToggleSubscription,
                     modifier = detailsModifier,
@@ -321,24 +325,4 @@ fun LoadedPlayer(
         onDismissDownload = { downloadPickerVisible = false },
         onAction = onAction,
     )
-}
-
-private fun Modifier.playerTopProgressPadding(
-    maxTopPx: Float,
-    progress: () -> Float,
-): Modifier = layout { measurable, constraints ->
-    val topPx = (maxTopPx * (1f - progress().coerceIn(0f, 1f))).roundToInt()
-    val maxHeight = if (constraints.hasBoundedHeight) {
-        (constraints.maxHeight - topPx).coerceAtLeast(0)
-    } else {
-        constraints.maxHeight
-    }
-    val childConstraints = constraints.copy(
-        minHeight = constraints.minHeight.coerceAtMost(maxHeight),
-        maxHeight = maxHeight,
-    )
-    val placeable = measurable.measure(childConstraints)
-    layout(placeable.width, placeable.height + topPx) {
-        placeable.placeRelative(0, topPx)
-    }
 }

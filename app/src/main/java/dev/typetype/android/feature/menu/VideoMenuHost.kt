@@ -1,6 +1,5 @@
 package dev.typetype.android.feature.menu
 
-import android.content.Intent
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -10,7 +9,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -19,7 +17,7 @@ import dev.typetype.android.core.ui.components.LocalAppSnackbarHost
 import dev.typetype.android.core.ui.components.VideoMenuAction
 import dev.typetype.android.core.ui.components.VideoMenuItemState
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
-import dev.typetype.android.core.ui.share.buildShareUrl
+import dev.typetype.android.core.ui.share.ShareChooserSheet
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.navigation.canonicalVideoIdentity
 import dev.typetype.android.domain.actions.titleMatchesBlockedKeyword
@@ -52,7 +50,6 @@ class VideoMenuScope internal constructor(
 fun rememberVideoMenuScope(
     onOpenChannel: (channelUrl: String) -> Unit,
 ): VideoMenuScope {
-    val context = LocalContext.current
     val viewModel: VideoMenuHandlerViewModel = hiltViewModel()
     val playlists by viewModel.playlists.collectAsStateWithLifecycle()
     val favorites by viewModel.favoriteUrls.collectAsStateWithLifecycle()
@@ -61,11 +58,11 @@ fun rememberVideoMenuScope(
     val blockedVideos by viewModel.blockedVideoUrls.collectAsStateWithLifecycle()
     val blockedChannels by viewModel.blockedChannelUrls.collectAsStateWithLifecycle()
     val blockedKeywords by viewModel.blockedKeywords.collectAsStateWithLifecycle()
-    val shareChooserTitle = stringResource(R.string.video_menu_share_chooser)
     val serverBaseUrl = LocalServerBaseUrl.current
 
     var pickerVideo by remember { mutableStateOf<Video?>(null) }
     var downloadVideo by remember { mutableStateOf<Video?>(null) }
+    var shareVideoUrl by remember { mutableStateOf<String?>(null) }
 
     val effectiveHost: SnackbarHostState =
         LocalAppSnackbarHost.current ?: remember { SnackbarHostState() }
@@ -78,6 +75,14 @@ fun rememberVideoMenuScope(
                 )
             }
         }
+    }
+
+    shareVideoUrl?.let { videoUrl ->
+        ShareChooserSheet(
+            serverBaseUrl = serverBaseUrl,
+            videoUrl = videoUrl,
+            onDismiss = { shareVideoUrl = null },
+        )
     }
 
     pickerVideo?.let { video ->
@@ -125,13 +130,7 @@ fun rememberVideoMenuScope(
                 canonicalVideoIdentity(video.url) in watched,
             )
             VideoMenuAction.Download -> downloadVideo = video
-            VideoMenuAction.Share -> {
-                val intent = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, buildShareUrl(serverBaseUrl, video.url))
-                }
-                context.startActivity(Intent.createChooser(intent, shareChooserTitle))
-            }
+            VideoMenuAction.Share -> shareVideoUrl = video.url
             VideoMenuAction.OpenChannel -> onOpenChannel(video.uploaderUrl)
             VideoMenuAction.BlockVideo -> viewModel.blockVideo(video)
             VideoMenuAction.BlockChannel -> viewModel.blockChannel(video)

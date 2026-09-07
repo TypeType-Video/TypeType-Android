@@ -139,7 +139,7 @@ fun RelatedVideoCard(
             Text(
                 text = stringResource(R.string.video_views_short, formatRelatedViews(video.viewCount)),
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.outlineVariant,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
             )
         }

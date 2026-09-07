@@ -6,31 +6,30 @@ import org.junit.Test
 
 class PlayerSurfaceRefreshGateTest {
     @Test
-    fun `initial lifecycle events do not recreate the surface`() {
+    fun `background cycle without screen off does not request refresh`() {
         val gate = PlayerSurfaceRefreshGate()
 
-        assertFalse(gate.refresh())
-        assertFalse(gate.refresh())
+        assertFalse(gate.consumeScreenOff())
+        assertFalse(gate.consumeScreenOff())
     }
 
     @Test
-    fun `multiple wake signals recreate the surface once`() {
+    fun `screen off requests refresh once`() {
         val gate = PlayerSurfaceRefreshGate()
 
-        gate.invalidate()
-        assertTrue(gate.refresh())
-        assertFalse(gate.refresh())
+        gate.markScreenOff()
+        assertTrue(gate.consumeScreenOff())
+        assertFalse(gate.consumeScreenOff())
     }
 
     @Test
-    fun `each inactive cycle permits one surface recreation`() {
+    fun `each screen off cycle permits one surface recreation`() {
         val gate = PlayerSurfaceRefreshGate()
 
         repeat(1_000) {
-            gate.invalidate()
-            gate.invalidate()
-            assertTrue(gate.refresh())
-            assertFalse(gate.refresh())
+            gate.markScreenOff()
+            assertTrue(gate.consumeScreenOff())
+            assertFalse(gate.consumeScreenOff())
         }
     }
 }

@@ -6,6 +6,22 @@ import org.junit.Test
 class ShareUrlsTest {
 
     @Test
+    fun sharesCanonicalProviderSourceLinks() {
+        assertEquals(
+            "https://www.youtube.com/watch?v=AbCdEfGhI_1",
+            buildSourceShareUrl("AbCdEfGhI_1"),
+        )
+        assertEquals(
+            "https://www.bilibili.com/video/BV1UbX3B2EZQ?p=3",
+            buildSourceShareUrl("BV1UbX3B2EZQ?p=3"),
+        )
+        assertEquals(
+            "https://www.nicovideo.jp/watch/sm46525483",
+            buildSourceShareUrl("sm46525483"),
+        )
+    }
+
+    @Test
     fun sharesCompactPublicWatchRoutes() {
         assertEquals(
             "https://watch.example/watch?v=dQw4w9WgXcQ",
@@ -29,6 +45,40 @@ class ShareUrlsTest {
         assertEquals(
             "https://youtube.com/watch?v=dQw4w9WgXcQ",
             buildShareUrl(null, "https://youtube.com/watch?v=dQw4w9WgXcQ"),
+        )
+    }
+
+    @Test
+    fun offersTypeTypeAndOriginalProviderLinks() {
+        assertEquals(
+            listOf(
+                ShareChoice(
+                    target = ShareTarget.TypeType,
+                    url = "https://watch.example/watch?v=dQw4w9WgXcQ",
+                ),
+                ShareChoice(
+                    target = ShareTarget.Source,
+                    url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                    providerName = "YouTube",
+                ),
+            ),
+            buildShareChoices(
+                "https://watch.example/api",
+                "https://youtube.com/watch?v=dQw4w9WgXcQ",
+            ),
+        )
+    }
+
+    @Test
+    fun offersOnlyTypeTypeLinkForUnknownProvider() {
+        assertEquals(
+            listOf(
+                ShareChoice(
+                    target = ShareTarget.TypeType,
+                    url = "https://watch.example/watch?v=https%3A%2F%2Fexample.com%2Fvideo",
+                ),
+            ),
+            buildShareChoices("https://watch.example/api", "https://example.com/video"),
         )
     }
 

@@ -6,11 +6,13 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
@@ -54,6 +56,8 @@ private val THUMB_WIDTH = 14.dp
 private val THUMB_HEIGHT = 14.dp
 private val COMPACT_THUMB_WIDTH = 10.dp
 private val COMPACT_THUMB_HEIGHT = 10.dp
+private val SCRUBBING_TRACK_HEIGHT = 6.dp
+private val SCRUBBING_THUMB_SIZE = 22.dp
 
 @OptIn(markerClass = [UnstableApi::class])
 @Composable
@@ -62,12 +66,18 @@ fun PlayerTimeBar(
     modifier: Modifier = Modifier,
     segments: List<SponsorBlockSegment> = emptyList(),
     compact: Boolean = false,
+    expanded: Boolean = false,
+    previewPositionMs: Long? = null,
+    onScrubbingChange: (Boolean) -> Unit = {},
 ) {
     val progressState = rememberProgressStateWithTickInterval(player, TICK_INTERVAL_MS)
     var scrubPositionMs by remember { mutableStateOf<Long?>(null) }
 
     val durationMs = progressState.durationMs.coerceAtLeast(0L)
-    val displayedPosMs = scrubPositionMs ?: progressState.currentPositionMs.coerceIn(0L, durationMs)
+    val displayedPosMs = scrubPositionMs
+        ?: previewPositionMs?.takeIf { durationMs > 0L }
+        ?: progressState.currentPositionMs.coerceIn(0L, durationMs)
+    val emphasized = scrubPositionMs != null || previewPositionMs != null
     val positionLabel = formatPlayerTime(displayedPosMs)
     val durationLabel = formatPlayerTime(durationMs)
 
@@ -78,12 +88,12 @@ fun PlayerTimeBar(
     ) {
         Text(
             text = positionLabel,
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp),
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = if (expanded) 16.sp else 12.sp),
             color = Color.White,
             modifier = if (compact) {
                 Modifier.widthIn(min = COMPACT_TIME_LABEL_MIN_WIDTH)
             } else {
-                Modifier.width(TIME_LABEL_WIDTH)
+                Modifier.width(if (expanded) 68.dp else TIME_LABEL_WIDTH)
             },
             textAlign = TextAlign.End,
         )
@@ -92,12 +102,21 @@ fun PlayerTimeBar(
             durationMs = durationMs,
             segments = segments,
             compact = compact,
-            onScrub = { scrubPositionMs = it },
+            expanded = expanded,
+            emphasized = emphasized,
+            onScrub = {
+                onScrubbingChange(true)
+                scrubPositionMs = it
+            },
             onScrubFinished = { targetMs ->
                 player.seekTo(targetMs)
+                onScrubbingChange(false)
                 scrubPositionMs = null
             },
-            onScrubCancelled = { scrubPositionMs = null },
+            onScrubCancelled = {
+                onScrubbingChange(false)
+                scrubPositionMs = null
+            },
             accessibilityLabel = stringResource(R.string.player_timeline),
             accessibilityStateDescription = stringResource(
                 R.string.player_timeline_position,
@@ -107,16 +126,16 @@ fun PlayerTimeBar(
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = if (compact) 2.dp else 4.dp)
-                .height(if (compact) COMPACT_TIMELINE_HEIGHT else TIMELINE_HEIGHT),
+                .height(if (expanded) 56.dp else if (compact) COMPACT_TIMELINE_HEIGHT else TIMELINE_HEIGHT),
         )
         Text(
             text = durationLabel,
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp),
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = if (expanded) 16.sp else 12.sp),
             color = Color.White.copy(alpha = 0.7f),
             modifier = if (compact) {
                 Modifier.widthIn(min = COMPACT_TIME_LABEL_MIN_WIDTH)
             } else {
-                Modifier.width(TIME_LABEL_WIDTH)
+                Modifier.width(if (expanded) 68.dp else TIME_LABEL_WIDTH)
             },
         )
     }
@@ -128,6 +147,9 @@ internal fun TimelineTrack(
     durationMs: Long,
     segments: List<SponsorBlockSegment>,
     compact: Boolean,
+    emphasized: Boolean = false,
+    expanded: Boolean = false,
+    interactive: Boolean = true,
     onScrub: (Long) -> Unit,
     onScrubFinished: (Long) -> Unit,
     onScrubCancelled: () -> Unit,
@@ -136,9 +158,9 @@ internal fun TimelineTrack(
     modifier: Modifier = Modifier,
 ) {
     val activeColor = MaterialTheme.colorScheme.primary
-    val inactiveColor = Color.White.copy(alpha = 0.3f)
-    Box(
-        modifier = modifier
+    val inactiveColor = if (expanded) Color.White.copy(alpha = 0.3f) else Color.Black.copy(alpha = 0.38f)
+    val timelineModifier = if (interactive) {
+        modifier
             .semantics {
                 contentDescription = accessibilityLabel
                 stateDescription = accessibilityStateDescription
@@ -174,12 +196,29 @@ internal fun TimelineTrack(
                     onDragEnd = { onScrubFinished(lastTargetMs) },
                     onDragCancel = onScrubCancelled,
                 )
-            },
+            }
+    } else {
+        modifier
+    }
+    Box(
+        modifier = timelineModifier,
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val trackHeight = if (compact) COMPACT_TRACK_HEIGHT.toPx() else TRACK_HEIGHT.toPx()
-            val thumbWidth = if (compact) COMPACT_THUMB_WIDTH.toPx() else THUMB_WIDTH.toPx()
-            val thumbHeight = if (compact) COMPACT_THUMB_HEIGHT.toPx() else THUMB_HEIGHT.toPx()
+            val targetTrackHeight = when {
+                expanded -> if (emphasized) 10.dp else 6.dp
+                emphasized -> SCRUBBING_TRACK_HEIGHT
+                compact -> COMPACT_TRACK_HEIGHT
+                else -> TRACK_HEIGHT
+            }
+            val targetThumbSize = when {
+                expanded -> if (emphasized) 32.dp else 24.dp
+                emphasized -> SCRUBBING_THUMB_SIZE
+                compact -> COMPACT_THUMB_WIDTH
+                else -> THUMB_WIDTH
+            }
+            val trackHeight = targetTrackHeight.toPx()
+            val thumbWidth = targetThumbSize.toPx()
+            val thumbHeight = targetThumbSize.toPx()
             val trackTop = (size.height - trackHeight) / 2f
             val trackRadius = trackHeight / 2f
             val progress = if (durationMs > 0) positionMs.toFloat() / durationMs.toFloat() else 0f
@@ -209,7 +248,7 @@ internal fun TimelineTrack(
                 )
             }
             drawRoundRect(
-                color = activeColor,
+                color = Color.White,
                 topLeft = Offset(
                     x = playerTimeBarThumbStartX(
                         progressX = progressX,
@@ -232,6 +271,38 @@ internal fun playerTimeBarThumbStartX(
 ): Float {
     val maximumStartX = (trackWidth - thumbWidth).coerceAtLeast(0f)
     return (progressX - thumbWidth / 2f).coerceIn(0f, maximumStartX)
+}
+
+@Composable
+internal fun PlayerSeekScrubOverlay(
+    player: Player,
+    positionMs: Long,
+    segments: List<SponsorBlockSegment>,
+    isFullscreen: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    BoxWithConstraints(modifier = modifier) {
+        val expanded = maxWidth >= 600.dp
+        TimelineTrack(
+            positionMs = positionMs,
+            durationMs = player.duration.coerceAtLeast(0L),
+            segments = segments,
+            compact = false,
+            emphasized = true,
+            expanded = expanded,
+            interactive = false,
+            onScrub = {},
+            onScrubFinished = {},
+            onScrubCancelled = {},
+            accessibilityLabel = "",
+            accessibilityStateDescription = "",
+            modifier = Modifier
+                .align(Alignment.Center)
+                .fillMaxWidth()
+                .height(if (expanded) 72.dp else if (isFullscreen) 52.dp else 40.dp)
+                .padding(horizontal = 4.dp),
+        )
+    }
 }
 
 private fun Float.toPositionMs(width: Float, durationMs: Long): Long {

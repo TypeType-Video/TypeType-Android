@@ -59,6 +59,7 @@ internal fun PlayerContentLayout(
     modifier: Modifier = Modifier,
     viewport: @Composable (Modifier) -> Unit,
     details: @Composable (Modifier) -> Unit,
+    recommendations: @Composable (Modifier) -> Unit = {},
 ) {
     val currentViewport by rememberUpdatedState(viewport)
     val retainedViewport = remember {
@@ -113,6 +114,11 @@ internal fun PlayerContentLayout(
                             .playerDetailsTransition(hostTransitionProgress)
                             .then(if (detailsHidden) Modifier.clearAndSetSemantics { } else Modifier),
                     )
+                    recommendations(
+                        Modifier.fillMaxWidth()
+                            .playerDetailsTransition(hostTransitionProgress)
+                            .then(if (detailsHidden) Modifier.clearAndSetSemantics { } else Modifier),
+                    )
                 }
             }
             PlayerContentLayoutMode.TwoPane -> {
@@ -121,11 +127,11 @@ internal fun PlayerContentLayout(
                         .fillMaxSize()
                         .testTag(PLAYER_TWO_PANE_LAYOUT_TAG),
                 ) {
-                    Box(
+                    Column(
                         modifier = Modifier
                             .weight(PLAYER_PANE_WEIGHT)
-                            .fillMaxHeight(),
-                        contentAlignment = Alignment.TopStart,
+                            .fillMaxHeight()
+                            .verticalScroll(rememberScrollState()),
                     ) {
                         retainedViewport(
                             Modifier
@@ -140,8 +146,13 @@ internal fun PlayerContentLayout(
                                 .aspectRatio(VIDEO_ASPECT_RATIO)
                                 .testTag(PLAYER_VIEWPORT_TAG),
                         )
+                        details(
+                            Modifier.fillMaxWidth()
+                                .playerDetailsTransition(hostTransitionProgress)
+                                .then(if (detailsHidden) Modifier.clearAndSetSemantics { } else Modifier),
+                        )
                     }
-                    details(
+                    recommendations(
                         Modifier
                             .weight(DETAILS_PANE_WEIGHT)
                             .fillMaxHeight()
