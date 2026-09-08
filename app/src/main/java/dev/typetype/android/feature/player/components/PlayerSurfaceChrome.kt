@@ -14,6 +14,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import dev.typetype.android.R
 import androidx.media3.session.MediaController
 import dev.typetype.android.domain.stream.SponsorBlockSegment
 import dev.typetype.android.feature.player.state.ResizeMode
@@ -26,6 +28,7 @@ internal fun PlayerSurfaceChrome(
     seekPreviewPositionMs: Long?,
     seekDragOverlayVisible: Boolean,
     seekDragPositionMs: Long,
+    fineSeeking: Boolean,
     isFullscreen: Boolean,
     isInPip: Boolean,
     controlsAllowedByProgress: Boolean,
@@ -53,7 +56,14 @@ internal fun PlayerSurfaceChrome(
             modifier = Modifier.align(Alignment.BottomCenter),
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(text = formatPlayerTime(seekDragPositionMs), color = Color.White)
+                Text(
+                    text = if (fineSeeking) {
+                        stringResource(R.string.player_fine_seek_position, formatPlayerTime(seekDragPositionMs))
+                    } else {
+                        formatPlayerTime(seekDragPositionMs)
+                    },
+                    color = Color.White,
+                )
                 PlayerSeekScrubOverlay(
                     player = player,
                     positionMs = seekDragPositionMs,
