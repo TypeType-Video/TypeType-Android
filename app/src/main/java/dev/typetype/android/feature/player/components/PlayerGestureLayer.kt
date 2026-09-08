@@ -6,15 +6,8 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
-import androidx.compose.material.icons.automirrored.filled.VolumeDown
-import androidx.compose.material.icons.automirrored.filled.VolumeMute
-import androidx.compose.material.icons.automirrored.filled.VolumeOff
-import androidx.compose.material.icons.filled.BrightnessHigh
-import androidx.compose.material.icons.filled.BrightnessLow
-import androidx.compose.material.icons.filled.BrightnessMedium
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
@@ -22,10 +15,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import dev.typetype.android.R
 import dev.typetype.android.feature.player.state.DragMode
@@ -34,19 +27,9 @@ import dev.typetype.android.feature.player.state.PlayerGestureState
 import dev.typetype.android.feature.player.state.ResizeMode
 import kotlin.math.abs
 
-private const val SEEK_DRAG_MS_PER_PIXEL = 80f
 private const val DIRECTION_LOCK_THRESHOLD_PX = 18f
 private const val LEVEL_DRAG_VIEW_FRACTION = 0.75f
 private const val LONG_PRESS_SPEED_FACTOR = 2f
-
-data class PlayerGestureConfig(
-    val doubleTapSeekEnabled: Boolean = true,
-    val doubleTapSeekSeconds: Int = 10,
-    val swipeSeekEnabled: Boolean = false,
-    val swipeBrightnessVolumeEnabled: Boolean = true,
-    val longPressSpeedEnabled: Boolean = true,
-    val accessibleControlsEnabled: Boolean = false,
-)
 
 @Composable
 fun PlayerGestureLayer(
@@ -66,6 +49,14 @@ fun PlayerGestureLayer(
     onVolumeGestureStart: () -> Float = { state.volumeFraction.floatValue },
 ) {
     var savedSpeed by remember { mutableFloatStateOf(1f) }
+    var holdSpeed by remember { mutableFloatStateOf(2f) }
+    fun restoreSpeed() {
+        if (state.longPressBoostActive.value) {
+            player.setPlaybackSpeed(savedSpeed)
+            state.longPressBoostActive.value = false
+        }
+    }
+    DisposableEffect(player) { onDispose { restoreSpeed() } }
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -79,83 +70,103 @@ fun PlayerGestureLayer(
                     var lastPosition = down.position
                     var totalDrag = Offset.Zero
                     var mode = DragMode.None
+                    val speedSteps = HoldSpeedSteps(24.dp.toPx())
+                    var speedDragY = 0f
                     state.dragMode.value = DragMode.None
                     state.seekDragStartMs.longValue = player.currentPosition
                     state.seekDragTargetMs.longValue = player.currentPosition
 
-                    while (true) {
-                        val event = awaitPointerEvent(PointerEventPass.Initial)
-                        if (event.changes.count { it.pressed } > 1) {
-                            resetDragState(state)
-                            break
-                        }
-                        val change = event.changes.firstOrNull { it.id == down.id } ?: break
-                        if (!change.pressed) {
-                            when (mode) {
-                                DragMode.Seek -> player.seekTo(state.seekDragTargetMs.longValue)
-                                DragMode.FullscreenEnter -> onEnterFullscreenGesture()
-                                DragMode.FullscreenExit -> onExitFullscreenGesture()
-                                else -> Unit
+                    try {
+                        while (true) {
+                            val event = awaitPointerEvent(PointerEventPass.Initial)
+                            if (event.changes.count { it.pressed } > 1) {
+                                resetDragState(state)
+                                break
                             }
-                            resetDragState(state)
-                            break
-                        }
-                        val current = change.position
-                        val delta = current - lastPosition
-                        lastPosition = current
-                        totalDrag += delta
-                        if (mode == DragMode.None) {
-                            if (abs(totalDrag.x) < DIRECTION_LOCK_THRESHOLD_PX &&
-                                abs(totalDrag.y) < DIRECTION_LOCK_THRESHOLD_PX
-                            ) continue
-                            val candidate = pickDragMode(
-                                dragAmount = totalDrag,
-                                startX = startX,
-                                width = size.width.toFloat(),
-                            )
-                            val allowed = when (candidate) {
-                                DragMode.Seek -> config.swipeSeekEnabled
-                                DragMode.Brightness,
-                                DragMode.Volume,
-                                -> isFullscreen && config.swipeBrightnessVolumeEnabled
-                                DragMode.FullscreenEnter -> !isFullscreen
-                                DragMode.FullscreenExit -> isFullscreen && fullscreenExitGestureEnabled
-                                DragMode.None -> false
-                            }
-                            if (!allowed) continue
-                            mode = candidate
-                            state.dragMode.value = candidate
-                            onGestureFeedback()
-                            when (candidate) {
-                                DragMode.Brightness -> {
-                                    state.brightnessFraction.floatValue = onBrightnessGestureStart()
-                                    state.brightnessOverlayActive.value = true
+                            val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                            if (!change.pressed) {
+                                when (mode) {
+                                    DragMode.Seek -> player.seekTo(state.seekDragTargetMs.longValue)
+                                    DragMode.FullscreenEnter -> onEnterFullscreenGesture()
+                                    DragMode.FullscreenExit -> onExitFullscreenGesture()
+                                    else -> Unit
                                 }
-                                DragMode.Volume -> {
-                                    state.volumeFraction.floatValue = onVolumeGestureStart()
-                                    state.volumeOverlayActive.value = true
+                                resetDragState(state)
+                                break
+                            }
+                            val current = change.position
+                            val delta = current - lastPosition
+                            lastPosition = current
+                            totalDrag += delta
+                            if (state.longPressBoostActive.value) {
+                                change.consume()
+                                speedDragY += delta.y
+                                val nextSpeed = speedSteps.update(speedDragY)
+                                if (nextSpeed != holdSpeed) {
+                                    holdSpeed = nextSpeed
+                                    player.setPlaybackSpeed(nextSpeed)
+                                    onGestureFeedback()
                                 }
-                                DragMode.Seek -> state.seekDragOverlayActive.value = true
-                                DragMode.FullscreenEnter -> Unit
-                                DragMode.FullscreenExit -> Unit
-                                DragMode.None -> Unit
+                                continue
+                            }
+                            if (mode == DragMode.None) {
+                                if (abs(totalDrag.x) < DIRECTION_LOCK_THRESHOLD_PX &&
+                                    abs(totalDrag.y) < DIRECTION_LOCK_THRESHOLD_PX
+                                ) continue
+                                val candidate = pickDragMode(
+                                    dragAmount = totalDrag,
+                                    startX = startX,
+                                    width = size.width.toFloat(),
+                                )
+                                val allowed = when (candidate) {
+                                    DragMode.Seek -> config.swipeSeekEnabled && player.duration > 0
+                                    DragMode.Brightness,
+                                    DragMode.Volume,
+                                    -> isFullscreen && config.swipeBrightnessVolumeEnabled
+                                    DragMode.FullscreenEnter -> !isFullscreen
+                                    DragMode.FullscreenExit -> isFullscreen && fullscreenExitGestureEnabled
+                                    DragMode.None -> false
+                                }
+                                if (!allowed) continue
+                                mode = candidate
+                                state.dragMode.value = candidate
+                                onGestureFeedback()
+                                when (candidate) {
+                                    DragMode.Brightness -> {
+                                        state.brightnessFraction.floatValue = onBrightnessGestureStart()
+                                        state.brightnessOverlayActive.value = true
+                                    }
+                                    DragMode.Volume -> {
+                                        state.volumeFraction.floatValue = onVolumeGestureStart()
+                                        state.volumeOverlayActive.value = true
+                                    }
+                                    DragMode.Seek -> state.seekDragOverlayActive.value = true
+                                    DragMode.FullscreenEnter -> Unit
+                                    DragMode.FullscreenExit -> Unit
+                                    DragMode.None -> Unit
+                                }
+                            }
+                            if (mode != DragMode.None) {
+                                change.consume()
+                                handleDragMode(
+                                    player = player,
+                                    state = state,
+                                    mode = mode,
+                                    delta = delta,
+                                    totalDragX = totalDrag.x,
+                                    viewportWidth = size.width.toFloat(),
+                                    levelDragRangePx = levelDragRangePx(
+                                        size.width.toFloat(),
+                                        size.height.toFloat(),
+                                    ),
+                                    onAdjustBrightness = onAdjustBrightness,
+                                    onAdjustVolume = onAdjustVolume,
+                                )
                             }
                         }
-                        if (mode != DragMode.None) {
-                            change.consume()
-                            handleDragMode(
-                                player = player,
-                                state = state,
-                                mode = mode,
-                                delta = delta,
-                                levelDragRangePx = levelDragRangePx(
-                                    size.width.toFloat(),
-                                    size.height.toFloat(),
-                                ),
-                                onAdjustBrightness = onAdjustBrightness,
-                                onAdjustVolume = onAdjustVolume,
-                            )
-                        }
+                    } finally {
+                        restoreSpeed()
+                        resetDragState(state)
                     }
                 }
             }
@@ -189,18 +200,10 @@ fun PlayerGestureLayer(
                     onLongPress = {
                         if (!config.longPressSpeedEnabled) return@detectTapGestures
                         savedSpeed = player.playbackParameters.speed
+                        holdSpeed = LONG_PRESS_SPEED_FACTOR
                         player.setPlaybackSpeed(LONG_PRESS_SPEED_FACTOR)
                         state.longPressBoostActive.value = true
-                    },
-                    onPress = {
-                        try {
-                            awaitRelease()
-                        } finally {
-                            if (state.longPressBoostActive.value) {
-                                player.setPlaybackSpeed(savedSpeed)
-                                state.longPressBoostActive.value = false
-                            }
-                        }
+                        onGestureFeedback()
                     },
                 )
             }
@@ -234,7 +237,7 @@ fun PlayerGestureLayer(
             icon = volumeLevelIcon(state.volumeFraction.floatValue),
             modifier = Modifier.align(Alignment.Center),
         )
-        SpeedBoostBadge(visible = state.longPressBoostActive.value, factor = LONG_PRESS_SPEED_FACTOR)
+        SpeedBoostBadge(visible = state.longPressBoostActive.value, factor = holdSpeed)
     }
 }
 
@@ -246,6 +249,8 @@ private fun handleDragMode(
     state: PlayerGestureState,
     mode: DragMode,
     delta: Offset,
+    totalDragX: Float,
+    viewportWidth: Float,
     levelDragRangePx: Float,
     onAdjustBrightness: (Float) -> Unit,
     onAdjustVolume: (Float) -> Unit,
@@ -270,10 +275,9 @@ private fun handleDragMode(
             onAdjustVolume(next)
         }
         DragMode.Seek -> {
-            val deltaMs = (delta.x * SEEK_DRAG_MS_PER_PIXEL).toLong()
-            val duration = if (player.duration > 0) player.duration else Long.MAX_VALUE
-            state.seekDragTargetMs.longValue =
-                (state.seekDragTargetMs.longValue + deltaMs).coerceIn(0L, duration)
+            state.seekDragTargetMs.longValue = proportionalSeekTarget(
+                state.seekDragStartMs.longValue, totalDragX, viewportWidth, player.duration,
+            )
         }
         DragMode.FullscreenEnter,
         DragMode.FullscreenExit,
@@ -287,19 +291,6 @@ internal fun adjustLevelFraction(current: Float, deltaY: Float, dragRangePx: Flo
 
 internal fun levelDragRangePx(width: Float, height: Float): Float =
     minOf(width, height) * LEVEL_DRAG_VIEW_FRACTION
-
-internal fun brightnessLevelIcon(fraction: Float): ImageVector = when {
-    fraction < 0.25f -> Icons.Filled.BrightnessLow
-    fraction < 0.75f -> Icons.Filled.BrightnessMedium
-    else -> Icons.Filled.BrightnessHigh
-}
-
-internal fun volumeLevelIcon(fraction: Float): ImageVector = when {
-    fraction <= 0f -> Icons.AutoMirrored.Filled.VolumeOff
-    fraction < 0.25f -> Icons.AutoMirrored.Filled.VolumeMute
-    fraction < 0.75f -> Icons.AutoMirrored.Filled.VolumeDown
-    else -> Icons.AutoMirrored.Filled.VolumeUp
-}
 
 internal fun pickDragMode(dragAmount: Offset, startX: Float, width: Float): DragMode = when {
     abs(dragAmount.x) > abs(dragAmount.y) -> DragMode.Seek
