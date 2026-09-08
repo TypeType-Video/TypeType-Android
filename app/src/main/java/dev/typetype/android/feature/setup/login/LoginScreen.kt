@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
@@ -99,9 +100,10 @@ fun LoginScreen(
             }
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxHeight()
                     .padding(horizontal = 24.dp)
                     .widthIn(max = 480.dp)
+                    .fillMaxWidth()
                     .align(Alignment.Center)
                     .imePadding()
                     .padding(top = 72.dp, bottom = 24.dp)

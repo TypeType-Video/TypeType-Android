@@ -2,6 +2,13 @@ package dev.typetype.android.feature.podcast
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -128,50 +135,66 @@ internal fun PodcastContentGrid(
 ) {
     val podcast = requireNotNull(state.podcast)
     val episodes = state.episodes.filterNot(menuScope::isHidden)
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = 300.dp),
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        item(span = { GridItemSpan(maxLineSpan) }, key = "podcast-header") {
-            PodcastHeader(
-                podcast = podcast,
-                loadedCount = episodes.size,
-                hasMore = state.nextPage != null,
-                onPlay = { onPlayQueue(podcast.title, episodes, false) },
-                onShuffle = { onPlayQueue(podcast.title, episodes, true) },
-            )
-        }
-        items(episodes, key = { it.url }, contentType = { "podcast-episode" }) { episode ->
-            VideoCard(
-                video = episode,
-                onClick = { onPlayVideo(episode.url) },
-                onChannelClick = episode.uploaderUrl.takeIf(String::isNotBlank)?.let { url ->
-                    { onOpenChannel(url) }
-                },
-                onMenuAction = { action -> menuScope.onAction(action, episode) },
-                menuItemState = menuScope.stateFor(episode),
-                modifier = Modifier.padding(horizontal = 8.dp),
-            )
-        }
-        if (episodes.isEmpty()) {
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                Text(
-                    text = stringResource(R.string.podcast_empty),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.fillMaxWidth().padding(24.dp),
-                )
+    val gridState = rememberLazyGridState()
+    val header: @Composable (Boolean) -> Unit = { stacked ->
+        PodcastHeader(
+            stacked = stacked,
+            podcast = podcast,
+            loadedCount = episodes.size,
+            hasMore = state.nextPage != null,
+            onPlay = { onPlayQueue(podcast.title, episodes, false) },
+            onShuffle = { onPlayQueue(podcast.title, episodes, true) },
+        )
+    }
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val twoPane = maxWidth >= 840.dp && maxHeight >= 480.dp
+        Row(Modifier.fillMaxSize()) {
+            if (twoPane) {
+                Column(Modifier.width(320.dp).fillMaxHeight().verticalScroll(rememberScrollState())) {
+                    header(true)
+                }
             }
-        }
-        item(span = { GridItemSpan(maxLineSpan) }, key = "podcast-pagination") {
-            PodcastPagination(
-                cursor = state.nextPage,
-                loading = state.isLoadingMore,
-                failed = state.loadMoreError,
-                onLoadMore = onLoadMore,
-            )
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 300.dp),
+                state = gridState,
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                if (!twoPane) {
+                    item(span = { GridItemSpan(maxLineSpan) }, key = "podcast-header") { header(false) }
+                }
+                items(episodes, key = { it.url }, contentType = { "podcast-episode" }) { episode ->
+                    VideoCard(
+                        video = episode,
+                        onClick = { onPlayVideo(episode.url) },
+                        onChannelClick = episode.uploaderUrl.takeIf(String::isNotBlank)?.let { url ->
+                            { onOpenChannel(url) }
+                        },
+                        onMenuAction = { action -> menuScope.onAction(action, episode) },
+                        menuItemState = menuScope.stateFor(episode),
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                    )
+                }
+                if (episodes.isEmpty()) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        Text(
+                            text = stringResource(R.string.podcast_empty),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.fillMaxWidth().padding(24.dp),
+                        )
+                    }
+                }
+                item(span = { GridItemSpan(maxLineSpan) }, key = "podcast-pagination") {
+                    PodcastPagination(
+                        cursor = state.nextPage,
+                        loading = state.isLoadingMore,
+                        failed = state.loadMoreError,
+                        onLoadMore = onLoadMore,
+                    )
+                }
+            }
         }
     }
 }
