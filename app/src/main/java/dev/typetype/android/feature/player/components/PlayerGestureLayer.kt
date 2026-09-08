@@ -72,6 +72,7 @@ fun PlayerGestureLayer(
                     var mode = DragMode.None
                     val speedSteps = HoldSpeedSteps(24.dp.toPx())
                     var speedDragY = 0f
+                    var seekDragX = 0f
                     state.dragMode.value = DragMode.None
                     state.seekDragStartMs.longValue = player.currentPosition
                     state.seekDragTargetMs.longValue = player.currentPosition
@@ -140,7 +141,10 @@ fun PlayerGestureLayer(
                                         state.volumeFraction.floatValue = onVolumeGestureStart()
                                         state.volumeOverlayActive.value = true
                                     }
-                                    DragMode.Seek -> state.seekDragOverlayActive.value = true
+                                    DragMode.Seek -> {
+                                        state.seekDragStartMs.longValue = player.currentPosition
+                                        state.seekDragOverlayActive.value = true
+                                    }
                                     DragMode.FullscreenEnter -> Unit
                                     DragMode.FullscreenExit -> Unit
                                     DragMode.None -> Unit
@@ -148,13 +152,13 @@ fun PlayerGestureLayer(
                             }
                             if (mode != DragMode.None) {
                                 change.consume()
+                                if (mode == DragMode.Seek) seekDragX += delta.x
                                 handleDragMode(
                                     player = player,
                                     state = state,
                                     mode = mode,
                                     delta = delta,
-                                    totalDragX = totalDrag.x,
-                                    viewportWidth = size.width.toFloat(),
+                                    totalDragX = seekDragX,
                                     levelDragRangePx = levelDragRangePx(
                                         size.width.toFloat(),
                                         size.height.toFloat(),
@@ -250,7 +254,6 @@ private fun handleDragMode(
     mode: DragMode,
     delta: Offset,
     totalDragX: Float,
-    viewportWidth: Float,
     levelDragRangePx: Float,
     onAdjustBrightness: (Float) -> Unit,
     onAdjustVolume: (Float) -> Unit,
@@ -275,8 +278,8 @@ private fun handleDragMode(
             onAdjustVolume(next)
         }
         DragMode.Seek -> {
-            state.seekDragTargetMs.longValue = proportionalSeekTarget(
-                state.seekDragStartMs.longValue, totalDragX, viewportWidth, player.duration,
+            state.seekDragTargetMs.longValue = swipeSeekTarget(
+                state.seekDragStartMs.longValue, totalDragX, player.duration,
             )
         }
         DragMode.FullscreenEnter,
@@ -293,7 +296,8 @@ internal fun levelDragRangePx(width: Float, height: Float): Float =
     minOf(width, height) * LEVEL_DRAG_VIEW_FRACTION
 
 internal fun pickDragMode(dragAmount: Offset, startX: Float, width: Float): DragMode = when {
-    abs(dragAmount.x) > abs(dragAmount.y) -> DragMode.Seek
+    abs(dragAmount.x) > abs(dragAmount.y) * 1.5f -> DragMode.Seek
+    abs(dragAmount.x) > abs(dragAmount.y) -> DragMode.None
     startX in (width * 0.35f)..(width * 0.65f) && dragAmount.y < 0f -> DragMode.FullscreenEnter
     startX in (width * 0.35f)..(width * 0.65f) && dragAmount.y > 0f -> DragMode.FullscreenExit
     startX < width / 2f -> DragMode.Brightness

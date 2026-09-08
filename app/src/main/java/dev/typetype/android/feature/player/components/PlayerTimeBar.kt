@@ -35,6 +35,7 @@ import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -282,7 +283,7 @@ internal fun PlayerSeekScrubOverlay(
     modifier: Modifier = Modifier,
 ) {
     BoxWithConstraints(modifier = modifier) {
-        val expanded = maxWidth >= 600.dp
+        val expanded = LocalConfiguration.current.smallestScreenWidthDp >= 600 && maxWidth >= 600.dp
         TimelineTrack(
             positionMs = positionMs,
             durationMs = player.duration.coerceAtLeast(0L),

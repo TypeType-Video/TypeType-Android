@@ -1,6 +1,9 @@
 package dev.typetype.android.feature.player.components
 
 import android.os.Looper
+import android.content.res.Configuration
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
@@ -38,8 +41,17 @@ class PlayerControlsLayoutTest {
     }
 
     @Test
+    fun landscapePhoneKeepsNormalFullscreenControlSize() {
+        setControls(800.dp, 360.dp, smallestWidthDp = 360, fullscreen = true)
+        assertControlsDoNotOverlap()
+        val height = composeRule.onNodeWithTag(PLAYER_CENTER_CONTROLS_TAG)
+            .fetchSemanticsNode().boundsInRoot.height
+        assertEquals(with(composeRule.density) { 74.dp.toPx() }, height, 1f)
+    }
+
+    @Test
     fun tabletControlsHaveLargerTargetsWithoutOverlapping() {
-        setControls(720.dp, 405.dp)
+        setControls(720.dp, 405.dp, 720)
         assertControlsDoNotOverlap()
         composeRule.onNodeWithTag(PLAYER_CENTER_CONTROLS_TAG)
             .assertHeightIsAtLeast(96.dp)
@@ -51,22 +63,33 @@ class PlayerControlsLayoutTest {
         ).assertHeightIsAtLeast(64.dp)
     }
 
-    private fun setControls(width: Dp, height: Dp) {
+    private fun setControls(
+        width: Dp,
+        height: Dp,
+        smallestWidthDp: Int = 360,
+        fullscreen: Boolean = false,
+    ) {
         val player = controlsLayoutPlayer()
         composeRule.setContent {
-            Box(
-                Modifier
-                    .size(width = width, height = height)
-                    .testTag(PLAYER_CONTROLS_VIEWPORT_TAG),
-            ) {
-                PlayerControls(
-                    player = player,
-                    title = "Portrait controls",
-                    onNavigateBack = {},
-                    isPipAvailable = true,
-                    chaptersAvailable = true,
-                    modifier = Modifier.matchParentSize(),
-                )
+            val configuration = Configuration(LocalConfiguration.current).apply {
+                smallestScreenWidthDp = smallestWidthDp
+            }
+            CompositionLocalProvider(LocalConfiguration provides configuration) {
+                Box(
+                    Modifier
+                        .size(width = width, height = height)
+                        .testTag(PLAYER_CONTROLS_VIEWPORT_TAG),
+                ) {
+                    PlayerControls(
+                        player = player,
+                        title = "Portrait controls",
+                        onNavigateBack = {},
+                        isPipAvailable = true,
+                        isFullscreen = fullscreen,
+                        chaptersAvailable = true,
+                        modifier = Modifier.matchParentSize(),
+                    )
+                }
             }
         }
     }

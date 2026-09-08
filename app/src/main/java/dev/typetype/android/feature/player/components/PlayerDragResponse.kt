@@ -3,12 +3,13 @@ package dev.typetype.android.feature.player.components
 import kotlin.math.abs
 import kotlin.math.sign
 
-internal fun proportionalSeekTarget(startMs: Long, dragX: Float, width: Float, durationMs: Long): Long {
-    if (durationMs <= 0 || width <= 0 || !dragX.isFinite()) return startMs
-    val fraction = (dragX / width).coerceIn(-1f, 1f)
-    val rangeMs = minOf(durationMs, 180_000L)
-    val accelerated = fraction * (0.35f + 0.65f * abs(fraction))
-    return (startMs + (accelerated * rangeMs).toLong()).coerceIn(0L, durationMs)
+internal fun swipeSeekTarget(startMs: Long, dragX: Float, durationMs: Long): Long {
+    if (durationMs <= 0 || !dragX.isFinite()) return startMs
+    val normalTravelMs = abs(dragX.toDouble()) * 100.0
+    val travelMs = minOf(normalTravelMs, 60_000.0) +
+        (normalTravelMs - 60_000.0).coerceAtLeast(0.0) * 10.0
+    return (startMs.toDouble() + sign(dragX) * travelMs)
+        .coerceIn(0.0, durationMs.toDouble()).toLong()
 }
 
 internal class HoldSpeedSteps(private val stepPx: Float) {
