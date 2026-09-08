@@ -3,15 +3,6 @@ package dev.typetype.android.feature.player.components
 import kotlin.math.abs
 import kotlin.math.sign
 
-internal fun swipeSeekTarget(startMs: Long, dragX: Float, durationMs: Long): Long {
-    if (durationMs <= 0 || !dragX.isFinite()) return startMs
-    val normalTravelMs = abs(dragX.toDouble()) * 100.0
-    val travelMs = minOf(normalTravelMs, 60_000.0) +
-        (normalTravelMs - 60_000.0).coerceAtLeast(0.0) * 10.0
-    return (startMs.toDouble() + sign(dragX) * travelMs)
-        .coerceIn(0.0, durationMs.toDouble()).toLong()
-}
-
 internal class HoldSpeedSteps(private val stepPx: Float) {
     var factor: Float = 2f
         private set

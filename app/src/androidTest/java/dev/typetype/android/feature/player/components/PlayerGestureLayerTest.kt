@@ -40,6 +40,53 @@ class PlayerGestureLayerTest {
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
+    fun seekingCanSwitchToFinePrecisionWithoutJumpingOrChangingLevels() {
+        val player = GestureTestPlayer(Looper.getMainLooper())
+        val state = PlayerGestureState()
+        val levels = AtomicInteger()
+        composeRule.setContent {
+            PlayerGestureLayer(
+                player = player,
+                state = state,
+                onSingleTap = {},
+                onAdjustBrightness = { levels.incrementAndGet() },
+                onAdjustVolume = { levels.incrementAndGet() },
+                isFullscreen = true,
+                config = PlayerGestureConfig(swipeSeekEnabled = true),
+                modifier = Modifier.size(300.dp, 180.dp).testTag(GESTURE_TAG),
+            )
+        }
+        composeRule.onNodeWithTag(GESTURE_TAG).performTouchInput {
+            down(Offset(width * 0.25f, center.y))
+            moveBy(Offset(width * 0.25f, 0f), delayMillis = 80)
+        }
+        var coarseTarget = 0L
+        composeRule.runOnIdle {
+            coarseTarget = state.seekDragTargetMs.longValue
+            assertTrue(coarseTarget > 120_000)
+            assertEquals(20_000L, player.currentPosition)
+        }
+        val fineDrop = with(composeRule.density) { 60.dp.toPx() }
+        composeRule.onNodeWithTag(GESTURE_TAG).performTouchInput {
+            moveBy(Offset(0f, fineDrop), delayMillis = 80)
+        }
+        composeRule.runOnIdle {
+            assertTrue(state.fineSeeking.value)
+            assertEquals(coarseTarget, state.seekDragTargetMs.longValue)
+        }
+        composeRule.onNodeWithTag(GESTURE_TAG).performTouchInput {
+            moveBy(Offset(10f, 0f), delayMillis = 80)
+            up()
+        }
+        composeRule.runOnIdle {
+            assertTrue(player.currentPosition > coarseTarget)
+            assertTrue(player.currentPosition <= coarseTarget + 1000)
+            assertEquals(0, levels.get())
+            player.release()
+        }
+    }
+
+    @Test
     fun longPressDragChangesSpeedWithoutChangingLevelsAndRestoresOnRelease() {
         val player = GestureTestPlayer(Looper.getMainLooper())
         val levelChanges = AtomicInteger()

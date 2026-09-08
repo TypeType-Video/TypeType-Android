@@ -241,6 +241,7 @@ internal fun PlayerSurfaceBox(
                 .takeIf { gestureState.seekDragOverlayActive.value },
             seekDragOverlayVisible = gestureState.seekDragOverlayActive.value,
             seekDragPositionMs = gestureState.seekDragTargetMs.longValue,
+            fineSeeking = gestureState.fineSeeking.value,
             isFullscreen = isFullscreen,
             isInPip = isInPip,
             controlsAllowedByProgress = controlsAllowedByProgress,
