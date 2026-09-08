@@ -8,6 +8,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -20,6 +21,7 @@ import androidx.compose.ui.test.swipe
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.SimpleBasePlayer
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.util.concurrent.Futures
@@ -36,6 +38,73 @@ import org.junit.runner.RunWith
 class PlayerGestureLayerTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<ComponentActivity>()
+
+    @Test
+    fun longPressDragChangesSpeedWithoutChangingLevelsAndRestoresOnRelease() {
+        val player = GestureTestPlayer(Looper.getMainLooper())
+        val levelChanges = AtomicInteger()
+        composeRule.setContent {
+            PlayerGestureLayer(
+                player = player,
+                state = remember { PlayerGestureState() },
+                onSingleTap = {},
+                onAdjustBrightness = { levelChanges.incrementAndGet() },
+                onAdjustVolume = { levelChanges.incrementAndGet() },
+                isFullscreen = true,
+                modifier = Modifier.size(300.dp, 180.dp).testTag(GESTURE_TAG),
+            )
+        }
+        composeRule.runOnIdle { player.setPlaybackSpeed(1.5f) }
+        composeRule.onNodeWithTag(GESTURE_TAG).performTouchInput {
+            down(center)
+            advanceEventTime(700)
+            moveTo(center)
+        }
+        composeRule.runOnIdle { assertEquals(2f, player.playbackParameters.speed) }
+        composeRule.onNodeWithTag(GESTURE_TAG).performTouchInput {
+            moveBy(Offset(0f, -height * 0.3f))
+        }
+        composeRule.runOnIdle {
+            assertTrue(player.playbackParameters.speed > 2f)
+            assertEquals(0, levelChanges.get())
+        }
+        composeRule.onNodeWithTag(GESTURE_TAG).performTouchInput { up() }
+        composeRule.runOnIdle {
+            assertEquals(1.5f, player.playbackParameters.speed)
+            player.release()
+        }
+    }
+
+    @Test
+    fun removingGestureLayerDuringHoldRestoresPreviousSpeed() {
+        val player = GestureTestPlayer(Looper.getMainLooper())
+        val visible = mutableStateOf(true)
+        composeRule.setContent {
+            if (visible.value) PlayerGestureLayer(
+                player = player,
+                state = remember { PlayerGestureState() },
+                onSingleTap = {},
+                onAdjustBrightness = {},
+                onAdjustVolume = {},
+                modifier = Modifier.size(300.dp, 180.dp).testTag(GESTURE_TAG),
+            )
+        }
+        composeRule.runOnIdle { player.setPlaybackSpeed(1.25f) }
+        composeRule.onNodeWithTag(GESTURE_TAG).performTouchInput {
+            down(center)
+            advanceEventTime(700)
+            moveTo(center)
+        }
+        composeRule.runOnIdle {
+            assertEquals(2f, player.playbackParameters.speed)
+            visible.value = false
+        }
+        composeRule.waitForIdle()
+        composeRule.runOnIdle {
+            assertEquals(1.25f, player.playbackParameters.speed)
+            player.release()
+        }
+    }
 
     @Test
     fun doubleTapZonesSeekTogglePlaybackAndProvideFeedback() {
@@ -164,10 +233,12 @@ class PlayerGestureLayerTest {
 private class GestureTestPlayer(looper: Looper) : SimpleBasePlayer(looper) {
     private var positionMs = 20_000L
     private var playWhenReady = false
+    private var parameters = PlaybackParameters.DEFAULT
 
     override fun getState(): State = State.Builder()
         .setAvailableCommands(Player.Commands.Builder().addAllCommands().build())
         .setPlaybackState(Player.STATE_READY)
+        .setPlaybackParameters(parameters)
         .setPlayWhenReady(
             playWhenReady,
             Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST,
@@ -175,6 +246,7 @@ private class GestureTestPlayer(looper: Looper) : SimpleBasePlayer(looper) {
         .setPlaylist(
             listOf(
                 MediaItemData.Builder("gesture-item")
+                    .setDurationUs(600_000_000L)
                     .setMediaItem(MediaItem.Builder().setMediaId("gesture-item").build())
                     .build(),
             ),
@@ -199,4 +271,10 @@ private class GestureTestPlayer(looper: Looper) : SimpleBasePlayer(looper) {
     }
 
     override fun handleRelease(): ListenableFuture<*> = Futures.immediateVoidFuture()
+
+    override fun handleSetPlaybackParameters(playbackParameters: PlaybackParameters): ListenableFuture<*> {
+        parameters = playbackParameters
+        invalidateState()
+        return Futures.immediateVoidFuture()
+    }
 }
