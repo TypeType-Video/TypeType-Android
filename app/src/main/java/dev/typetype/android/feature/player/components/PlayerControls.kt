@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import dev.typetype.android.R
@@ -51,7 +52,9 @@ fun PlayerControls(
 ) {
     BoxWithConstraints(modifier = modifier) {
         val compactControls = !isFullscreen && maxHeight < COMPACT_CONTROLS_HEIGHT
-        val expandedControls = maxWidth >= 600.dp && maxHeight >= 300.dp
+        val expandedControls = useExpandedPlayerControls(
+            LocalConfiguration.current.smallestScreenWidthDp, maxWidth.value, maxHeight.value,
+        )
         if (!timelineScrubbing) {
             TopScrim(
                 compact = compactControls,
