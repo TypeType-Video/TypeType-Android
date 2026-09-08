@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -86,7 +88,11 @@ fun PlayerControls(
                     .testTag(PLAYER_TOP_CONTROLS_TAG)
                     .then(
                         if (isFullscreen) {
-                            Modifier.windowInsetsPadding(WindowInsets.statusBars)
+                            Modifier.windowInsetsPadding(
+                                WindowInsets.displayCutout.only(
+                                    WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
+                                ),
+                            )
                         } else {
                             Modifier
                         },

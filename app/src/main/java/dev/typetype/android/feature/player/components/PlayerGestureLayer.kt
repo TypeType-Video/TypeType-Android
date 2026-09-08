@@ -11,6 +11,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +49,7 @@ fun PlayerGestureLayer(
     onBrightnessGestureStart: () -> Float = { state.brightnessFraction.floatValue },
     onVolumeGestureStart: () -> Float = { state.volumeFraction.floatValue },
 ) {
+    val currentOnSingleTap by rememberUpdatedState(onSingleTap)
     var savedSpeed by remember { mutableFloatStateOf(1f) }
     var holdSpeed by remember { mutableFloatStateOf(2f) }
     fun restoreSpeed() {
@@ -182,7 +184,7 @@ fun PlayerGestureLayer(
             }
             .pointerInput(player, config) {
                 detectTapGestures(
-                    onTap = { onSingleTap() },
+                    onTap = { currentOnSingleTap() },
                     onDoubleTap = { offset ->
                         val action = doubleTapAction(offset.x, size.width.toFloat())
                         if (!action.isEnabled(config.doubleTapSeekEnabled)) {
