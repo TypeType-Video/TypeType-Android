@@ -4,6 +4,8 @@ import android.os.Looper
 import android.content.res.Configuration
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalView
+import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
@@ -15,6 +17,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.ViewCompat
+import androidx.core.graphics.Insets
+import android.graphics.Bitmap
+import java.io.File
 import dev.typetype.android.R
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
@@ -33,6 +43,7 @@ import org.junit.runner.RunWith
 class PlayerControlsLayoutTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<ComponentActivity>()
+    private lateinit var controlsView: View
 
     @Test
     fun portraitControlsDoNotOverlapInsideShortVideoViewport() {
@@ -47,6 +58,54 @@ class PlayerControlsLayoutTest {
         val height = composeRule.onNodeWithTag(PLAYER_CENTER_CONTROLS_TAG)
             .fetchSemanticsNode().boundsInRoot.height
         assertEquals(with(composeRule.density) { 74.dp.toPx() }, height, 1f)
+    }
+
+    @Test
+    fun fullscreenTopControlsStayAnchoredWhenStatusBarsDisappear() {
+        composeRule.runOnUiThread {
+            val window = composeRule.activity.window
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+            WindowCompat.getInsetsController(window, window.decorView)
+                .show(WindowInsetsCompat.Type.statusBars())
+        }
+        setControls(800.dp, 360.dp, fullscreen = true)
+        dispatchStatusBarInsets(40)
+        composeRule.waitForIdle()
+        val visibleTop = backButtonTopInViewport()
+        captureControls("status-bars-visible.png")
+        dispatchStatusBarInsets(0)
+        composeRule.waitForIdle()
+        captureControls("status-bars-hidden.png")
+        assertEquals(visibleTop, backButtonTopInViewport(), 1f)
+    }
+
+    private fun dispatchStatusBarInsets(top: Int) {
+        composeRule.runOnUiThread {
+            ViewCompat.dispatchApplyWindowInsets(
+                controlsView,
+                WindowInsetsCompat.Builder()
+                    .setInsets(WindowInsetsCompat.Type.statusBars(), Insets.of(0, top, 0, 0))
+                    .setVisible(WindowInsetsCompat.Type.statusBars(), top > 0)
+                    .build(),
+            )
+        }
+    }
+
+    private fun backButtonTopInViewport(): Float {
+        val back = composeRule.onNodeWithContentDescription(
+            composeRule.activity.getString(R.string.player_back),
+        ).fetchSemanticsNode().boundsInRoot
+        val viewport = composeRule.onNodeWithTag(PLAYER_CONTROLS_VIEWPORT_TAG)
+            .fetchSemanticsNode().boundsInRoot
+        return back.top - viewport.top
+    }
+
+    private fun captureControls(name: String) {
+        val bitmap = composeRule.onNodeWithTag(PLAYER_CONTROLS_VIEWPORT_TAG)
+            .captureToImage().asAndroidBitmap()
+        File(composeRule.activity.noBackupFilesDir, name).outputStream().use {
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
+        }
     }
 
     @Test
@@ -71,6 +130,7 @@ class PlayerControlsLayoutTest {
     ) {
         val player = controlsLayoutPlayer()
         composeRule.setContent {
+            controlsView = LocalView.current
             val configuration = Configuration(LocalConfiguration.current).apply {
                 smallestScreenWidthDp = smallestWidthDp
             }

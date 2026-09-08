@@ -277,7 +277,7 @@ class PlayerGestureLayerTest {
     }
 }
 
-private class GestureTestPlayer(looper: Looper) : SimpleBasePlayer(looper) {
+internal class GestureTestPlayer(looper: Looper) : SimpleBasePlayer(looper) {
     private var positionMs = 20_000L
     private var playWhenReady = false
     private var parameters = PlaybackParameters.DEFAULT
