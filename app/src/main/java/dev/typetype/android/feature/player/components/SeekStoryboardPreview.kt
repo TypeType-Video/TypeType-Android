@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,7 +34,9 @@ internal fun SeekStoryboardPreview(
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.testTag(PLAYER_SEEK_STORYBOARD_PREVIEW_TAG),
+        modifier = modifier
+            .width(PREVIEW_WIDTH)
+            .testTag(PLAYER_SEEK_STORYBOARD_PREVIEW_TAG),
     ) {
         frame?.let { StoryboardFrame(frame = it) }
         Text(
