@@ -1,5 +1,6 @@
 package dev.typetype.android.core.ui.components
 
+import android.text.format.DateUtils
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -39,6 +40,7 @@ import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.feed.VideoAvailability
 import dev.typetype.android.domain.feed.availabilityAt
+import dev.typetype.android.domain.feed.releaseTimeMillis
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -137,7 +139,7 @@ fun RelatedVideoCard(
                 )
             }
             Text(
-                text = stringResource(R.string.video_views_short, formatRelatedViews(video.viewCount)),
+                text = video.metadataText(),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
@@ -168,4 +170,20 @@ private fun formatRelatedViews(views: Long): String = when {
     views >= 1_000_000 -> "%.1fM".format(views / 1_000_000.0)
     views >= 1_000 -> "%.1fK".format(views / 1_000.0)
     else -> views.toString()
+}
+
+@Composable
+private fun Video.metadataText(): String {
+    val views = stringResource(R.string.video_views_short, formatRelatedViews(viewCount))
+    val published = releaseTimeMillis()
+        ?.takeIf { it <= System.currentTimeMillis() }
+        ?.let { timestamp ->
+            DateUtils.getRelativeTimeSpanString(
+                timestamp,
+                System.currentTimeMillis(),
+                DateUtils.MINUTE_IN_MILLIS,
+                DateUtils.FORMAT_ABBREV_RELATIVE,
+            ).toString()
+        }
+    return listOfNotNull(views, published).joinToString(" · ")
 }
