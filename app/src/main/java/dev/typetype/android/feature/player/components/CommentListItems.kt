@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,6 +21,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,9 +48,10 @@ internal fun CommentBody(
     avatarSize: Dp,
     onUrlClick: (String) -> Unit,
     onTimestampClick: (Long) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val serverBaseUrl = LocalServerBaseUrl.current
-    Row(modifier = Modifier.fillMaxWidth()) {
+    Row(modifier = modifier.fillMaxWidth()) {
         AsyncImage(
             model = buildImageUrl(serverBaseUrl, comment.authorAvatarUrl),
             contentDescription = null,
@@ -82,10 +88,8 @@ internal fun CommentBody(
                 )
             }
             Spacer(Modifier.height(4.dp))
-            LinkedText(
-                text = comment.text,
-                style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
-                linkColor = MaterialTheme.colorScheme.primary,
+            ExpandableCommentText(
+                comment = comment,
                 onUrlClick = onUrlClick,
                 onTimestampClick = onTimestampClick,
             )
@@ -110,6 +114,38 @@ internal fun CommentBody(
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExpandableCommentText(
+    comment: Comment,
+    onUrlClick: (String) -> Unit,
+    onTimestampClick: (Long) -> Unit,
+) {
+    var expanded by remember(comment.text) { mutableStateOf(false) }
+    val needsTruncation = comment.text.length > COMMENT_COLLAPSE_CHARACTER_LIMIT ||
+        comment.text.count { it == '\n' } >= COMMENT_COLLAPSE_LINE_LIMIT
+
+    Column {
+        LinkedText(
+            text = comment.text,
+            style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
+            linkColor = MaterialTheme.colorScheme.primary,
+            onUrlClick = onUrlClick,
+            onTimestampClick = onTimestampClick,
+            maxLines = if (expanded) Int.MAX_VALUE else COMMENT_COLLAPSE_LINE_LIMIT,
+            overflow = if (expanded) TextOverflow.Clip else TextOverflow.Ellipsis,
+        )
+        if (needsTruncation && !expanded) {
+            TextButton(
+                onClick = { expanded = true },
+                contentPadding = PaddingValues(horizontal = 4.dp),
+                modifier = Modifier.padding(top = 2.dp),
+            ) {
+                Text(stringResource(R.string.comments_read_more))
             }
         }
     }
@@ -156,3 +192,6 @@ private fun CommentSkeletons(count: Int) {
         }
     }
 }
+
+private const val COMMENT_COLLAPSE_CHARACTER_LIMIT = 320
+private const val COMMENT_COLLAPSE_LINE_LIMIT = 6

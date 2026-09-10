@@ -12,6 +12,7 @@ import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withLink
 import java.net.URI
 import java.net.URLDecoder
@@ -97,6 +98,8 @@ internal fun LinkedText(
     onUrlClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     onTimestampClick: (Long) -> Unit = {},
+    maxLines: Int = Int.MAX_VALUE,
+    overflow: TextOverflow = TextOverflow.Clip,
 ) {
     val latestOnUrlClick = rememberUpdatedState(onUrlClick)
     val latestOnTimestampClick = rememberUpdatedState(onTimestampClick)
@@ -141,5 +144,11 @@ internal fun LinkedText(
         }
         append(text.substring(cursor))
     }
-    Text(text = annotated, style = style, modifier = modifier)
+    Text(
+        text = annotated,
+        style = style,
+        modifier = modifier,
+        maxLines = maxLines,
+        overflow = overflow,
+    )
 }
