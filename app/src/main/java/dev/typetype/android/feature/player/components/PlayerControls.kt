@@ -29,12 +29,14 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import dev.typetype.android.R
 import dev.typetype.android.domain.stream.SponsorBlockSegment
+import dev.typetype.android.domain.stream.StreamStoryboard
 import dev.typetype.android.feature.player.state.ResizeMode
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
 fun PlayerControls(
     player: Player,
+    storyboard: StreamStoryboard? = null,
     title: String,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
@@ -108,6 +110,7 @@ fun PlayerControls(
         }
         BottomBar(
             player = player,
+            storyboard = storyboard,
             sponsorBlockSegments = sponsorBlockSegments,
             seekPreviewPositionMs = seekPreviewPositionMs,
             timelineScrubbing = timelineScrubbing,
@@ -170,6 +173,7 @@ private fun BottomScrim(
 @Composable
 private fun BottomBar(
     player: Player,
+    storyboard: StreamStoryboard?,
     sponsorBlockSegments: List<SponsorBlockSegment>,
     seekPreviewPositionMs: Long?,
     timelineScrubbing: Boolean,
@@ -196,6 +200,7 @@ private fun BottomBar(
     ) {
         PlayerTimeBar(
             player = player,
+            storyboard = storyboard,
             segments = sponsorBlockSegments,
             previewPositionMs = seekPreviewPositionMs,
             compact = !isFullscreen && !expanded,

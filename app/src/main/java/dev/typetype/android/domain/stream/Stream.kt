@@ -33,6 +33,7 @@ data class Stream(
     val originalAudioTrackId: String? = null,
     val preferredDefaultAudioTrackId: String? = null,
     val subtitles: List<StreamSubtitleSource> = emptyList(),
+    val storyboard: StreamStoryboard? = null,
     val startPositionMillis: Long,
     val sponsorBlockSegments: List<SponsorBlockSegment> = emptyList(),
     val chapters: List<Chapter> = emptyList(),
@@ -41,6 +42,50 @@ data class Stream(
     val isPostLive: Boolean = false,
     val isLiveContent: Boolean = false,
     val category: String? = null,
+)
+
+data class StreamStoryboard(
+    val urls: List<String>,
+    val frameWidth: Int,
+    val frameHeight: Int,
+    val totalCount: Int,
+    val durationPerFrameMillis: Long,
+    val framesPerPageX: Int,
+    val framesPerPageY: Int,
+) {
+    fun frameAt(positionMs: Long): StreamStoryboardFrame? {
+        val totalFrames = totalCount.takeIf { it > 0 } ?: return null
+        val duration = durationPerFrameMillis.takeIf { it > 0L } ?: return null
+        val pageColumns = framesPerPageX.takeIf { it > 0 } ?: return null
+        val pageRows = framesPerPageY.takeIf { it > 0 } ?: return null
+        if (frameWidth <= 0 || frameHeight <= 0 || urls.isEmpty()) return null
+
+        val elapsedFrames = positionMs / duration
+        val frameIndex = when {
+            elapsedFrames <= 0L -> 0
+            elapsedFrames >= totalFrames - 1L -> totalFrames - 1
+            else -> elapsedFrames.toInt()
+        }
+        val framesPerPage = pageColumns * pageRows
+        val pageIndex = (frameIndex / framesPerPage).coerceIn(0, urls.lastIndex)
+        val pageFrameIndex = frameIndex % framesPerPage
+        val url = urls.getOrNull(pageIndex) ?: return null
+        return StreamStoryboardFrame(
+            url = url,
+            x = (pageFrameIndex % pageColumns) * frameWidth,
+            y = (pageFrameIndex / pageColumns) * frameHeight,
+            width = frameWidth,
+            height = frameHeight,
+        )
+    }
+}
+
+data class StreamStoryboardFrame(
+    val url: String,
+    val x: Int,
+    val y: Int,
+    val width: Int,
+    val height: Int,
 )
 
 enum class StreamPlaybackContract {

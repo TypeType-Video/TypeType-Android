@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.material3.Text
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -18,11 +17,13 @@ import androidx.compose.ui.res.stringResource
 import dev.typetype.android.R
 import androidx.media3.session.MediaController
 import dev.typetype.android.domain.stream.SponsorBlockSegment
+import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.feature.player.state.ResizeMode
 
 @Composable
 internal fun PlayerSurfaceChrome(
     player: MediaController,
+    stream: Stream,
     title: String,
     sponsorBlockSegments: List<SponsorBlockSegment>,
     seekPreviewPositionMs: Long?,
@@ -56,13 +57,16 @@ internal fun PlayerSurfaceChrome(
             modifier = Modifier.align(Alignment.BottomCenter),
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = if (fineSeeking) {
-                        stringResource(R.string.player_fine_seek_position, formatPlayerTime(seekDragPositionMs))
+                SeekStoryboardPreview(
+                    frame = stream.storyboard?.frameAt(seekDragPositionMs),
+                    timecode = if (fineSeeking) {
+                        stringResource(
+                            R.string.player_fine_seek_position,
+                            formatPlayerTime(seekDragPositionMs),
+                        )
                     } else {
                         formatPlayerTime(seekDragPositionMs)
                     },
-                    color = Color.White,
                 )
                 PlayerSeekScrubOverlay(
                     player = player,
@@ -91,6 +95,7 @@ internal fun PlayerSurfaceChrome(
         ) {
             PlayerControls(
                 player = player,
+                storyboard = stream.storyboard,
                 title = title,
                 onNavigateBack = onNavigateBack,
                 onOpenOptions = onOpenOptions,

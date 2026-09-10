@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
@@ -44,6 +45,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.state.rememberProgressStateWithTickInterval
 import dev.typetype.android.R
 import dev.typetype.android.domain.stream.SponsorBlockSegment
+import dev.typetype.android.domain.stream.StreamStoryboard
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val TICK_INTERVAL_MS = 200L
@@ -59,11 +61,14 @@ private val COMPACT_THUMB_WIDTH = 10.dp
 private val COMPACT_THUMB_HEIGHT = 10.dp
 private val SCRUBBING_TRACK_HEIGHT = 6.dp
 private val SCRUBBING_THUMB_SIZE = 22.dp
+private val CLASSIC_PREVIEW_WIDTH = 160.dp
+private val CLASSIC_PREVIEW_LIFT = 52.dp
 
 @OptIn(markerClass = [UnstableApi::class])
 @Composable
 fun PlayerTimeBar(
     player: Player,
+    storyboard: StreamStoryboard? = null,
     modifier: Modifier = Modifier,
     segments: List<SponsorBlockSegment> = emptyList(),
     compact: Boolean = false,
@@ -82,63 +87,86 @@ fun PlayerTimeBar(
     val positionLabel = formatPlayerTime(displayedPosMs)
     val durationLabel = formatPlayerTime(durationMs)
 
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    BoxWithConstraints(modifier = modifier) {
+        val scrubFraction = if (durationMs > 0L) {
+            (displayedPosMs.toFloat() / durationMs).coerceIn(0f, 1f)
+        } else {
+            0f
+        }
+        val previewOffsetX = (maxWidth - CLASSIC_PREVIEW_WIDTH).coerceAtLeast(0.dp) * scrubFraction
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(
-            text = positionLabel,
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = if (expanded) 16.sp else 12.sp),
-            color = Color.White,
-            modifier = if (compact) {
-                Modifier.widthIn(min = COMPACT_TIME_LABEL_MIN_WIDTH)
-            } else {
-                Modifier.width(if (expanded) 68.dp else TIME_LABEL_WIDTH)
-            },
-            textAlign = TextAlign.End,
-        )
-        TimelineTrack(
-            positionMs = displayedPosMs,
-            durationMs = durationMs,
-            segments = segments,
-            compact = compact,
-            expanded = expanded,
-            emphasized = emphasized,
-            onScrub = {
-                onScrubbingChange(true)
-                scrubPositionMs = it
-            },
-            onScrubFinished = { targetMs ->
-                player.seekTo(targetMs)
-                onScrubbingChange(false)
-                scrubPositionMs = null
-            },
-            onScrubCancelled = {
-                onScrubbingChange(false)
-                scrubPositionMs = null
-            },
-            accessibilityLabel = stringResource(R.string.player_timeline),
-            accessibilityStateDescription = stringResource(
-                R.string.player_timeline_position,
-                positionLabel,
-                durationLabel,
-            ),
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = if (compact) 2.dp else 4.dp)
-                .height(if (expanded) 56.dp else if (compact) COMPACT_TIMELINE_HEIGHT else TIMELINE_HEIGHT),
-        )
-        Text(
-            text = durationLabel,
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = if (expanded) 16.sp else 12.sp),
-            color = Color.White.copy(alpha = 0.7f),
-            modifier = if (compact) {
-                Modifier.widthIn(min = COMPACT_TIME_LABEL_MIN_WIDTH)
-            } else {
-                Modifier.width(if (expanded) 68.dp else TIME_LABEL_WIDTH)
-            },
-        )
+                Text(
+                    text = positionLabel,
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = if (expanded) 16.sp else 12.sp),
+                    color = Color.White,
+                    modifier = if (compact) {
+                        Modifier.widthIn(min = COMPACT_TIME_LABEL_MIN_WIDTH)
+                    } else {
+                        Modifier.width(if (expanded) 68.dp else TIME_LABEL_WIDTH)
+                    },
+                    textAlign = TextAlign.End,
+                )
+                TimelineTrack(
+                    positionMs = displayedPosMs,
+                    durationMs = durationMs,
+                    segments = segments,
+                    compact = compact,
+                    expanded = expanded,
+                    emphasized = emphasized,
+                    onScrub = {
+                        onScrubbingChange(true)
+                        scrubPositionMs = it
+                    },
+                    onScrubFinished = { targetMs ->
+                        player.seekTo(targetMs)
+                        onScrubbingChange(false)
+                        scrubPositionMs = null
+                    },
+                    onScrubCancelled = {
+                        onScrubbingChange(false)
+                        scrubPositionMs = null
+                    },
+                    accessibilityLabel = stringResource(R.string.player_timeline),
+                    accessibilityStateDescription = stringResource(
+                        R.string.player_timeline_position,
+                        positionLabel,
+                        durationLabel,
+                    ),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = if (compact) 2.dp else 4.dp)
+                        .height(if (expanded) 56.dp else if (compact) COMPACT_TIMELINE_HEIGHT else TIMELINE_HEIGHT),
+                )
+                Text(
+                    text = durationLabel,
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = if (expanded) 16.sp else 12.sp),
+                    color = Color.White.copy(alpha = 0.7f),
+                    modifier = if (compact) {
+                        Modifier.widthIn(min = COMPACT_TIME_LABEL_MIN_WIDTH)
+                    } else {
+                        Modifier.width(if (expanded) 68.dp else TIME_LABEL_WIDTH)
+                    },
+                )
+            }
+
+        val classicScrubPositionMs = scrubPositionMs
+        if (classicScrubPositionMs != null) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .offset(x = previewOffsetX, y = -CLASSIC_PREVIEW_LIFT),
+            ) {
+                SeekStoryboardPreview(
+                    frame = storyboard?.frameAt(classicScrubPositionMs),
+                    timecode = formatPlayerTime(classicScrubPositionMs),
+                )
+            }
+        }
     }
 }
 

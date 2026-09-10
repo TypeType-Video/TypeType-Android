@@ -4,6 +4,7 @@ import dev.typetype.android.data.account.AccountScopeProvider
 import dev.typetype.android.core.error.CodedFailure
 import dev.typetype.android.data.network.PlaybackNetworkObserver
 import dev.typetype.android.data.network.dto.AudioStreamItem
+import dev.typetype.android.data.network.dto.PreviewFrameItem
 import dev.typetype.android.data.network.dto.SponsorBlockSegmentItem
 import dev.typetype.android.data.network.dto.StreamResponse
 import dev.typetype.android.data.network.dto.StreamSegmentItem
@@ -19,6 +20,7 @@ import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.stream.StreamPlaybackContract
 import dev.typetype.android.domain.stream.StreamAudioSource
 import dev.typetype.android.domain.stream.StreamRepository
+import dev.typetype.android.domain.stream.StreamStoryboard
 import dev.typetype.android.domain.stream.StreamRequestScope
 import dev.typetype.android.domain.stream.StreamVideoSource
 import dev.typetype.android.domain.stream.isServerSabrAudioFormat
@@ -176,6 +178,7 @@ internal class StreamRepositoryImpl @Inject constructor(
             subtitles = subtitles.mapIndexedNotNull { index, subtitle ->
                 subtitle.toClientSubtitleSource(index)
             },
+            storyboard = previewFrames.firstNotNullOfOrNull { it.toDomainStoryboard() },
             startPositionMillis = startPosition * 1000L,
             sponsorBlockSegments = sponsorBlockSegments.mapNotNull {
                 it.toDomainSponsorBlockSegment(duration)
@@ -201,6 +204,17 @@ internal class StreamRepositoryImpl @Inject constructor(
             .filter { !it.isVideoOnly && it.url.isNotBlank() }
             .maxByOrNull { it.height }
             ?.url
+
+    private fun PreviewFrameItem.toDomainStoryboard(): StreamStoryboard? =
+        StreamStoryboard(
+            urls = urls.filter(String::isNotBlank),
+            frameWidth = frameWidth,
+            frameHeight = frameHeight,
+            totalCount = totalCount,
+            durationPerFrameMillis = durationPerFrame.toLong(),
+            framesPerPageX = framesPerPageX,
+            framesPerPageY = framesPerPageY,
+        ).takeIf { it.frameAt(0L) != null }
 
     private fun serverManifestUrl(baseUrl: String, path: String, videoUrl: String): String {
         val normalizedBaseUrl = baseUrl.trimEnd('/')
