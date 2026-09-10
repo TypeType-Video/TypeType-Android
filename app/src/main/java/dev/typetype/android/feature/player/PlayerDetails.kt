@@ -55,6 +55,7 @@ internal fun PlayerDetails(
             title = branding.title,
             viewCount = stream.viewCount,
             likeCount = stream.likeCount,
+            releaseDateMillis = stream.uploadedAtMillis,
             description = stream.description,
             onTimestampClick = { player?.seekTo(it) },
         )

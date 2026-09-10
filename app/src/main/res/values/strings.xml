@@ -76,6 +76,7 @@
     <string name="player_autoplay_short">Autoplay</string>
     <string name="player_views_count">%1$s views</string>
     <string name="player_likes_count">%1$s likes</string>
+    <string name="player_release_date">Release date: %1$s</string>
     <string name="player_action_play">Resume playback</string>
     <string name="player_action_pause">Pause playback</string>
     <string name="player_state_playing">Playing</string>
