@@ -235,6 +235,7 @@ internal fun PlayerSurfaceBox(
 
         PlayerSurfaceChrome(
             player = player,
+            stream = stream,
             title = stream.title,
             sponsorBlockSegments = sponsorBlockPolicy.visibleSegments,
             seekPreviewPositionMs = gestureState.seekDragTargetMs.longValue
