@@ -26,8 +26,8 @@ android {
         applicationId = "dev.typetype.android"
         minSdk = 23
         targetSdk = 37
-        versionCode = 10808
-        versionName = "1.8.0-beta.8"
+        versionCode = 10809
+        versionName = "1.8.0-beta.9"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         resValue("string", "app_name", "TypeType")
     }
