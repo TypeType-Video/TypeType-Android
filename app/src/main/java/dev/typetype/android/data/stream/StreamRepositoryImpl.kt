@@ -178,7 +178,9 @@ internal class StreamRepositoryImpl @Inject constructor(
             subtitles = subtitles.mapIndexedNotNull { index, subtitle ->
                 subtitle.toClientSubtitleSource(index)
             },
-            storyboard = previewFrames.firstNotNullOfOrNull { it.toDomainStoryboard() },
+            storyboard = previewFrames
+                .mapNotNull { it.toDomainStoryboard() }
+                .maxByOrNull { it.frameWidth },
             startPositionMillis = startPosition * 1000L,
             sponsorBlockSegments = sponsorBlockSegments.mapNotNull {
                 it.toDomainSponsorBlockSegment(duration)

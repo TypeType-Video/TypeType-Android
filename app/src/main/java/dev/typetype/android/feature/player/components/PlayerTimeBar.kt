@@ -158,7 +158,7 @@ fun PlayerTimeBar(
         if (classicScrubPositionMs != null) {
             Box(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
+                    .align(Alignment.TopStart)
                     .offset(x = previewOffsetX, y = -CLASSIC_PREVIEW_LIFT),
             ) {
                 SeekStoryboardPreview(
