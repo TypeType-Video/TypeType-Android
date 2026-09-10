@@ -47,6 +47,7 @@ class CommentBodyTest {
         }
 
         composeRule.onNodeWithText("Read more").assertExists().performClick()
-        composeRule.onNodeWithText("Long comment starts here$suffix").assertExists()
+        composeRule.onNodeWithText("Show less").assertExists().performClick()
+        composeRule.onNodeWithText("Read more").assertExists()
     }
 }

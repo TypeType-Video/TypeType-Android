@@ -139,13 +139,17 @@ private fun ExpandableCommentText(
             maxLines = if (expanded) Int.MAX_VALUE else COMMENT_COLLAPSE_LINE_LIMIT,
             overflow = if (expanded) TextOverflow.Clip else TextOverflow.Ellipsis,
         )
-        if (needsTruncation && !expanded) {
+        if (needsTruncation) {
             TextButton(
-                onClick = { expanded = true },
+                onClick = { expanded = !expanded },
                 contentPadding = PaddingValues(horizontal = 4.dp),
                 modifier = Modifier.padding(top = 2.dp),
             ) {
-                Text(stringResource(R.string.comments_read_more))
+                Text(
+                    stringResource(
+                        if (expanded) R.string.comments_show_less else R.string.comments_read_more,
+                    )
+                )
             }
         }
     }
