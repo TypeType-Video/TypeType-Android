@@ -180,7 +180,7 @@ internal class StreamRepositoryImpl @Inject constructor(
             },
             storyboard = previewFrames
                 .mapNotNull { it.toDomainStoryboard() }
-                .maxByOrNull { it.frameWidth },
+                .let(::selectStoryboard),
             startPositionMillis = startPosition * 1000L,
             sponsorBlockSegments = sponsorBlockSegments.mapNotNull {
                 it.toDomainSponsorBlockSegment(duration)
@@ -206,6 +206,11 @@ internal class StreamRepositoryImpl @Inject constructor(
             .filter { !it.isVideoOnly && it.url.isNotBlank() }
             .maxByOrNull { it.height }
             ?.url
+
+    private fun selectStoryboard(storyboards: List<StreamStoryboard>): StreamStoryboard? =
+        storyboards.filter { it.frameWidth >= TARGET_STORYBOARD_FRAME_WIDTH }
+            .minByOrNull { it.frameWidth }
+            ?: storyboards.maxByOrNull { it.frameWidth }
 
     private fun PreviewFrameItem.toDomainStoryboard(): StreamStoryboard? =
         StreamStoryboard(
@@ -289,6 +294,7 @@ internal suspend fun <T> cancellableStreamResult(
 }
 
 private const val SABR_DELIVERY_METHOD = "sabr"
+private const val TARGET_STORYBOARD_FRAME_WIDTH = 160
 
 private class SabrContractException :
     IllegalStateException("The server returned no playable SABR contract"),
