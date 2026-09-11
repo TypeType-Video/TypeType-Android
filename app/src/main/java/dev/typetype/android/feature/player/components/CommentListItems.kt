@@ -126,11 +126,12 @@ private fun ExpandableCommentText(
     onTimestampClick: (Long) -> Unit,
 ) {
     var expanded by remember(comment.text) { mutableStateOf(false) }
-    val needsTruncation = comment.text.length > COMMENT_COLLAPSE_CHARACTER_LIMIT ||
-        comment.text.count { it == '\n' } >= COMMENT_COLLAPSE_LINE_LIMIT
+    val renderedText = remember(comment.text) { richMarkupPlainText(comment.text) }
+    val needsTruncation = renderedText.length > COMMENT_COLLAPSE_CHARACTER_LIMIT ||
+        renderedText.count { it == '\n' } >= COMMENT_COLLAPSE_LINE_LIMIT
 
     Column {
-        LinkedText(
+        CommentRichText(
             text = comment.text,
             style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
             linkColor = MaterialTheme.colorScheme.primary,
