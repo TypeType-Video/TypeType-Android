@@ -38,6 +38,7 @@ datastore = "1.2.1"
 securityCrypto = "1.1.0"
 tink = "1.23.0"
 okhttp = "5.4.0"
+jsoup = "1.23.2"
 aboutlibraries = "15.1.1"
 
 [libraries]
@@ -64,6 +65,7 @@ androidx-security-crypto = { group = "androidx.security", name = "security-crypt
 google-tink-android = { group = "com.google.crypto.tink", name = "tink-android", version.ref = "tink" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 okhttp-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "okhttp" }
+jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 androidx-activity = { group = "androidx.activity", name = "activity-ktx", version.ref = "activity" }
 androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
