@@ -26,6 +26,9 @@ data class ChannelState(
     val errorRequestId: String? = null,
     val isSubscribed: Boolean = false,
     val subscribeInFlight: Boolean = false,
+    val notificationsAvailable: Boolean = false,
+    val notificationsEnabled: Boolean = false,
+    val notificationsInFlight: Boolean = false,
     val podcasts: List<Podcast> = emptyList(),
     val podcastsLoading: Boolean = false,
     val playlists: List<SearchPlaylist> = emptyList(),
@@ -37,3 +40,6 @@ data class ChannelState(
     val playlistsErrorMessage: String? = null,
     val playlistsErrorRequestId: String? = null,
 )
+
+internal fun String.isYouTubeChannel(): Boolean =
+    contains("youtube.com", ignoreCase = true) || startsWith("/channel/") || startsWith("/c/")

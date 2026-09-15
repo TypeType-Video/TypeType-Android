@@ -1,5 +1,10 @@
 package dev.typetype.android.feature.channel
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,6 +24,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -30,12 +37,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
@@ -50,7 +59,11 @@ internal fun ChannelHeader(
     channel: Channel,
     isSubscribed: Boolean,
     subscribeInFlight: Boolean,
+    notificationsAvailable: Boolean,
+    notificationsEnabled: Boolean,
+    notificationsInFlight: Boolean,
     onToggleSubscribe: () -> Unit,
+    onToggleNotifications: () -> Unit,
     onNavigateBack: () -> Unit,
 ) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
@@ -58,7 +71,11 @@ internal fun ChannelHeader(
             channel = channel,
             isSubscribed = isSubscribed,
             subscribeInFlight = subscribeInFlight,
+            notificationsAvailable = notificationsAvailable,
+            notificationsEnabled = notificationsEnabled,
+            notificationsInFlight = notificationsInFlight,
             onToggleSubscribe = onToggleSubscribe,
+            onToggleNotifications = onToggleNotifications,
             onNavigateBack = onNavigateBack,
             expanded = maxWidth >= 600.dp,
         )
@@ -70,11 +87,31 @@ private fun ChannelHeaderContent(
     channel: Channel,
     isSubscribed: Boolean,
     subscribeInFlight: Boolean,
+    notificationsAvailable: Boolean,
+    notificationsEnabled: Boolean,
+    notificationsInFlight: Boolean,
     onToggleSubscribe: () -> Unit,
+    onToggleNotifications: () -> Unit,
     onNavigateBack: () -> Unit,
     expanded: Boolean,
 ) {
     val serverBaseUrl = LocalServerBaseUrl.current
+    val context = LocalContext.current
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) onToggleNotifications()
+    }
+    val requestNotifications: () -> Unit = {
+        val notificationsGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
+        if (notificationsEnabled || notificationsGranted) {
+            onToggleNotifications()
+        } else {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
     Column(modifier = Modifier.fillMaxWidth()) {
         if (channel.bannerUrl.isNullOrBlank()) {
             ChannelBackButton(onNavigateBack = onNavigateBack)
@@ -119,6 +156,27 @@ private fun ChannelHeaderContent(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+            if (notificationsAvailable) {
+                IconButton(
+                    onClick = requestNotifications,
+                    enabled = !notificationsInFlight,
+                ) {
+                    Icon(
+                        imageVector = if (notificationsEnabled) {
+                            Icons.Filled.NotificationsActive
+                        } else {
+                            Icons.Filled.NotificationsOff
+                        },
+                        contentDescription = stringResource(
+                            if (notificationsEnabled) {
+                                R.string.channel_notifications_disable
+                            } else {
+                                R.string.channel_notifications_enable
+                            },
+                        ),
+                    )
+                }
             }
             SubscribeButton(
                 isSubscribed = isSubscribed,

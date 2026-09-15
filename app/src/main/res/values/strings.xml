@@ -1192,4 +1192,19 @@
     <string name="rss_error_content_types">Select at least one content type.</string>
     <string name="rss_error_channels">Select at least one channel.</string>
     <string name="rss_error_generic">Couldn\'t update private RSS feeds</string>
+    <string name="push_notification_channel_name">New videos</string>
+    <string name="settings_push_title">Push notifications</string>
+    <string name="settings_push_subtitle">New video alerts via UnifiedPush</string>
+    <string name="push_status_active">Active</string>
+    <string name="push_status_connecting">Connecting…</string>
+    <string name="push_status_disabled">Off</string>
+    <string name="push_status_missing_distributor">No push distributor installed</string>
+    <string name="push_status_unavailable">Not offered by this instance</string>
+    <string name="push_status_failed">Registration failed</string>
+    <string name="push_devices_count">%1$d of %2$d devices registered</string>
+    <string name="push_install_hint">Install a UnifiedPush distributor such as ntfy to receive notifications.</string>
+    <string name="push_choose_distributor">Choose distributor</string>
+    <string name="push_error_generic">Couldn\'t update push notifications</string>
+    <string name="channel_notifications_enable">Turn on new video notifications</string>
+    <string name="channel_notifications_disable">Turn off new video notifications</string>
 </resources>
