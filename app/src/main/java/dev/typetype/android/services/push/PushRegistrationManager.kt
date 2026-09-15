@@ -14,6 +14,10 @@ import javax.inject.Singleton
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import org.unifiedpush.android.connector.UnifiedPush
 
 @Singleton
@@ -26,6 +30,8 @@ class PushRegistrationManager @Inject constructor(
     private val _status = MutableStateFlow<PushRegistrationStatus>(PushRegistrationStatus.Disabled)
     val status: StateFlow<PushRegistrationStatus> = _status.asStateFlow()
 
+    private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     suspend fun enable(): PushRegistrationStatus {
         val scope = activeAccountScope.require()
         if (!repository.currentCapability().enabled) {
@@ -34,6 +40,9 @@ class PushRegistrationManager @Inject constructor(
         val instance = pushInstanceName(scope)
         if (UnifiedPush.getDistributors(context).isEmpty()) {
             return update(PushRegistrationStatus.MissingDistributor)
+        }
+        if (UnifiedPush.getAckDistributor(context) == null) {
+            UnifiedPush.saveDistributor(context, UnifiedPush.getDistributors(context).first())
         }
         registrationStore.ensureDeviceId(scope)
         UnifiedPush.register(context, instance, context.getString(R.string.app_name))
@@ -63,25 +72,29 @@ class PushRegistrationManager @Inject constructor(
         }
     }
 
-    suspend fun onEndpointAvailable(instance: String, endpoint: String) {
-        val scope = scopeFromInstanceName(instance) ?: return
-        val deviceId = registrationStore.ensureDeviceId(scope)
-        repository.registerDevice(deviceId, endpoint).fold(
-            onSuccess = {
-                registrationStore.setEndpoint(scope, endpoint)
-                update(PushRegistrationStatus.Registered)
-            },
-            onFailure = { update(PushRegistrationStatus.Failed) },
-        )
+    fun onEndpointAvailable(instance: String, endpoint: String) {
+        managerScope.launch {
+            val accountScope = scopeFromInstanceName(instance) ?: return@launch
+            val deviceId = registrationStore.ensureDeviceId(accountScope)
+            repository.registerDevice(deviceId, endpoint).fold(
+                onSuccess = {
+                    registrationStore.setEndpoint(accountScope, endpoint)
+                    update(PushRegistrationStatus.Registered)
+                },
+                onFailure = { update(PushRegistrationStatus.Failed) },
+            )
+        }
     }
 
-    suspend fun onUnregistered(instance: String) {
-        val scope = scopeFromInstanceName(instance) ?: return
-        registrationStore.registrationOnce(scope)?.let { registration ->
-            repository.unregisterDevice(registration.deviceId)
+    fun onUnregistered(instance: String) {
+        managerScope.launch {
+            val accountScope = scopeFromInstanceName(instance) ?: return@launch
+            registrationStore.registrationOnce(accountScope)?.let { registration ->
+                repository.unregisterDevice(registration.deviceId)
+            }
+            registrationStore.clear(accountScope)
+            update(PushRegistrationStatus.Disabled)
         }
-        registrationStore.clear(scope)
-        update(PushRegistrationStatus.Disabled)
     }
 
     fun onRegistrationFailed(instance: String) {
