@@ -7,6 +7,7 @@ sealed interface ChannelAction {
     data object OnLoadMore : ChannelAction
     data object OnLoadMorePlaylists : ChannelAction
     data object OnToggleSubscribe : ChannelAction
+    data object OnToggleNotifications : ChannelAction
     data object OnSubmitSearch : ChannelAction
     data object OnDismissSearch : ChannelAction
     data object OnClearSearchInput : ChannelAction

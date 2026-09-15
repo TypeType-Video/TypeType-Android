@@ -19,6 +19,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -50,7 +52,11 @@ internal fun ChannelHeader(
     channel: Channel,
     isSubscribed: Boolean,
     subscribeInFlight: Boolean,
+    notificationsAvailable: Boolean,
+    notificationsEnabled: Boolean,
+    notificationsInFlight: Boolean,
     onToggleSubscribe: () -> Unit,
+    onToggleNotifications: () -> Unit,
     onNavigateBack: () -> Unit,
 ) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
@@ -58,7 +64,11 @@ internal fun ChannelHeader(
             channel = channel,
             isSubscribed = isSubscribed,
             subscribeInFlight = subscribeInFlight,
+            notificationsAvailable = notificationsAvailable,
+            notificationsEnabled = notificationsEnabled,
+            notificationsInFlight = notificationsInFlight,
             onToggleSubscribe = onToggleSubscribe,
+            onToggleNotifications = onToggleNotifications,
             onNavigateBack = onNavigateBack,
             expanded = maxWidth >= 600.dp,
         )
@@ -70,7 +80,11 @@ private fun ChannelHeaderContent(
     channel: Channel,
     isSubscribed: Boolean,
     subscribeInFlight: Boolean,
+    notificationsAvailable: Boolean,
+    notificationsEnabled: Boolean,
+    notificationsInFlight: Boolean,
     onToggleSubscribe: () -> Unit,
+    onToggleNotifications: () -> Unit,
     onNavigateBack: () -> Unit,
     expanded: Boolean,
 ) {
@@ -119,6 +133,27 @@ private fun ChannelHeaderContent(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+            if (notificationsAvailable) {
+                IconButton(
+                    onClick = onToggleNotifications,
+                    enabled = !notificationsInFlight,
+                ) {
+                    Icon(
+                        imageVector = if (notificationsEnabled) {
+                            Icons.Filled.NotificationsActive
+                        } else {
+                            Icons.Filled.NotificationsOff
+                        },
+                        contentDescription = stringResource(
+                            if (notificationsEnabled) {
+                                R.string.channel_notifications_disable
+                            } else {
+                                R.string.channel_notifications_enable
+                            },
+                        ),
+                    )
+                }
             }
             SubscribeButton(
                 isSubscribed = isSubscribed,
