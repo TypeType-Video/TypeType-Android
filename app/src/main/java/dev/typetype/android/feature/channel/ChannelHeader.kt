@@ -1,5 +1,10 @@
 package dev.typetype.android.feature.channel
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,12 +37,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
@@ -89,6 +96,22 @@ private fun ChannelHeaderContent(
     expanded: Boolean,
 ) {
     val serverBaseUrl = LocalServerBaseUrl.current
+    val context = LocalContext.current
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) onToggleNotifications()
+    }
+    val requestNotifications: () -> Unit = {
+        val notificationsGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
+        if (notificationsEnabled || notificationsGranted) {
+            onToggleNotifications()
+        } else {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
     Column(modifier = Modifier.fillMaxWidth()) {
         if (channel.bannerUrl.isNullOrBlank()) {
             ChannelBackButton(onNavigateBack = onNavigateBack)
@@ -136,7 +159,7 @@ private fun ChannelHeaderContent(
             }
             if (notificationsAvailable) {
                 IconButton(
-                    onClick = onToggleNotifications,
+                    onClick = requestNotifications,
                     enabled = !notificationsInFlight,
                 ) {
                     Icon(
