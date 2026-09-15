@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,6 +38,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
+import dev.typetype.android.feature.player.components.LocalPlayerSurfaceSnapping
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
@@ -75,6 +77,11 @@ internal fun PlayerHostMotionLayout(
     val interactionSource = remember { MutableInteractionSource() }
     val isDragged by interactionSource.collectIsDraggedAsState()
     var dragSettlementPending by remember { mutableStateOf(false) }
+    val viewportSnapping by remember {
+        derivedStateOf {
+            isDragged || transitionProgress.floatValue > 0.001f
+        }
+    }
     val flingBehavior = AnchoredDraggableDefaults.flingBehavior(anchoredState)
     val nestedScrollConnection = remember(anchoredState, dragEnabled, flingBehavior) {
         playerHostNestedScrollConnection(anchoredState, flingBehavior, dragEnabled)
@@ -158,15 +165,17 @@ internal fun PlayerHostMotionLayout(
                 )
             }
     ) {
-        expandedContent { transitionProgress.floatValue }
-        if (miniContentEnabled && miniContentVisible) {
-            Box(
-                modifier = Modifier.graphicsLayer {
-                    val progress = transitionProgress.floatValue
-                    alpha = ((progress - 0.55f) / 0.45f).coerceIn(0f, 1f)
-                },
-            ) {
-                miniContent()
+        CompositionLocalProvider(LocalPlayerSurfaceSnapping provides viewportSnapping) {
+            expandedContent { transitionProgress.floatValue }
+            if (miniContentEnabled && miniContentVisible) {
+                Box(
+                    modifier = Modifier.graphicsLayer {
+                        val progress = transitionProgress.floatValue
+                        alpha = ((progress - 0.55f) / 0.45f).coerceIn(0f, 1f)
+                    },
+                ) {
+                    miniContent()
+                }
             }
         }
     }
