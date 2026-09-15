@@ -30,6 +30,7 @@ data class InstanceResponse(
     val youtubeRemoteLoginReady: Boolean? = null,
     val youtubeRemoteLoginUnavailableReason: String? = null,
     val rss: RssInstanceCapabilityDto? = null,
+    val pushNotifications: PushCapabilityDto? = null,
 )
 
 @Serializable
@@ -39,6 +40,14 @@ data class RssInstanceCapabilityDto(
     val maxItems: Int = 0,
     val minimumPollMinutes: Int = 0,
     val rateLimitPerMinute: Int = 0,
+)
+
+@Serializable
+data class PushCapabilityDto(
+    val enabled: Boolean = false,
+    val provider: String = "unifiedpush",
+    val eventTypes: List<String> = emptyList(),
+    val maxDevicesPerAccount: Int = 0,
 )
 
 @Serializable

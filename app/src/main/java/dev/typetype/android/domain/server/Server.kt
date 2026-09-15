@@ -24,4 +24,5 @@ data class Server(
     val youtubeRemoteLoginReady: Boolean = false,
     val youtubeRemoteLoginUnavailableReason: String? = null,
     val rss: RssCapability = RssCapability(),
+    val push: PushCapability = PushCapability(),
 )
