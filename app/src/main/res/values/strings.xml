@@ -1205,4 +1205,6 @@
     <string name="push_install_hint">Install a UnifiedPush distributor such as ntfy to receive notifications.</string>
     <string name="push_choose_distributor">Choose distributor</string>
     <string name="push_error_generic">Couldn\'t update push notifications</string>
+    <string name="channel_notifications_enable">Turn on new video notifications</string>
+    <string name="channel_notifications_disable">Turn off new video notifications</string>
 </resources>

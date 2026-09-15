@@ -149,7 +149,11 @@ internal fun ChannelContentGrid(
                 channel = channel,
                 isSubscribed = state.isSubscribed,
                 subscribeInFlight = state.subscribeInFlight,
+                notificationsAvailable = state.notificationsAvailable,
+                notificationsEnabled = state.notificationsEnabled,
+                notificationsInFlight = state.notificationsInFlight,
                 onToggleSubscribe = { onAction(ChannelAction.OnToggleSubscribe) },
+                onToggleNotifications = { onAction(ChannelAction.OnToggleNotifications) },
                 onNavigateBack = onNavigateBack,
             )
         }
