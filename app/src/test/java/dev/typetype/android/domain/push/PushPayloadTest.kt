@@ -37,7 +37,24 @@ class PushPayloadTest {
 
     @Test
     fun `ignores unknown fields`() {
-        val content = """{"eventType":"subscription_new_video","futureField":true,"title":"t"}"""
+        val content = """
+            {
+              "eventType": "subscription_new_video",
+              "serviceId": 0,
+              "serviceName": "YouTube",
+              "eventId": "abc123",
+              "videoId": "v1",
+              "videoUrl": "https://example/watch?v=v1",
+              "channelId": "c1",
+              "channelName": "Channel",
+              "channelAvatarUrl": "",
+              "instanceId": "instance",
+              "accountId": "user-1",
+              "publishedAt": 1760000000000,
+              "title": "t",
+              "futureField": true
+            }
+        """.trimIndent()
 
         val payload = parsePushPayload(content.toByteArray())!!
 

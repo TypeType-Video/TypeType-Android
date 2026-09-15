@@ -50,6 +50,7 @@ data object ContentSettingsRoute
 @Serializable
 data object PlayerSettingsRoute
 
+@Serializable
 data object PushNotificationsRoute
 
 @Serializable
