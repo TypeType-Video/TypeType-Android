@@ -28,6 +28,7 @@ import dev.typetype.android.core.ui.navigation.PlayerSettingsRoute
 import dev.typetype.android.core.ui.navigation.PrivacySettingsRoute
 import dev.typetype.android.core.ui.navigation.ProfileSettingsRoute
 import dev.typetype.android.core.ui.navigation.RssFeedsRoute
+import dev.typetype.android.core.ui.navigation.PushNotificationsRoute
 import dev.typetype.android.core.ui.navigation.SettingsRoute
 import dev.typetype.android.core.ui.navigation.StorageSettingsRoute
 import dev.typetype.android.feature.settings.SettingsRoute as SettingsMenu
@@ -67,6 +68,7 @@ internal fun AdaptiveSettingsHost(
                             onOpenAppearance = { navController.selectSettings(AppearanceRoute) },
                             onOpenContent = { navController.selectSettings(ContentSettingsRoute) },
                             onOpenPlayer = { navController.selectSettings(PlayerSettingsRoute) },
+                            onOpenPushNotifications = { navController.selectSettings(PushNotificationsRoute) },
                             onOpenStorage = { navController.selectSettings(StorageSettingsRoute) },
                             onOpenPrivacy = { navController.selectSettings(PrivacySettingsRoute) },
                             onOpenDiagnostics = { navController.selectSettings(DiagnosticsRoute) },
