@@ -1,5 +1,7 @@
 package dev.typetype.android.data.network.dto
 
+import dev.typetype.android.domain.push.ChannelNotificationsPreference
+import dev.typetype.android.domain.push.PushDevice
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -31,3 +33,14 @@ data class ChannelNotificationPreferenceDto(
     val enabled: Boolean,
     val updatedAt: Long,
 )
+
+internal fun PushDeviceRegistrationResponseDto.toDomain(): PushDevice = PushDevice(
+    deviceId = deviceId,
+    updatedAt = updatedAt,
+)
+
+internal fun ChannelNotificationPreferenceDto.toDomain(): ChannelNotificationsPreference =
+    ChannelNotificationsPreference(
+        channelUrl = channelUrl,
+        enabled = enabled,
+    )
