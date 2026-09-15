@@ -28,6 +28,7 @@ import dev.typetype.android.data.network.PlaybackNetworkMonitor
 import dev.typetype.android.data.network.PlaybackNetworkObserver
 import dev.typetype.android.data.preferences.DataStorePreferencesRepository
 import dev.typetype.android.data.podcast.RemotePodcastRepository
+import dev.typetype.android.data.push.RemotePushRepository
 import dev.typetype.android.data.playback.RoomPlaybackResumeRepository
 import dev.typetype.android.data.playback.RoomPlaybackQueueRepository
 import dev.typetype.android.data.profile.RemoteProfileRepository
@@ -72,6 +73,7 @@ import dev.typetype.android.domain.imports.YoutubeTakeoutImportRepository
 import dev.typetype.android.domain.library.VideoMetaRepository
 import dev.typetype.android.domain.notifications.NotificationsRepository
 import dev.typetype.android.domain.preferences.PreferencesRepository
+import dev.typetype.android.domain.push.PushRepository
 import dev.typetype.android.domain.podcast.PodcastRepository
 import dev.typetype.android.domain.playback.PlaybackResumeRepository
 import dev.typetype.android.domain.playback.PlaybackQueueRepository
@@ -172,6 +174,10 @@ abstract class RepositoryModule {
     abstract fun bindNotificationsRepository(
         impl: RemoteNotificationsRepository,
     ): NotificationsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPushRepository(impl: RemotePushRepository): PushRepository
 
     @Binds
     @Singleton
