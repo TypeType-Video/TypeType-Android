@@ -28,6 +28,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import dev.typetype.android.domain.navigation.sameVideoTimestampMillis
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -77,7 +78,14 @@ fun CommentsSheet(
             CommentsList(
                 items = items,
                 repliesByCommentId = repliesByCommentId,
-                onUrlClick = { pendingUrl = it },
+                onUrlClick = { url ->
+                    val timestamp = sameVideoTimestampMillis(url, videoUrl)
+                    if (timestamp != null) {
+                        onTimestampClick(timestamp)
+                    } else {
+                        pendingUrl = url
+                    }
+                },
                 onTimestampClick = onTimestampClick,
                 onToggleReplies = { comment ->
                     val current = repliesByCommentId[comment.id]

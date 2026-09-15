@@ -71,7 +71,7 @@ internal fun ResilientPlayerSurface(
                     val parent = FrameLayout(context)
                     (LayoutInflater.from(context).inflate(R.layout.player_view_texture, parent, false) as PlayerView).apply {
                         useController = false
-                        setShutterBackgroundColor(Color.BLACK)
+                        setShutterBackgroundColor(Color.TRANSPARENT)
                         retainContentAcrossPlayerResets()
                         this.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
                         subtitleView?.visibility =

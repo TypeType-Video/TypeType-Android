@@ -93,4 +93,34 @@ class IncomingVideoUrlTest {
         assertNull(resolveIncomingVideoUrl("not a video"))
         assertNull(resolveSharedVideoUrl("plain text without a link"))
     }
+
+    @Test
+    fun `extracts timestamps from same video urls`() {
+        val current = "https://www.youtube.com/watch?v=abc12345678"
+
+        assertEquals(125_000L, sameVideoTimestampMillis("https://youtu.be/abc12345678?t=125", current))
+        assertEquals(
+            85_000L,
+            sameVideoTimestampMillis("https://www.youtube.com/watch?v=abc12345678&t=1m25s", current),
+        )
+        assertEquals(
+            3_723_000L,
+            sameVideoTimestampMillis("https://www.youtube.com/watch?v=abc12345678&t=1h2m3s", current),
+        )
+        assertEquals(30_000L, sameVideoTimestampMillis("https://youtu.be/abc12345678?start=30s", current))
+    }
+
+    @Test
+    fun `ignores timestamps from other videos`() {
+        val current = "https://www.youtube.com/watch?v=abc12345678"
+
+        assertNull(sameVideoTimestampMillis("https://youtu.be/other456789?t=125", current))
+    }
+
+    @Test
+    fun `ignores same video urls without timestamp`() {
+        val current = "https://www.youtube.com/watch?v=abc12345678"
+
+        assertNull(sameVideoTimestampMillis("https://youtu.be/abc12345678", current))
+    }
 }
