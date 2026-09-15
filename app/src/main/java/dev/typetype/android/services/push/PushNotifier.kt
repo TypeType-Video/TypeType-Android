@@ -7,7 +7,10 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.typetype.android.R
 import dev.typetype.android.domain.navigation.toPublicWatchParameter
@@ -22,8 +25,10 @@ class PushNotifier @Inject constructor(
 ) {
     fun notify(payload: PushPayload) {
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
-        if (!manager.areNotificationsEnabled()) return
-        manager.createNotificationChannel(notificationChannel())
+        if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            manager.createNotificationChannel(notificationChannel())
+        }
         manager.notify(payload.notificationId(), buildNotification(payload))
     }
 
@@ -49,6 +54,7 @@ class PushNotifier @Inject constructor(
             .build()
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun notificationChannel(): NotificationChannel = NotificationChannel(
         CHANNEL_ID,
         context.getString(R.string.push_notification_channel_name),
