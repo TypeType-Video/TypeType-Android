@@ -6,11 +6,14 @@ import android.view.View
 import android.widget.FrameLayout
 import androidx.annotation.OptIn
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -47,6 +50,7 @@ internal fun ResilientPlayerSurface(
     captionStyles: CaptionStyles = CaptionStyles(),
     modifier: Modifier = Modifier,
 ) {
+    val surfaceSnapping = LocalPlayerSurfaceSnapping.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var videoAspectRatio by remember(player) { mutableFloatStateOf(player.videoSize.aspectRatio()) }
     var view by remember(surfaceKey) { mutableStateOf<PlayerView?>(null) }
@@ -55,14 +59,19 @@ internal fun ResilientPlayerSurface(
             videoAspectRatio = videoAspectRatio,
             containerAspectRatio = constraints.containerAspectRatio(),
         )
+        val scaleSpec: FiniteAnimationSpec<Float> = if (surfaceSnapping) {
+            snap()
+        } else {
+            tween(durationMillis = RESIZE_ANIMATION_MS, easing = FastOutSlowInEasing)
+        }
         val scaleX by animateFloatAsState(
             targetValue = targetScale.x,
-            animationSpec = tween(durationMillis = RESIZE_ANIMATION_MS, easing = FastOutSlowInEasing),
+            animationSpec = scaleSpec,
             label = "playerSurfaceScaleX",
         )
         val scaleY by animateFloatAsState(
             targetValue = targetScale.y,
-            animationSpec = tween(durationMillis = RESIZE_ANIMATION_MS, easing = FastOutSlowInEasing),
+            animationSpec = scaleSpec,
             label = "playerSurfaceScaleY",
         )
         key(surfaceKey) {
