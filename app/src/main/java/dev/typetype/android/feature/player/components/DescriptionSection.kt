@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.compose.ui.unit.sp
+import dev.typetype.android.domain.navigation.sameVideoTimestampMillis
 import java.text.DateFormat
 import java.util.Date
 
@@ -48,6 +49,7 @@ fun DescriptionSection(
     likeCount: Long,
     releaseDateMillis: Long,
     description: String,
+    videoUrl: String,
     onTimestampClick: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -131,7 +133,14 @@ fun DescriptionSection(
                     lineHeight = 22.sp,
                 ),
                 linkColor = MaterialTheme.colorScheme.primary,
-                onUrlClick = { url -> pendingUrl = url },
+                onUrlClick = { url ->
+                    val timestamp = sameVideoTimestampMillis(url, videoUrl)
+                    if (timestamp != null) {
+                        onTimestampClick(timestamp)
+                    } else {
+                        pendingUrl = url
+                    }
+                },
                 onTimestampClick = onTimestampClick,
                 modifier = Modifier.padding(top = 10.dp),
             )
