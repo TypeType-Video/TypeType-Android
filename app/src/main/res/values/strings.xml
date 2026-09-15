@@ -1192,4 +1192,5 @@
     <string name="rss_error_content_types">Select at least one content type.</string>
     <string name="rss_error_channels">Select at least one channel.</string>
     <string name="rss_error_generic">Couldn\'t update private RSS feeds</string>
+    <string name="push_notification_channel_name">New videos</string>
 </resources>
