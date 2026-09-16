@@ -2,8 +2,11 @@ package dev.typetype.android.feature.settings.notifications
 
 import android.Manifest
 import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -94,6 +97,9 @@ internal fun PushNotificationsScreen(
                     label = stringResource(R.string.push_devices_count, state.deviceCount, state.maxDevices),
                 )
             }
+            if (state.status.isRegistered()) {
+                BatteryHintRow()
+            }
             if (state.showError) {
                 Text(
                     text = stringResource(R.string.push_error_generic),
@@ -166,6 +172,30 @@ private fun DistributorRow() {
         modifier = Modifier.padding(horizontal = 20.dp),
     ) {
         Text(stringResource(R.string.push_choose_distributor))
+    }
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+}
+
+@Composable
+private fun BatteryHintRow() {
+    val context = LocalContext.current
+    val powerManager = context.getSystemService(PowerManager::class.java)
+    if (powerManager?.isIgnoringBatteryOptimizations(context.packageName) == true) return
+    Text(
+        text = stringResource(R.string.push_battery_hint),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(20.dp, 12.dp),
+    )
+    TextButton(
+        onClick = {
+            context.startActivity(
+                Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS),
+            )
+        },
+        modifier = Modifier.padding(horizontal = 20.dp),
+    ) {
+        Text(stringResource(R.string.push_battery_open_settings))
     }
     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 }
