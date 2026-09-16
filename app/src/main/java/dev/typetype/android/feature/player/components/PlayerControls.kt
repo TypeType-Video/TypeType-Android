@@ -94,7 +94,7 @@ fun PlayerControls(
                                 WindowInsets.displayCutout.only(
                                     WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
                                 ),
-                            )
+                            ).padding(top = 4.dp)
                         } else {
                             Modifier
                         },
