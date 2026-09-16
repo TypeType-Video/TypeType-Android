@@ -79,10 +79,22 @@ fun SearchChannelCard(
                 }
             }
             Text(
-                text = stringResource(
-                    R.string.search_channel_metadata_subscribers_only,
-                    formatCount(channel.subscriberCount),
-                ),
+                text = when {
+                    channel.subscriberCount >= 0 && channel.streamCount >= 0 -> stringResource(
+                        R.string.search_channel_metadata,
+                        formatCount(channel.subscriberCount),
+                        formatCount(channel.streamCount),
+                    )
+                    channel.subscriberCount >= 0 -> stringResource(
+                        R.string.search_channel_metadata_subscribers_only,
+                        formatCount(channel.subscriberCount),
+                    )
+                    channel.streamCount >= 0 -> stringResource(
+                        R.string.search_channel_videos_count,
+                        formatCount(channel.streamCount),
+                    )
+                    else -> stringResource(R.string.search_channel_metadata_unavailable)
+                },
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
