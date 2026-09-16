@@ -38,7 +38,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
@@ -91,7 +94,10 @@ fun VideoCard(
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
             AsyncImage(
-                model = buildImageUrl(serverBaseUrl, branding.thumbnailUrl),
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(buildImageUrl(serverBaseUrl, branding.thumbnailUrl))
+                    .crossfade(200)
+                    .build(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
