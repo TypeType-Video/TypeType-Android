@@ -1207,4 +1207,6 @@
     <string name="push_error_generic">Couldn\'t update push notifications</string>
     <string name="channel_notifications_enable">Turn on new video notifications</string>
     <string name="channel_notifications_disable">Turn off new video notifications</string>
+    <string name="push_battery_hint">Disable battery optimization for reliable notification delivery.</string>
+    <string name="push_battery_open_settings">Battery settings</string>
 </resources>
