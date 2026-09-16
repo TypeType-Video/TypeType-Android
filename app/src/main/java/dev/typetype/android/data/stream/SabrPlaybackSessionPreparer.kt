@@ -80,7 +80,12 @@ internal class SabrPlaybackSessionPreparer(
         val control = response.body()
             ?.requireControlResponse(target, binding.sessionId, binding.generation)
             ?: sabrContractMismatch("SABR returned an empty seek response")
-        return waitForWindow(api, baseUrl, target, control, emptyList())
+        return try {
+            waitForWindow(api, baseUrl, target, control, emptyList())
+        } catch (failure: SabrControlException) {
+            if (failure.failureCode != "youtube_sabr_preparation_timeout") throw failure
+            createSession(api, baseUrl, target, startTimeMs)
+        }
     }
 
     suspend fun refresh(
