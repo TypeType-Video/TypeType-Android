@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.History
@@ -44,7 +44,7 @@ internal fun SuggestionsAndHistory(
 
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         if (showSuggestions) {
-            items(suggestions, key = { "sug-$it" }) { term ->
+            itemsIndexed(suggestions, key = { index, _ -> "sug-$index" }) { _, term ->
                 SuggestionRow(
                     term = term,
                     icon = Icons.Filled.Search,
@@ -80,7 +80,7 @@ internal fun SuggestionsAndHistory(
                     }
                 }
             }
-            items(history, key = { "hist-$it" }) { term ->
+            itemsIndexed(history, key = { index, _ -> "hist-$index" }) { _, term ->
                 SuggestionRow(
                     term = term,
                     icon = Icons.Filled.History,
