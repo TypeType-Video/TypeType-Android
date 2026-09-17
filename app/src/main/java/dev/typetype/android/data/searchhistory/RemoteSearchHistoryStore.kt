@@ -22,23 +22,17 @@ class RemoteSearchHistoryStore @Inject constructor(
         val response = withContext(Dispatchers.IO) { api.searchHistory() }
         response.requireSuccessfulResponse()
         activeAccountScope.verify(scope)
-        response.body() ?: emptyList()
+        response.body().orEmpty()
+            .map { it.term }
+            .filter { it.isNotBlank() }
     }
 
     override suspend fun addEntry(query: String): Result<Unit> = runCatching {
         val scope = activeAccountScope.require()
         val api = apiHolder.require(scope)
         val response = withContext(Dispatchers.IO) {
-            api.addSearchHistory(SearchHistoryEntryRequest(query))
+            api.addSearchHistory(SearchHistoryEntryRequest(term = query))
         }
-        response.requireSuccessfulResponse()
-        activeAccountScope.verify(scope)
-    }
-
-    override suspend fun removeEntry(query: String): Result<Unit> = runCatching {
-        val scope = activeAccountScope.require()
-        val api = apiHolder.require(scope)
-        val response = withContext(Dispatchers.IO) { api.removeSearchHistory(query) }
         response.requireSuccessfulResponse()
         activeAccountScope.verify(scope)
     }
