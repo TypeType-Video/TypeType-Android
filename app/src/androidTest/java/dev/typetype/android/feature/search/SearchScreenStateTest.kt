@@ -1,8 +1,10 @@
 package dev.typetype.android.feature.search
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import dev.typetype.android.core.ui.components.LocalAnimatedStatePlayback
@@ -50,6 +52,13 @@ class SearchScreenStateTest {
         composeRule.onNodeWithText("Recent searches").assertIsDisplayed()
         composeRule.onNodeWithText("Compose accessibility").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Clear all search history").assertIsDisplayed()
+    }
+
+    @Test
+    fun duplicateRecentSearchesHaveUniqueLazyListKeys() {
+        show(SearchState(searchHistory = listOf("Compose", "Compose")))
+
+        composeRule.onAllNodesWithText("Compose").assertCountEquals(2)
     }
 
     @Test
