@@ -141,7 +141,7 @@ fun SearchScreen(
                 onSuggestionClick = ::submitTerm,
                 onSuggestionFill = { onAction(SearchAction.OnQueryChange(it)) },
                 onHistoryClick = ::submitTerm,
-                onDeleteHistory = { onAction(SearchAction.OnDeleteHistoryEntry(it)) },
+                onClearHistory = { onAction(SearchAction.OnClearHistory) },
             )
             else -> SearchResultsGrid(
                 state = state,

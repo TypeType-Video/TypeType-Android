@@ -2,6 +2,7 @@ package dev.typetype.android.feature.search
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,7 +36,7 @@ internal fun SuggestionsAndHistory(
     onSuggestionClick: (String) -> Unit,
     onSuggestionFill: (String) -> Unit,
     onHistoryClick: (String) -> Unit,
-    onDeleteHistory: (String) -> Unit,
+    onClearHistory: () -> Unit,
 ) {
     val trimmed = query.trim()
     val showSuggestions = trimmed.isNotEmpty() && suggestions.isNotEmpty()
@@ -59,26 +60,32 @@ internal fun SuggestionsAndHistory(
 
         if (showHistory) {
             item(key = "history-header") {
-                Text(
-                    text = stringResource(R.string.search_recent_searches),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        text = stringResource(R.string.search_recent_searches),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    IconButton(onClick = onClearHistory) {
+                        Icon(
+                            Icons.Filled.Clear,
+                            contentDescription = stringResource(R.string.search_clear_all),
+                        )
+                    }
+                }
             }
             items(history, key = { "hist-$it" }) { term ->
                 SuggestionRow(
                     term = term,
                     icon = Icons.Filled.History,
                     onClick = { onHistoryClick(term) },
-                    trailing = {
-                        IconButton(onClick = { onDeleteHistory(term) }) {
-                            Icon(
-                                Icons.Filled.Clear,
-                                contentDescription = stringResource(R.string.search_clear),
-                            )
-                        }
-                    },
+                    trailing = {},
                 )
             }
         }

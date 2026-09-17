@@ -37,9 +37,6 @@ data class ProgressItemDto(
 )
 
 @Serializable
-data class SearchHistoryEntryRequest(val query: String)
-
-@Serializable
 data class CreatePlaylistRequest(
     val name: String,
     val description: String = "",
