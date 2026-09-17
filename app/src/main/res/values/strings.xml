@@ -769,6 +769,9 @@
     <string name="search_filter_remove">Remove %1$s filter</string>
     <string name="search_channel_verified">Verified channel</string>
     <string name="search_channel_metadata">%1$s subscribers, %2$s videos</string>
+    <string name="search_channel_metadata_subscribers_only">%1$s subscribers</string>
+    <string name="search_channel_videos_count">%1$s videos</string>
+    <string name="search_channel_metadata_unavailable">Channel info unavailable</string>
     <string name="search_playlist_video_count">%1$s videos</string>
     <string name="search_playlist_type">Playlist</string>
     <string name="search_did_you_mean">Did you mean %1$s?</string>
