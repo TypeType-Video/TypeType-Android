@@ -1,7 +1,10 @@
 package dev.typetype.android.feature.settings.appearance
 
+import android.os.Build
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasText
@@ -14,9 +17,11 @@ import androidx.compose.ui.test.performScrollToIndex
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import dev.typetype.android.domain.preferences.AccentColor
 import dev.typetype.android.domain.preferences.AppPreferences
+import dev.typetype.android.domain.preferences.AppearancePersonality
 import dev.typetype.android.domain.preferences.AppearanceTheme
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -68,5 +73,44 @@ class AppearanceScreenTest {
         composeRule.onNodeWithText("Forest").performClick()
 
         assertEquals(AppearanceAction.SelectTheme(AppearanceTheme.Forest), selected.get())
+    }
+
+    @Test
+    fun accentCellsAreDisabledWhenDynamicColorsAreActive() {
+        assumeTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+
+        composeRule.setContent {
+            TypeTypeTheme {
+                AppearanceScreen(
+                    state = AppPreferences(appearanceTheme = AppearanceTheme.Dynamic),
+                    onAction = {},
+                    onNavigateBack = {},
+                )
+            }
+        }
+
+        composeRule.onAllNodes(hasScrollAction())[0].performScrollToIndex(11)
+        composeRule.onNode(isSelectable() and hasText("Red"))
+            .assertIsNotEnabled()
+    }
+
+    @Test
+    fun accentCellsRemainEnabledForMangaDynamicTheme() {
+        composeRule.setContent {
+            TypeTypeTheme {
+                AppearanceScreen(
+                    state = AppPreferences(
+                        appearancePersonality = AppearancePersonality.Manga,
+                        appearanceTheme = AppearanceTheme.Dynamic,
+                    ),
+                    onAction = {},
+                    onNavigateBack = {},
+                )
+            }
+        }
+
+        composeRule.onAllNodes(hasScrollAction())[0].performScrollToIndex(11)
+        composeRule.onNode(isSelectable() and hasText("Red"))
+            .assertIsEnabled()
     }
 }

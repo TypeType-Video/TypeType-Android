@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.Scaffold
@@ -101,6 +102,12 @@ fun AppShell(
     var isPlayerFullscreen by remember { mutableStateOf(false) }
     var bottomNavigationHeight by remember { mutableStateOf(0.dp) }
     val density = LocalDensity.current
+    val imeVisible = WindowInsets.ime.getBottom(density) > 0
+    val appNavigationVisible = shouldShowAppNavigation(
+        showsNavigation = showsNavigation,
+        isPlayerFullscreen = isPlayerFullscreen,
+        imeVisible = imeVisible,
+    )
     var playerTransitionProgress by remember { mutableFloatStateOf(0f) }
     val playerHostState by playerHostController.state.collectAsStateWithLifecycle()
     val appChromeVisible = isAppChromeVisible(playerHostState.target, isPlayerFullscreen)
@@ -164,7 +171,7 @@ fun AppShell(
                             }
                         },
                         bottomBar = {
-                            if (showsNavigation && !isPlayerFullscreen) {
+                            if (appNavigationVisible) {
                                 AppBottomBar(
                                     expanded = tabletLayout,
                                     selectedTabRouteQualifiedName = selectedTabRouteQualifiedName,
@@ -199,14 +206,15 @@ fun AppShell(
                     }
                     PlayerHost(
                         controller = playerHostController,
-                        reserveNavigationBarInset = !tabletLayout || !showsNavigation || isPlayerFullscreen,
+                        reserveNavigationBarInset = (!tabletLayout && !imeVisible) ||
+                            !showsNavigation || isPlayerFullscreen,
                         modifier = Modifier.padding(
-                            bottom = if (tabletLayout && showsNavigation && !isPlayerFullscreen) bottomNavigationHeight else 0.dp,
+                            bottom = if (tabletLayout && appNavigationVisible) bottomNavigationHeight else 0.dp,
                         ).consumeWindowInsets(PaddingValues(
-                            bottom = if (tabletLayout && showsNavigation && !isPlayerFullscreen) bottomNavigationHeight else 0.dp,
+                            bottom = if (tabletLayout && appNavigationVisible) bottomNavigationHeight else 0.dp,
                         )),
                         bottomBarHeightDp = if (
-                            !tabletLayout && showsNavigation && !isPlayerFullscreen
+                            !tabletLayout && appNavigationVisible
                         ) {
                             NAV_BAR_HEIGHT_DP
                         } else {
@@ -240,6 +248,12 @@ internal fun isAppChromeVisible(
     playerTarget: PlayerHostTarget,
     isPlayerFullscreen: Boolean,
 ): Boolean = playerTarget != PlayerHostTarget.Expanded && !isPlayerFullscreen
+
+internal fun shouldShowAppNavigation(
+    showsNavigation: Boolean,
+    isPlayerFullscreen: Boolean,
+    imeVisible: Boolean,
+): Boolean = showsNavigation && !isPlayerFullscreen && !imeVisible
 
 internal fun playerPhoneChromeAlpha(
     hasVideo: Boolean,
