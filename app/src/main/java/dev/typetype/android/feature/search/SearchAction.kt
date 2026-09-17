@@ -9,6 +9,6 @@ sealed interface SearchAction {
     data class OnFilterToggle(val groupKey: String, val optionValue: String) : SearchAction
     data object OnResetFilters : SearchAction
     data object OnLoadMore : SearchAction
-    data class OnDeleteHistoryEntry(val query: String) : SearchAction
+    data object OnClearHistory : SearchAction
     data class OnHistoryEntryClick(val query: String) : SearchAction
 }

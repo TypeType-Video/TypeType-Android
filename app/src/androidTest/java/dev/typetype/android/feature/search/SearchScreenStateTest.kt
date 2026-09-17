@@ -49,6 +49,7 @@ class SearchScreenStateTest {
 
         composeRule.onNodeWithText("Recent searches").assertIsDisplayed()
         composeRule.onNodeWithText("Compose accessibility").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Clear all search history").assertIsDisplayed()
     }
 
     @Test

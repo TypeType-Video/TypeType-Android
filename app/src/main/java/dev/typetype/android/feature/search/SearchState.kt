@@ -8,6 +8,7 @@ import dev.typetype.android.domain.search.SearchPlaylist
 
 data class SearchState(
     val query: String = "",
+    val service: Int = 0,
     val isLoading: Boolean = false,
     val results: List<Video> = emptyList(),
     val channels: List<SearchChannel> = emptyList(),

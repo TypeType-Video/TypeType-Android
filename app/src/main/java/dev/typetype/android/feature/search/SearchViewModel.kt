@@ -9,6 +9,7 @@ import dev.typetype.android.domain.library.VideoMetaRepository
 import dev.typetype.android.domain.library.cacheVideos
 import dev.typetype.android.domain.search.SearchRepository
 import dev.typetype.android.domain.searchhistory.SearchHistoryRepository
+import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -31,6 +32,7 @@ class SearchViewModel @Inject constructor(
     private val searchRepository: SearchRepository,
     private val searchHistoryRepository: SearchHistoryRepository,
     private val videoMetaRepository: VideoMetaRepository,
+    private val userSettingsRepository: UserSettingsRepository,
     private val errorMapper: UserErrorMapper,
 ) : ViewModel() {
 
@@ -43,7 +45,9 @@ class SearchViewModel @Inject constructor(
     init {
         loadHistory()
         loadFilters()
+        observeService()
         observeSuggestions()
+        viewModelScope.launch { userSettingsRepository.refresh() }
     }
 
     fun onAction(action: SearchAction) {
@@ -86,7 +90,7 @@ class SearchViewModel @Inject constructor(
             is SearchAction.OnFilterToggle -> toggleFilter(action.groupKey, action.optionValue)
             SearchAction.OnResetFilters -> resetFilters()
             SearchAction.OnLoadMore -> loadMore()
-            is SearchAction.OnDeleteHistoryEntry -> deleteHistoryEntry(action.query)
+            SearchAction.OnClearHistory -> clearHistory()
             is SearchAction.OnHistoryEntryClick -> {
                 _state.update { it.copy(query = action.query) }
                 performSearch(action.query)
@@ -97,19 +101,40 @@ class SearchViewModel @Inject constructor(
     private fun observeSuggestions() {
         viewModelScope.launch {
             _state
-                .map { it.query }
+                .map { it.query to it.service }
                 .distinctUntilChanged()
                 .debounce(SUGGESTIONS_DEBOUNCE_MS)
-                .flatMapLatest { query ->
+                .flatMapLatest { (query, service) ->
                     val trimmed = query.trim()
                     if (trimmed.isBlank()) {
                         flowOf(emptyList())
                     } else {
-                        flowOf(searchRepository.suggestions(trimmed).getOrDefault(emptyList()))
+                        flowOf(
+                            searchRepository.suggestions(
+                                query = trimmed,
+                                service = service,
+                            ).getOrDefault(emptyList()),
+                        )
                     }
                 }
                 .collect { suggestions ->
                     _state.update { it.copy(suggestions = suggestions) }
+                }
+        }
+    }
+
+    private fun observeService() {
+        viewModelScope.launch {
+            userSettingsRepository.observe()
+                .map { it.defaultService }
+                .distinctUntilChanged()
+                .collect { service ->
+                    if (_state.value.service == service) return@collect
+                    _state.update { it.copy(service = service) }
+                    loadFilters(
+                        contentFilter = _state.value.selectedContentFilter,
+                        searchAfter = _state.value.hasSearched,
+                    )
                 }
         }
     }
@@ -125,7 +150,10 @@ class SearchViewModel @Inject constructor(
     private fun loadFilters(contentFilter: String? = null, searchAfter: Boolean = false) {
         filtersJob?.cancel()
         filtersJob = viewModelScope.launch {
-            searchRepository.filters(contentFilter = contentFilter).fold(
+            searchRepository.filters(
+                service = _state.value.service,
+                contentFilter = contentFilter,
+            ).fold(
                 onSuccess = { filters ->
                     val groups = filters.resolvedGroups()
                     _state.update {
@@ -167,6 +195,7 @@ class SearchViewModel @Inject constructor(
             val current = _state.value
             searchRepository.search(
                 query = query,
+                service = current.service,
                 contentFilter = current.selectedContentFilter,
                 filters = current.selectedFilters,
             ).fold(
@@ -234,6 +263,7 @@ class SearchViewModel @Inject constructor(
             _state.update { it.copy(isLoadingMore = true, loadMoreError = false) }
             searchRepository.search(
                 query = snapshot.query,
+                service = snapshot.service,
                 nextPage = cursor,
                 contentFilter = snapshot.selectedContentFilter,
                 filters = snapshot.selectedFilters,
@@ -258,10 +288,10 @@ class SearchViewModel @Inject constructor(
         }
     }
 
-    private fun deleteHistoryEntry(query: String) {
+    private fun clearHistory() {
         viewModelScope.launch {
-            searchHistoryRepository.removeEntry(query).onSuccess {
-                _state.update { it.copy(searchHistory = it.searchHistory - query) }
+            searchHistoryRepository.clearHistory().onSuccess {
+                _state.update { it.copy(searchHistory = emptyList()) }
             }
         }
     }

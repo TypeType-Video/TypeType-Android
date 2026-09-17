@@ -803,6 +803,7 @@
     <string name="podcast_shuffle">Shuffle</string>
     <string name="podcast_empty">This podcast has no available episodes.</string>
     <string name="search_recent_searches">Recent searches</string>
+    <string name="search_clear_all">Clear all search history</string>
     <string name="search_no_results">No results for \"%1$s\"</string>
     <string name="search_back">Back</string>
     <string name="search_clear">Clear</string>

@@ -4,6 +4,7 @@ import dev.typetype.android.data.network.dto.ChannelPageRequest
 import dev.typetype.android.data.network.dto.ChannelPlaylistsResponse
 import dev.typetype.android.data.network.dto.ChannelResponse
 import dev.typetype.android.data.network.dto.SearchHistoryEntryRequest
+import dev.typetype.android.data.network.dto.SearchHistoryItemDto
 import dev.typetype.android.data.network.dto.SearchFiltersResponse
 import dev.typetype.android.data.network.dto.PublicPlaylistResponseDto
 import dev.typetype.android.data.network.dto.SearchResponse
@@ -52,13 +53,10 @@ interface TypeTypeSearchApi {
     ): Response<List<String>>
 
     @GET("search-history")
-    suspend fun searchHistory(): Response<List<String>>
+    suspend fun searchHistory(): Response<List<SearchHistoryItemDto>>
 
     @POST("search-history")
-    suspend fun addSearchHistory(@Body body: SearchHistoryEntryRequest): Response<Unit>
-
-    @DELETE("search-history")
-    suspend fun removeSearchHistory(@Query("query") query: String): Response<Unit>
+    suspend fun addSearchHistory(@Body body: SearchHistoryEntryRequest): Response<SearchHistoryItemDto>
 
     @DELETE("search-history")
     suspend fun clearSearchHistory(): Response<Unit>
