@@ -26,8 +26,8 @@ android {
         applicationId = "dev.typetype.android"
         minSdk = 23
         targetSdk = 37
-        versionCode = 10700
-        versionName = "1.7.0"
+        versionCode = 10820
+        versionName = "1.8.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         resValue("string", "app_name", "TypeType")
     }
@@ -140,6 +140,10 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.browser)
     implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.jsoup)
+    implementation(libs.unifiedpush.connector) {
+        exclude(group = "com.google.crypto.tink", module = "tink")
+    }
     implementation(libs.androidx.navigation.compose)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)

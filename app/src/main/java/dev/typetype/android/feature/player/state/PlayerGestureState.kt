@@ -33,6 +33,7 @@ class PlayerGestureState {
     val seekDragStartMs: MutableLongState = mutableLongStateOf(0L)
     val seekDragTargetMs: MutableLongState = mutableLongStateOf(0L)
     val seekDragOverlayActive: MutableState<Boolean> = mutableStateOf(false)
+    val fineSeeking: MutableState<Boolean> = mutableStateOf(false)
     val longPressBoostActive: MutableState<Boolean> = mutableStateOf(false)
 
     fun showSeekHint(side: GestureSide, seconds: Int) {

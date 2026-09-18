@@ -20,6 +20,32 @@ fun toPublicWatchParameter(value: String): String {
 fun canonicalVideoIdentity(value: String): String =
     resolveIncomingVideoUrl(value) ?: value.trim()
 
+fun sameVideoTimestampMillis(url: String, currentVideoUrl: String): Long? {
+    val trimmed = url.trim()
+    if (trimmed.isEmpty()) return null
+    val timestamp = timestampParamMillis(trimmed) ?: return null
+    val identity = canonicalVideoIdentity(trimmed)
+    if (identity != canonicalVideoIdentity(currentVideoUrl)) return null
+    return timestamp
+}
+
+private fun timestampParamMillis(url: String): Long? {
+    val uri = runCatching { URI(url) }.getOrNull() ?: return null
+    val raw = queryParameter(uri, "t")
+        ?: queryParameter(uri, "start")
+        ?: queryParameter(uri, "timestamp")
+        ?: return null
+    val compact = raw.trim().removeSuffix("s").removeSuffix("S")
+    if (compact.isEmpty()) return null
+    val match = DURATION_PATTERN.matchEntire(compact) ?: return null
+    val hours = match.groupValues[1].toLongOrNull() ?: 0L
+    val minutes = match.groupValues[2].toLongOrNull() ?: 0L
+    val seconds = match.groupValues[3].toLongOrNull() ?: return null
+    return ((hours * 3600L) + (minutes * 60L) + seconds) * 1000L
+}
+
+private val DURATION_PATTERN = Regex("(?:(\\d{1,3})h)?(?:(\\d{1,3})m)?(\\d{1,5})")
+
 fun resolveSharedVideoUrl(value: String?): String? {
     val text = value?.trim().orEmpty()
     if (text.isEmpty() || text.length > MAX_SHARED_TEXT_LENGTH) return null

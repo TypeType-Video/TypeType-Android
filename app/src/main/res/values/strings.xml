@@ -76,6 +76,7 @@
     <string name="player_autoplay_short">Autoplay</string>
     <string name="player_views_count">%1$s views</string>
     <string name="player_likes_count">%1$s likes</string>
+    <string name="player_release_date">Release date: %1$s</string>
     <string name="player_action_play">Resume playback</string>
     <string name="player_action_pause">Pause playback</string>
     <string name="player_state_playing">Playing</string>
@@ -495,6 +496,8 @@
     <string name="accounts_forget_failed">Couldn\'t forget account</string>
     <string name="comments_title">Comments</string>
     <string name="comments_empty">No comments</string>
+    <string name="comments_read_more">Read more</string>
+    <string name="comments_show_less">Show less</string>
     <string name="comments_like_count">Likes: %1$s</string>
     <string name="comments_replies_failed">Couldn\'t load replies</string>
     <string name="comments_load_failed">Couldn\'t load comments</string>
@@ -766,6 +769,9 @@
     <string name="search_filter_remove">Remove %1$s filter</string>
     <string name="search_channel_verified">Verified channel</string>
     <string name="search_channel_metadata">%1$s subscribers, %2$s videos</string>
+    <string name="search_channel_metadata_subscribers_only">%1$s subscribers</string>
+    <string name="search_channel_videos_count">%1$s videos</string>
+    <string name="search_channel_metadata_unavailable">Channel info unavailable</string>
     <string name="search_playlist_video_count">%1$s videos</string>
     <string name="search_playlist_type">Playlist</string>
     <string name="search_did_you_mean">Did you mean %1$s?</string>
@@ -797,6 +803,7 @@
     <string name="podcast_shuffle">Shuffle</string>
     <string name="podcast_empty">This podcast has no available episodes.</string>
     <string name="search_recent_searches">Recent searches</string>
+    <string name="search_clear_all">Clear all search history</string>
     <string name="search_no_results">No results for \"%1$s\"</string>
     <string name="search_back">Back</string>
     <string name="search_clear">Clear</string>
@@ -1189,4 +1196,21 @@
     <string name="rss_error_content_types">Select at least one content type.</string>
     <string name="rss_error_channels">Select at least one channel.</string>
     <string name="rss_error_generic">Couldn\'t update private RSS feeds</string>
+    <string name="push_notification_channel_name">New videos</string>
+    <string name="settings_push_title">Push notifications</string>
+    <string name="settings_push_subtitle">New video alerts via UnifiedPush</string>
+    <string name="push_status_active">Active</string>
+    <string name="push_status_connecting">Connecting…</string>
+    <string name="push_status_disabled">Off</string>
+    <string name="push_status_missing_distributor">No push distributor installed</string>
+    <string name="push_status_unavailable">Not offered by this instance</string>
+    <string name="push_status_failed">Registration failed</string>
+    <string name="push_devices_count">%1$d of %2$d devices registered</string>
+    <string name="push_install_hint">Install a UnifiedPush distributor such as ntfy to receive notifications.</string>
+    <string name="push_choose_distributor">Choose distributor</string>
+    <string name="push_error_generic">Couldn\'t update push notifications</string>
+    <string name="channel_notifications_enable">Turn on new video notifications</string>
+    <string name="channel_notifications_disable">Turn off new video notifications</string>
+    <string name="push_battery_hint">Disable battery optimization for reliable notification delivery.</string>
+    <string name="push_battery_open_settings">Battery settings</string>
 </resources>

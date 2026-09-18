@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.ThumbUp
 import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,25 +31,37 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.compose.ui.unit.sp
+import dev.typetype.android.domain.navigation.sameVideoTimestampMillis
+import java.text.DateFormat
+import java.util.Date
 
 @Composable
 fun DescriptionSection(
     title: String,
     viewCount: Long,
     likeCount: Long,
+    releaseDateMillis: Long,
     description: String,
+    videoUrl: String,
     onTimestampClick: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var pendingUrl by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
+    val releaseDate = releaseDateMillis.takeIf { it > 0L }?.let { millis ->
+        DateFormat.getDateInstance(
+            DateFormat.MEDIUM,
+            LocalLocale.current.platformLocale,
+        ).format(Date(millis))
+    }
 
     Column(
         modifier = modifier
@@ -93,6 +106,17 @@ fun DescriptionSection(
                         ),
                     )
                 }
+                releaseDate?.let {
+                    Spacer(Modifier.width(16.dp))
+                    VideoStat(
+                        value = it,
+                        icon = Icons.Outlined.Event,
+                        contentDescription = stringResource(
+                            dev.typetype.android.R.string.player_release_date,
+                            it,
+                        ),
+                    )
+                }
                 Spacer(Modifier.weight(1f))
                 Icon(
                     imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
@@ -109,7 +133,14 @@ fun DescriptionSection(
                     lineHeight = 22.sp,
                 ),
                 linkColor = MaterialTheme.colorScheme.primary,
-                onUrlClick = { url -> pendingUrl = url },
+                onUrlClick = { url ->
+                    val timestamp = sameVideoTimestampMillis(url, videoUrl)
+                    if (timestamp != null) {
+                        onTimestampClick(timestamp)
+                    } else {
+                        pendingUrl = url
+                    }
+                },
                 onTimestampClick = onTimestampClick,
                 modifier = Modifier.padding(top = 10.dp),
             )

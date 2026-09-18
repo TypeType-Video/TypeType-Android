@@ -9,6 +9,8 @@ import coil3.gif.AnimatedImageDecoder
 import coil3.gif.GifDecoder
 import coil3.memory.MemoryCache
 import coil3.memoryCacheMaxSizePercentWhileInBackground
+import coil3.disk.DiskCache
+import okio.Path.Companion.toPath
 import coil3.svg.SvgDecoder
 import dagger.hilt.android.HiltAndroidApp
 import androidx.hilt.work.HiltWorkerFactory
@@ -44,6 +46,12 @@ internal fun createTypeTypeImageLoader(context: PlatformContext): ImageLoader =
                 .maxSizePercent(context, IMAGE_MEMORY_CACHE_PERCENT)
                 .build()
         }
+        .diskCache {
+            DiskCache.Builder()
+                .directory(context.cacheDir.resolve("coil_image_cache").absolutePath.toPath())
+                .maxSizeBytes(DISK_CACHE_MAX_BYTES)
+                .build()
+        }
         .memoryCacheMaxSizePercentWhileInBackground(BACKGROUND_CACHE_RETAINED_PERCENT)
         .components {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -57,3 +65,4 @@ internal fun createTypeTypeImageLoader(context: PlatformContext): ImageLoader =
 
 private const val IMAGE_MEMORY_CACHE_PERCENT = 0.10
 private const val BACKGROUND_CACHE_RETAINED_PERCENT = 0.50
+private const val DISK_CACHE_MAX_BYTES = 100L * 1024 * 1024

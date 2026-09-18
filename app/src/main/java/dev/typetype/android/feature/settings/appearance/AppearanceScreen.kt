@@ -1,5 +1,6 @@
 package dev.typetype.android.feature.settings.appearance
 
+import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +20,7 @@ import dev.typetype.android.core.ui.components.SectionHeader
 import dev.typetype.android.core.ui.components.KomiStoreAttribution
 import dev.typetype.android.domain.preferences.AppearanceMode
 import dev.typetype.android.domain.preferences.AppearancePersonality
+import dev.typetype.android.domain.preferences.AppearanceTheme
 import dev.typetype.android.domain.preferences.AppPreferences
 import dev.typetype.android.feature.settings.SettingsDetailTopBar
 
@@ -68,7 +70,16 @@ fun AppearanceScreen(
             appearanceModeItems(state, onAction)
             if (state.appearanceMode != AppearanceMode.Light) appearanceAmoledItem(state, onAction)
             appearanceSection(R.string.settings_appearance_accent_color)
-            item { AccentChooser(state.accentColor, onAction) }
+            item {
+                val accentDisabled = state.appearanceTheme == AppearanceTheme.Dynamic &&
+                    state.appearancePersonality == AppearancePersonality.Classic &&
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                AccentChooser(
+                    current = state.accentColor,
+                    accentDisabled = accentDisabled,
+                    onAction = onAction,
+                )
+            }
             appearanceSection(R.string.appearance_typography)
             appearanceFontItems(state, onAction)
             appearanceSection(R.string.appearance_motion)

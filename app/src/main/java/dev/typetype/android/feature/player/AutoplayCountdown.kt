@@ -126,6 +126,31 @@ internal fun rememberAutoplayCountdown(
         }
     }
 
+    LaunchedEffect(player, currentVideoUrl, enabled, boundedSeconds, target?.videoUrl) {
+        while (true) {
+            delay(END_OF_STREAM_CHECK_MILLIS)
+            val p = player ?: continue
+            if (!enabled) continue
+            val next = target ?: continue
+            if (handledTargetUrl == next.videoUrl) continue
+            if (p.playbackState == Player.STATE_ENDED) continue
+            if (!p.playWhenReady) continue
+            val duration = p.duration
+            if (duration <= 0L) continue
+            val position = p.currentPosition
+            if (position < duration - END_OF_STREAM_EPSILON_MS) continue
+            handledTargetUrl = next.videoUrl
+            if (boundedSeconds == 0) {
+                latestPlayTarget(next)
+            } else {
+                remainingMillis = boundedSeconds * 1_000L
+                paused = false
+                activeTarget = next
+            }
+            break
+        }
+    }
+
     val next = activeTarget ?: return null
     return AutoplayCountdownState(
         target = next,
@@ -172,5 +197,7 @@ internal fun shouldStartAutoplayCountdown(
     currentMediaId == currentVideoUrl &&
     !targetUrl.isNullOrBlank()
 
+private const val END_OF_STREAM_CHECK_MILLIS = 2_000L
+private const val END_OF_STREAM_EPSILON_MS = 1_000L
 private const val COUNTDOWN_TICK_MILLIS = 100L
 private const val MAX_AUTOPLAY_COUNTDOWN_SECONDS = 60

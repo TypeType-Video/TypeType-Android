@@ -29,6 +29,7 @@ class ChannelViewModel @Inject constructor(
     private val videoMetaRepository: VideoMetaRepository,
     private val subscriptionsRepository: SubscriptionsRepository,
     private val podcastRepository: PodcastRepository,
+    private val notifications: ChannelNotificationsController,
     private val errorMapper: UserErrorMapper,
 ) : ViewModel() {
 
@@ -63,6 +64,7 @@ class ChannelViewModel @Inject constructor(
             ChannelAction.OnLoadMore -> loadMore()
             ChannelAction.OnLoadMorePlaylists -> loadMorePlaylists()
             ChannelAction.OnToggleSubscribe -> toggleSubscribe()
+            ChannelAction.OnToggleNotifications -> toggleNotifications()
             ChannelAction.OnSubmitSearch -> submitSearch()
             ChannelAction.OnDismissSearch -> {
                 _state.update { it.copy(searchInput = it.appliedSearch) }
@@ -268,6 +270,30 @@ class ChannelViewModel @Inject constructor(
         viewModelScope.launch {
             subscriptionsRepository.observeSubscribedChannelUrls().collect { urls ->
                 _state.update { it.copy(isSubscribed = channelUrl in urls) }
+                refreshNotifications()
+            }
+        }
+    }
+
+    private suspend fun refreshNotifications() {
+        val available = notifications.isAvailable(isSubscribed = _state.value.isSubscribed)
+        _state.update { it.copy(notificationsAvailable = available) }
+        if (!available) return
+        val enabled = notifications.currentEnabled(channelUrl) ?: return
+        _state.update { it.copy(notificationsEnabled = enabled) }
+    }
+
+    private fun toggleNotifications() {
+        val current = _state.value
+        if (!current.notificationsAvailable || current.notificationsInFlight) return
+        viewModelScope.launch {
+            _state.update { it.copy(notificationsInFlight = true) }
+            val enabled = notifications.setEnabled(channelUrl, !current.notificationsEnabled)
+            _state.update {
+                it.copy(
+                    notificationsInFlight = false,
+                    notificationsEnabled = enabled ?: it.notificationsEnabled,
+                )
             }
         }
     }
@@ -300,6 +326,3 @@ class ChannelViewModel @Inject constructor(
         }
     }
 }
-
-internal fun String.isYouTubeChannel(): Boolean =
-    contains("youtube.com", ignoreCase = true) || startsWith("/channel/") || startsWith("/c/")

@@ -38,6 +38,7 @@ class SearchFilterContractTest {
 
         val request = server.takeRequest()
         assertEquals("/search/filters", request.requestUrl?.encodedPath)
+        assertEquals("0", request.requestUrl?.queryParameter("service"))
         assertEquals("videos", request.requestUrl?.queryParameter("contentFilter"))
         val group = response.body()?.filterGroups?.single()
         assertEquals("duration", group?.key)
@@ -58,6 +59,26 @@ class SearchFilterContractTest {
         val requestUrl = server.takeRequest().requestUrl
         assertEquals(listOf("short", "week"), requestUrl?.queryParameterValues("filter"))
         assertFalse(requestUrl?.queryParameterNames?.contains("sortFilter") == true)
+    }
+
+    @Test
+    fun searchSendsTheSelectedService() = runBlocking {
+        server.enqueue(jsonResponse("""{"items":[],"channels":[],"playlists":[]}"""))
+
+        api.search(query = "test", service = 6)
+
+        assertEquals("6", server.takeRequest().requestUrl?.queryParameter("service"))
+    }
+
+    @Test
+    fun suggestionsSendTheSelectedService() = runBlocking {
+        server.enqueue(jsonResponse("[]"))
+
+        api.searchSuggestions(query = "test", service = 5)
+
+        val requestUrl = server.takeRequest().requestUrl
+        assertEquals("test", requestUrl?.queryParameter("query"))
+        assertEquals("5", requestUrl?.queryParameter("service"))
     }
 
     private fun jsonResponse(body: String) = MockResponse()

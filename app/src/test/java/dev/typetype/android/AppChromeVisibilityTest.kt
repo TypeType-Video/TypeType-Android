@@ -22,6 +22,14 @@ class AppChromeVisibilityTest {
     }
 
     @Test
+    fun keyboardHidesAppNavigationWithoutChangingOtherVisibilityRules() {
+        assertTrue(shouldShowAppNavigation(true, false, false))
+        assertFalse(shouldShowAppNavigation(true, false, true))
+        assertFalse(shouldShowAppNavigation(false, false, false))
+        assertFalse(shouldShowAppNavigation(true, true, false))
+    }
+
+    @Test
     fun phoneChromeFollowsPlayerMotionInBothDirections() {
         assertEquals(
             0.35f,

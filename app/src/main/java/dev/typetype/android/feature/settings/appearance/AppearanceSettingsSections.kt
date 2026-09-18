@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -216,7 +217,11 @@ private fun AppearanceToggleRow(
 }
 
 @Composable
-fun AccentChooser(current: AccentColor, onAction: (AppearanceAction) -> Unit) {
+fun AccentChooser(
+    current: AccentColor,
+    accentDisabled: Boolean = false,
+    onAction: (AppearanceAction) -> Unit,
+) {
     Row(
         Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -224,10 +229,13 @@ fun AccentChooser(current: AccentColor, onAction: (AppearanceAction) -> Unit) {
         accents.forEach { swatch ->
             val label = stringResource(swatch.label)
             Column(
-                modifier = Modifier.selectable(
-                    selected = swatch.accent == current,
-                    role = Role.RadioButton,
-                ) { onAction(AppearanceAction.SelectAccent(swatch.accent)) },
+                modifier = Modifier
+                    .alpha(if (accentDisabled) 0.38f else 1f)
+                    .selectable(
+                        selected = swatch.accent == current,
+                        enabled = !accentDisabled,
+                        role = Role.RadioButton,
+                    ) { onAction(AppearanceAction.SelectAccent(swatch.accent)) },
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Box(

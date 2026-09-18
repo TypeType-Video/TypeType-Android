@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.ManageAccounts
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayCircle
@@ -60,6 +61,7 @@ fun SettingsScreen(
     onOpenAppearance: () -> Unit,
     onOpenContent: () -> Unit = {},
     onOpenPlayer: () -> Unit = {},
+    onOpenPushNotifications: () -> Unit = {},
     onOpenStorage: () -> Unit = {},
     onOpenPrivacy: () -> Unit = {},
     onOpenDiagnostics: () -> Unit = {},
@@ -87,6 +89,7 @@ fun SettingsScreen(
         add(SettingsEntry(R.string.settings_appearance_title, R.string.settings_appearance_subtitle, Icons.Filled.Palette, onOpenAppearance))
         add(SettingsEntry(R.string.settings_content_title, R.string.settings_content_subtitle, Icons.Filled.Tune, onOpenContent))
         add(SettingsEntry(R.string.settings_player_title, R.string.settings_player_subtitle, Icons.Filled.PlayCircle, onOpenPlayer))
+        add(SettingsEntry(R.string.settings_push_title, R.string.settings_push_subtitle, Icons.Filled.Notifications, onOpenPushNotifications))
         add(SettingsEntry(R.string.settings_storage_title, R.string.settings_storage_subtitle, Icons.Filled.Storage, onOpenStorage))
         add(SettingsEntry(R.string.settings_privacy_title, R.string.settings_privacy_subtitle, Icons.Filled.Lock, onOpenPrivacy))
         add(SettingsEntry(R.string.diagnostics_title, R.string.diagnostics_subtitle, Icons.Filled.BugReport, onOpenDiagnostics))

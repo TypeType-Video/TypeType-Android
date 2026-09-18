@@ -173,6 +173,14 @@
             android:exported="false" />
 
         <service
+            android:name=".services.push.TypeTypePushService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="org.unifiedpush.android.connector.PUSH_EVENT" />
+            </intent-filter>
+        </service>
+
+        <service
             android:name=".services.PlaybackService"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback"

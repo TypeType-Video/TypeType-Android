@@ -18,6 +18,7 @@ internal class SabrPlaybackSessionPreparer(
     private val pause: suspend (Long) -> Unit = { delay(it) },
     private val network: PlaybackNetworkObserver = AlwaysAvailablePlaybackNetworkObserver,
     private val maxWindowPolls: Int = 60,
+    private val stuckRecoveryAttempts: Int = STUCK_RECOVERY_ATTEMPTS,
 ) {
     suspend fun prepare(
         api: TypeTypeMediaApi,
@@ -80,7 +81,12 @@ internal class SabrPlaybackSessionPreparer(
         val control = response.body()
             ?.requireControlResponse(target, binding.sessionId, binding.generation)
             ?: sabrContractMismatch("SABR returned an empty seek response")
-        return waitForWindow(api, baseUrl, target, control, emptyList())
+        return try {
+            waitForWindow(api, baseUrl, target, control, emptyList())
+        } catch (failure: SabrControlException) {
+            if (failure.failureCode != "youtube_sabr_preparation_timeout") throw failure
+            createSession(api, baseUrl, target, startTimeMs)
+        }
     }
 
     suspend fun refresh(
@@ -214,6 +220,12 @@ internal class SabrPlaybackSessionPreparer(
             } else {
                 stagnantAttempts = pending.stagnantAttempts(previousEdgeMs, stagnantAttempts)
                 previousEdgeMs = pending.bufferedEdgeMs
+                if (stagnantAttempts >= stuckRecoveryAttempts) {
+                    throw sabrPreparationFailure(
+                        "SABR prefetch stuck: segment-pending",
+                        "youtube_sabr_preparation_timeout",
+                    )
+                }
                 pause(pending.retryDelay(stagnantAttempts))
             }
         }
@@ -280,6 +292,8 @@ internal class SabrPlaybackSessionPreparer(
     }
 
 }
+
+private const val STUCK_RECOVERY_ATTEMPTS = 5
 
 private const val MAX_FRESH_SESSION_RECOVERIES = 2
 

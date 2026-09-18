@@ -7,6 +7,12 @@ import org.junit.Test
 
 class PlayerLevelGestureTest {
     @Test
+    fun `ambiguous diagonal does not capture seek`() {
+        assertEquals(DragMode.None, pickDragMode(Offset(30f, 25f), 100f, 300f))
+        assertEquals(DragMode.Seek, pickDragMode(Offset(40f, 25f), 100f, 300f))
+    }
+
+    @Test
     fun `upward drag raises the level gradually`() {
         assertEquals(0.75f, adjustLevelFraction(0.5f, -150f, 600f), 0.001f)
     }
