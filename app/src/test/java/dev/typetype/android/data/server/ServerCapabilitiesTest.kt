@@ -80,6 +80,24 @@ class ServerCapabilitiesTest {
         assertTrue(refreshed.rss.rateLimitPerMinute == 30)
     }
 
+    @Test
+    fun enabledPushCapabilityPreservesProviderEventsAndLimit() {
+        val refreshed = server.withCapabilities(
+            decode(
+                BASE_INSTANCE.dropLast(1) +
+                    ",\"pushNotifications\":{" +
+                    "\"enabled\":true,\"provider\":\"unifiedpush\"," +
+                    "\"eventTypes\":[\"new_video\",\"channel_live\"]," +
+                    "\"maxDevicesPerAccount\":3}}",
+            ),
+        )
+
+        assertTrue(refreshed.push.enabled)
+        assertTrue(refreshed.push.provider == "unifiedpush")
+        assertTrue(refreshed.push.eventTypes == listOf("new_video", "channel_live"))
+        assertTrue(refreshed.push.maxDevicesPerAccount == 3)
+    }
+
     private fun decode(value: String): InstanceResponse = json.decodeFromString(value)
 
     private companion object {

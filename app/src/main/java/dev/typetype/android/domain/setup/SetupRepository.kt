@@ -1,6 +1,7 @@
 package dev.typetype.android.domain.setup
 
 import dev.typetype.android.domain.server.Server
+import dev.typetype.android.domain.server.PushCapability
 import dev.typetype.android.domain.server.RssCapability
 
 interface SetupRepository {
@@ -33,4 +34,5 @@ data class ProbeResult(
     val youtubeRemoteLoginReady: Boolean,
     val youtubeRemoteLoginUnavailableReason: String?,
     val rss: RssCapability,
+    val push: PushCapability,
 )
