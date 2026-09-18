@@ -106,6 +106,10 @@ fun SearchScreen(
             onNavigateBack = onNavigateBack,
             focusRequester = focusRequester,
         )
+        SearchServiceSelector(
+            service = state.service,
+            onServiceSelect = { onAction(SearchAction.OnServiceSelect(it)) },
+        )
         if (state.hasSearched) {
             SearchFilterBar(
                 contentFilters = state.contentFilters,
