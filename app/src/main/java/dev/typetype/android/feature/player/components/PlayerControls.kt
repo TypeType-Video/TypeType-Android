@@ -30,11 +30,12 @@ import androidx.media3.common.Player
 import dev.typetype.android.R
 import dev.typetype.android.domain.stream.SponsorBlockSegment
 import dev.typetype.android.domain.stream.StreamStoryboard
+import dev.typetype.android.feature.player.PlayerNavigationControls
 import dev.typetype.android.feature.player.state.ResizeMode
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
-fun PlayerControls(
+internal fun PlayerControls(
     player: Player,
     storyboard: StreamStoryboard? = null,
     title: String,
@@ -53,6 +54,7 @@ fun PlayerControls(
     seekPreviewPositionMs: Long? = null,
     timelineScrubbing: Boolean = false,
     onTimelineScrubbingChange: (Boolean) -> Unit = {},
+    navigation: PlayerNavigationControls = PlayerNavigationControls.Disabled,
 ) {
     BoxWithConstraints(modifier = modifier) {
         val compactControls = !isFullscreen && maxHeight < COMPACT_CONTROLS_HEIGHT
@@ -105,6 +107,7 @@ fun PlayerControls(
                 expanded = expandedControls,
                 isFullscreen = isFullscreen,
                 compact = compactControls,
+                navigation = navigation,
                 modifier = Modifier.align(Alignment.Center).testTag(PLAYER_CENTER_CONTROLS_TAG),
             )
         }
