@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import dev.typetype.android.core.ui.components.LocalAnimatedStatePlayback
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
+import dev.typetype.android.domain.search.SearchFilterOption
 import dev.typetype.android.feature.menu.VideoMenuScope
 import org.junit.Rule
 import org.junit.Test
@@ -62,6 +63,32 @@ class SearchScreenStateTest {
     }
 
     @Test
+    fun filtersStayHiddenUntilSearchFinishesSubmitting() {
+        show(searchState())
+
+        composeRule.onNodeWithContentDescription("Content type").assertDoesNotExist()
+    }
+
+    @Test
+    fun filtersAppearOnlyWithResultsState() {
+        composeRule.setContent {
+            TypeTypeTheme {
+                SearchFilterBar(
+                    contentFilters = searchState().contentFilters,
+                    filterGroups = emptyList(),
+                    selectedContent = null,
+                    selectedFilters = emptyList(),
+                    onContentSelect = {},
+                    onFilterToggle = { _, _ -> },
+                    onResetFilters = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Content type").assertIsDisplayed()
+    }
+
+    @Test
     fun completedSearchHasAnExplicitEmptyState() {
         composeRule.setContent {
             TypeTypeTheme {
@@ -105,5 +132,12 @@ class SearchScreenStateTest {
         favorites = emptySet(),
         watchLater = emptySet(),
         onAction = { _, _ -> },
+    )
+
+    private fun searchState() = SearchState(
+        query = "kotlin",
+        contentFilters = listOf(
+            SearchFilterOption(value = "video", label = "video", isDefault = false),
+        ),
     )
 }

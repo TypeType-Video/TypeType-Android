@@ -4,6 +4,7 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.typetype.android.R
 import dev.typetype.android.data.account.ActiveAccountScope
+import dev.typetype.android.data.account.AccountScope
 import dev.typetype.android.data.push.PushRegistrationStore
 import dev.typetype.android.data.push.pushInstanceName
 import dev.typetype.android.data.push.scopeFromInstanceName
@@ -37,6 +38,30 @@ class PushRegistrationManager @Inject constructor(
         if (!repository.currentCapability().enabled) {
             return update(PushRegistrationStatus.Unavailable)
         }
+        return startRegistration(scope)
+    }
+
+    suspend fun reconcileRegistration(): PushRegistrationStatus {
+        val scope = activeAccountScope.require()
+        val registration = registrationStore.registrationOnce(scope)
+            ?: return update(PushRegistrationStatus.Disabled)
+        if (!repository.currentCapability().enabled) {
+            return update(PushRegistrationStatus.Unavailable)
+        }
+        val endpoint = registration.endpoint ?: return startRegistration(scope)
+        val devices = repository.devices().getOrElse {
+            return update(PushRegistrationStatus.Failed)
+        }
+        if (devices.any { device -> device.deviceId == registration.deviceId }) {
+            return update(PushRegistrationStatus.Registered)
+        }
+        return repository.registerDevice(registration.deviceId, endpoint).fold(
+            onSuccess = { update(PushRegistrationStatus.Registered) },
+            onFailure = { update(PushRegistrationStatus.Failed) },
+        )
+    }
+
+    private suspend fun startRegistration(scope: AccountScope): PushRegistrationStatus {
         val instance = pushInstanceName(scope)
         if (UnifiedPush.getDistributors(context).isEmpty()) {
             return update(PushRegistrationStatus.MissingDistributor)

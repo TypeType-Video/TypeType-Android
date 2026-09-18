@@ -86,6 +86,7 @@ class SearchViewModel @Inject constructor(
                     loadMoreError = false,
                 )
             }
+            is SearchAction.OnServiceSelect -> selectService(action.service)
             is SearchAction.OnContentFilterSelect -> selectContentFilter(action.value)
             is SearchAction.OnFilterToggle -> toggleFilter(action.groupKey, action.optionValue)
             SearchAction.OnResetFilters -> resetFilters()
@@ -95,6 +96,12 @@ class SearchViewModel @Inject constructor(
                 _state.update { it.copy(query = action.query) }
                 performSearch(action.query)
             }
+        }
+    }
+
+    private fun selectService(service: Int) {
+        viewModelScope.launch {
+            userSettingsRepository.update { it.copy(defaultService = service) }
         }
     }
 

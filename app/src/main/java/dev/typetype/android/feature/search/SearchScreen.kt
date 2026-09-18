@@ -106,17 +106,23 @@ fun SearchScreen(
             onNavigateBack = onNavigateBack,
             focusRequester = focusRequester,
         )
-        SearchFilterBar(
-            contentFilters = state.contentFilters,
-            filterGroups = state.filterGroups,
-            selectedContent = state.selectedContentFilter,
-            selectedFilters = state.selectedFilters,
-            onContentSelect = { onAction(SearchAction.OnContentFilterSelect(it)) },
-            onFilterToggle = { groupKey, value ->
-                onAction(SearchAction.OnFilterToggle(groupKey, value))
-            },
-            onResetFilters = { onAction(SearchAction.OnResetFilters) },
+        SearchServiceSelector(
+            service = state.service,
+            onServiceSelect = { onAction(SearchAction.OnServiceSelect(it)) },
         )
+        if (state.hasSearched) {
+            SearchFilterBar(
+                contentFilters = state.contentFilters,
+                filterGroups = state.filterGroups,
+                selectedContent = state.selectedContentFilter,
+                selectedFilters = state.selectedFilters,
+                onContentSelect = { onAction(SearchAction.OnContentFilterSelect(it)) },
+                onFilterToggle = { groupKey, value ->
+                    onAction(SearchAction.OnFilterToggle(groupKey, value))
+                },
+                onResetFilters = { onAction(SearchAction.OnResetFilters) },
+            )
+        }
 
         when {
             state.isLoading -> Box(

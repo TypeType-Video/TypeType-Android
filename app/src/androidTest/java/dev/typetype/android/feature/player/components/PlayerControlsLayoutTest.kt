@@ -110,6 +110,7 @@ class PlayerControlsLayoutTest {
                     .padding(top = 200.dp),
             )
         }
+    }
 
         composeRule.onNodeWithContentDescription(
             composeRule.activity.getString(R.string.player_timeline),

@@ -238,6 +238,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
+          target_commitish: ${{ github.sha }}
           name: ${{ env.RELEASE_TAG }}
           body_path: release-notes/${{ env.RELEASE_TAG }}.md
           files: |
