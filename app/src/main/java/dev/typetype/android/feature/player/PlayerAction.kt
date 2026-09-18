@@ -7,6 +7,8 @@ sealed interface PlayerAction {
     data object OnToggleWatchLater : PlayerAction
     data object OnRetry : PlayerAction
     data object OnAdvanceQueue : PlayerAction
+    data object OnPlayPreviousVideo : PlayerAction
+    data object OnPlayNextVideo : PlayerAction
     data object OnCancelQueueAutoplay : PlayerAction
     data object OnToggleQueueAutoplayPause : PlayerAction
     data class OnSetPlaybackBrightness(val percent: Int) : PlayerAction
