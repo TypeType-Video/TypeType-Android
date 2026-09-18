@@ -9,6 +9,7 @@ import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.network.NetworkAvailabilityObserver
 import dev.typetype.android.domain.feed.HomeFeedRepository
 import dev.typetype.android.domain.feed.SubscriptionsPage
+import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.library.VideoMetaRepository
 import dev.typetype.android.domain.library.cacheVideos
 import dev.typetype.android.domain.subscriptions.SubscriptionsRepository
@@ -41,6 +42,7 @@ class SubscriptionsViewModel @Inject constructor(
     private var nextCursor: String? = null
     private var generation: Long? = null
     private var persistCurrentGeneration = true
+    private var continuationVideos: List<Video> = emptyList()
     private val networkRecovery = SubscriptionsRecovery()
 
     init {
@@ -99,6 +101,7 @@ class SubscriptionsViewModel @Inject constructor(
                 persistCurrentGeneration = true
                 networkRecovery.clear()
                 _state.value = SubscriptionsState(isLoading = true)
+                continuationVideos = emptyList()
                 refresh()
             }
         }
@@ -119,6 +122,7 @@ class SubscriptionsViewModel @Inject constructor(
         networkRecovery.clear()
         requestJob?.cancel()
         refreshMonitorJob?.cancel()
+        continuationVideos = _state.value.videos
         requestJob = viewModelScope.launch { loadFirstPage() }
         viewModelScope.launch { channelsProvider.refresh() }
     }
@@ -153,12 +157,19 @@ class SubscriptionsViewModel @Inject constructor(
         nextCursor = page.nextCursor
         persistCurrentGeneration = !page.refreshing || !hadCachedContent
         val isPersisting = persistCurrentGeneration
+        val preservesContinuation = continuationVideos.isNotEmpty()
+        val videos = if (preservesContinuation) {
+            mergeSubscriptionFirstPage(continuationVideos, page.videos)
+        } else {
+            page.videos.distinctBy { video -> video.url }
+        }
+        continuationVideos = emptyList()
         _state.update {
             it.copy(
                 isLoading = false,
                 isLoadingMore = isPersisting,
-                videos = page.videos.distinctBy { video -> video.url },
-                hasMore = page.hasMore,
+                videos = videos,
+                hasMore = page.hasMore || preservesContinuation,
                 isServerRefreshing = page.refreshing,
                 generatedAtMillis = page.generatedAtMillis,
                 errorMessage = null,
@@ -166,7 +177,7 @@ class SubscriptionsViewModel @Inject constructor(
                 loadMoreError = false,
             )
         }
-        if (isPersisting) persistPage(page, append = false)
+        if (isPersisting) persistPage(videos, append = false)
         _state.update { it.copy(isLoadingMore = false) }
         if (page.refreshing) monitorServerRefresh(page.generation)
     }
@@ -228,7 +239,7 @@ class SubscriptionsViewModel @Inject constructor(
                 errorRequestId = null,
             )
         }
-        if (isPersisting) persistPage(page, append = true)
+        if (isPersisting) persistPage(page.videos, append = true)
         _state.update { it.copy(isLoadingMore = false) }
         if (page.refreshing && refreshMonitorJob?.isActive != true) {
             monitorServerRefresh(page.generation)
@@ -267,10 +278,10 @@ class SubscriptionsViewModel @Inject constructor(
         }
     }
 
-    private suspend fun persistPage(page: SubscriptionsPage, append: Boolean) {
+    private suspend fun persistPage(videos: List<Video>, append: Boolean) {
         try {
-            videoMetaRepository.cacheVideos(page.videos)
-            feedRepository.cacheSubscriptionsFeed(page.videos, append)
+            videoMetaRepository.cacheVideos(videos)
+            feedRepository.cacheSubscriptionsFeed(videos, append)
         } catch (cancelled: kotlinx.coroutines.CancellationException) {
             throw cancelled
         } catch (failure: Throwable) {
@@ -307,5 +318,10 @@ class SubscriptionsViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    private companion object {
+        const val SERVER_REFRESH_POLL_MS = 2_000L
+        const val SUBSCRIPTIONS_PAGE_SIZE = 30
     }
 }
