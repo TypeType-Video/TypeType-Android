@@ -1,3 +1,5 @@
+U want to know the current position of TypeType about AI ? Go check [this](https://github.com/TypeType-Video/TypeType/blob/dev/AI_TRANSPARENCY.md).
+
 <!-- markdownlint-disable MD033 MD041 -->
 
 <div align="center">
