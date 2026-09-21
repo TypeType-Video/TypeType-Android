@@ -3,6 +3,7 @@ package dev.typetype.android.data.setup
 import dev.typetype.android.data.network.RetrofitFactory
 import dev.typetype.android.domain.server.Server
 import dev.typetype.android.domain.server.ServerRepository
+import dev.typetype.android.domain.server.PushCapability
 import dev.typetype.android.domain.server.RssCapability
 import dev.typetype.android.domain.setup.ProbeResult
 import dev.typetype.android.domain.setup.ServerAddress
@@ -61,6 +62,14 @@ class SetupRepositoryImpl @Inject constructor(
                     rateLimitPerMinute = it.rateLimitPerMinute,
                 )
             } ?: RssCapability(),
+            push = resolved.instance.pushNotifications?.let {
+                PushCapability(
+                    enabled = it.enabled,
+                    provider = it.provider,
+                    eventTypes = it.eventTypes,
+                    maxDevicesPerAccount = it.maxDevicesPerAccount,
+                )
+            } ?: PushCapability(),
         )
     }
 

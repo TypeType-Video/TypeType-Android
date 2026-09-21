@@ -6,6 +6,8 @@
   <p>Native Android client for TypeType.</p>
 </div>
 
+You want to know the current position of TypeType about AI ? Go check [this](https://github.com/TypeType-Video/TypeType/blob/dev/AI_TRANSPARENCY.md).
+
 <div align="center">
 
 [<img src="assets/widgets/license.svg" alt="GPL v3">](LICENSE)

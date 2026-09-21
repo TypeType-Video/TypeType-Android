@@ -14,7 +14,9 @@ class ChannelNotificationsController @Inject constructor(
     suspend fun isAvailable(isSubscribed: Boolean): Boolean {
         if (!isSubscribed) return false
         val scope = runCatching { activeAccountScope.require() }.getOrNull() ?: return false
-        return serverRepository.getServer(scope.serverId)?.push?.enabled == true
+        val cachedCapability = serverRepository.getServer(scope.serverId)?.push
+        if (cachedCapability?.enabled == true) return true
+        return runCatching { pushRepository.currentCapability().enabled }.getOrDefault(false)
     }
 
     suspend fun currentEnabled(channelUrl: String): Boolean? =
