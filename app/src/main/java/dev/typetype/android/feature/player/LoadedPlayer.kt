@@ -46,7 +46,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlin.math.roundToInt
 
 @Composable
-fun LoadedPlayer(
+internal fun LoadedPlayer(
     stream: Stream,
     videoUrl: String,
     resumeAtMillis: Long,
@@ -65,6 +65,7 @@ fun LoadedPlayer(
     playlistActionInFlight: Boolean,
     downloadInFlight: Boolean,
     playbackQueue: PlaybackQueueState,
+    navigation: PlayerNavigationControls,
     commentsFlow: Flow<PagingData<Comment>>,
     commentsRepository: CommentsRepository?,
     prepareSabrPlayback: PrepareSabrPlayback,
@@ -267,6 +268,7 @@ fun LoadedPlayer(
                             danmakuState = danmakuState,
                             onDanmakuAction = onDanmakuAction,
                             hostTransitionProgress = hostTransitionProgress,
+                            navigation = navigation,
                             modifier = Modifier.fillMaxSize(),
                         )
                     } else {

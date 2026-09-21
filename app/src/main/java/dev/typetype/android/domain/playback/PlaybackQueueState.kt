@@ -23,6 +23,15 @@ data class PlaybackQueueState(
     val current: PlaybackQueueEntry?
         get() = entries.getOrNull(currentIndex)
 
+    val previous: PlaybackQueueEntry?
+        get() = entries.getOrNull(currentIndex - 1) ?: if (
+            repeatMode == PlaybackRepeatMode.All && entries.size > 1
+        ) {
+            entries.lastOrNull()
+        } else {
+            null
+        }
+
     val next: PlaybackQueueEntry?
         get() = entries.getOrNull(currentIndex + 1) ?: if (
             repeatMode == PlaybackRepeatMode.All && entries.size > 1

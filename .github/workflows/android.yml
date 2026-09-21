@@ -47,7 +47,7 @@ env:
 jobs:
   verify:
     if: ${{ github.event_name != 'workflow_dispatch' || !inputs.publish_release || github.ref != 'refs/heads/main' }}
-    runs-on: [self-hosted, Linux, X64, arko, android]
+    runs-on: [self-hosted, Linux, X64, ci-stack, android]
     timeout-minutes: 30
     steps:
       - name: Checkout
@@ -116,7 +116,7 @@ jobs:
 
   release:
     if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && inputs.publish_release }}
-    runs-on: [self-hosted, Linux, X64, arko, android]
+    runs-on: [self-hosted, Linux, X64, ci-stack, android]
     timeout-minutes: 35
     permissions:
       contents: write
@@ -238,7 +238,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
-          target_commitish: ${{ github.sha }}
           name: ${{ env.RELEASE_TAG }}
           body_path: release-notes/${{ env.RELEASE_TAG }}.md
           files: |

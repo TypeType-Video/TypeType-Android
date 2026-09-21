@@ -158,6 +158,22 @@ object TypeTypeDatabaseMigrations {
         }
     }
 
+    val MIGRATION_22_23 = object : Migration(22, 23) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `servers` ADD COLUMN `pushEnabled` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL(
+                "ALTER TABLE `servers` ADD COLUMN `pushProvider` TEXT NOT NULL DEFAULT 'unifiedpush'",
+            )
+            db.execSQL(
+                "ALTER TABLE `servers` ADD COLUMN `pushEventTypesCsv` TEXT NOT NULL DEFAULT ''",
+            )
+            db.execSQL(
+                "ALTER TABLE `servers` ADD COLUMN `pushMaxDevicesPerAccount` " +
+                    "INTEGER NOT NULL DEFAULT 0",
+            )
+        }
+    }
+
     val ALL = arrayOf(
         MIGRATION_7_8,
         MIGRATION_11_12,
@@ -170,5 +186,6 @@ object TypeTypeDatabaseMigrations {
         MIGRATION_19_20,
         MIGRATION_20_21,
         MIGRATION_21_22,
+        MIGRATION_22_23,
     )
 }

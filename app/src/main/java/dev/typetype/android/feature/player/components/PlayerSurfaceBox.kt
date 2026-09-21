@@ -34,6 +34,7 @@ import dev.typetype.android.feature.player.LoadSubtitleCues
 import dev.typetype.android.feature.player.PlaybackCodecSupport
 import dev.typetype.android.feature.player.PlayerDanmakuAction
 import dev.typetype.android.feature.player.PlayerDanmakuState
+import dev.typetype.android.feature.player.PlayerNavigationControls
 import dev.typetype.android.feature.player.SponsorBlockPlaybackPolicy
 import dev.typetype.android.feature.player.key
 import dev.typetype.android.feature.player.state.PlayerGestureState
@@ -78,6 +79,7 @@ internal fun PlayerSurfaceBox(
     danmakuState: PlayerDanmakuState = PlayerDanmakuState(),
     onDanmakuAction: (PlayerDanmakuAction) -> Unit = {},
     hostTransitionProgress: () -> Float = { 0f },
+    navigation: PlayerNavigationControls,
 ) {
     val activity = LocalActivity.current
     val context = LocalContext.current
@@ -142,7 +144,6 @@ internal fun PlayerSurfaceBox(
     }
 
     PlayerAudioOnlyFailureEffect(audioOnlyState, audioOnlySnackbar)
-
     val presentationState = rememberPresentationState(player, keepContentOnReset = true)
     val surfaceKey = rememberPlayerSurfaceKey(stream.id)
     val chromeModifier = Modifier.graphicsLayer {
@@ -270,6 +271,7 @@ internal fun PlayerSurfaceBox(
             resizeMode = gestureState.resizeMode.value,
             isPipAvailable = isPipAvailable,
             chaptersAvailable = chapters.isNotEmpty(),
+            navigation = navigation,
             modifier = chromeModifier,
         )
 

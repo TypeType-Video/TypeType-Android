@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -22,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.graphics.asAndroidBitmap
@@ -33,6 +35,8 @@ import android.graphics.Bitmap
 import java.io.File
 import dev.typetype.android.R
 import dev.typetype.android.domain.stream.StreamStoryboard
+import dev.typetype.android.feature.player.PlayerNavigationAvailability
+import dev.typetype.android.feature.player.PlayerNavigationControls
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
@@ -110,7 +114,6 @@ class PlayerControlsLayoutTest {
                     .padding(top = 200.dp),
             )
         }
-    }
 
         composeRule.onNodeWithContentDescription(
             composeRule.activity.getString(R.string.player_timeline),
@@ -171,6 +174,34 @@ class PlayerControlsLayoutTest {
         composeRule.onNodeWithContentDescription(
             composeRule.activity.getString(R.string.player_playback_options),
         ).assertHeightIsAtLeast(64.dp)
+    }
+
+    @Test
+    fun navigationButtonsExposePreviousAndNextActions() {
+        var previousClicks = 0
+        var nextClicks = 0
+        composeRule.setContent {
+            PlayerControls(
+                player = controlsLayoutPlayer(),
+                title = "Navigation controls",
+                onNavigateBack = {},
+                navigation = PlayerNavigationControls(
+                    availability = PlayerNavigationAvailability(previous = true, next = true),
+                    onPrevious = { previousClicks++ },
+                    onNext = { nextClicks++ },
+                ),
+            )
+        }
+
+        composeRule.onNodeWithContentDescription(
+            composeRule.activity.getString(R.string.player_previous_video),
+        ).assertIsEnabled().performClick()
+        composeRule.onNodeWithContentDescription(
+            composeRule.activity.getString(R.string.player_next_video),
+        ).assertIsEnabled().performClick()
+
+        assertEquals(1, previousClicks)
+        assertEquals(1, nextClicks)
     }
 
     private fun setControls(
