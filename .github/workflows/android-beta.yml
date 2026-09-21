@@ -45,7 +45,7 @@ env:
 
 jobs:
   release:
-    runs-on: [self-hosted, Linux, X64, arko, android]
+    runs-on: [self-hosted, Linux, X64, ci-stack, android]
     timeout-minutes: 35
     permissions:
       contents: write
