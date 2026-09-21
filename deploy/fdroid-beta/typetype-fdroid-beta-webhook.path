@@ -1,0 +1,11 @@
+[Unit]
+Description=Trigger the TypeType F-Droid beta sync after a valid GitHub webhook
+Requires=typetype-fdroid-beta-webhook.service
+After=typetype-fdroid-beta-webhook.service
+
+[Path]
+PathExists=/run/typetype-fdroid-beta-webhook/sync
+Unit=typetype-fdroid-beta-sync.service
+
+[Install]
+WantedBy=multi-user.target
