@@ -41,6 +41,13 @@ class SabrPlaybackRepositoryImpl @Inject constructor(
         preparer.prepareOnce(api, target.requestScope.baseUrl, target, startTimeMs)
     }
 
+    override suspend fun prewarm(
+        target: SabrPlaybackTarget,
+        startTimeMs: Long,
+    ): Result<SabrPlaybackSession> = execute(target) { api ->
+        preparer.prepare(api, target.requestScope.baseUrl, target, startTimeMs, prewarm = true)
+    }
+
     override suspend fun seek(
         target: SabrPlaybackTarget,
         binding: SabrPlaybackBinding,

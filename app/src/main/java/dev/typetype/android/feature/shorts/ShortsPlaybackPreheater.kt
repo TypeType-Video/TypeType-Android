@@ -40,6 +40,6 @@ class ShortsPlaybackPreheater @Inject constructor(
         ) ?: return
         val target = stream.sabrPlaybackTarget(selection)
         val reservation = preloads.reserve(target)
-        if (reservation.owner) reservation.result.complete(sabr.prepare(target, 0L))
+        if (reservation.owner) reservation.result.complete(sabr.prewarm(target, 0L))
     }
 }
