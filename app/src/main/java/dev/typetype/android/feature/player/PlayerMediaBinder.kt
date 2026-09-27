@@ -10,6 +10,7 @@ import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.stream.StreamAudioSource
 import dev.typetype.android.domain.stream.StreamPlaybackContract
 import dev.typetype.android.domain.stream.StreamSubtitleSource
+import dev.typetype.android.domain.stream.StreamVideoSource
 import dev.typetype.android.services.MergedStreamMediaKeys
 import dev.typetype.android.services.sabrPlaybackBinding
 import dev.typetype.android.services.sabrPlaybackTarget
@@ -216,7 +217,6 @@ private fun pickMergedSource(
     codecSupport: PlaybackCodecSupport,
     selectedCodec: String,
 ): PlayableSource? {
-    if (selectedAudioKey == null) return null
     val video = stream.videoOnlyStreams.pickVideo(
         selectedQuality,
         codecSupport,
@@ -232,7 +232,7 @@ private fun pickMergedSource(
     ) ?: return null
     return PlayableSource(
         url = video.url,
-        mimeType = video.mimeType.normalizedMimeType(),
+        mimeType = video.playbackContainerMimeType(),
         audioUrl = audio.url,
         audioMimeType = audio.mimeType.normalizedMimeType(),
     )
@@ -247,7 +247,7 @@ private fun pickMuxedSource(
     stream.muxedVideoStreams.pickVideo(defaultQuality, codecSupport, selectedCodec)?.let { source ->
         PlayableSource(
             url = source.url,
-            mimeType = source.mimeType.normalizedMimeType() ?: MimeTypes.VIDEO_MP4,
+            mimeType = source.playbackContainerMimeType() ?: MimeTypes.VIDEO_MP4,
         )
     }
 
@@ -278,6 +278,9 @@ private fun applyTrackSelectionDefaults(
 
 private fun String.normalizedMimeType(): String? =
     substringBefore(";").trim().takeIf { it.isNotBlank() }
+
+internal fun StreamVideoSource.playbackContainerMimeType(): String? =
+    (playbackMimeType ?: mimeType).normalizedMimeType()
 
 internal val StreamAudioSource.key: String
     get() = audioTrackId?.takeIf { it.isNotBlank() }

@@ -1,8 +1,10 @@
 package dev.typetype.android.feature.player
 
-import java.net.URI
+import dev.typetype.android.data.stream.StreamProvider
+import dev.typetype.android.data.stream.streamProvider
 
-internal fun supportsServerBulletComments(videoUrl: String): Boolean {
-    val host = runCatching { URI(videoUrl).host?.lowercase() }.getOrNull() ?: return false
-    return host == "nicovideo.jp" || host.endsWith(".nicovideo.jp") || host == "nico.ms"
-}
+internal fun supportsServerBulletComments(videoUrl: String): Boolean =
+    when (videoUrl.streamProvider()) {
+        StreamProvider.NicoNico, StreamProvider.BiliBili -> true
+        StreamProvider.YouTube, StreamProvider.Generic -> false
+    }

@@ -147,6 +147,7 @@ jobs:
 
       - name: Verify and prepare beta APK
         run: |
+          export PATH="$JAVA_HOME/bin:$PATH"
           mkdir -p artifacts
           apk="$(find app/build/outputs/apk/release -name '*.apk' | head -n 1)"
           test -n "$apk"

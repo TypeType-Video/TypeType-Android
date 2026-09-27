@@ -14,6 +14,7 @@ import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.typetype.android.R
 import dev.typetype.android.domain.navigation.toPublicWatchParameter
+import dev.typetype.android.domain.notifications.NotificationItem
 import dev.typetype.android.domain.push.PushPayload
 import dev.typetype.android.domain.push.parsePushPayload
 import javax.inject.Inject
@@ -23,34 +24,67 @@ import javax.inject.Singleton
 class PushNotifier @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
+    fun canNotify(): Boolean = NotificationManagerCompat.from(context).areNotificationsEnabled()
+
     fun notify(payload: PushPayload) {
+        show(
+            title = payload.channelName.ifBlank { payload.serviceName },
+            text = payload.title,
+            videoUrl = payload.videoUrl,
+            notificationId = subscriptionNotificationId(
+                videoId = payload.videoId,
+                videoUrl = payload.videoUrl,
+                fallback = payload.eventId,
+            ),
+        )
+    }
+
+    fun notifySubscription(item: NotificationItem) {
+        show(
+            title = item.channelName.ifBlank { item.video.uploaderName },
+            text = item.title,
+            videoUrl = item.video.url,
+            notificationId = subscriptionNotificationId(
+                videoId = item.video.id,
+                videoUrl = item.video.url,
+                fallback = item.video.url,
+            ),
+        )
+    }
+
+    private fun show(title: String, text: String, videoUrl: String, notificationId: Int) {
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
         if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             manager.createNotificationChannel(notificationChannel())
         }
-        manager.notify(payload.notificationId(), buildNotification(payload))
+        manager.notify(notificationId, buildNotification(title, text, videoUrl, notificationId))
     }
 
-    private fun buildNotification(payload: PushPayload): Notification {
+    private fun buildNotification(
+        title: String,
+        text: String,
+        videoUrl: String,
+        notificationId: Int,
+    ): Notification {
         val deepLink = Intent(
             Intent.ACTION_VIEW,
-            Uri.parse("typetype://watch?v=${toPublicWatchParameter(payload.videoUrl)}"),
+            Uri.parse("typetype://watch?v=${toPublicWatchParameter(videoUrl)}"),
         )
         val contentIntent = PendingIntent.getActivity(
             context,
-            payload.notificationId(),
+            notificationId,
             deepLink,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        val fallbackTitle = payload.channelName.ifBlank { payload.serviceName }
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
-            .setContentTitle(fallbackTitle)
-            .setContentText(payload.title)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(payload.title))
+            .setContentTitle(title)
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setContentIntent(contentIntent)
             .setAutoCancel(true)
+            .setOnlyAlertOnce(true)
             .build()
     }
 
@@ -61,9 +95,10 @@ class PushNotifier @Inject constructor(
         NotificationManager.IMPORTANCE_DEFAULT,
     )
 
-    private fun PushPayload.notificationId(): Int = eventId.hashCode()
-
     private companion object {
         const val CHANNEL_ID = "subscription_push"
     }
 }
+
+internal fun subscriptionNotificationId(videoId: String, videoUrl: String, fallback: String): Int =
+    videoId.trim().ifBlank { videoUrl.trim() }.ifBlank { fallback.trim() }.hashCode()

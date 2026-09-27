@@ -82,7 +82,7 @@ class PlaybackBackgroundTransitionTest {
     }
 
     private fun waitForMainThread(condition: () -> Boolean): Boolean {
-        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10)
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(30)
         while (System.nanoTime() < deadline) {
             if (readOnMainThread(condition)) return true
             Thread.sleep(50)

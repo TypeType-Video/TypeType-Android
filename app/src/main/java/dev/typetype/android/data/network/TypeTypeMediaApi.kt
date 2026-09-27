@@ -48,6 +48,7 @@ interface TypeTypeMediaApi {
     suspend fun createSabrPlayback(
         @Path("videoId") videoId: String,
         @Body body: SabrPlaybackRequest,
+        @Query("prewarm") prewarm: Boolean? = null,
     ): Response<SabrPlaybackResponse>
 
     @POST("sabr/playback/{sessionId}/seek")

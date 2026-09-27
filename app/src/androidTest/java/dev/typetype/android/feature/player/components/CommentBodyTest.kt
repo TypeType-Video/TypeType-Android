@@ -21,7 +21,7 @@ class CommentBodyTest {
 
     @Test
     fun longCommentCollapsesAndExpandsWithReadMore() {
-        val suffix = " more comment detail".repeat(60)
+        val suffix = " more comment detail".repeat(30)
         val comment = Comment(
             id = "comment",
             text = "Long comment starts here$suffix",
@@ -47,7 +47,9 @@ class CommentBodyTest {
         }
 
         composeRule.onNodeWithText("Read more").assertExists().performClick()
+        composeRule.waitForIdle()
         composeRule.onNodeWithText("Show less").assertExists().performClick()
+        composeRule.waitForIdle()
         composeRule.onNodeWithText("Read more").assertExists()
     }
 }

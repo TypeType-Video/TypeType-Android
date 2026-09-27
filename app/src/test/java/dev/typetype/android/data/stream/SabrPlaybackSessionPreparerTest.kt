@@ -82,6 +82,30 @@ class SabrPlaybackSessionPreparerTest {
     }
 
     @Test
+    fun prewarmCreationMarksTheSessionForReuse() = runBlocking {
+        enqueueCreate(startTimeMs = 0, ready = true)
+        enqueuePosition(0)
+        enqueuePrefetch(ready = true)
+        enqueueWindow(startTimeMs = 0, endOfStream = false)
+
+        preparer().prepare(api, baseUrl, target(), 0L, prewarm = true)
+
+        assertEquals("/api/sabr/playback/video?prewarm=true", server.takeRequest().path)
+    }
+
+    @Test
+    fun playbackCreationOmitsThePrewarmFlag() = runBlocking {
+        enqueueCreate(startTimeMs = 0, ready = true)
+        enqueuePosition(0)
+        enqueuePrefetch(ready = true)
+        enqueueWindow(startTimeMs = 0, endOfStream = false)
+
+        preparer().prepare(api, baseUrl, target(), 0L)
+
+        assertEquals("/api/sabr/playback/video", server.takeRequest().path)
+    }
+
+    @Test
     fun refreshReportsBufferedRangesForBothSelectedTracks() = runBlocking {
         enqueuePosition(55_000)
         enqueuePrefetch(ready = true)

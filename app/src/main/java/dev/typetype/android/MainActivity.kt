@@ -36,6 +36,7 @@ import dev.typetype.android.domain.navigation.resolveIncomingVideoUrl
 import dev.typetype.android.domain.navigation.resolveSharedVideoUrl
 import dev.typetype.android.domain.session.ActiveSessionRepository
 import dev.typetype.android.feature.player.components.PIP_ACTION_AUDIO_ONLY
+import dev.typetype.android.feature.player.PlaybackPrewarm
 import dev.typetype.android.feature.player.components.PIP_ACTION_PLAY_PAUSE
 import dev.typetype.android.feature.player.components.PictureInPictureActionStateOwner
 import dev.typetype.android.feature.player.components.updatePictureInPicturePlaybackAction
@@ -55,6 +56,9 @@ class MainActivity : ComponentActivity(), PictureInPictureActionStateOwner {
 
     @Inject
     lateinit var oidcCallbackRelay: OidcCallbackRelay
+
+    @Inject
+    lateinit var playbackPrewarm: PlaybackPrewarm
 
     private val viewModel: MainViewModel by viewModels()
     private var activityReportingJob: Job? = null
@@ -105,7 +109,11 @@ class MainActivity : ComponentActivity(), PictureInPictureActionStateOwner {
                         report = pendingCrashReport,
                         onContinue = viewModel::continueAfterCrash,
                     )
-                    startRoute != null -> AppNavHost(startRoute = startRoute, mainViewModel = viewModel)
+                    startRoute != null -> AppNavHost(
+                        startRoute = startRoute,
+                        mainViewModel = viewModel,
+                        playbackPrewarm = playbackPrewarm,
+                    )
                     else -> FullScreenLoader()
                 }
             }

@@ -1,11 +1,10 @@
 package dev.typetype.android.core.ui.share
 
 import androidx.compose.runtime.compositionLocalOf
+import dev.typetype.android.core.url.percentEncode
 import dev.typetype.android.domain.navigation.resolveIncomingVideoUrl
 import dev.typetype.android.domain.navigation.toPublicWatchParameter
 import java.net.URI
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 
 val LocalServerBaseUrl = compositionLocalOf<String?> { null }
 
@@ -16,7 +15,7 @@ fun buildShareUrl(serverBaseUrl: String?, videoUrl: String): String {
         .removeSuffix("/api")
         .trimEnd('/')
     if (origin.isBlank()) return videoUrl
-    val encoded = URLEncoder.encode(toPublicWatchParameter(videoUrl), StandardCharsets.UTF_8.toString())
+    val encoded = percentEncode(toPublicWatchParameter(videoUrl))
     return "$origin/watch?v=$encoded"
 }
 
@@ -77,7 +76,7 @@ fun buildImageUrl(serverBaseUrl: String?, imageUrl: String): String {
     if (!source.startsWith("http://") && !source.startsWith("https://")) return source
     if (!needsImageProxy(source)) return source
 
-    val encoded = URLEncoder.encode(source, StandardCharsets.UTF_8.toString())
+    val encoded = percentEncode(source)
     return "$base/proxy?url=$encoded"
 }
 

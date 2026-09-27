@@ -117,6 +117,36 @@ class StreamErrorClassifierTest {
     }
 
     @Test
+    fun `classifies scheduled lives the server reports as not started`() {
+        val scheduledLive = ServerResponseException(
+            ServerError("This live event will begin in 55 minutes.", "live_not_started", 409, "request-9"),
+        )
+
+        val classified = classifyStreamError(scheduledLive)
+
+        assertEquals(StreamErrorKind.ScheduledPremiere, classified.kind)
+        assertEquals("request-9", classified.requestId)
+        assertEquals(
+            StreamErrorKind.ScheduledPremiere,
+            classifyStreamError("This live event will begin in 55 minutes.").kind,
+        )
+    }
+
+    @Test
+    fun `maps typed provider failures to content unavailable`() {
+        val missing = ServerResponseException(
+            ServerError("This live stream recording is not available.", "content_unavailable", 404, "request-7"),
+        )
+        val blocked = ServerResponseException(
+            ServerError("Provider blocked this instance", "provider_access_blocked", 403, "request-8"),
+        )
+
+        assertEquals(StreamErrorKind.ContentUnavailable, classifyStreamError(missing).kind)
+        assertEquals("request-7", classifyStreamError(missing).requestId)
+        assertEquals(StreamErrorKind.ContentUnavailable, classifyStreamError(blocked).kind)
+    }
+
+    @Test
     fun `finds network failures wrapped by another layer`() {
         val failure = IllegalStateException("Request failed", IOException("socket closed"))
 

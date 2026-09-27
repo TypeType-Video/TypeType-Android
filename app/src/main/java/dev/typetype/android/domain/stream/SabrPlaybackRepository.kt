@@ -49,6 +49,9 @@ interface SabrPlaybackRepository {
             onFailure = Result.Companion::failure,
         )
 
+    suspend fun prewarm(target: SabrPlaybackTarget, startTimeMs: Long = 0L): Result<SabrPlaybackSession> =
+        prepare(target, startTimeMs)
+
     suspend fun recoverOnce(
         target: SabrPlaybackTarget,
         startTimeMs: Long,
