@@ -97,6 +97,7 @@ enum class StreamPlaybackContract {
 data class StreamVideoSource(
     val url: String,
     val mimeType: String,
+    val playbackMimeType: String? = null,
     val codec: String?,
     val resolution: String,
     val width: Int,

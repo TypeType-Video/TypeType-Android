@@ -143,7 +143,7 @@ internal class StreamRepositoryImpl @Inject constructor(
             uploadedAtMillis = uploaded,
             hlsUrl = resolvedHlsUrl.takeIf { !serverSabr && it.isNotBlank() },
             dashMpdUrl = dashMpdUrl.takeIf { !serverSabr && it.isNotBlank() },
-            progressiveUrl = pickBestProgressiveStream(videoStreams).takeUnless { serverSabr },
+            progressiveUrl = pickBestProgressiveStream(baseUrl, videoStreams).takeUnless { serverSabr },
             serverDashManifestUrl = serverManifestUrl(baseUrl, "streams/manifest", videoUrl)
                 .takeUnless { serverSabr || serverYoutube },
             serverHlsManifestUrl = hlsUrl.takeIf { !serverSabr && !serverYoutube && it.isNotBlank() }
@@ -207,11 +207,14 @@ internal class StreamRepositoryImpl @Inject constructor(
             item.manifestUrl.takeIf { item.deliveryMethod == SABR_DELIVERY_METHOD }
         }
 
-    private fun pickBestProgressiveStream(videoStreams: List<VideoStreamItem>): String? =
+    private fun pickBestProgressiveStream(
+        baseUrl: String,
+        videoStreams: List<VideoStreamItem>,
+    ): String? =
         videoStreams
             .filter { !it.isVideoOnly && it.url.isNotBlank() }
             .maxByOrNull { it.height }
-            ?.url
+            ?.let { resolvePlaybackUrl(baseUrl, it.url) }
 
     private fun selectStoryboard(storyboards: List<StreamStoryboard>): StreamStoryboard? =
         storyboards.filter { it.frameWidth >= TARGET_STORYBOARD_FRAME_WIDTH }
@@ -236,16 +239,21 @@ internal class StreamRepositoryImpl @Inject constructor(
     }
 
     private fun VideoStreamItem.toDomainVideoSource(baseUrl: String): StreamVideoSource = StreamVideoSource(
-        url = if (deliveryMethod == SABR_DELIVERY_METHOD) resolveServerUrl(baseUrl, manifestUrl).orEmpty() else url,
+        url = if (deliveryMethod == SABR_DELIVERY_METHOD) {
+            resolveServerUrl(baseUrl, manifestUrl).orEmpty()
+        } else {
+            resolvePlaybackUrl(baseUrl, url).orEmpty()
+        },
         mimeType = mimeType,
+        playbackMimeType = HLS_MIME_TYPE.takeIf { deliveryMethod == HLS_DELIVERY_METHOD },
         codec = codec,
         resolution = buildString {
-            append("${height.coerceAtLeast(0)}p")
+            append("${resolvedHeight()}p")
             fps.takeIf { it > 0 }?.let { append(it) }
             if (resolution.contains("HDR", ignoreCase = true)) append(" HDR")
         },
-        width = width,
-        height = height,
+        width = width.coerceAtLeast(0),
+        height = resolvedHeight(),
         fps = fps,
         bitrate = bitrate,
         isVideoOnly = isVideoOnly,
@@ -253,7 +261,11 @@ internal class StreamRepositoryImpl @Inject constructor(
     )
 
     private fun AudioStreamItem.toDomainAudioSource(baseUrl: String): StreamAudioSource = StreamAudioSource(
-        url = if (deliveryMethod == SABR_DELIVERY_METHOD) resolveServerUrl(baseUrl, manifestUrl).orEmpty() else url,
+        url = if (deliveryMethod == SABR_DELIVERY_METHOD) {
+            resolveServerUrl(baseUrl, manifestUrl).orEmpty()
+        } else {
+            resolvePlaybackUrl(baseUrl, url).orEmpty()
+        },
         mimeType = mimeType,
         codec = codec,
         bitrate = bitrate,
@@ -300,7 +312,14 @@ internal suspend fun <T> cancellableStreamResult(
 }
 
 private const val SABR_DELIVERY_METHOD = "sabr"
+private const val HLS_DELIVERY_METHOD = "hls"
+private const val HLS_MIME_TYPE = "application/vnd.apple.mpegurl"
 private const val TARGET_STORYBOARD_FRAME_WIDTH = 160
+
+private fun VideoStreamItem.resolvedHeight(): Int =
+    height.takeIf { it > 0 } ?: RESOLUTION_HEIGHT_PATTERN.find(resolution)?.groupValues?.get(1)?.toIntOrNull() ?: 0
+
+private val RESOLUTION_HEIGHT_PATTERN = Regex("(\\d{3,4})")
 
 private class SabrContractException :
     IllegalStateException("The server returned no playable SABR contract"),
