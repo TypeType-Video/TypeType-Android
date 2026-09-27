@@ -2,6 +2,7 @@ package dev.typetype.android.data.stream
 
 import dev.typetype.android.data.account.AccountScopeProvider
 import dev.typetype.android.core.error.CodedFailure
+import dev.typetype.android.core.url.percentEncode
 import dev.typetype.android.data.network.PlaybackNetworkObserver
 import dev.typetype.android.data.network.dto.AudioStreamItem
 import dev.typetype.android.data.network.dto.PreviewFrameItem
@@ -26,8 +27,6 @@ import dev.typetype.android.domain.stream.StreamVideoSource
 import dev.typetype.android.domain.stream.isServerSabrAudioFormat
 import dev.typetype.android.domain.stream.isServerSabrVideoFormat
 import dev.typetype.android.domain.server.ServerRepository
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.roundToLong
@@ -234,7 +233,7 @@ internal class StreamRepositoryImpl @Inject constructor(
 
     private fun serverManifestUrl(baseUrl: String, path: String, videoUrl: String): String {
         val normalizedBaseUrl = baseUrl.trimEnd('/')
-        val encoded = URLEncoder.encode(videoUrl, StandardCharsets.UTF_8)
+        val encoded = percentEncode(videoUrl)
         return "$normalizedBaseUrl/$path?url=$encoded"
     }
 
