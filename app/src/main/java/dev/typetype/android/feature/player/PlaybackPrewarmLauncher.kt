@@ -14,7 +14,7 @@ internal class PlaybackPrewarmLauncher @Inject constructor(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var inFlight = false
 
-    override fun prewarm(videoUrl: String) {
+    override fun prewarm(videoUrl: String, knownLive: Boolean) {
         if (videoUrl.isBlank()) return
         synchronized(this) {
             if (inFlight) return
@@ -22,7 +22,7 @@ internal class PlaybackPrewarmLauncher @Inject constructor(
         }
         scope.launch {
             try {
-                preheater.preheat(videoUrl)
+                preheater.preheat(videoUrl, knownLive)
             } finally {
                 synchronized(this@PlaybackPrewarmLauncher) { inFlight = false }
             }

@@ -21,7 +21,8 @@ class PlaybackPreheater @Inject constructor(
 ) {
     private val codecSupport: PlaybackCodecSupport = DevicePlaybackCodecSupport(context)
 
-    suspend fun preheat(videoUrl: String) {
+    suspend fun preheat(videoUrl: String, knownLive: Boolean = false) {
+        if (knownLive) return
         val settings = userSettingsRepository.current().getOrNull() ?: return
         preheat(videoUrl, settings, codecSupport, { true })
     }

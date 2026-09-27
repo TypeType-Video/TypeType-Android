@@ -64,7 +64,7 @@ fun RelatedVideoCard(
     LaunchedEffect(video.url, playbackPrewarm) {
         if (playbackPrewarm == null) return@LaunchedEffect
         delay(CARD_PREWARM_DELAY_MILLIS)
-        playbackPrewarm.prewarm(video.url)
+        playbackPrewarm.prewarm(video.url, video.isLive)
     }
 
     val availability = video.availabilityAt(System.currentTimeMillis())
