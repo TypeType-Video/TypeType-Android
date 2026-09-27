@@ -3,6 +3,7 @@ package dev.typetype.android.feature.settings.notifications
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.typetype.android.data.notifications.LocalNotificationScheduler
 import dev.typetype.android.domain.push.PushRegistrationStatus
 import dev.typetype.android.domain.push.PushRepository
 import dev.typetype.android.services.push.PushRegistrationManager
@@ -32,6 +33,7 @@ data class PushSettingsState(
 class PushNotificationsViewModel @Inject constructor(
     private val pushRepository: PushRepository,
     private val registrationManager: PushRegistrationManager,
+    private val localNotificationScheduler: LocalNotificationScheduler,
 ) : ViewModel() {
     private val _state = MutableStateFlow(PushSettingsState())
     val state = _state.asStateFlow()
@@ -44,6 +46,7 @@ class PushNotificationsViewModel @Inject constructor(
         viewModelScope.launch {
             registrationManager.status.collect { status ->
                 _state.update { it.copy(status = status) }
+                localNotificationScheduler.sync(status != PushRegistrationStatus.Registered)
             }
         }
     }
@@ -92,4 +95,5 @@ class PushNotificationsViewModel @Inject constructor(
             }
         }
     }
+
 }

@@ -1211,6 +1211,7 @@
     <string name="push_install_hint">Install a UnifiedPush distributor such as ntfy to receive notifications.</string>
     <string name="push_choose_distributor">Choose distributor</string>
     <string name="push_error_generic">Couldn\'t update push notifications</string>
+    <string name="push_local_fallback">UnifiedPush is inactive, so the app checks for new videos every 15 minutes</string>
     <string name="channel_notifications_enable">Turn on new video notifications</string>
     <string name="channel_notifications_disable">Turn off new video notifications</string>
     <string name="push_battery_hint">Disable battery optimization for reliable notification delivery.</string>
