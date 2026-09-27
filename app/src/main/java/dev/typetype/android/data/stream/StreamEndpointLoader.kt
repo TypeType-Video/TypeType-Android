@@ -26,8 +26,17 @@ internal suspend fun TypeTypeMediaApi.loadYouTubeSabrBootstrapResponse(
 ): Response<StreamResponse> {
     val response = youtubeSabrBootstrap(videoUrl)
     response.rejectSabrRedirect("SABR stream bootstrap attempted to redirect")
-    return response
+    if (response.isSuccessful) return response
+    if (!response.canFallBackToSabrStreams()) return response
+    val fallback = youtubeSabrStreams(videoUrl)
+    fallback.rejectSabrRedirect("SABR stream discovery attempted to redirect")
+    return fallback
 }
+
+private fun Response<StreamResponse>.canFallBackToSabrStreams(): Boolean =
+    code() in BOOTSTRAP_FALLBACK_STATUSES
+
+private val BOOTSTRAP_FALLBACK_STATUSES = setOf(404, 405, 422, 500, 501, 502, 503, 504)
 
 private suspend fun TypeTypeMediaApi.fallbackToGeneric(
     response: Response<StreamResponse>,

@@ -106,6 +106,41 @@ class StreamEndpointLoaderTest {
     }
 
     @Test
+    fun youtubePlaybackFallsBackWhenTheBootstrapRouteCannotServeTheVideo() = runBlocking {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(503)
+                .setHeader("Content-Type", "application/json")
+                .setBody("{\"error\":\"The video provider is blocking requests\",\"code\":\"provider_access_blocked\"}"),
+        )
+        server.enqueue(
+            jsonResponse(
+                sabr = false,
+                live = true,
+                hlsUrl = "/streams/hls-manifest?token=signed",
+            ),
+        )
+
+        val response = api.loadYouTubeSabrBootstrapResponse(YOUTUBE_URL)
+        val body = response.body()
+
+        assertTrue(response.isSuccessful)
+        assertTrue(body?.hasPlayableLiveContract(server.url("/").toString()) == true)
+        assertEquals("/streams/youtube/sabr/bootstrap?url=${encode(YOUTUBE_URL)}", server.takeRequest().path)
+        assertEquals("/streams/youtube/sabr?url=${encode(YOUTUBE_URL)}", server.takeRequest().path)
+    }
+
+    @Test
+    fun youtubePlaybackKeepsABootstrapFailureThatTheSabrRouteCannotFix() = runBlocking {
+        server.enqueue(errorResponse(401))
+
+        val response = api.loadYouTubeSabrBootstrapResponse(YOUTUBE_URL)
+
+        assertEquals(401, response.code())
+        assertEquals(1, server.requestCount)
+    }
+
+    @Test
     fun youtubeSabrResponseWithoutValidItagsIsRejected() = runBlocking {
         server.enqueue(jsonResponse(sabr = true, videoItag = 0))
 
