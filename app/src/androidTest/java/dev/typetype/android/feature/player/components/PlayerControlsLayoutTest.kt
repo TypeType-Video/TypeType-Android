@@ -46,6 +46,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import java.lang.reflect.Proxy
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -164,6 +165,10 @@ class PlayerControlsLayoutTest {
 
     @Test
     fun tabletControlsHaveLargerTargetsWithoutOverlapping() {
+        assumeTrue(
+            "tablet player controls need a 600dp wide device",
+            composeRule.activity.resources.configuration.smallestScreenWidthDp >= 600,
+        )
         setControls(720.dp, 405.dp, 720)
         assertControlsDoNotOverlap()
         composeRule.onNodeWithTag(PLAYER_CENTER_CONTROLS_TAG)

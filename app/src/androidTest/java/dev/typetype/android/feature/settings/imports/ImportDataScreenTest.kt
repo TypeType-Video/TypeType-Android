@@ -22,6 +22,8 @@ class ImportDataScreenTest {
     fun restoreRequiresASelectedArchive() {
         setScreen(ImportDataState())
 
+        composeRule.onNode(hasScrollAction())
+            .performScrollToNode(hasText("Restore backup"))
         composeRule.onNodeWithText("Restore backup").assertIsNotEnabled()
     }
 
