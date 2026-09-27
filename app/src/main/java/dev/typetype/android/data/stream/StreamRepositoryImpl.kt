@@ -195,6 +195,7 @@ internal class StreamRepositoryImpl @Inject constructor(
             isLive = isLive,
             isPostLive = isPostLive,
             isLiveContent = isLiveContent,
+            requiresMembership = requiresMembership,
             category = category,
         )
     }

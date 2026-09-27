@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +42,9 @@ import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.feed.VideoAvailability
 import dev.typetype.android.domain.feed.availabilityAt
 import dev.typetype.android.domain.feed.releaseTimeMillis
+import dev.typetype.android.feature.player.CARD_PREWARM_DELAY_MILLIS
+import dev.typetype.android.feature.player.LocalPlaybackPrewarm
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -55,6 +59,14 @@ fun RelatedVideoCard(
     var menuVisible by remember { mutableStateOf(false) }
     var availabilityVisible by remember { mutableStateOf(false) }
     val serverBaseUrl = LocalServerBaseUrl.current
+    val playbackPrewarm = LocalPlaybackPrewarm.current
+
+    LaunchedEffect(video.url, playbackPrewarm) {
+        if (playbackPrewarm == null) return@LaunchedEffect
+        delay(CARD_PREWARM_DELAY_MILLIS)
+        playbackPrewarm.prewarm(video.url)
+    }
+
     val availability = video.availabilityAt(System.currentTimeMillis())
     val branding = rememberVideoBranding(
         sourceUrl = video.url,

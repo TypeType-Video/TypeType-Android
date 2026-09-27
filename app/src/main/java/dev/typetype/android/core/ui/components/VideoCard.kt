@@ -22,6 +22,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,6 +43,7 @@ import androidx.compose.ui.platform.LocalContext
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import kotlinx.coroutines.delay
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
@@ -50,6 +52,8 @@ import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.feed.VideoAvailability
 import dev.typetype.android.domain.feed.availabilityAt
 import dev.typetype.android.domain.feed.releaseTimeMillis
+import dev.typetype.android.feature.player.CARD_PREWARM_DELAY_MILLIS
+import dev.typetype.android.feature.player.LocalPlaybackPrewarm
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -73,6 +77,13 @@ fun VideoCard(
         durationSeconds = video.durationSeconds,
     )
     val openDescription = stringResource(R.string.video_open_accessibility, branding.title)
+    val playbackPrewarm = LocalPlaybackPrewarm.current
+
+    LaunchedEffect(video.url, playbackPrewarm) {
+        if (playbackPrewarm == null) return@LaunchedEffect
+        delay(CARD_PREWARM_DELAY_MILLIS)
+        playbackPrewarm.prewarm(video.url)
+    }
 
     Column(
         modifier = modifier

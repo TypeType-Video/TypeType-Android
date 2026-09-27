@@ -41,6 +41,7 @@ data class Stream(
     val isLive: Boolean = false,
     val isPostLive: Boolean = false,
     val isLiveContent: Boolean = false,
+    val requiresMembership: Boolean = false,
     val category: String? = null,
 )
 

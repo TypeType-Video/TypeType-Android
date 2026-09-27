@@ -23,6 +23,8 @@ import dev.typetype.android.data.imports.RemotePortabilityRepository
 import dev.typetype.android.data.imports.RoomYoutubeTakeoutImportRepository
 import dev.typetype.android.data.library.RoomVideoMetaRepository
 import dev.typetype.android.data.notifications.RemoteNotificationsRepository
+import dev.typetype.android.feature.player.PlaybackPrewarm
+import dev.typetype.android.feature.player.PlaybackPrewarmLauncher
 import dev.typetype.android.data.network.NetworkAvailabilityObserver
 import dev.typetype.android.data.network.PlaybackNetworkMonitor
 import dev.typetype.android.data.network.PlaybackNetworkObserver
@@ -178,6 +180,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindPushRepository(impl: RemotePushRepository): PushRepository
+
+    @Binds
+    @Singleton
+    internal abstract fun bindPlaybackPrewarm(impl: PlaybackPrewarmLauncher): PlaybackPrewarm
 
     @Binds
     @Singleton
