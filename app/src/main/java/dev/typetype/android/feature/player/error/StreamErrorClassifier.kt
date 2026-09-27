@@ -20,6 +20,7 @@ private val SCHEDULED_PREMIERE_NEEDLES = listOf(
     "premieres in",
     "premiere has not started",
     "premiere scheduled",
+    "live event will begin",
 )
 
 private val PAID_CONTENT_NEEDLES = listOf(
@@ -176,7 +177,7 @@ fun classifyStreamError(failure: Throwable): StreamErrorClass {
     if (code == "paid_content") {
         return StreamErrorClass(StreamErrorKind.PaidContent, rawMessage = null, requestId = requestId)
     }
-    if (code == "scheduled_premiere") {
+    if (code == "scheduled_premiere" || code == "live_not_started") {
         return StreamErrorClass(StreamErrorKind.ScheduledPremiere, rawMessage = null, requestId = requestId)
     }
     if (code == "youtube_session_needs_reconnect" || code == "youtube_session_unavailable") {
