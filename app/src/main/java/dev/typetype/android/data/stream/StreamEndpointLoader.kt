@@ -40,16 +40,19 @@ private fun Response<StreamResponse>.canFallbackToGeneric(): Boolean =
 internal fun StreamResponse.hasPlayableSabrContract(baseUrl: String? = null): Boolean {
     val playableVideoItags = (videoStreams + videoOnlyStreams).filter {
         it.deliveryMethod == SABR_DELIVERY_METHOD && it.itag > 0 &&
-            it.manifestUrl.isAllowedSabrManifest(baseUrl) && isServerSabrVideoFormat(it.codec)
+            it.manifestUrl.isAllowedServerManifest(baseUrl) && isServerSabrVideoFormat(it.codec)
     }.mapTo(mutableSetOf()) { it.itag }
     return playableVideoItags.isNotEmpty() && audioStreams.any {
         it.deliveryMethod == SABR_DELIVERY_METHOD && it.itag > 0 &&
-            it.itag !in playableVideoItags && it.manifestUrl.isAllowedSabrManifest(baseUrl) &&
+            it.itag !in playableVideoItags && it.manifestUrl.isAllowedServerManifest(baseUrl) &&
             isServerSabrAudioFormat(it.mimeType, it.codec)
     }
 }
 
-private fun String?.isAllowedSabrManifest(baseUrl: String?): Boolean =
+internal fun StreamResponse.hasPlayableLiveContract(baseUrl: String? = null): Boolean =
+    (isLive || hasLiveManifest) && hlsUrl.isAllowedServerManifest(baseUrl)
+
+private fun String?.isAllowedServerManifest(baseUrl: String?): Boolean =
     !isNullOrBlank() && (baseUrl == null || resolveServerUrl(baseUrl, this) != null)
 
 internal fun String.streamProvider(): StreamProvider {

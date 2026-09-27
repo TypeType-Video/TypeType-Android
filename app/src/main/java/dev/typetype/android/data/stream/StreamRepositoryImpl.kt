@@ -103,7 +103,10 @@ internal class StreamRepositoryImpl @Inject constructor(
         }
         val body = response.body() ?: error("Empty stream body")
         activeAccountScope.verify(scope)
-        if (provider == StreamProvider.YouTube && !body.hasPlayableSabrContract(server.baseUrl)) {
+        if (provider == StreamProvider.YouTube &&
+            !body.hasPlayableSabrContract(server.baseUrl) &&
+            !body.hasPlayableLiveContract(server.baseUrl)
+        ) {
             throw SabrContractException()
         }
         body.toDomain(videoUrl, server.baseUrl, scope, provider)
@@ -115,7 +118,9 @@ internal class StreamRepositoryImpl @Inject constructor(
         scope: dev.typetype.android.data.account.AccountScope,
         provider: StreamProvider,
     ): Stream {
-        val serverSabr = provider == StreamProvider.YouTube
+        val serverYoutube = provider == StreamProvider.YouTube
+        val serverSabr = serverYoutube && hasPlayableSabrContract(baseUrl)
+        val resolvedHlsUrl = resolvePlaybackUrl(baseUrl, hlsUrl).orEmpty()
         return Stream(
             playbackContract = if (serverSabr) {
                 StreamPlaybackContract.ServerSabr
@@ -136,12 +141,12 @@ internal class StreamRepositoryImpl @Inject constructor(
             likeCount = likeCount,
             dislikeCount = dislikeCount,
             uploadedAtMillis = uploaded,
-            hlsUrl = hlsUrl.takeIf { !serverSabr && it.isNotBlank() },
+            hlsUrl = resolvedHlsUrl.takeIf { !serverSabr && it.isNotBlank() },
             dashMpdUrl = dashMpdUrl.takeIf { !serverSabr && it.isNotBlank() },
             progressiveUrl = pickBestProgressiveStream(videoStreams).takeUnless { serverSabr },
             serverDashManifestUrl = serverManifestUrl(baseUrl, "streams/manifest", videoUrl)
-                .takeUnless { serverSabr },
-            serverHlsManifestUrl = hlsUrl.takeIf { !serverSabr && it.isNotBlank() }
+                .takeUnless { serverSabr || serverYoutube },
+            serverHlsManifestUrl = hlsUrl.takeIf { !serverSabr && !serverYoutube && it.isNotBlank() }
                 ?.let { serverManifestUrl(baseUrl, "streams/hls-manifest", videoUrl) },
             serverSabrManifestUrl = resolveServerUrl(baseUrl, firstSabrManifestUrl()),
             sabrVideoStreams = (videoOnlyStreams + videoStreams)

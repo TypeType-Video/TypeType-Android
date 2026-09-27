@@ -14,6 +14,11 @@ internal fun resolveServerUrl(baseUrl: String, value: String?): String? {
     return resolved.takeIf { it.hasSameOrigin(server) }?.toString()
 }
 
+internal fun resolvePlaybackUrl(baseUrl: String, value: String?): String? {
+    val source = value?.takeIf { it.isNotBlank() } ?: return null
+    return source.toHttpUrlOrNull()?.toString() ?: resolveServerUrl(baseUrl, source)
+}
+
 internal fun resolveSabrPlaybackManifestUrl(
     baseUrl: String,
     value: String?,

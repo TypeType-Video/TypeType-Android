@@ -74,6 +74,38 @@ class StreamEndpointLoaderTest {
     }
 
     @Test
+    fun youtubeLiveHlsResponseIsAcceptedAsLiveContract() = runBlocking {
+        server.enqueue(
+            jsonResponse(
+                sabr = false,
+                live = true,
+                hlsUrl = "/streams/hls-manifest?token=signed",
+            ),
+        )
+
+        val body = api.loadStreamResponse(YOUTUBE_URL).body()
+
+        assertFalse(body?.hasPlayableSabrContract(server.url("/").toString()) == true)
+        assertTrue(body?.hasPlayableLiveContract(server.url("/").toString()) == true)
+        assertEquals(1, server.requestCount)
+    }
+
+    @Test
+    fun youtubeLiveHlsResponseOnAnotherOriginIsRejected() = runBlocking {
+        server.enqueue(
+            jsonResponse(
+                sabr = false,
+                live = true,
+                hlsUrl = "https://media.example/live.m3u8",
+            ),
+        )
+
+        val body = api.loadStreamResponse(YOUTUBE_URL).body()
+
+        assertFalse(body?.hasPlayableLiveContract(server.url("/").toString()) == true)
+    }
+
+    @Test
     fun youtubeSabrResponseWithoutValidItagsIsRejected() = runBlocking {
         server.enqueue(jsonResponse(sabr = true, videoItag = 0))
 
@@ -162,6 +194,8 @@ class StreamEndpointLoaderTest {
     private fun jsonResponse(
         sabr: Boolean,
         hls: Boolean = false,
+        live: Boolean = false,
+        hlsUrl: String? = null,
         videoItag: Int = 137,
         manifestUrl: String = "/sabr/manifest/video",
         videoCodec: String = "avc1.640028",
@@ -170,7 +204,18 @@ class StreamEndpointLoaderTest {
     ): MockResponse = MockResponse()
         .setResponseCode(200)
         .setHeader("Content-Type", "application/json")
-        .setBody(streamJson(sabr, hls, videoItag, manifestUrl, videoCodec, audioMimeType, audioCodec))
+        .setBody(
+            streamJson(
+                sabr = sabr,
+                live = live,
+                hlsUrlValue = hlsUrl ?: if (hls) "https://media.example/live.m3u8" else "",
+                videoItag = videoItag,
+                manifestUrl = manifestUrl,
+                videoCodec = videoCodec,
+                audioMimeType = audioMimeType,
+                audioCodec = audioCodec,
+            ),
+        )
 
     private fun errorResponse(code: Int): MockResponse = MockResponse()
         .setResponseCode(code)
@@ -179,7 +224,8 @@ class StreamEndpointLoaderTest {
 
     private fun streamJson(
         sabr: Boolean,
-        hls: Boolean,
+        live: Boolean,
+        hlsUrlValue: String,
         videoItag: Int,
         manifestUrl: String,
         videoCodec: String,
@@ -189,7 +235,6 @@ class StreamEndpointLoaderTest {
         val delivery = if (sabr) "sabr" else "progressive"
         val manifest = if (sabr) "\"$manifestUrl\"" else "null"
         val mediaUrl = if (sabr) "" else "https://media.example/video.mp4"
-        val hlsUrl = if (hls) "https://media.example/live.m3u8" else ""
         return """
             {
               "id":"video","title":"Video","uploaderName":"Channel","uploaderUrl":"/channel",
@@ -197,7 +242,8 @@ class StreamEndpointLoaderTest {
               "viewCount":1,"likeCount":0,"dislikeCount":0,"uploadDate":"","uploaded":-1,
               "uploaderSubscriberCount":0,"uploaderVerified":false,"category":"","license":"",
               "visibility":"public","streamType":"VIDEO_STREAM","isShortFormContent":false,
-              "requiresMembership":false,"startPosition":0,"hlsUrl":"$hlsUrl","dashMpdUrl":"",
+              "requiresMembership":false,"startPosition":0,"hlsUrl":"$hlsUrlValue","dashMpdUrl":"",
+              "isLive":$live,"hasLiveManifest":$live,
               "videoStreams":[],
               "videoOnlyStreams":[{"url":"$mediaUrl","mimeType":"video/mp4","format":"MPEG_4",
                 "resolution":"1080p","codec":"$videoCodec","isVideoOnly":true,"itag":$videoItag,
