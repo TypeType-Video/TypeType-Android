@@ -12,18 +12,19 @@ internal class PlaybackPrewarmLauncher @Inject constructor(
     private val preheater: PlaybackPreheater,
 ) : PlaybackPrewarm {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private val inFlight = mutableSetOf<String>()
+    private var inFlight = false
 
     override fun prewarm(videoUrl: String) {
         if (videoUrl.isBlank()) return
-        synchronized(inFlight) {
-            if (!inFlight.add(videoUrl)) return
+        synchronized(this) {
+            if (inFlight) return
+            inFlight = true
         }
         scope.launch {
             try {
                 preheater.preheat(videoUrl)
             } finally {
-                synchronized(inFlight) { inFlight.remove(videoUrl) }
+                synchronized(this@PlaybackPrewarmLauncher) { inFlight = false }
             }
         }
     }
