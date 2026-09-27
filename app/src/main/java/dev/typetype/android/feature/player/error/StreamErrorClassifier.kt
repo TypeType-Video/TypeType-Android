@@ -107,6 +107,7 @@ fun parseGeoRestriction(message: String?): String? {
 enum class StreamErrorKind {
     Generic,
     AuthenticationExpired,
+    ContentUnavailable,
     MemberOnly,
     PaidContent,
     ScheduledPremiere,
@@ -167,6 +168,10 @@ fun classifyStreamError(failure: Throwable): StreamErrorClass {
     }
     if (code == "members_only") {
         return StreamErrorClass(StreamErrorKind.MemberOnly, rawMessage = null, requestId = requestId)
+    }
+
+    if (code in CONTENT_UNAVAILABLE_CODES) {
+        return StreamErrorClass(StreamErrorKind.ContentUnavailable, rawMessage = null, requestId = requestId)
     }
     if (code == "paid_content") {
         return StreamErrorClass(StreamErrorKind.PaidContent, rawMessage = null, requestId = requestId)
@@ -266,6 +271,11 @@ private val SABR_UNAVAILABLE_CODES = setOf(
     "no_playable_streams",
     "youtube_sabr_unavailable",
     "youtube_sabr_preparation_failed",
+)
+
+private val CONTENT_UNAVAILABLE_CODES = setOf(
+    "content_unavailable",
+    "provider_access_blocked",
 )
 
 private val SABR_CONTRACT_CODES = setOf(
