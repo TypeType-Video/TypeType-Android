@@ -18,11 +18,7 @@ class LocalNotificationScheduler @Inject constructor(
 ) {
     private val workManager = WorkManager.getInstance(context)
 
-    fun sync(enabled: Boolean) {
-        if (!enabled) {
-            workManager.cancelUniqueWork(WORK_NAME)
-            return
-        }
+    fun sync() {
         workManager.enqueueUniquePeriodicWork(
             WORK_NAME,
             ExistingPeriodicWorkPolicy.UPDATE,

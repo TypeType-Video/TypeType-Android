@@ -28,7 +28,6 @@ import dev.typetype.android.domain.usersettings.UserSettings
 import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import dev.typetype.android.feature.player.host.PlayerHostController
 import dev.typetype.android.data.notifications.LocalNotificationScheduler
-import dev.typetype.android.domain.push.PushRegistrationStatus
 import dev.typetype.android.services.push.PushRegistrationManager
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
@@ -192,8 +191,8 @@ class MainViewModel @Inject constructor(
     }
 
     private suspend fun reconcileNotificationDelivery() {
-        val status = pushRegistrationManager.reconcileRegistration()
-        localNotificationScheduler.sync(status != PushRegistrationStatus.Registered)
+        pushRegistrationManager.reconcileRegistration()
+        localNotificationScheduler.sync()
     }
 
     private companion object {

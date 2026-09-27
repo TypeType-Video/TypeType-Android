@@ -46,7 +46,7 @@ class PushNotificationsViewModel @Inject constructor(
         viewModelScope.launch {
             registrationManager.status.collect { status ->
                 _state.update { it.copy(status = status) }
-                localNotificationScheduler.sync(status != PushRegistrationStatus.Registered)
+                localNotificationScheduler.sync()
             }
         }
     }

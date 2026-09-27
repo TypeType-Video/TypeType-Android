@@ -31,7 +31,11 @@ class PushNotifier @Inject constructor(
             title = payload.channelName.ifBlank { payload.serviceName },
             text = payload.title,
             videoUrl = payload.videoUrl,
-            notificationId = payload.eventId.hashCode(),
+            notificationId = subscriptionNotificationId(
+                videoId = payload.videoId,
+                videoUrl = payload.videoUrl,
+                fallback = payload.eventId,
+            ),
         )
     }
 
@@ -40,7 +44,11 @@ class PushNotifier @Inject constructor(
             title = item.channelName.ifBlank { item.video.uploaderName },
             text = item.title,
             videoUrl = item.video.url,
-            notificationId = item.video.id.hashCode(),
+            notificationId = subscriptionNotificationId(
+                videoId = item.video.id,
+                videoUrl = item.video.url,
+                fallback = item.video.url,
+            ),
         )
     }
 
@@ -76,6 +84,7 @@ class PushNotifier @Inject constructor(
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setContentIntent(contentIntent)
             .setAutoCancel(true)
+            .setOnlyAlertOnce(true)
             .build()
     }
 
@@ -90,3 +99,6 @@ class PushNotifier @Inject constructor(
         const val CHANNEL_ID = "subscription_push"
     }
 }
+
+internal fun subscriptionNotificationId(videoId: String, videoUrl: String, fallback: String): Int =
+    videoId.trim().ifBlank { videoUrl.trim() }.ifBlank { fallback.trim() }.hashCode()

@@ -92,14 +92,12 @@ internal fun PushNotificationsScreen(
             if (state.status == PushRegistrationStatus.MissingDistributor) {
                 DistributorRow()
             }
-            if (!state.status.isRegistered()) {
-                Text(
-                    text = stringResource(R.string.push_local_fallback),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(20.dp, 4.dp),
-                )
-            }
+            Text(
+                text = stringResource(R.string.push_local_fallback),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(20.dp, 4.dp),
+            )
             if (state.capabilityEnabled && state.deviceCount > 0) {
                 StatusRow(
                     label = stringResource(R.string.push_devices_count, state.deviceCount, state.maxDevices),
