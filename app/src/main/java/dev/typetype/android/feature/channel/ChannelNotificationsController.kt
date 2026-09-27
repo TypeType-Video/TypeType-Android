@@ -1,8 +1,8 @@
 package dev.typetype.android.feature.channel
 
 import dev.typetype.android.data.account.ActiveAccountScope
-import dev.typetype.android.domain.push.ChannelNotificationsPreference
 import dev.typetype.android.domain.push.PushRepository
+import dev.typetype.android.domain.push.matchesChannel
 import dev.typetype.android.domain.server.ServerRepository
 import javax.inject.Inject
 
@@ -21,16 +21,11 @@ class ChannelNotificationsController @Inject constructor(
 
     suspend fun currentEnabled(channelUrl: String): Boolean? =
         pushRepository.channelPreferences().getOrNull()
-            ?.firstOrNull { it.matches(channelUrl) }
+            ?.firstOrNull { it.matchesChannel(channelUrl) }
             ?.enabled
 
     suspend fun setEnabled(channelUrl: String, enabled: Boolean): Boolean? {
         pushRepository.setChannelPreference(channelUrl, enabled).getOrNull() ?: return null
         return enabled
     }
-
-    private fun ChannelNotificationsPreference.matches(channelUrl: String): Boolean =
-        this.channelUrl == channelUrl ||
-            channelUrl.endsWith(this.channelUrl) ||
-            this.channelUrl.endsWith(channelUrl)
 }
