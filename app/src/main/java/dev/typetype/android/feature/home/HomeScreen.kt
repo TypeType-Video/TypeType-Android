@@ -22,10 +22,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.AnimatedError
-import dev.typetype.android.core.ui.components.FullScreenLoader
+import dev.typetype.android.core.ui.components.VideoGridSkeleton
 import dev.typetype.android.core.ui.components.LazyPaginationFooter
 import dev.typetype.android.core.ui.components.SectionHeader
 import dev.typetype.android.core.ui.components.VideoCard
+import dev.typetype.android.core.ui.components.VideoCardSkeleton
 import dev.typetype.android.feature.menu.VideoMenuScope
 import dev.typetype.android.feature.menu.rememberVideoMenuScope
 
@@ -77,7 +78,7 @@ internal fun HomeContent(
     val continueWatching = if (state.hideContinueWatching) emptyList() else state.continueWatching
     val showRecommendations = !state.hideHomeRecommendations
     when {
-        state.isLoading && state.videos.isEmpty() && continueWatching.isEmpty() -> FullScreenLoader()
+        state.isLoading && state.videos.isEmpty() && continueWatching.isEmpty() -> VideoGridSkeleton()
         state.errorMessage != null && state.videos.isEmpty() && continueWatching.isEmpty() -> AnimatedError(
             message = state.errorMessage,
             requestId = state.errorRequestId,
@@ -100,7 +101,7 @@ internal fun HomeContent(
                     )
                 }
             }
-            if (state.isLoading && showRecommendations) {
+            if (state.isLoading && showRecommendations && visibleVideos.isNotEmpty()) {
                 item(key = "home-refresh", span = { GridItemSpan(maxLineSpan) }) {
                     LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 }
@@ -116,6 +117,11 @@ internal fun HomeContent(
                         ),
                         modifier = Modifier.padding(horizontal = 4.dp),
                     )
+                }
+                if (state.isLoading && visibleVideos.isEmpty()) {
+                    items(HOME_SKELETON_SLOTS, key = { "home-skeleton-$it" }) {
+                        VideoCardSkeleton()
+                    }
                 }
                 items(
                     visibleVideos,
@@ -156,3 +162,5 @@ private fun HomeEmptyState() {
         )
     }
 }
+
+private val HOME_SKELETON_SLOTS = (0 until 6).toList()

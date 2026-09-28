@@ -12,18 +12,20 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import dev.typetype.android.core.ui.components.AnimatedLoader
+import dev.typetype.android.feature.player.components.PlayerDetailsSkeleton
 
 @Composable
 fun LoadingState() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top)),
     ) {
         Box(
@@ -35,5 +37,6 @@ fun LoadingState() {
         ) {
             AnimatedLoader(size = 88.dp)
         }
+        PlayerDetailsSkeleton()
     }
 }
