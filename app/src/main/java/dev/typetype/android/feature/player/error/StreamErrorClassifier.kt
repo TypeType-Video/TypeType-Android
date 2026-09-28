@@ -20,6 +20,7 @@ private val SCHEDULED_PREMIERE_NEEDLES = listOf(
     "premieres in",
     "premiere has not started",
     "premiere scheduled",
+    "live event will begin",
 )
 
 private val PAID_CONTENT_NEEDLES = listOf(
@@ -107,6 +108,7 @@ fun parseGeoRestriction(message: String?): String? {
 enum class StreamErrorKind {
     Generic,
     AuthenticationExpired,
+    ContentUnavailable,
     MemberOnly,
     PaidContent,
     ScheduledPremiere,
@@ -168,10 +170,14 @@ fun classifyStreamError(failure: Throwable): StreamErrorClass {
     if (code == "members_only") {
         return StreamErrorClass(StreamErrorKind.MemberOnly, rawMessage = null, requestId = requestId)
     }
+
+    if (code in CONTENT_UNAVAILABLE_CODES) {
+        return StreamErrorClass(StreamErrorKind.ContentUnavailable, rawMessage = null, requestId = requestId)
+    }
     if (code == "paid_content") {
         return StreamErrorClass(StreamErrorKind.PaidContent, rawMessage = null, requestId = requestId)
     }
-    if (code == "scheduled_premiere") {
+    if (code == "scheduled_premiere" || code == "live_not_started") {
         return StreamErrorClass(StreamErrorKind.ScheduledPremiere, rawMessage = null, requestId = requestId)
     }
     if (code == "youtube_session_needs_reconnect" || code == "youtube_session_unavailable") {
@@ -266,6 +272,11 @@ private val SABR_UNAVAILABLE_CODES = setOf(
     "no_playable_streams",
     "youtube_sabr_unavailable",
     "youtube_sabr_preparation_failed",
+)
+
+private val CONTENT_UNAVAILABLE_CODES = setOf(
+    "content_unavailable",
+    "provider_access_blocked",
 )
 
 private val SABR_CONTRACT_CODES = setOf(

@@ -28,6 +28,8 @@ data class PlayerState(
     val playlistActionInFlight: Boolean = false,
     val downloadInFlight: Boolean = false,
     val playbackQueue: PlaybackQueueState = PlaybackQueueState(),
+    val canPlayPreviousVideo: Boolean = false,
+    val canPlayNextVideo: Boolean = false,
 )
 
 internal fun PlayerState.retryPlayback(): PlayerState =

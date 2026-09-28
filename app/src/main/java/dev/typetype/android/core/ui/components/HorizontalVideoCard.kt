@@ -85,10 +85,9 @@ fun HorizontalVideoCard(
                 .clip(MaterialTheme.shapes.medium)
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
-            AsyncImage(
-                model = buildImageUrl(serverBaseUrl, branding.thumbnailUrl),
+            SkeletonImage(
+                imageUrl = branding.thumbnailUrl,
                 contentDescription = null,
-                contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
             )
             VideoThumbnailBadges(

@@ -14,10 +14,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,15 +32,15 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.branding.rememberVideoBranding
-import dev.typetype.android.core.ui.share.LocalServerBaseUrl
-import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.feed.VideoAvailability
 import dev.typetype.android.domain.feed.availabilityAt
 import dev.typetype.android.domain.feed.releaseTimeMillis
+import dev.typetype.android.feature.player.CARD_PREWARM_DELAY_MILLIS
+import dev.typetype.android.feature.player.LocalPlaybackPrewarm
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -54,7 +54,14 @@ fun RelatedVideoCard(
 ) {
     var menuVisible by remember { mutableStateOf(false) }
     var availabilityVisible by remember { mutableStateOf(false) }
-    val serverBaseUrl = LocalServerBaseUrl.current
+    val playbackPrewarm = LocalPlaybackPrewarm.current
+
+    LaunchedEffect(video.url, playbackPrewarm) {
+        if (playbackPrewarm == null) return@LaunchedEffect
+        delay(CARD_PREWARM_DELAY_MILLIS)
+        playbackPrewarm.prewarm(video.url, video.isLive)
+    }
+
     val availability = video.availabilityAt(System.currentTimeMillis())
     val branding = rememberVideoBranding(
         sourceUrl = video.url,
@@ -85,10 +92,9 @@ fun RelatedVideoCard(
                 .clip(MaterialTheme.shapes.medium)
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
-            AsyncImage(
-                model = buildImageUrl(serverBaseUrl, branding.thumbnailUrl),
+            SkeletonImage(
+                imageUrl = branding.thumbnailUrl,
                 contentDescription = null,
-                contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
             )
             if (menuItemState.isWatched) {
@@ -112,18 +118,15 @@ fun RelatedVideoCard(
                 overflow = TextOverflow.Ellipsis,
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
-                AsyncImage(
-                    model = buildImageUrl(serverBaseUrl, video.uploaderAvatarUrl),
+                ChannelAvatar(
+                    avatarUrl = video.uploaderAvatarUrl,
+                    name = video.uploaderName,
+                    size = 18.dp,
                     contentDescription = stringResource(
                         R.string.video_open_channel_accessibility,
                         video.uploaderName,
                     ),
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(18.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .combinedClickable(onClick = onChannelClick, role = Role.Button),
+                    modifier = Modifier.combinedClickable(onClick = onChannelClick, role = Role.Button),
                 )
                 Spacer(Modifier.width(6.dp))
                 Text(

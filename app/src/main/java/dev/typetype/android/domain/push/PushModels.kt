@@ -10,6 +10,11 @@ data class ChannelNotificationsPreference(
     val enabled: Boolean,
 )
 
+fun ChannelNotificationsPreference.matchesChannel(channelUrl: String): Boolean =
+    this.channelUrl == channelUrl ||
+        channelUrl.startsWith("${this.channelUrl}/") ||
+        this.channelUrl.startsWith("$channelUrl/")
+
 sealed interface PushRegistrationStatus {
     data object Disabled : PushRegistrationStatus
 

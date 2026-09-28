@@ -179,6 +179,33 @@ class TypeTypeDatabaseMigrationTest {
     }
 
     @Test
+    fun migratesVersion22WithPushCapabilityColumns() {
+        helper.createDatabase(DATABASE_NAME, 22).apply {
+            execSQL(
+                "INSERT INTO servers(id, baseUrl, displayName, addedAt) " +
+                    "VALUES('instance-a', 'https://example.test/api', 'TypeType', 1)",
+            )
+            close()
+        }
+
+        database = Room.databaseBuilder(context, TypeTypeDatabase::class.java, DATABASE_NAME)
+            .addMigrations(*TypeTypeDatabaseMigrations.ALL)
+            .build()
+        val sqlite = requireNotNull(database).openHelper.writableDatabase
+
+        sqlite.query(
+            "SELECT pushEnabled, pushProvider, pushEventTypesCsv, pushMaxDevicesPerAccount " +
+                "FROM servers WHERE id = 'instance-a'",
+        ).use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(0, cursor.getInt(0))
+            assertEquals("unifiedpush", cursor.getString(1))
+            assertEquals("", cursor.getString(2))
+            assertEquals(0, cursor.getInt(3))
+        }
+    }
+
+    @Test
     fun migratesVersion13WithDurableScopedLibraryMutations() {
         helper.createDatabase(DATABASE_NAME, 13).apply {
             execSQL(
@@ -259,7 +286,7 @@ class TypeTypeDatabaseMigrationTest {
     private companion object {
         const val DATABASE_NAME = "migration-test.db"
         const val FIRST_RETAINED_VERSION = 1
-        const val CURRENT_VERSION = 22
+        const val CURRENT_VERSION = 23
         const val DRAFT_VERSION_10_SERVERS =
             "CREATE TABLE `servers` (" +
                 "`id` TEXT NOT NULL, `baseUrl` TEXT NOT NULL, `displayName` TEXT NOT NULL, " +

@@ -31,6 +31,9 @@ class PlayerSettingsCaptionStyleTest {
         }
 
         composeRule.onNode(hasScrollAction())
+            .performScrollToNode(hasText("Show advanced player settings"))
+        composeRule.onNodeWithText("Show advanced player settings").performClick()
+        composeRule.onNode(hasScrollAction())
             .performScrollToNode(hasText("Text size"))
         composeRule.onNodeWithText("Text size").performClick()
         composeRule.onNodeWithText("150%").performClick()

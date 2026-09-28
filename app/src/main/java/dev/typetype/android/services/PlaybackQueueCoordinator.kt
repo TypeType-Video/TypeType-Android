@@ -158,6 +158,10 @@ class PlaybackQueueCoordinator @Inject internal constructor(
         }
     }
 
+    fun playPrevious() = mutableState.value.previous?.let { previous ->
+        play(mutableState.value.entries.indexOfFirst { it.videoUrl == previous.videoUrl })
+    }
+
     fun playAutoplayNow() = autoplayController.playNow()
 
     fun cancelAutoplay() = autoplayController.cancel()

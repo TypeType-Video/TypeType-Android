@@ -27,6 +27,8 @@ import dev.typetype.android.core.ui.navigation.PrivacySettingsRoute
 import dev.typetype.android.core.ui.navigation.PublicPlaylistRoute
 import dev.typetype.android.core.ui.navigation.ProfileSettingsRoute
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.feature.player.LocalPlaybackPrewarm
+import dev.typetype.android.feature.player.PlaybackPrewarm
 import dev.typetype.android.core.ui.navigation.AppearanceRoute
 import dev.typetype.android.core.ui.navigation.ContentSettingsRoute
 import dev.typetype.android.core.ui.navigation.HomeRoute
@@ -61,7 +63,11 @@ import dev.typetype.android.feature.subscriptions.SubscriptionsRoute as Subscrip
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
-fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
+fun AppNavHost(
+    startRoute: Any,
+    mainViewModel: MainViewModel,
+    playbackPrewarm: PlaybackPrewarm? = null,
+) {
     val navController: NavHostController = rememberNavController()
     val playerHostController = remember { mainViewModel.playerHostController }
     val currentServer by mainViewModel.currentServer.collectAsStateWithLifecycle()
@@ -133,6 +139,7 @@ fun AppNavHost(startRoute: Any, mainViewModel: MainViewModel) {
     CompositionLocalProvider(
         LocalServerBaseUrl provides currentServer?.baseUrl,
         LocalDeArrowBranding provides deArrowEnvironment,
+        LocalPlaybackPrewarm provides playbackPrewarm,
     ) {
     AppShell(
         navController = navController,

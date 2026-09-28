@@ -14,6 +14,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performScrollToNode
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import dev.typetype.android.domain.preferences.AccentColor
 import dev.typetype.android.domain.preferences.AppPreferences
@@ -109,8 +110,8 @@ class AppearanceScreenTest {
             }
         }
 
-        composeRule.onAllNodes(hasScrollAction())[0].performScrollToIndex(11)
-        composeRule.onNode(isSelectable() and hasText("Red"))
-            .assertIsEnabled()
+        val accentCell = isSelectable() and hasText("Red")
+        composeRule.onAllNodes(hasScrollAction())[0].performScrollToNode(accentCell)
+        composeRule.onNode(accentCell).assertIsEnabled()
     }
 }

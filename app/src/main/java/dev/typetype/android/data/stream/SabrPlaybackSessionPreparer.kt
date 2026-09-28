@@ -25,7 +25,8 @@ internal class SabrPlaybackSessionPreparer(
         baseUrl: String,
         target: SabrPlaybackTarget,
         startTimeMs: Long = 0L,
-    ): SabrPlaybackSession = createSessionWithRecovery(api, baseUrl, target, startTimeMs)
+        prewarm: Boolean = false,
+    ): SabrPlaybackSession = createSessionWithRecovery(api, baseUrl, target, startTimeMs, prewarm)
 
     suspend fun prepareOnce(
         api: TypeTypeMediaApi,
@@ -39,11 +40,13 @@ internal class SabrPlaybackSessionPreparer(
         baseUrl: String,
         target: SabrPlaybackTarget,
         startTimeMs: Long,
+        prewarm: Boolean = false,
     ): SabrPlaybackSession {
         val response = transientPlaybackRequest(pause, network) {
             api.createSabrPlayback(
                 target.videoId,
                 target.controlRequest(startTimeMs),
+                prewarm.takeIf { it },
             )
         }
         response.requireControlEndpoint(
@@ -139,8 +142,9 @@ internal class SabrPlaybackSessionPreparer(
         baseUrl: String,
         target: SabrPlaybackTarget,
         startTimeMs: Long,
+        prewarm: Boolean = false,
     ): SabrPlaybackSession = try {
-        createSession(api, baseUrl, target, startTimeMs)
+        createSession(api, baseUrl, target, startTimeMs, prewarm)
     } catch (failure: SabrPlaybackRecoveryException) {
         recoverSession(api, baseUrl, target, startTimeMs, failure)
     }

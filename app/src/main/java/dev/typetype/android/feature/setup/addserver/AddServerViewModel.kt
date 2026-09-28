@@ -139,6 +139,7 @@ class AddServerViewModel @Inject constructor(
                         youtubeRemoteLoginReady = probe.youtubeRemoteLoginReady,
                         youtubeRemoteLoginUnavailableReason = probe.youtubeRemoteLoginUnavailableReason,
                         rss = probe.rss,
+                        push = probe.push,
                     )
                     setupRepository.persistServer(server)
                     _state.update {

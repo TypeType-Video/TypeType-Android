@@ -18,6 +18,7 @@ import dev.typetype.android.R
 import androidx.media3.session.MediaController
 import dev.typetype.android.domain.stream.SponsorBlockSegment
 import dev.typetype.android.domain.stream.Stream
+import dev.typetype.android.feature.player.PlayerNavigationControls
 import dev.typetype.android.feature.player.state.ResizeMode
 
 @Composable
@@ -47,6 +48,7 @@ internal fun PlayerSurfaceChrome(
     resizeMode: ResizeMode,
     isPipAvailable: Boolean,
     chaptersAvailable: Boolean,
+    navigation: PlayerNavigationControls,
     modifier: Modifier = Modifier,
 ) {
     Box(Modifier.fillMaxSize()) {
@@ -111,6 +113,7 @@ internal fun PlayerSurfaceChrome(
                 seekPreviewPositionMs = seekPreviewPositionMs,
                 onTimelineScrubbingChange = onTimelineScrubbingChange,
                 timelineScrubbing = timelineScrubbing,
+                navigation = navigation,
                 modifier = modifier.fillMaxSize(),
             )
         }

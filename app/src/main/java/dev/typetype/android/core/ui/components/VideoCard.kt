@@ -15,13 +15,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,17 +39,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.request.crossfade
+import kotlinx.coroutines.delay
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.branding.rememberVideoBranding
-import dev.typetype.android.core.ui.share.LocalServerBaseUrl
-import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.feed.VideoAvailability
 import dev.typetype.android.domain.feed.availabilityAt
 import dev.typetype.android.domain.feed.releaseTimeMillis
+import dev.typetype.android.feature.player.CARD_PREWARM_DELAY_MILLIS
+import dev.typetype.android.feature.player.LocalPlaybackPrewarm
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -63,7 +61,6 @@ fun VideoCard(
 ) {
     var menuVisible by remember { mutableStateOf(false) }
     var availabilityVisible by remember { mutableStateOf(false) }
-    val serverBaseUrl = LocalServerBaseUrl.current
     val availability = video.availabilityAt(System.currentTimeMillis())
     val metadata = video.metadataText()
     val branding = rememberVideoBranding(
@@ -73,6 +70,13 @@ fun VideoCard(
         durationSeconds = video.durationSeconds,
     )
     val openDescription = stringResource(R.string.video_open_accessibility, branding.title)
+    val playbackPrewarm = LocalPlaybackPrewarm.current
+
+    LaunchedEffect(video.url, playbackPrewarm) {
+        if (playbackPrewarm == null) return@LaunchedEffect
+        delay(CARD_PREWARM_DELAY_MILLIS)
+        playbackPrewarm.prewarm(video.url, video.isLive)
+    }
 
     Column(
         modifier = modifier
@@ -93,13 +97,10 @@ fun VideoCard(
                 .clip(MaterialTheme.shapes.medium)
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(buildImageUrl(serverBaseUrl, branding.thumbnailUrl))
-                    .crossfade(200)
-                    .build(),
+            SkeletonImage(
+                imageUrl = branding.thumbnailUrl,
                 contentDescription = null,
-                contentScale = ContentScale.Crop,
+                crossfadeMillis = 200,
                 modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
             )
             if (menuItemState.isWatched) {
@@ -119,9 +120,6 @@ fun VideoCard(
         Spacer(Modifier.height(10.dp))
         Row(verticalAlignment = Alignment.Top) {
             val avatarModifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant)
                 .let {
                     if (onChannelClick != null) {
                         it.combinedClickable(onClick = onChannelClick, role = Role.Button)
@@ -129,14 +127,15 @@ fun VideoCard(
                         it
                     }
                 }
-            AsyncImage(
-                model = buildImageUrl(serverBaseUrl, video.uploaderAvatarUrl),
+            ChannelAvatar(
+                avatarUrl = video.uploaderAvatarUrl,
+                name = video.uploaderName,
+                size = 36.dp,
                 contentDescription = if (onChannelClick != null) {
                     stringResource(R.string.video_open_channel_accessibility, video.uploaderName)
                 } else {
                     null
                 },
-                contentScale = ContentScale.Crop,
                 modifier = avatarModifier,
             )
             Spacer(Modifier.width(10.dp))

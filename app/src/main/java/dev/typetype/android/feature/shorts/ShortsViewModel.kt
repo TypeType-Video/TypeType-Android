@@ -14,6 +14,7 @@ import dev.typetype.android.domain.library.cacheVideos
 import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import dev.typetype.android.domain.usersettings.UserSettings
 import dev.typetype.android.feature.player.PlaybackCodecSupport
+import dev.typetype.android.feature.player.PlaybackPreheater
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -32,7 +33,7 @@ class ShortsViewModel @Inject constructor(
     private val videoMetaRepository: VideoMetaRepository,
     private val userSettingsRepository: UserSettingsRepository,
     private val errorMapper: UserErrorMapper,
-    private val playbackPreheater: ShortsPlaybackPreheater,
+    private val playbackPreheater: PlaybackPreheater,
 ) : ViewModel() {
     private val _state = MutableStateFlow(ShortsState())
     val state = _state.asStateFlow()

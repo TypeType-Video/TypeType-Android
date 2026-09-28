@@ -26,8 +26,17 @@ internal suspend fun TypeTypeMediaApi.loadYouTubeSabrBootstrapResponse(
 ): Response<StreamResponse> {
     val response = youtubeSabrBootstrap(videoUrl)
     response.rejectSabrRedirect("SABR stream bootstrap attempted to redirect")
-    return response
+    if (response.isSuccessful) return response
+    if (!response.canFallBackToSabrStreams()) return response
+    val fallback = youtubeSabrStreams(videoUrl)
+    fallback.rejectSabrRedirect("SABR stream discovery attempted to redirect")
+    return fallback
 }
+
+private fun Response<StreamResponse>.canFallBackToSabrStreams(): Boolean =
+    code() in BOOTSTRAP_FALLBACK_STATUSES
+
+private val BOOTSTRAP_FALLBACK_STATUSES = setOf(404, 405, 422, 500, 501, 502, 503, 504)
 
 private suspend fun TypeTypeMediaApi.fallbackToGeneric(
     response: Response<StreamResponse>,
@@ -40,16 +49,19 @@ private fun Response<StreamResponse>.canFallbackToGeneric(): Boolean =
 internal fun StreamResponse.hasPlayableSabrContract(baseUrl: String? = null): Boolean {
     val playableVideoItags = (videoStreams + videoOnlyStreams).filter {
         it.deliveryMethod == SABR_DELIVERY_METHOD && it.itag > 0 &&
-            it.manifestUrl.isAllowedSabrManifest(baseUrl) && isServerSabrVideoFormat(it.codec)
+            it.manifestUrl.isAllowedServerManifest(baseUrl) && isServerSabrVideoFormat(it.codec)
     }.mapTo(mutableSetOf()) { it.itag }
     return playableVideoItags.isNotEmpty() && audioStreams.any {
         it.deliveryMethod == SABR_DELIVERY_METHOD && it.itag > 0 &&
-            it.itag !in playableVideoItags && it.manifestUrl.isAllowedSabrManifest(baseUrl) &&
+            it.itag !in playableVideoItags && it.manifestUrl.isAllowedServerManifest(baseUrl) &&
             isServerSabrAudioFormat(it.mimeType, it.codec)
     }
 }
 
-private fun String?.isAllowedSabrManifest(baseUrl: String?): Boolean =
+internal fun StreamResponse.hasPlayableLiveContract(baseUrl: String? = null): Boolean =
+    (isLive || hasLiveManifest) && hlsUrl.isAllowedServerManifest(baseUrl)
+
+private fun String?.isAllowedServerManifest(baseUrl: String?): Boolean =
     !isNullOrBlank() && (baseUrl == null || resolveServerUrl(baseUrl, this) != null)
 
 internal fun String.streamProvider(): StreamProvider {

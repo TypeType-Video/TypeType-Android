@@ -188,6 +188,20 @@ class PlayerHostControllerTest {
         assertEquals("second", controller.state.value.videoUrl)
         assertEquals(PlayerHostTarget.Expanded, controller.state.value.target)
     }
+
+    @Test
+    fun `normal playback history restores previous videos in reverse order`() {
+        val controller = PlayerHostController(FakePlaybackQueueController())
+        controller.openVideo("first")
+        controller.continueWithVideo("second")
+        controller.continueWithVideo("third")
+
+        assertTrue(controller.goToPreviousVideo())
+        assertEquals("second", controller.state.value.videoUrl)
+        assertTrue(controller.goToPreviousVideo())
+        assertEquals("first", controller.state.value.videoUrl)
+        assertFalse(controller.goToPreviousVideo())
+    }
 }
 
 private class FakePlaybackQueueController : PlaybackQueueController {

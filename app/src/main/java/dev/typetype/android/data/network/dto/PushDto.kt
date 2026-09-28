@@ -9,6 +9,8 @@ data class PushDeviceRegistrationRequestDto(
     val deviceId: String,
     val platform: String = "android",
     val endpoint: String,
+    val p256dh: String,
+    val auth: String,
     val expiresAt: Long? = null,
 )
 

@@ -34,6 +34,10 @@ data class ServerEntity(
     @ColumnInfo(defaultValue = "0") val rssMaxItems: Int = 0,
     @ColumnInfo(defaultValue = "0") val rssMinimumPollMinutes: Int = 0,
     @ColumnInfo(defaultValue = "0") val rssRateLimitPerMinute: Int = 0,
+    @ColumnInfo(defaultValue = "0") val pushEnabled: Boolean = false,
+    @ColumnInfo(defaultValue = "unifiedpush") val pushProvider: String = "unifiedpush",
+    @ColumnInfo(defaultValue = "") val pushEventTypesCsv: String = "",
+    @ColumnInfo(defaultValue = "0") val pushMaxDevicesPerAccount: Int = 0,
 ) {
     fun toDomain(): Server = Server(
         id = id,
@@ -64,6 +68,12 @@ data class ServerEntity(
             maxItems = rssMaxItems,
             minimumPollMinutes = rssMinimumPollMinutes,
             rateLimitPerMinute = rssRateLimitPerMinute,
+        ),
+        push = dev.typetype.android.domain.server.PushCapability(
+            enabled = pushEnabled,
+            provider = pushProvider,
+            eventTypes = pushEventTypesCsv.split(',').mapNotNull { it.takeIf(String::isNotBlank) },
+            maxDevicesPerAccount = pushMaxDevicesPerAccount,
         ),
     )
 
@@ -96,6 +106,10 @@ data class ServerEntity(
             rssMaxItems = server.rss.maxItems,
             rssMinimumPollMinutes = server.rss.minimumPollMinutes,
             rssRateLimitPerMinute = server.rss.rateLimitPerMinute,
+            pushEnabled = server.push.enabled,
+            pushProvider = server.push.provider,
+            pushEventTypesCsv = server.push.eventTypes.joinToString(","),
+            pushMaxDevicesPerAccount = server.push.maxDevicesPerAccount,
         )
     }
 }

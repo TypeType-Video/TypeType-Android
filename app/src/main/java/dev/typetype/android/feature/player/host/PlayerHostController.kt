@@ -24,12 +24,17 @@ data class PlayerHostStateSnapshot(
     val embeddedReturnVideoUrl: String? = null,
     val embeddedReturnPositionMillis: Long? = null,
     val embeddedReturnPlayWhenReady: Boolean = false,
+    val normalPlaybackHistory: List<String> = emptyList(),
 )
 
 @Singleton
 class PlayerHostController @Inject constructor(
     private val playbackQueueCoordinator: PlaybackQueueController,
 ) {
+
+    private companion object {
+        const val MAX_NORMAL_PLAYBACK_HISTORY = 20
+    }
 
     private val _state = MutableStateFlow(PlayerHostStateSnapshot())
     val state: StateFlow<PlayerHostStateSnapshot> = _state.asStateFlow()
@@ -48,6 +53,7 @@ class PlayerHostController @Inject constructor(
                 embeddedReturnVideoUrl = null,
                 embeddedReturnPositionMillis = null,
                 embeddedReturnPlayWhenReady = false,
+                normalPlaybackHistory = emptyList(),
             )
         }
         playbackQueueCoordinator.clear()
@@ -55,6 +61,11 @@ class PlayerHostController @Inject constructor(
 
     fun continueWithVideo(url: String) {
         _state.update {
+            val history = if (it.videoUrl != null && it.videoUrl != url) {
+                (it.normalPlaybackHistory + it.videoUrl).takeLast(MAX_NORMAL_PLAYBACK_HISTORY)
+            } else {
+                it.normalPlaybackHistory
+            }
             it.copy(
                 videoUrl = url,
                 resumePositionMillis = null,
@@ -65,9 +76,26 @@ class PlayerHostController @Inject constructor(
                 embeddedReturnVideoUrl = null,
                 embeddedReturnPositionMillis = null,
                 embeddedReturnPlayWhenReady = false,
+                normalPlaybackHistory = history,
             )
         }
         playbackQueueCoordinator.clear()
+    }
+
+    fun goToPreviousVideo(): Boolean {
+        val previousUrl = _state.value.normalPlaybackHistory.lastOrNull() ?: return false
+        _state.update {
+            it.copy(
+                videoUrl = previousUrl,
+                resumePositionMillis = null,
+                initialPlayWhenReady = true,
+                requestStamp = it.requestStamp + 1,
+                playbackClearRequestStamp = null,
+                normalPlaybackHistory = it.normalPlaybackHistory.dropLast(1),
+            )
+        }
+        playbackQueueCoordinator.clear()
+        return true
     }
 
     fun openQueue(title: String, entries: List<PlaybackQueueEntry>, shuffle: Boolean) {
@@ -86,6 +114,7 @@ class PlayerHostController @Inject constructor(
                 embeddedReturnVideoUrl = null,
                 embeddedReturnPositionMillis = null,
                 embeddedReturnPlayWhenReady = false,
+                normalPlaybackHistory = emptyList(),
             )
         }
     }
@@ -106,6 +135,7 @@ class PlayerHostController @Inject constructor(
                 embeddedReturnVideoUrl = null,
                 embeddedReturnPositionMillis = null,
                 embeddedReturnPlayWhenReady = false,
+                normalPlaybackHistory = emptyList(),
             )
         }
         playbackQueueCoordinator.clear()
@@ -128,6 +158,7 @@ class PlayerHostController @Inject constructor(
                 embeddedReturnVideoUrl = null,
                 embeddedReturnPositionMillis = null,
                 embeddedReturnPlayWhenReady = false,
+                normalPlaybackHistory = emptyList(),
             )
         }
     }
@@ -265,6 +296,7 @@ class PlayerHostController @Inject constructor(
                 embeddedReturnVideoUrl = null,
                 embeddedReturnPositionMillis = null,
                 embeddedReturnPlayWhenReady = false,
+                normalPlaybackHistory = emptyList(),
             )
         }
         playbackQueueCoordinator.clear()

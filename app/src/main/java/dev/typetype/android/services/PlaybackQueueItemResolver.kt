@@ -42,7 +42,7 @@ class PlaybackQueueItemResolver @Inject constructor(
                 preferOriginalLanguage = settings.preferOriginalLanguage,
                 codecSupport = codecSupport,
                 prepareSabrPlayback = { loaded, selection, _ ->
-                    sabrPlaybackRepository.prepare(loaded.sabrPlaybackTarget(selection)).getOrThrow()
+                    sabrPlaybackRepository.prewarm(loaded.sabrPlaybackTarget(selection)).getOrThrow()
                 },
             ),
         ) { "No playable source for queued video" }

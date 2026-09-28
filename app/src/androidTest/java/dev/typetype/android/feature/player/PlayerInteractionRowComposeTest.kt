@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.typetype.android.R
 import org.junit.Assert.assertEquals
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -24,6 +25,10 @@ class PlayerInteractionRowComposeTest {
 
     @Test
     fun tabletShowsLabelsAndLargerTouchTargets() {
+        assumeTrue(
+            "tablet interaction row needs a 600dp wide device",
+            composeRule.activity.resources.configuration.smallestScreenWidthDp >= 600,
+        )
         var commentClicks = 0
         setActions(720.dp) { commentClicks += 1 }
 

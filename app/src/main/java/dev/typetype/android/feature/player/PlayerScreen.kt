@@ -178,6 +178,14 @@ fun PlayerScreen(
                     playlistActionInFlight = state.playlistActionInFlight,
                     downloadInFlight = state.downloadInFlight,
                     playbackQueue = state.playbackQueue,
+                    navigation = PlayerNavigationControls(
+                        availability = PlayerNavigationAvailability(
+                            previous = state.canPlayPreviousVideo,
+                            next = state.canPlayNextVideo,
+                        ),
+                        onPrevious = { onAction(PlayerAction.OnPlayPreviousVideo) },
+                        onNext = { onAction(PlayerAction.OnPlayNextVideo) },
+                    ),
                     commentsFlow = commentsFlow,
                     commentsRepository = commentsRepository,
                     prepareSabrPlayback = prepareSabrPlayback,

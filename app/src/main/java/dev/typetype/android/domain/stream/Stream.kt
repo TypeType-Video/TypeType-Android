@@ -41,6 +41,7 @@ data class Stream(
     val isLive: Boolean = false,
     val isPostLive: Boolean = false,
     val isLiveContent: Boolean = false,
+    val requiresMembership: Boolean = false,
     val category: String? = null,
 )
 
@@ -96,6 +97,7 @@ enum class StreamPlaybackContract {
 data class StreamVideoSource(
     val url: String,
     val mimeType: String,
+    val playbackMimeType: String? = null,
     val codec: String?,
     val resolution: String,
     val width: Int,

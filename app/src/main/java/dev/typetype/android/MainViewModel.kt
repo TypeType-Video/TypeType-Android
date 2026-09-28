@@ -27,6 +27,7 @@ import dev.typetype.android.domain.subscriptions.SubscriptionsRepository
 import dev.typetype.android.domain.usersettings.UserSettings
 import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import dev.typetype.android.feature.player.host.PlayerHostController
+import dev.typetype.android.data.notifications.LocalNotificationScheduler
 import dev.typetype.android.services.push.PushRegistrationManager
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
@@ -65,6 +66,7 @@ class MainViewModel @Inject constructor(
     private val libraryRepository: LibraryRepository,
     private val activeAccountScope: ActiveAccountScope,
     private val pushRegistrationManager: PushRegistrationManager,
+    private val localNotificationScheduler: LocalNotificationScheduler,
     private val startupLandingStore: StartupLandingStore,
     private val playbackResumeRepository: PlaybackResumeRepository,
     private val playbackQueueRepository: PlaybackQueueRepository,
@@ -184,8 +186,13 @@ class MainViewModel @Inject constructor(
             launch { profileRepository.refresh() }
             launch { subscriptionsRepository.refresh() }
             launch { libraryRepository.resumePendingWrites() }
-            launch { pushRegistrationManager.reconcileRegistration() }
+            launch { reconcileNotificationDelivery() }
         }
+    }
+
+    private suspend fun reconcileNotificationDelivery() {
+        pushRegistrationManager.reconcileRegistration()
+        localNotificationScheduler.sync()
     }
 
     private companion object {
@@ -224,7 +231,7 @@ class MainViewModel @Inject constructor(
             launch { profileRepository.refresh() }
             launch { subscriptionsRepository.refresh() }
             launch { libraryRepository.resumePendingWrites() }
-            launch { pushRegistrationManager.reconcileRegistration() }
+            launch { reconcileNotificationDelivery() }
             launch {
                 restorePlaybackUnlessExternalRequestArrives()
             }

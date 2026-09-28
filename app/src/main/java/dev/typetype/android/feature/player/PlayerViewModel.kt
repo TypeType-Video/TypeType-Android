@@ -62,12 +62,18 @@ class PlayerViewModel @Inject constructor(
     val events: Flow<PlayerEvent> = _events.receiveAsFlow()
     val comments = playerCommentsFlow(commentsRepository, videoUrlFlow, viewModelScope)
     private var loadStreamJob: Job? = null
-    private var favoriteJob: Job? = null
-    private var watchLaterJob: Job? = null
     private val playerPreferences = PlayerPreferenceCoordinator(
         preferencesRepository,
         userSettingsRepository,
         viewModelScope,
+    )
+    private val navigationController = PlayerNavigationController(playerHostController, playbackQueueCoordinator)
+    private val libraryStatusObserver = PlayerLibraryStatusObserver(
+        repository = libraryRepository,
+        scope = viewModelScope,
+        currentUrl = ::currentUrl,
+        onFavoriteChanged = { value -> _state.update { it.copy(isFavorited = value) } },
+        onWatchLaterChanged = { value -> _state.update { it.copy(isInWatchLater = value) } },
     )
     init {
         viewModelScope.launch {
@@ -85,49 +91,33 @@ class PlayerViewModel @Inject constructor(
                         isInWatchLater = false,
                         downloadInFlight = false,
                     )
-            }
+                }
                 if (url.isNullOrBlank()) {
                     loadStreamJob?.cancel()
-                    favoriteJob?.cancel()
-                    watchLaterJob?.cancel()
+                    libraryStatusObserver.clear()
                 } else {
                     loadStream(url)
-                    observeLibraryStatus(url)
+                    libraryStatusObserver.observe(url)
                 }
-                }
+                navigationController.setRelatedVideoCount(0)
+            }
         }
         observePreferences()
         viewModelScope.launch {
-            playbackQueueCoordinator.state.collect { queue ->
-                _state.update { it.copy(playbackQueue = queue) }
+            navigationController.state.collect { navigation ->
+                _state.update {
+                    it.copy(
+                        playbackQueue = navigation.queue,
+                        canPlayPreviousVideo = navigation.availability.previous,
+                        canPlayNextVideo = navigation.availability.next,
+                    )
                 }
+            }
         }
         viewModelScope.launch {
             libraryRepository.observePlaylists().collect { playlists ->
                 _state.update { it.copy(playlists = playlists) }
             }
-        }
-    }
-    private fun observeLibraryStatus(url: String) {
-        favoriteJob?.cancel()
-        favoriteJob = viewModelScope.launch {
-            libraryRepository.observeIsFavorite(url)
-                .distinctUntilChanged()
-                .collect { isFavorite ->
-                    if (currentUrl() == url) {
-                        _state.update { it.copy(isFavorited = isFavorite) }
-                    }
-                }
-        }
-        watchLaterJob?.cancel()
-        watchLaterJob = viewModelScope.launch {
-            libraryRepository.observeIsInWatchLater(url)
-                .distinctUntilChanged()
-                .collect { isInWatchLater ->
-                    if (currentUrl() == url) {
-                        _state.update { it.copy(isInWatchLater = isInWatchLater) }
-                    }
-                }
         }
     }
     private fun observePreferences() {
@@ -153,6 +143,10 @@ class PlayerViewModel @Inject constructor(
             PlayerAction.OnToggleWatchLater -> toggleWatchLater()
             PlayerAction.OnRetry -> if (_state.value.stream == null) currentUrl()?.let(::loadStream) else _state.update(PlayerState::retryPlayback)
             PlayerAction.OnAdvanceQueue -> playbackQueueCoordinator.playAutoplayNow()
+            PlayerAction.OnPlayPreviousVideo -> navigationController.playPrevious()
+            PlayerAction.OnPlayNextVideo -> navigationController.playNext(
+                _state.value.stream?.relatedStreams?.firstOrNull()?.url,
+            )
             PlayerAction.OnCancelQueueAutoplay -> playbackQueueCoordinator.cancelAutoplay()
             PlayerAction.OnToggleQueueAutoplayPause ->
                 playbackQueueCoordinator.toggleAutoplayPause()
@@ -281,6 +275,9 @@ class PlayerViewModel @Inject constructor(
             playerStreamLoader.load(url).collect { update ->
                 if (currentUrl() != url) return@collect
                 _state.update { it.applyStreamUpdate(update, playerHostController.state.value) }
+                navigationController.setRelatedVideoCount(
+                    _state.value.stream?.relatedStreams?.size ?: 0,
+                )
                 when (update) {
                     is PlayerStreamUpdate.PlaybackReady ->
                         launch { playerStreamLoader.record(url, update.loaded.stream) }

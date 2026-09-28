@@ -4,6 +4,7 @@ import dev.typetype.android.domain.stream.StreamAudioSource
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.stream.StreamPlaybackContract
 import dev.typetype.android.domain.stream.StreamVideoSource
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -255,6 +256,34 @@ class PlaybackSourceSelectorTest {
         )
 
         assertEquals(french, selected)
+    }
+
+    @Test
+    fun `provider video with separate audio merges without an explicit audio key`() = runBlocking {
+        val video = video("video", height = 360, codec = "avc1.64001E")
+            .copy(playbackMimeType = "application/vnd.apple.mpegurl")
+        val audio = audio("audio", locale = "ja")
+        val support = FakeCodecSupport(
+            video = mapOf(video.url to DecoderSupport.Hardware),
+            audio = mapOf(audio.url to DecoderSupport.Hardware),
+        )
+
+        val source = pickPlayableSource(
+            stream = providerStream(listOf(video), listOf(audio)),
+            selectedQuality = RECOMMENDED_QUALITY_KEY,
+            selectedAudioKey = null,
+            defaultAudioLanguage = "en",
+            automaticQualityCap = RECOMMENDED_QUALITY_KEY,
+            preferOriginalLanguage = false,
+            codecSupport = support,
+            prepareSabrPlayback = { _, _, _ -> null },
+        )
+
+        requireNotNull(source)
+        assertEquals("video", source.url)
+        assertEquals("audio", source.audioUrl)
+        assertEquals("application/vnd.apple.mpegurl", source.mimeType)
+        assertEquals("audio/mp4", source.audioMimeType)
     }
 
     private fun video(url: String, height: Int, codec: String, itag: Int = 0) = StreamVideoSource(

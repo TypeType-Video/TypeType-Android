@@ -147,6 +147,7 @@ jobs:
 
       - name: Verify and prepare beta APK
         run: |
+          export PATH="$JAVA_HOME/bin:$PATH"
           mkdir -p artifacts
           apk="$(find app/build/outputs/apk/release -name '*.apk' | head -n 1)"
           test -n "$apk"
@@ -182,13 +183,24 @@ jobs:
           compression-level: 0
           retention-days: 30
 
+      - name: Prepare beta release notes
+        if: ${{ github.event_name != 'pull_request' }}
+        env:
+          HEAD_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          if [ -f "release-notes/${RELEASE_TAG}.md" ]; then
+            cp "release-notes/${RELEASE_TAG}.md" release-body.md
+          else
+            printf '%s\n' "${HEAD_MESSAGE:-Beta build from the development branch.}" > release-body.md
+          fi
+
       - name: Publish GitHub prerelease
         if: ${{ github.event_name != 'pull_request' }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           name: TypeType Android ${{ env.RELEASE_VERSION }}
-          body: ${{ github.event.head_commit.message }}
+          body_path: release-body.md
           prerelease: true
           make_latest: false
           generate_release_notes: false

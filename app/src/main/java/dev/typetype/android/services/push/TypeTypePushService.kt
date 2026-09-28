@@ -15,7 +15,12 @@ class TypeTypePushService : PushService() {
     @Inject lateinit var notifier: PushNotifier
 
     override fun onNewEndpoint(endpoint: PushEndpoint, instance: String) {
-        registrationManager.onEndpointAvailable(instance, endpoint.url)
+        val keySet = endpoint.pubKeySet
+        if (keySet == null) {
+            registrationManager.onRegistrationFailed(instance)
+            return
+        }
+        registrationManager.onEndpointAvailable(instance, endpoint.url, keySet.pubKey, keySet.auth)
     }
 
     override fun onMessage(message: PushMessage, instance: String) {

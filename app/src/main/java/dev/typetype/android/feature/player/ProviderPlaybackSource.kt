@@ -17,7 +17,7 @@ internal fun Stream.pickExplicitProviderSource(
     if (!video.isVideoOnly) {
         return PlayableSource(
             url = video.url,
-            mimeType = video.mimeType.normalizedProviderMimeType() ?: MimeTypes.VIDEO_MP4,
+            mimeType = video.playbackContainerMimeType() ?: MimeTypes.VIDEO_MP4,
             sourceKey = video.videoSelectionKey(),
         )
     }
@@ -31,7 +31,7 @@ internal fun Stream.pickExplicitProviderSource(
     ) ?: return null
     return PlayableSource(
         url = video.url,
-        mimeType = video.mimeType.normalizedProviderMimeType(),
+        mimeType = video.playbackContainerMimeType(),
         audioUrl = audio.url,
         audioMimeType = audio.mimeType.normalizedProviderMimeType(),
         sourceKey = video.videoSelectionKey(),
