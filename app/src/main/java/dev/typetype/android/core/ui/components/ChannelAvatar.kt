@@ -65,16 +65,14 @@ fun ChannelAvatar(
             .semantics { contentDescription?.let { this.contentDescription = it } },
         contentAlignment = Alignment.Center,
     ) {
-        if (loading) {
-            TypeTypeSkeletonCircle(size = size)
-        } else {
+        if (!loading) {
             Text(
                 text = avatarInitial(name),
                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        if (hasSource && !loaded) {
+        if (hasSource) {
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(avatarRetryUrl(buildImageUrl(serverBaseUrl, avatarUrl), attempt))
@@ -87,6 +85,9 @@ fun ChannelAvatar(
                 },
                 modifier = Modifier.fillMaxSize(),
             )
+        }
+        if (loading) {
+            TypeTypeSkeletonCircle(size = size)
         }
     }
 }
