@@ -26,6 +26,7 @@ import dev.typetype.android.core.ui.components.VideoGridSkeleton
 import dev.typetype.android.core.ui.components.LazyPaginationFooter
 import dev.typetype.android.core.ui.components.SectionHeader
 import dev.typetype.android.core.ui.components.VideoCard
+import dev.typetype.android.core.ui.components.VideoCardSkeleton
 import dev.typetype.android.feature.menu.VideoMenuScope
 import dev.typetype.android.feature.menu.rememberVideoMenuScope
 
@@ -100,7 +101,7 @@ internal fun HomeContent(
                     )
                 }
             }
-            if (state.isLoading && showRecommendations) {
+            if (state.isLoading && showRecommendations && visibleVideos.isNotEmpty()) {
                 item(key = "home-refresh", span = { GridItemSpan(maxLineSpan) }) {
                     LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 }
@@ -116,6 +117,11 @@ internal fun HomeContent(
                         ),
                         modifier = Modifier.padding(horizontal = 4.dp),
                     )
+                }
+                if (state.isLoading && visibleVideos.isEmpty()) {
+                    items(HOME_SKELETON_SLOTS, key = { "home-skeleton-$it" }) {
+                        VideoCardSkeleton()
+                    }
                 }
                 items(
                     visibleVideos,
@@ -156,3 +162,5 @@ private fun HomeEmptyState() {
         )
     }
 }
+
+private val HOME_SKELETON_SLOTS = (0 until 6).toList()
