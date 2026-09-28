@@ -39,14 +39,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.request.crossfade
 import kotlinx.coroutines.delay
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.branding.rememberVideoBranding
-import dev.typetype.android.core.ui.share.LocalServerBaseUrl
-import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.feed.VideoAvailability
 import dev.typetype.android.domain.feed.availabilityAt
@@ -66,7 +61,6 @@ fun VideoCard(
 ) {
     var menuVisible by remember { mutableStateOf(false) }
     var availabilityVisible by remember { mutableStateOf(false) }
-    val serverBaseUrl = LocalServerBaseUrl.current
     val availability = video.availabilityAt(System.currentTimeMillis())
     val metadata = video.metadataText()
     val branding = rememberVideoBranding(
@@ -103,13 +97,10 @@ fun VideoCard(
                 .clip(MaterialTheme.shapes.medium)
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(buildImageUrl(serverBaseUrl, branding.thumbnailUrl))
-                    .crossfade(200)
-                    .build(),
+            SkeletonImage(
+                imageUrl = branding.thumbnailUrl,
                 contentDescription = null,
-                contentScale = ContentScale.Crop,
+                crossfadeMillis = 200,
                 modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
             )
             if (menuItemState.isWatched) {

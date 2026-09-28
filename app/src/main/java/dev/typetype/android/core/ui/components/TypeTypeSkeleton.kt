@@ -18,7 +18,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -26,8 +25,8 @@ import androidx.compose.ui.unit.dp
 internal fun skeletonPulseAlpha(): Float {
     val transition = rememberInfiniteTransition(label = "skeleton")
     val alpha by transition.animateFloat(
-        initialValue = SKELETON_MIN_ALPHA,
-        targetValue = SKELETON_MAX_ALPHA,
+        initialValue = SKELETON_PULSE_MAX,
+        targetValue = SKELETON_PULSE_MIN,
         animationSpec = infiniteRepeatable(
             animation = tween(SKELETON_PULSE_MILLIS),
             repeatMode = RepeatMode.Reverse,
@@ -46,8 +45,9 @@ internal fun TypeTypeSkeleton(
     Spacer(
         modifier = modifier
             .clip(shape)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .graphicsLayer { this.alpha = alpha },
+            .background(
+                MaterialTheme.colorScheme.onSurface.copy(alpha = SKELETON_TINT * alpha),
+            ),
     )
 }
 
@@ -80,6 +80,7 @@ internal fun TypeTypeSkeletonCircle(
 internal val SkeletonCardShape = RoundedCornerShape(12.dp)
 
 private const val SKELETON_CORNER = 4
-private const val SKELETON_MIN_ALPHA = 0.38f
-private const val SKELETON_MAX_ALPHA = 0.72f
+private const val SKELETON_TINT = 0.15f
+private const val SKELETON_PULSE_MIN = 0.55f
+private const val SKELETON_PULSE_MAX = 1f
 private const val SKELETON_PULSE_MILLIS = 850
