@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.AnimatedError
-import dev.typetype.android.core.ui.components.FullScreenLoader
+import dev.typetype.android.core.ui.components.VideoGridSkeleton
 import dev.typetype.android.core.ui.components.LazyPaginationFooter
 import dev.typetype.android.core.ui.components.SectionHeader
 import dev.typetype.android.core.ui.components.VideoCard
@@ -77,7 +77,7 @@ internal fun HomeContent(
     val continueWatching = if (state.hideContinueWatching) emptyList() else state.continueWatching
     val showRecommendations = !state.hideHomeRecommendations
     when {
-        state.isLoading && state.videos.isEmpty() && continueWatching.isEmpty() -> FullScreenLoader()
+        state.isLoading && state.videos.isEmpty() && continueWatching.isEmpty() -> VideoGridSkeleton()
         state.errorMessage != null && state.videos.isEmpty() && continueWatching.isEmpty() -> AnimatedError(
             message = state.errorMessage,
             requestId = state.errorRequestId,

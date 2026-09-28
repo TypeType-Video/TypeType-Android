@@ -26,7 +26,6 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.NorthWest
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -52,6 +51,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.AnimatedError
+import dev.typetype.android.core.ui.components.VideoGridSkeleton
 
 @Composable
 fun SearchRoute(
@@ -125,16 +125,7 @@ fun SearchScreen(
         }
 
         when {
-            state.isLoading -> Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                val description = stringResource(R.string.state_loading)
-                CircularProgressIndicator(
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.semantics { contentDescription = description },
-                )
-            }
+            state.isLoading -> VideoGridSkeleton(verticalPadding = 12.dp)
             state.errorMessage != null -> AnimatedError(
                 message = state.errorMessage,
                 requestId = state.errorRequestId,
