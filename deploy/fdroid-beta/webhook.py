@@ -2,6 +2,8 @@
 import hashlib
 import hmac
 import json
+import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -9,6 +11,13 @@ from pathlib import Path
 SECRET_FILE = Path("/srv/fdroid-beta/secrets/github-webhook-secret")
 TRIGGER_FILE = Path("/run/typetype-fdroid-beta-webhook/sync")
 MAX_PAYLOAD_SIZE = 1024 * 1024
+RETRY_DELAY_SECONDS = 90
+
+
+def retrigger_sync() -> None:
+    time.sleep(RETRY_DELAY_SECONDS)
+    TRIGGER_FILE.unlink(missing_ok=True)
+    TRIGGER_FILE.touch(exist_ok=True)
 
 
 class WebhookHandler(BaseHTTPRequestHandler):
@@ -58,6 +67,7 @@ class WebhookHandler(BaseHTTPRequestHandler):
             and release.get("prerelease", False)
         ):
             TRIGGER_FILE.touch(exist_ok=True)
+            threading.Thread(target=retrigger_sync, daemon=True).start()
             self.send_response(202)
         else:
             self.send_response(204)
