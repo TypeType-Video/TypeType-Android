@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Icon
@@ -130,9 +129,6 @@ fun VideoCard(
         Spacer(Modifier.height(10.dp))
         Row(verticalAlignment = Alignment.Top) {
             val avatarModifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant)
                 .let {
                     if (onChannelClick != null) {
                         it.combinedClickable(onClick = onChannelClick, role = Role.Button)
@@ -140,14 +136,15 @@ fun VideoCard(
                         it
                     }
                 }
-            AsyncImage(
-                model = buildImageUrl(serverBaseUrl, video.uploaderAvatarUrl),
+            ChannelAvatar(
+                avatarUrl = video.uploaderAvatarUrl,
+                name = video.uploaderName,
+                size = 36.dp,
                 contentDescription = if (onChannelClick != null) {
                     stringResource(R.string.video_open_channel_accessibility, video.uploaderName)
                 } else {
                     null
                 },
-                contentScale = ContentScale.Crop,
                 modifier = avatarModifier,
             )
             Spacer(Modifier.width(10.dp))

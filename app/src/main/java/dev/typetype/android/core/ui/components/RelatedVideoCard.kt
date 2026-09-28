@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -124,18 +123,15 @@ fun RelatedVideoCard(
                 overflow = TextOverflow.Ellipsis,
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
-                AsyncImage(
-                    model = buildImageUrl(serverBaseUrl, video.uploaderAvatarUrl),
+                ChannelAvatar(
+                    avatarUrl = video.uploaderAvatarUrl,
+                    name = video.uploaderName,
+                    size = 18.dp,
                     contentDescription = stringResource(
                         R.string.video_open_channel_accessibility,
                         video.uploaderName,
                     ),
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(18.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .combinedClickable(onClick = onChannelClick, role = Role.Button),
+                    modifier = Modifier.combinedClickable(onClick = onChannelClick, role = Role.Button),
                 )
                 Spacer(Modifier.width(6.dp))
                 Text(
