@@ -36,6 +36,7 @@ import dev.typetype.android.R
 import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.core.ui.components.SectionHeader
 import dev.typetype.android.core.ui.components.VideoDurationBadge
+import dev.typetype.android.core.ui.components.SkeletonImage
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
 import dev.typetype.android.core.ui.share.buildImageUrl
 import dev.typetype.android.domain.library.HistoryItem
@@ -98,10 +99,9 @@ private fun ContinueWatchingCard(
                 .clip(MaterialTheme.shapes.medium)
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
-            AsyncImage(
-                model = buildImageUrl(serverBaseUrl, branding.thumbnailUrl),
+            SkeletonImage(
+                imageUrl = branding.thumbnailUrl,
                 contentDescription = null,
-                contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
             )
             VideoDurationBadge(
