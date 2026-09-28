@@ -49,13 +49,10 @@ class PushRegistrationManager @Inject constructor(
             return update(PushRegistrationStatus.Unavailable)
         }
         val endpoint = registration.endpoint ?: return startRegistration(scope)
-        val devices = repository.devices().getOrElse {
-            return update(PushRegistrationStatus.Failed)
-        }
-        if (devices.any { device -> device.deviceId == registration.deviceId }) {
-            return update(PushRegistrationStatus.Registered)
-        }
-        return repository.registerDevice(registration.deviceId, endpoint).fold(
+        val p256dh = registration.p256dh
+        val auth = registration.auth
+        if (p256dh.isNullOrBlank() || auth.isNullOrBlank()) return startRegistration(scope)
+        return repository.registerDevice(registration.deviceId, endpoint, p256dh, auth).fold(
             onSuccess = { update(PushRegistrationStatus.Registered) },
             onFailure = { update(PushRegistrationStatus.Failed) },
         )
@@ -92,18 +89,20 @@ class PushRegistrationManager @Inject constructor(
         val registration = registrationStore.registrationOnce(scope)
         return when {
             registration == null -> update(PushRegistrationStatus.Disabled)
-            registration.endpoint != null -> update(PushRegistrationStatus.Registered)
+            !registration.endpoint.isNullOrBlank() &&
+                !registration.p256dh.isNullOrBlank() &&
+                !registration.auth.isNullOrBlank() -> update(PushRegistrationStatus.Registered)
             else -> update(PushRegistrationStatus.Registering)
         }
     }
 
-    fun onEndpointAvailable(instance: String, endpoint: String) {
+    fun onEndpointAvailable(instance: String, endpoint: String, p256dh: String, auth: String) {
         managerScope.launch {
             val accountScope = scopeFromInstanceName(instance) ?: return@launch
             val deviceId = registrationStore.ensureDeviceId(accountScope)
-            repository.registerDevice(deviceId, endpoint).fold(
+            repository.registerDevice(deviceId, endpoint, p256dh, auth).fold(
                 onSuccess = {
-                    registrationStore.setEndpoint(accountScope, endpoint)
+                    registrationStore.setSubscription(accountScope, endpoint, p256dh, auth)
                     update(PushRegistrationStatus.Registered)
                 },
                 onFailure = { update(PushRegistrationStatus.Failed) },
