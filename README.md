@@ -25,8 +25,8 @@ You want to know the current position of TypeType about AI ? Go check [this](htt
 
 TypeType Android is the native client for
 [TypeType](https://github.com/TypeType-Video/TypeType), a self-hosted video
-platform. The app is in beta, supports Android 6.0 and newer, and does not
-require Google Play Services.
+platform. The app supports Android 6.0 and newer and does not require Google
+Play Services.
 
 TypeType Android uses the TypeType Server selected during setup for extraction,
 playback sessions, recommendations, synchronization, and downloads.
