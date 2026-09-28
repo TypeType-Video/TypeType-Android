@@ -5,7 +5,7 @@ import dev.typetype.android.domain.server.PushCapability
 interface PushRepository {
     suspend fun currentCapability(): PushCapability
 
-    suspend fun registerDevice(deviceId: String, endpoint: String): Result<Unit>
+    suspend fun registerDevice(deviceId: String, endpoint: String, p256dh: String, auth: String): Result<Unit>
 
     suspend fun unregisterDevice(deviceId: String): Result<Unit>
 

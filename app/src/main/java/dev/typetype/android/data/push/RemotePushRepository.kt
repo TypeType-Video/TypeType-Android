@@ -36,11 +36,16 @@ class RemotePushRepository @Inject constructor(
             ?: PushCapability()
     }
 
-    override suspend fun registerDevice(deviceId: String, endpoint: String): Result<Unit> = guarded {
+    override suspend fun registerDevice(
+        deviceId: String,
+        endpoint: String,
+        p256dh: String,
+        auth: String,
+    ): Result<Unit> = guarded {
         val api = apiHolder.require(requireEligibleScope())
         val response = withContext(Dispatchers.IO) {
             api.registerPushDevice(
-                PushDeviceRegistrationRequestDto(deviceId = deviceId, endpoint = endpoint),
+                PushDeviceRegistrationRequestDto(deviceId = deviceId, endpoint = endpoint, p256dh = p256dh, auth = auth),
             )
         }
         response.requireSuccessfulResponse()

@@ -19,6 +19,8 @@ class PushRegistrationStore @Inject constructor(
     data class Registration(
         val deviceId: String,
         val endpoint: String?,
+        val p256dh: String?,
+        val auth: String?,
     )
 
     fun registration(scope: AccountScope): Flow<Registration?> = dataStore.data.map { prefs ->
@@ -39,10 +41,11 @@ class PushRegistrationStore @Inject constructor(
         return dataStore.data.first()[deviceIdKey(scope)] ?: error("The stored push device id disappeared")
     }
 
-    suspend fun setEndpoint(scope: AccountScope, endpoint: String?) {
+    suspend fun setSubscription(scope: AccountScope, endpoint: String, p256dh: String, auth: String) {
         dataStore.edit { prefs ->
-            val key = endpointKey(scope)
-            if (endpoint == null) prefs.remove(key) else prefs[key] = endpoint
+            prefs[endpointKey(scope)] = endpoint
+            prefs[p256dhKey(scope)] = p256dh
+            prefs[authKey(scope)] = auth
         }
     }
 
@@ -50,19 +53,32 @@ class PushRegistrationStore @Inject constructor(
         dataStore.edit { prefs ->
             prefs.remove(deviceIdKey(scope))
             prefs.remove(endpointKey(scope))
+            prefs.remove(p256dhKey(scope))
+            prefs.remove(authKey(scope))
         }
     }
 
     private fun Preferences.registration(scope: AccountScope): Registration? {
         val deviceId = this[deviceIdKey(scope)]?.takeIf(String::isNotBlank) ?: return null
-        return Registration(deviceId, this[endpointKey(scope)])
+        return Registration(
+            deviceId = deviceId,
+            endpoint = this[endpointKey(scope)],
+            p256dh = this[p256dhKey(scope)],
+            auth = this[authKey(scope)],
+        )
     }
 
     private fun deviceIdKey(scope: AccountScope) =
-        stringPreferencesKey("push_device_id_${scopeKey(scope)}")
+        stringPreferencesKey("push_device_id_" + scopeKey(scope))
 
     private fun endpointKey(scope: AccountScope) =
-        stringPreferencesKey("push_endpoint_${scopeKey(scope)}")
+        stringPreferencesKey("push_endpoint_" + scopeKey(scope))
+
+    private fun p256dhKey(scope: AccountScope) =
+        stringPreferencesKey("push_p256dh_" + scopeKey(scope))
+
+    private fun authKey(scope: AccountScope) =
+        stringPreferencesKey("push_auth_" + scopeKey(scope))
 
     private fun scopeKey(scope: AccountScope) = "${scope.serverId}_${scope.accountId}"
 }
