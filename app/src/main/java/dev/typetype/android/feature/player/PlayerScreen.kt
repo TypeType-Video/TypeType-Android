@@ -152,13 +152,17 @@ fun PlayerScreen(
             color = MaterialTheme.colorScheme.background,
         ) {
             when {
-                state.isLoading -> LoadingState()
-                state.error != null -> ErrorState(
-                    classification = state.error,
-                    onNavigateBack = onNavigateBack,
-                    onRetry = { onAction(PlayerAction.OnRetry) },
-                    onOpenAccounts = onOpenAccounts,
-                )
+                state.isLoading -> PlayerPlaceholderLayer(hostTransitionProgress) {
+                    LoadingState()
+                }
+                state.error != null -> PlayerPlaceholderLayer(hostTransitionProgress) {
+                    ErrorState(
+                        classification = state.error,
+                        onNavigateBack = onNavigateBack,
+                        onRetry = { onAction(PlayerAction.OnRetry) },
+                        onOpenAccounts = onOpenAccounts,
+                    )
+                }
                 state.stream != null -> LoadedPlayer(
                     stream = state.stream,
                     videoUrl = state.videoUrl,
