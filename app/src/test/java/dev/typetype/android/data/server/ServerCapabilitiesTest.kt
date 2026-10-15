@@ -98,6 +98,22 @@ class ServerCapabilitiesTest {
         assertTrue(refreshed.push.maxDevicesPerAccount == 3)
     }
 
+    @Test
+    fun enabledRecommenderCapabilityIsPreserved() {
+        val refreshed = server.withCapabilities(
+            decode(
+                BASE_INSTANCE.dropLast(1) +
+                    ",\"recommender\":{\"installed\":true,\"enabled\":true," +
+                    "\"experimental\":true}}",
+            ),
+        )
+
+        assertTrue(refreshed.recommender.installed)
+        assertTrue(refreshed.recommender.enabled)
+        assertTrue(refreshed.recommender.experimental)
+        assertTrue(refreshed.recommender.available)
+    }
+
     private fun decode(value: String): InstanceResponse = json.decodeFromString(value)
 
     private companion object {
