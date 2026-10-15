@@ -76,6 +76,13 @@ internal fun PlayerContentLayout(
         derivedStateOf { hostTransitionProgress() >= 0.99f }
     }
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val availableWidthPx = with(density) { maxWidth.toPx() }
+        val singleColumnDetailsTravelPx = miniTopPx + miniHeightPx -
+            availableWidthPx / VIDEO_ASPECT_RATIO
+        val twoPaneVideoWidthPx = availableWidthPx * PLAYER_PANE_WEIGHT /
+            (PLAYER_PANE_WEIGHT + DETAILS_PANE_WEIGHT)
+        val twoPaneDetailsTravelPx = miniTopPx + miniHeightPx -
+            twoPaneVideoWidthPx / VIDEO_ASPECT_RATIO
         when (playerContentLayoutMode(maxWidth.value, maxHeight.value, isFullscreen, isInPip)) {
             PlayerContentLayoutMode.Fullscreen -> retainedViewport(
                 Modifier
@@ -111,12 +118,18 @@ internal fun PlayerContentLayout(
                     details(
                         Modifier
                             .fillMaxWidth()
-                            .playerDetailsTransition(hostTransitionProgress)
+                            .playerDetailsTransition(
+                                progress = hostTransitionProgress,
+                                verticalTravelPx = singleColumnDetailsTravelPx,
+                            )
                             .then(if (detailsHidden) Modifier.clearAndSetSemantics { } else Modifier),
                     )
                     recommendations(
                         Modifier.fillMaxWidth()
-                            .playerDetailsTransition(hostTransitionProgress)
+                            .playerDetailsTransition(
+                                progress = hostTransitionProgress,
+                                verticalTravelPx = singleColumnDetailsTravelPx,
+                            )
                             .then(if (detailsHidden) Modifier.clearAndSetSemantics { } else Modifier),
                     )
                 }
@@ -148,7 +161,10 @@ internal fun PlayerContentLayout(
                         )
                         details(
                             Modifier.fillMaxWidth()
-                                .playerDetailsTransition(hostTransitionProgress)
+                                .playerDetailsTransition(
+                                    progress = hostTransitionProgress,
+                                    verticalTravelPx = twoPaneDetailsTravelPx,
+                                )
                                 .then(if (detailsHidden) Modifier.clearAndSetSemantics { } else Modifier),
                         )
                     }
@@ -185,8 +201,13 @@ private fun Modifier.playerViewportTransition(
     clip = fraction > 0f
 }
 
-private fun Modifier.playerDetailsTransition(progress: () -> Float): Modifier = graphicsLayer {
-    alpha = 1f - progress().coerceIn(0f, 1f)
+private fun Modifier.playerDetailsTransition(
+    progress: () -> Float,
+    verticalTravelPx: Float = 0f,
+): Modifier = graphicsLayer {
+    val fraction = progress().coerceIn(0f, 1f)
+    translationY = verticalTravelPx * fraction
+    alpha = 1f - fraction
 }
 
 private const val VIDEO_ASPECT_RATIO = 16f / 9f
