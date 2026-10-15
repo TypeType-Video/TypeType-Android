@@ -1,5 +1,6 @@
 package dev.typetype.android.data.recommendations
 
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
@@ -16,7 +17,7 @@ class RecommenderSettingsJsonTest {
         val settings = buildJsonObject {
             put("enabled", false)
             put("algorithmId", "signals")
-            put("customInterests", buildJsonArray { add("astronomy") })
+            put("customInterests", buildJsonArray { add(JsonPrimitive("astronomy")) })
             put("futureServerField", "keep me")
         }
 
