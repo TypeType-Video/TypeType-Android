@@ -1,5 +1,6 @@
 package dev.typetype.android.feature.channel
 
+import android.content.Context
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -14,6 +15,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextInput
+import androidx.test.core.app.ApplicationProvider
+import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.LocalAnimatedStatePlayback
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import dev.typetype.android.domain.channel.Channel
@@ -66,6 +69,23 @@ class ChannelScreenStateTest {
         )
 
         composeRule.onNodeWithText("Channel video").assertIsDisplayed()
+    }
+
+    @Test
+    fun subscribedChannelShowsNotificationBellWhenPushIsAvailable() {
+        showContent(
+            ChannelState(
+                isLoading = false,
+                channel = channel(),
+                isSubscribed = true,
+                notificationsAvailable = true,
+            ),
+        )
+
+        composeRule.onNodeWithContentDescription(
+            ApplicationProvider.getApplicationContext<Context>()
+                .getString(R.string.channel_notifications_enable),
+        ).assertIsDisplayed()
     }
 
     @Test
