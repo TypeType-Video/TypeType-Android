@@ -5,6 +5,9 @@ import dev.typetype.android.domain.usersettings.UserSettings
 sealed interface ContentSettingsAction {
     data object Retry : ContentSettingsAction
     data object DismissFailure : ContentSettingsAction
+    data object RetryRecommender : ContentSettingsAction
+    data object DismissRecommenderFailure : ContentSettingsAction
+    data class SetRecommenderEnabled(val enabled: Boolean) : ContentSettingsAction
 
     sealed interface Update : ContentSettingsAction
 
