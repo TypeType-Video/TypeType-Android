@@ -174,6 +174,23 @@ object TypeTypeDatabaseMigrations {
         }
     }
 
+    val MIGRATION_23_24 = object : Migration(23, 24) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE `servers` ADD COLUMN `recommenderInstalled` " +
+                    "INTEGER NOT NULL DEFAULT 0",
+            )
+            db.execSQL(
+                "ALTER TABLE `servers` ADD COLUMN `recommenderEnabled` " +
+                    "INTEGER NOT NULL DEFAULT 0",
+            )
+            db.execSQL(
+                "ALTER TABLE `servers` ADD COLUMN `recommenderExperimental` " +
+                    "INTEGER NOT NULL DEFAULT 0",
+            )
+        }
+    }
+
     val ALL = arrayOf(
         MIGRATION_7_8,
         MIGRATION_11_12,
@@ -187,5 +204,6 @@ object TypeTypeDatabaseMigrations {
         MIGRATION_20_21,
         MIGRATION_21_22,
         MIGRATION_22_23,
+        MIGRATION_23_24,
     )
 }
