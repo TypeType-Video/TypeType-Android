@@ -90,6 +90,11 @@ internal fun classifyPlaybackErrorCode(errorCode: Int): PlaybackFailureKind = wh
     PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT,
     -> PlaybackFailureKind.Network
     PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS -> PlaybackFailureKind.MediaDelivery
+    PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED,
+    PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
+    PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED,
+    PlaybackException.ERROR_CODE_PARSING_MANIFEST_UNSUPPORTED,
+    -> PlaybackFailureKind.MediaDelivery
     PlaybackException.ERROR_CODE_IO_CLEARTEXT_NOT_PERMITTED -> PlaybackFailureKind.CleartextBlocked
     PlaybackException.ERROR_CODE_DECODER_INIT_FAILED,
     PlaybackException.ERROR_CODE_DECODER_QUERY_FAILED,
