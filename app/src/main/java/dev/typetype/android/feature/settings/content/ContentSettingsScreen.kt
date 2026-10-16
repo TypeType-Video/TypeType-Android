@@ -170,6 +170,42 @@ fun ContentSettingsScreen(
                         )
                     }
                 }
+                if (state.recommenderAvailable) {
+                    item {
+                        SettingsSectionHeader(
+                            stringResource(R.string.settings_content_recommender),
+                        )
+                    }
+                    item {
+                        SwitchRow(
+                            title = stringResource(R.string.settings_content_recommender_enabled),
+                            subtitle = stringResource(
+                                if (state.recommenderExperimental) {
+                                    R.string.settings_content_recommender_experimental
+                                } else {
+                                    R.string.settings_content_recommender_subtitle
+                                },
+                            ),
+                            checked = state.recommenderEnabled,
+                            onCheckedChange = {
+                                onAction(ContentSettingsAction.SetRecommenderEnabled(it))
+                            },
+                            enabled = !state.isRecommenderLoading && !state.isRecommenderUpdating,
+                        )
+                    }
+                    state.recommenderErrorMessage?.let { message ->
+                        item {
+                            ContentSettingsFailureCard(
+                                message = message,
+                                requestId = state.recommenderErrorRequestId,
+                                onRetry = { onAction(ContentSettingsAction.RetryRecommender) },
+                                onDismiss = {
+                                    onAction(ContentSettingsAction.DismissRecommenderFailure)
+                                },
+                            )
+                        }
+                    }
+                }
             }
         }
     }

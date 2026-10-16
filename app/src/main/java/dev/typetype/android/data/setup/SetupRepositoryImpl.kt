@@ -4,6 +4,7 @@ import dev.typetype.android.data.network.RetrofitFactory
 import dev.typetype.android.domain.server.Server
 import dev.typetype.android.domain.server.ServerRepository
 import dev.typetype.android.domain.server.PushCapability
+import dev.typetype.android.domain.server.RecommenderCapability
 import dev.typetype.android.domain.server.RssCapability
 import dev.typetype.android.domain.setup.ProbeResult
 import dev.typetype.android.domain.setup.ServerAddress
@@ -21,9 +22,9 @@ class SetupRepositoryImpl @Inject constructor(
 
     override suspend fun probeServer(
         rawUrl: String,
-        allowLocalCleartext: Boolean,
+        allowCleartextHttp: Boolean,
     ): Result<ProbeResult> = runCatching {
-        val candidates = ServerAddress.candidateBaseUrls(rawUrl, allowLocalCleartext)
+        val candidates = ServerAddress.candidateBaseUrls(rawUrl, allowCleartextHttp)
         val attempts = candidates.map { tryCandidate(it) }
         val resolved = attempts.filterIsInstance<Attempt.Resolved>().firstOrNull()?.value
             ?: throw probeFailure(attempts)
@@ -70,6 +71,13 @@ class SetupRepositoryImpl @Inject constructor(
                     maxDevicesPerAccount = it.maxDevicesPerAccount,
                 )
             } ?: PushCapability(),
+            recommender = resolved.instance.recommender?.let {
+                RecommenderCapability(
+                    installed = it.installed,
+                    enabled = it.enabled,
+                    experimental = it.experimental,
+                )
+            } ?: RecommenderCapability(),
         )
     }
 

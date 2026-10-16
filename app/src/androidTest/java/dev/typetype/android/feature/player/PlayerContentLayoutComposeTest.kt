@@ -54,6 +54,16 @@ class PlayerContentLayoutComposeTest {
     }
 
     @Test
+    fun detailsTrackTheVideoBottomDuringPullDownTransition() {
+        assertDetailsTrackVideoBottom(width = 400.dp, height = 600.dp)
+    }
+
+    @Test
+    fun tabletDetailsTrackTheVideoBottomDuringPullDownTransition() {
+        assertDetailsTrackVideoBottom(width = 1280.dp, height = 800.dp)
+    }
+
+    @Test
     fun portraitTabletKeepsDetailsBelowThePlayer() {
         setLayout(width = 1067.dp, height = 1440.dp)
 
@@ -151,6 +161,31 @@ class PlayerContentLayoutComposeTest {
                 }
             }
         }
+    }
+
+    private fun assertDetailsTrackVideoBottom(width: Dp, height: Dp) {
+        var progress by mutableStateOf(0f)
+        composeRule.setContent {
+            MaterialTheme {
+                Box(Modifier.requiredWidth(width).requiredHeight(height)) {
+                    PlayerContentLayout(
+                        isFullscreen = false,
+                        hostTransitionProgress = { progress },
+                        modifier = Modifier.fillMaxSize(),
+                        viewport = { Box(it.testTag(VIEWPORT_TAG)) },
+                        details = { Box(it.height(300.dp).testTag(DETAILS_TAG)) },
+                        recommendations = { Box(it.testTag(RECOMMENDATIONS_TAG)) },
+                    )
+                }
+            }
+        }
+
+        composeRule.runOnIdle { progress = 0.5f }
+        composeRule.waitForIdle()
+
+        val viewport = bounds(VIEWPORT_TAG)
+        val details = bounds(DETAILS_TAG)
+        assertEquals("viewport=$viewport details=$details", viewport.bottom, details.top, 2f)
     }
 
     private fun bounds(tag: String) = composeRule

@@ -1,6 +1,7 @@
 package dev.typetype.android.data.feed
 
 import dev.typetype.android.data.account.ActiveAccountScope
+import dev.typetype.android.data.account.AccountScope
 import dev.typetype.android.data.network.TypeTypeApiHolder
 import dev.typetype.android.data.network.dto.toDomainVideo
 import dev.typetype.android.data.network.requireSuccessfulResponse
@@ -10,6 +11,9 @@ import dev.typetype.android.domain.feed.SubscriptionsPage
 import dev.typetype.android.domain.feed.ShortsContinuation
 import dev.typetype.android.domain.feed.ShortsPage
 import dev.typetype.android.domain.feed.Video
+import dev.typetype.android.domain.server.Server
+import dev.typetype.android.domain.server.ServerCapabilitiesRepository
+import dev.typetype.android.domain.server.ServerRepository
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
@@ -20,6 +24,8 @@ import kotlinx.coroutines.withContext
 class HomeFeedRepositoryImpl @Inject constructor(
     private val apiHolder: TypeTypeApiHolder,
     private val activeAccountScope: ActiveAccountScope,
+    private val serverRepository: ServerRepository,
+    private val serverCapabilitiesRepository: ServerCapabilitiesRepository,
     private val feedVideoDao: FeedVideoDao,
     private val subscriptionFeedDiagnostics: SubscriptionFeedDiagnostics,
 ) : HomeFeedRepository {
@@ -50,6 +56,15 @@ class HomeFeedRepositoryImpl @Inject constructor(
         limit: Int,
     ): Result<HomeRecommendationsPage> = feedResult {
         val scope = activeAccountScope.require()
+        val server = if (scope.accountId.startsWith(GUEST_ACCOUNT_PREFIX)) {
+            null
+        } else {
+            serverForRecommendationRequest(scope, refresh = cursor == null)
+        }
+        activeAccountScope.verify(scope)
+        if (!scope.canUseRecommendations(server)) {
+            return@feedResult HomeRecommendationsPage(emptyList(), null)
+        }
         val api = apiHolder.require(scope)
         val response = withContext(Dispatchers.IO) {
             api.homeRecommendations(intent = "auto", cursor = cursor, limit = limit)
@@ -101,8 +116,16 @@ class HomeFeedRepositoryImpl @Inject constructor(
     ): Result<ShortsPage> = feedResult {
         val scope = activeAccountScope.require()
         val api = apiHolder.require(scope)
+        val recommenderServer = if (
+            scope.accountId.startsWith(GUEST_ACCOUNT_PREFIX) ||
+            continuation is ShortsContinuation.Subscriptions
+        ) {
+            null
+        } else {
+            serverForRecommendationRequest(scope, refresh = continuation == null)
+        }
         val page = when {
-            scope.accountId.startsWith("guest:") -> loadDiscoveryShorts(
+            scope.accountId.startsWith(GUEST_ACCOUNT_PREFIX) -> loadDiscoveryShorts(
                 api = api,
                 nextPage = (continuation as? ShortsContinuation.Discovery)?.nextPage,
                 service = service,
@@ -110,6 +133,12 @@ class HomeFeedRepositoryImpl @Inject constructor(
             continuation is ShortsContinuation.Subscriptions -> loadSubscriptionShorts(
                 api = api,
                 page = continuation.page,
+                service = service,
+                limit = limit,
+            ).normalized(limit)
+            !scope.canUseRecommendations(recommenderServer) -> loadSubscriptionShorts(
+                api = api,
+                page = 0,
                 service = service,
                 limit = limit,
             ).normalized(limit)
@@ -129,6 +158,16 @@ class HomeFeedRepositoryImpl @Inject constructor(
         }
         activeAccountScope.verify(scope)
         page
+    }
+
+    private suspend fun serverForRecommendationRequest(scope: AccountScope, refresh: Boolean): Server {
+        val cached = serverRepository.getServer(scope.serverId)
+            ?: error("Instance not found")
+        return if (refresh) {
+            serverCapabilitiesRepository.refresh(scope.serverId).getOrDefault(cached)
+        } else {
+            cached
+        }
     }
 
     private suspend fun loadCachedFeed(feed: String): List<Video> {
@@ -175,3 +214,4 @@ private suspend fun <T> feedResult(block: suspend () -> T): Result<T> = try {
 private const val MAX_CACHED_FEED_VIDEOS = 120
 private const val HOME_FEED_KEY = "home"
 private const val SUBSCRIPTIONS_FEED_KEY = "subscriptions"
+private const val GUEST_ACCOUNT_PREFIX = "guest:"

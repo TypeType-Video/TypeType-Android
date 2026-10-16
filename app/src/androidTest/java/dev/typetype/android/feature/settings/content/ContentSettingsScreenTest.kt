@@ -93,6 +93,33 @@ class ContentSettingsScreenTest {
         composeRule.onNodeWithText("Hide subscription live streams").assertIsDisplayed()
     }
 
+    @Test
+    fun recommenderControlAppearsOnlyWhenTheInstanceAdvertisesIt() {
+        val action = AtomicReference<ContentSettingsAction>()
+        show(
+            ContentSettingsState(
+                isLoading = false,
+                recommenderAvailable = true,
+                recommenderExperimental = true,
+            ),
+        ) { action.set(it) }
+
+        scrollTo("Use this instance’s recommender")
+        composeRule.onNodeWithText("Use this instance’s recommender").assertIsDisplayed()
+        composeRule.onNodeWithText("Experimental service; enabling it may change your home feed")
+            .assertIsDisplayed()
+        composeRule.onNodeWithText("Use this instance’s recommender").performClick()
+
+        assertEquals(ContentSettingsAction.SetRecommenderEnabled(true), action.get())
+    }
+
+    @Test
+    fun recommenderControlIsHiddenWhenTheInstanceDoesNotAdvertiseIt() {
+        show(ContentSettingsState(isLoading = false))
+
+        composeRule.onNodeWithText("Use this instance’s recommender").assertDoesNotExist()
+    }
+
     private fun show(
         state: ContentSettingsState,
         onAction: (ContentSettingsAction) -> Unit = {},

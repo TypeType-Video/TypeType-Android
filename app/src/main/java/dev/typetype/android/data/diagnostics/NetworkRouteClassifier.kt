@@ -16,6 +16,7 @@ object NetworkRouteClassifier {
         "health",
         "history",
         "instance",
+        "media",
         "playlists",
         "profile",
         "progress",

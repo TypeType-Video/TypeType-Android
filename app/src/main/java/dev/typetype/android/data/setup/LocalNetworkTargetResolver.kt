@@ -34,4 +34,10 @@ private fun InetAddress.isLocalNetworkAddress(): Boolean =
         isLoopbackAddress ||
         isLinkLocalAddress ||
         isSiteLocalAddress ||
+        isCarrierGradeNatAddress() ||
         this is Inet6Address && address.firstOrNull()?.toInt()?.and(0xfe) == 0xfc
+
+private fun InetAddress.isCarrierGradeNatAddress(): Boolean =
+    address.size == 4 &&
+        (address[0].toInt() and 0xff) == 100 &&
+        (address[1].toInt() and 0xc0) == 0x40

@@ -6,7 +6,9 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
@@ -35,5 +37,24 @@ class AddServerScreenTest {
         composeRule.onNodeWithText("Open app settings").assertIsDisplayed().performClick()
 
         assertTrue(settingsOpened.get())
+    }
+
+    @Test
+    fun remoteHttpRequiresExplicitUnencryptedTransportOptIn() {
+        val action = AtomicReference<AddServerAction>()
+        composeRule.setContent {
+            TypeTypeTheme {
+                AddServerScreen(
+                    state = AddServerState(url = "http://video.example"),
+                    onAction = action::set,
+                    onConnect = {},
+                    onOpenAppSettings = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Allow unencrypted HTTP").assertIsDisplayed().performClick()
+
+        assertEquals(AddServerAction.OnAllowCleartextHttpChange(true), action.get())
     }
 }

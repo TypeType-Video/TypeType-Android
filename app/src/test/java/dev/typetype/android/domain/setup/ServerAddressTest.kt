@@ -23,18 +23,24 @@ class ServerAddressTest {
     }
 
     @Test
-    fun allowsExplicitHttpForLocalInstance() {
+    fun allowsPrivateLanHttpAfterExplicitOptIn() {
         assertEquals(
             listOf("http://192.168.1.10:8080/", "http://192.168.1.10:8080/api/"),
-            ServerAddress.candidateBaseUrls("http://192.168.1.10:8080"),
+            ServerAddress.candidateBaseUrls(
+                "http://192.168.1.10:8080",
+                allowCleartextHttp = true,
+            ),
         )
     }
 
     @Test
-    fun keepsBracketedIpv6AndPort() {
+    fun allowsBracketedLocalIpv6AfterExplicitOptIn() {
         assertEquals(
             listOf("http://[fd12:3456::1]:8080/", "http://[fd12:3456::1]:8080/api/"),
-            ServerAddress.candidateBaseUrls("http://[fd12:3456::1]:8080"),
+            ServerAddress.candidateBaseUrls(
+                "http://[fd12:3456::1]:8080",
+                allowCleartextHttp = true,
+            ),
         )
     }
 
@@ -44,14 +50,32 @@ class ServerAddressTest {
             listOf("http://video.home.arpa:8080/", "http://video.home.arpa:8080/api/"),
             ServerAddress.candidateBaseUrls(
                 "http://video.home.arpa:8080",
-                allowLocalCleartext = true,
+                allowCleartextHttp = true,
             ),
+        )
+    }
+
+    @Test
+    fun allowsRemoteHttpOnlyAfterExplicitOptIn() {
+        assertEquals(
+            listOf("http://video.example/", "http://video.example/api/"),
+            ServerAddress.candidateBaseUrls("http://video.example", allowCleartextHttp = true),
         )
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun rejectsPublicCleartextInstance() {
         ServerAddress.candidateBaseUrls("http://video.example")
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun rejectsPrivateLanCleartextWithoutExplicitOptIn() {
+        ServerAddress.candidateBaseUrls("http://192.168.1.10:8080")
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun rejectsTailscaleCleartextWithoutExplicitOptIn() {
+        ServerAddress.candidateBaseUrls("http://100.96.2.1:8080")
     }
 
     @Test

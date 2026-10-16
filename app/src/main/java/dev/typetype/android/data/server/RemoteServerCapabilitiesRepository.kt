@@ -6,6 +6,7 @@ import dev.typetype.android.data.network.dto.PushCapabilityDto
 import dev.typetype.android.data.network.requireSuccessfulResponse
 import dev.typetype.android.domain.server.RssCapability
 import dev.typetype.android.domain.server.PushCapability
+import dev.typetype.android.domain.server.RecommenderCapability
 import dev.typetype.android.domain.server.Server
 import dev.typetype.android.domain.server.ServerCapabilitiesRepository
 import dev.typetype.android.domain.server.ServerRepository
@@ -65,6 +66,7 @@ internal fun Server.withCapabilities(instance: InstanceResponse): Server = copy(
         )
     } ?: RssCapability(),
     push = instance.pushNotifications.toCapability(),
+    recommender = instance.recommender.toCapability(),
 )
 
 private fun PushCapabilityDto?.toCapability(): PushCapability = PushCapability(
@@ -73,6 +75,13 @@ private fun PushCapabilityDto?.toCapability(): PushCapability = PushCapability(
     eventTypes = this?.eventTypes ?: emptyList(),
     maxDevicesPerAccount = this?.maxDevicesPerAccount ?: 0,
 )
+
+private fun dev.typetype.android.data.network.dto.RecommenderCapabilityDto?.toCapability(): RecommenderCapability =
+    RecommenderCapability(
+        installed = this?.installed == true,
+        enabled = this?.enabled == true,
+        experimental = this?.experimental == true,
+    )
 
 private suspend fun <T> captureResult(block: suspend () -> T): Result<T> = try {
     Result.success(block())

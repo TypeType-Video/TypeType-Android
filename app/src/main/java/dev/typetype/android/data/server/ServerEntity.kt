@@ -3,6 +3,7 @@ package dev.typetype.android.data.server
 import androidx.room.Entity
 import androidx.room.ColumnInfo
 import androidx.room.PrimaryKey
+import dev.typetype.android.domain.server.RecommenderCapability
 import dev.typetype.android.domain.server.Server
 
 @Entity(tableName = "servers")
@@ -38,6 +39,9 @@ data class ServerEntity(
     @ColumnInfo(defaultValue = "unifiedpush") val pushProvider: String = "unifiedpush",
     @ColumnInfo(defaultValue = "") val pushEventTypesCsv: String = "",
     @ColumnInfo(defaultValue = "0") val pushMaxDevicesPerAccount: Int = 0,
+    @ColumnInfo(defaultValue = "0") val recommenderInstalled: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val recommenderEnabled: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val recommenderExperimental: Boolean = false,
 ) {
     fun toDomain(): Server = Server(
         id = id,
@@ -75,6 +79,11 @@ data class ServerEntity(
             eventTypes = pushEventTypesCsv.split(',').mapNotNull { it.takeIf(String::isNotBlank) },
             maxDevicesPerAccount = pushMaxDevicesPerAccount,
         ),
+        recommender = RecommenderCapability(
+            installed = recommenderInstalled,
+            enabled = recommenderEnabled,
+            experimental = recommenderExperimental,
+        ),
     )
 
     companion object {
@@ -110,6 +119,9 @@ data class ServerEntity(
             pushProvider = server.push.provider,
             pushEventTypesCsv = server.push.eventTypes.joinToString(","),
             pushMaxDevicesPerAccount = server.push.maxDevicesPerAccount,
+            recommenderInstalled = server.recommender.installed,
+            recommenderEnabled = server.recommender.enabled,
+            recommenderExperimental = server.recommender.experimental,
         )
     }
 }

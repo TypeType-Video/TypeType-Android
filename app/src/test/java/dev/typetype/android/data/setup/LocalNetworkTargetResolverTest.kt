@@ -26,6 +26,15 @@ class LocalNetworkTargetResolverTest {
     }
 
     @Test
+    fun tailscaleCgnatDomainRequestsLocalNetworkPermission() = runBlocking {
+        assertTrue(
+            localNetworkTarget("http://youtubetv.home") {
+                listOf(address(100, 96, 2, 1))
+            },
+        )
+    }
+
+    @Test
     fun mixedPublicAndPrivateAnswersRequestPermission() = runBlocking {
         assertTrue(
             localNetworkTarget("https://video.example") {

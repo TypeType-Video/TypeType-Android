@@ -82,6 +82,20 @@ class PlaybackErrorClassifierTest {
     }
 
     @Test
+    fun `classifies unreadable media containers and manifests as media delivery`() {
+        val errorCodes = listOf(
+            PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED,
+            PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
+            PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED,
+            PlaybackException.ERROR_CODE_PARSING_MANIFEST_UNSUPPORTED,
+        )
+
+        errorCodes.forEach { errorCode ->
+            assertEquals(PlaybackFailureKind.MediaDelivery, classifyPlaybackErrorCode(errorCode))
+        }
+    }
+
+    @Test
     fun `classifies stale live window separately`() {
         val result = classifyPlaybackErrorCode(PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW)
 

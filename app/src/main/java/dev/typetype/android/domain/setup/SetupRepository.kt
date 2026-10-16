@@ -2,12 +2,13 @@ package dev.typetype.android.domain.setup
 
 import dev.typetype.android.domain.server.Server
 import dev.typetype.android.domain.server.PushCapability
+import dev.typetype.android.domain.server.RecommenderCapability
 import dev.typetype.android.domain.server.RssCapability
 
 interface SetupRepository {
     suspend fun probeServer(
         rawUrl: String,
-        allowLocalCleartext: Boolean = false,
+        allowCleartextHttp: Boolean = false,
     ): Result<ProbeResult>
     suspend fun persistServer(server: Server, makeCurrent: Boolean = true)
 }
@@ -35,4 +36,5 @@ data class ProbeResult(
     val youtubeRemoteLoginUnavailableReason: String?,
     val rss: RssCapability,
     val push: PushCapability,
+    val recommender: RecommenderCapability = RecommenderCapability(),
 )
