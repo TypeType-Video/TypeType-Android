@@ -10,6 +10,7 @@ import dev.typetype.android.domain.feed.HomeFeedRepository
 import dev.typetype.android.domain.library.LibraryRepository
 import dev.typetype.android.domain.library.VideoMetaRepository
 import dev.typetype.android.domain.library.cacheVideos
+import dev.typetype.android.domain.server.Server
 import dev.typetype.android.domain.server.ServerRepository
 import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import javax.inject.Inject
@@ -42,9 +43,12 @@ class HomeViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            var observedServerId: String? = null
             serverRepository.observeCurrentServer().collect { server ->
+                val shouldRefresh = shouldRefreshHomeForServer(observedServerId, server)
+                observedServerId = server?.id
                 _state.update { it.copy(currentServer = server) }
-                if (server != null) {
+                if (shouldRefresh) {
                     refreshFeed()
                     refreshSupportingContent()
                 }
@@ -178,3 +182,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 }
+
+internal fun shouldRefreshHomeForServer(previousServerId: String?, server: Server?): Boolean =
+    server != null && server.id != previousServerId
