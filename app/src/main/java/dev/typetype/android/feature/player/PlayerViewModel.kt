@@ -3,6 +3,7 @@ package dev.typetype.android.feature.player
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.typetype.android.data.network.PlaybackNetworkMonitor
 import dev.typetype.android.domain.comments.CommentsRepository
 import dev.typetype.android.domain.download.DownloadProgress
 import dev.typetype.android.domain.download.DownloadRepository
@@ -42,6 +43,7 @@ class PlayerViewModel @Inject constructor(
     private val playbackQueueCoordinator: PlaybackQueueCoordinator,
     val commentsRepository: CommentsRepository,
     val subtitleCueLoader: PlayerSubtitleCueLoader,
+    networkMonitor: PlaybackNetworkMonitor,
 ) : ViewModel() {
     private val videoUrlFlow = combine(
         playerHostController.state.map { it.videoUrl },
@@ -76,6 +78,9 @@ class PlayerViewModel @Inject constructor(
         onWatchLaterChanged = { value -> _state.update { it.copy(isInWatchLater = value) } },
     )
     init {
+        observePlayerStreamNetworkRecovery(
+            viewModelScope, state, networkMonitor.states, ::loadStream,
+        )
         viewModelScope.launch {
             videoUrlFlow.collect { url ->
                 val hostState = playerHostController.state.value
@@ -123,16 +128,7 @@ class PlayerViewModel @Inject constructor(
     private fun observePreferences() {
         viewModelScope.launch {
             playerPreferences.states.collect { prefs ->
-                _state.update {
-                    it.copy(
-                        gestureConfig = prefs.gestureConfig,
-                        playbackBrightnessPercent = prefs.brightnessPercent,
-                        autoplayCountdownSeconds = prefs.autoplayCountdownSeconds,
-                        audioOnlyPlaybackDefault = prefs.audioOnlyPlaybackDefault,
-                        preferredCodec = prefs.preferredCodec,
-                        userSettings = prefs.userSettings,
-                    )
-                }
+                _state.update { it.applyPreferences(prefs) }
             }
         }
         viewModelScope.launch { playerPreferences.refresh() }

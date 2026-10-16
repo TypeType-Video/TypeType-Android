@@ -182,13 +182,17 @@ private fun SabrPlaybackWindowTrackDto.requireTrack(
         sabrContractMismatch("SABR returned an empty $expectedKind window")
     }
     var previousEndMs = -1L
-    val resolvedSegments = segments.map { segment ->
+    val resolvedSegments = segments.mapIndexed { index, segment ->
         if (
             segment.startMs < 0L || segment.durationMs <= 0L ||
             segment.startMs < previousEndMs &&
             previousEndMs - segment.startMs > TIMELINE_ROUNDING_TOLERANCE_MS
         ) {
-            sabrContractMismatch("SABR returned an invalid $expectedKind timeline")
+            sabrContractMismatch(
+                "SABR returned an invalid $expectedKind timeline: index=$index " +
+                    "startMs=${segment.startMs} durationMs=${segment.durationMs} " +
+                    "previousEndMs=$previousEndMs",
+            )
         }
         val resolvedUrl = requireMediaUrl(
             baseUrl,

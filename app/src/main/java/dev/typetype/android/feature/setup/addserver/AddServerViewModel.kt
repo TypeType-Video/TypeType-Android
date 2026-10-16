@@ -38,6 +38,7 @@ class AddServerViewModel @Inject constructor(
             is AddServerAction.OnUrlChange -> _state.update {
                 it.copy(
                     url = action.url,
+                    allowCleartextHttp = false,
                     errorMessage = null,
                     errorRequestId = null,
                     localNetworkPermissionDenied = false,
@@ -47,8 +48,12 @@ class AddServerViewModel @Inject constructor(
                     resolvedVersion = null,
                 )
             }
+            is AddServerAction.OnAllowCleartextHttpChange -> _state.update {
+                it.copy(allowCleartextHttp = action.allowed)
+            }
             is AddServerAction.OnConnectRequested -> checkLocalNetworkAccess(action.permissionRequired)
-            AddServerAction.OnLocalNetworkPermissionGranted -> connect(allowLocalCleartext = true)
+            AddServerAction.OnLocalNetworkPermissionGranted ->
+                checkLocalNetworkAccess(permissionRequired = false)
             is AddServerAction.OnLocalNetworkPermissionDenied -> _state.update {
                 it.copy(
                     isConnecting = false,
@@ -87,12 +92,12 @@ class AddServerViewModel @Inject constructor(
                     eventsChannel.send(AddServerEvent.RequestLocalNetworkPermission)
                 }
             } else {
-                connect(allowLocalCleartext = localTarget)
+                connect(allowCleartextHttp = _state.value.allowCleartextHttp)
             }
         }
     }
 
-    private fun connect(allowLocalCleartext: Boolean) {
+    private fun connect(allowCleartextHttp: Boolean) {
         val typedUrl = _state.value.url
         if (typedUrl.isBlank()) {
             _state.update {
@@ -113,7 +118,7 @@ class AddServerViewModel @Inject constructor(
             )
         }
         viewModelScope.launch {
-            setupRepository.probeServer(typedUrl, allowLocalCleartext).fold(
+            setupRepository.probeServer(typedUrl, allowCleartextHttp).fold(
                 onSuccess = { probe ->
                     val server = Server(
                         id = UUID.randomUUID().toString(),
@@ -140,6 +145,7 @@ class AddServerViewModel @Inject constructor(
                         youtubeRemoteLoginUnavailableReason = probe.youtubeRemoteLoginUnavailableReason,
                         rss = probe.rss,
                         push = probe.push,
+                        recommender = probe.recommender,
                     )
                     setupRepository.persistServer(server)
                     _state.update {

@@ -86,11 +86,18 @@ internal fun Modifier.playerFullscreenExitGesture(
     pointerInput(state, enabled) {
         val directionThresholdPx = 18.dp.toPx()
         val completionThresholdPx = 64.dp.toPx()
+        val edgeDeadzonePx = 48.dp.toPx()
         awaitEachGesture {
             val down = awaitFirstDown(
                 requireUnconsumed = false,
                 pass = PointerEventPass.Initial,
             )
+            if (isWithinFullscreenGestureDeadzone(
+                    yPx = down.position.y,
+                    heightPx = size.height.toFloat(),
+                    deadzonePx = edgeDeadzonePx,
+                )
+            ) return@awaitEachGesture
             val startsInMiddle = down.position.x in (size.width * 0.35f)..(size.width * 0.65f)
             var lastPosition = down.position
             var totalDrag = Offset.Zero

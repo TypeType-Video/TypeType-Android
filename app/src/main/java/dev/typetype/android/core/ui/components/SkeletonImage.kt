@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
-import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.request.crossfade
@@ -28,22 +27,21 @@ fun SkeletonImage(
 ) {
     val serverBaseUrl = LocalServerBaseUrl.current
     val context = LocalPlatformContext.current
-    var loaded by remember(imageUrl) { mutableStateOf(false) }
+    var loaded by remember(serverBaseUrl, imageUrl) { mutableStateOf(false) }
     val hasSource = imageUrl.isNotBlank()
     Box(modifier = modifier.clip(shape)) {
         if (hasSource && !loaded) {
             TypeTypeSkeleton(modifier = Modifier.matchParentSize(), shape = shape)
         }
         if (hasSource) {
-            AsyncImage(
-                model = ImageRequest.Builder(context)
+            RetryingImage(
+                request = ImageRequest.Builder(context)
                     .data(buildImageUrl(serverBaseUrl, imageUrl))
                     .apply { if (crossfadeMillis > 0) crossfade(crossfadeMillis) }
                     .build(),
                 contentDescription = contentDescription,
                 contentScale = contentScale,
-                onSuccess = { loaded = true },
-                onError = { loaded = false },
+                onLoaded = { loaded = it },
                 modifier = Modifier.matchParentSize(),
             )
         }

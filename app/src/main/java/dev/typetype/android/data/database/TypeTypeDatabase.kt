@@ -60,7 +60,7 @@ import dev.typetype.android.data.subscriptions.SubscriptionEntity
         FeedVideoEntity::class,
         YoutubeTakeoutImportEntity::class,
     ],
-    version = 23,
+    version = 24,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),

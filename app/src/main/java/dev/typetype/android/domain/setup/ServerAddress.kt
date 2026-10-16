@@ -5,7 +5,7 @@ import java.net.URI
 object ServerAddress {
     fun candidateBaseUrls(
         rawValue: String,
-        allowLocalCleartext: Boolean = false,
+        allowCleartextHttp: Boolean = false,
     ): List<String> {
         val value = rawValue.trim().trimEnd('/')
         require(value.isNotEmpty()) { "Enter an instance address" }
@@ -19,8 +19,8 @@ object ServerAddress {
         }
         val host = parsed.host?.trim('[', ']')?.lowercase()
         require(!host.isNullOrBlank()) { "Enter a valid instance address" }
-        require(scheme != "http" || isLocalHost(host) || allowLocalCleartext) {
-            "Plain HTTP is allowed only for an instance on your local network"
+        require(scheme != "http" || allowCleartextHttp) {
+            "Plain HTTP requires explicit user opt-in because it is unencrypted"
         }
         val path = parsed.rawPath.orEmpty().trimEnd('/')
         val normalized = URI(scheme, null, host, parsed.port, path.ifEmpty { "/" }, null, null)

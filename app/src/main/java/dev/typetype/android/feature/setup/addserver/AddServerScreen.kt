@@ -64,6 +64,7 @@ import dev.typetype.android.core.ui.components.SectionHeader
 import dev.typetype.android.core.ui.components.TypeTypePrimaryButton
 import dev.typetype.android.core.ui.components.TypeTypeTextField
 import dev.typetype.android.core.ui.components.RequestIdRow
+import dev.typetype.android.core.ui.components.SwitchRow
 import dev.typetype.android.domain.setup.ServerAddress
 import kotlinx.coroutines.flow.collectLatest
 
@@ -226,6 +227,15 @@ fun AddServerScreen(
                         text = stringResource(R.string.setup_cleartext_warning),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error,
+                    )
+                    SwitchRow(
+                        title = stringResource(R.string.setup_allow_cleartext_title),
+                        subtitle = stringResource(R.string.setup_allow_cleartext_subtitle),
+                        checked = state.allowCleartextHttp,
+                        onCheckedChange = {
+                            onAction(AddServerAction.OnAllowCleartextHttpChange(it))
+                        },
+                        enabled = !state.isConnecting,
                     )
                 }
                 if (state.resolvedName != null) {

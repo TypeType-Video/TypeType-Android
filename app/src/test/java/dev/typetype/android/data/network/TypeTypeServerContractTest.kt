@@ -208,14 +208,10 @@ class TypeTypeServerContractTest {
     }
 
     @Test
-    fun contractRevisionIsPinnedToInspectedDevelopmentSource() {
-        assertEquals(40, SERVER_CONTRACT_REVISION.length)
-        assertEquals("100b430", SERVER_CONTRACT_REVISION.take(7))
-    }
-
-    @Test
-    fun subscriptionFeedContractIsPinnedToTheDeployedBetaSource() {
-        assertEquals("0c38bae", SUBSCRIPTION_FEED_CONTRACT_REVISION.take(7))
+    fun contractRevisionIsPinnedToTheStableServerRelease() {
+        assertEquals("1.10.0", STABLE_SERVER_VERSION)
+        assertEquals(40, STABLE_SERVER_REVISION.length)
+        assertEquals("36e1e7d", STABLE_SERVER_REVISION.take(7))
     }
 
     @Test
@@ -256,11 +252,6 @@ class TypeTypeServerContractTest {
         assertTrue(watchRequest.body.readUtf8().contains("\"channelAvatar\":\"avatar\""))
         assertEquals("/history", server.takeRequest().path)
         assertEquals("history-id", history?.id)
-    }
-
-    @Test
-    fun collectionContractIsPinnedToFreshServerMain() {
-        assertEquals("e885c20", COLLECTION_CONTRACT_REVISION.take(7))
     }
 
     @Test
@@ -327,9 +318,8 @@ class TypeTypeServerContractTest {
         URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20")
 
     private companion object {
-        const val SERVER_CONTRACT_REVISION = "100b4303a9c63a7def99d6cf5ba68af67233a41f"
-        const val SUBSCRIPTION_FEED_CONTRACT_REVISION = "0c38baee8fa37c313d676fc3df6c5d812081df32"
-        const val COLLECTION_CONTRACT_REVISION = "e885c209279684b56edd8be06c6c8fdb6857a1a6"
+        const val STABLE_SERVER_VERSION = "1.10.0"
+        const val STABLE_SERVER_REVISION = "36e1e7d174df9161900c56e118e3543375e60c45"
         const val VIDEO_URL = "https://www.youtube.com/watch?v=video"
         const val NICONICO_URL = "https://www.nicovideo.jp/watch/sm9"
         const val BILIBILI_URL = "https://www.bilibili.com/video/BV1xx"

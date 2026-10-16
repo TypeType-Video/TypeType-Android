@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
@@ -29,8 +30,8 @@ import dev.typetype.android.feature.player.state.ResizeMode
 import kotlin.math.abs
 
 private const val DIRECTION_LOCK_THRESHOLD_PX = 18f
-private const val LEVEL_DRAG_VIEW_FRACTION = 0.75f
 private const val LONG_PRESS_SPEED_FACTOR = 2f
+private val FULLSCREEN_GESTURE_DEADZONE = 48.dp
 
 @Composable
 fun PlayerGestureLayer(
@@ -50,6 +51,9 @@ fun PlayerGestureLayer(
     onVolumeGestureStart: () -> Float = { state.volumeFraction.floatValue },
 ) {
     val currentOnSingleTap by rememberUpdatedState(onSingleTap)
+    val fullscreenGestureDeadzonePx = with(LocalDensity.current) {
+        FULLSCREEN_GESTURE_DEADZONE.toPx()
+    }
     var savedSpeed by remember { mutableFloatStateOf(1f) }
     var holdSpeed by remember { mutableFloatStateOf(2f) }
     fun restoreSpeed() {
@@ -62,13 +66,19 @@ fun PlayerGestureLayer(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .pointerInput(player, config, isFullscreen) {
+            .pointerInput(player, config, isFullscreen, fullscreenGestureDeadzonePx) {
                 awaitEachGesture {
                     val down = awaitFirstDown(
                         requireUnconsumed = false,
                         pass = PointerEventPass.Initial,
                     )
                     val startX = down.position.x
+                    if (isFullscreen && isWithinFullscreenGestureDeadzone(
+                            yPx = down.position.y,
+                            heightPx = size.height.toFloat(),
+                            deadzonePx = fullscreenGestureDeadzonePx,
+                        )
+                    ) return@awaitEachGesture
                     var lastPosition = down.position
                     var totalDrag = Offset.Zero
                     var mode = DragMode.None
@@ -182,10 +192,23 @@ fun PlayerGestureLayer(
                     }
                 }
             }
-            .pointerInput(player, config) {
+            .pointerInput(player, config, isFullscreen, fullscreenGestureDeadzonePx) {
                 detectTapGestures(
-                    onTap = { currentOnSingleTap() },
+                    onTap = { offset ->
+                        if (!isFullscreen || !isWithinFullscreenGestureDeadzone(
+                                offset.y,
+                                size.height.toFloat(),
+                                fullscreenGestureDeadzonePx,
+                            )
+                        ) currentOnSingleTap()
+                    },
                     onDoubleTap = { offset ->
+                        if (isFullscreen && isWithinFullscreenGestureDeadzone(
+                                offset.y,
+                                size.height.toFloat(),
+                                fullscreenGestureDeadzonePx,
+                            )
+                        ) return@detectTapGestures
                         val action = doubleTapAction(offset.x, size.width.toFloat())
                         if (!action.isEnabled(config.doubleTapSeekEnabled)) {
                             return@detectTapGestures
@@ -209,7 +232,13 @@ fun PlayerGestureLayer(
                             }
                         }
                     },
-                    onLongPress = {
+                    onLongPress = { offset ->
+                        if (isFullscreen && isWithinFullscreenGestureDeadzone(
+                                offset.y,
+                                size.height.toFloat(),
+                                fullscreenGestureDeadzonePx,
+                            )
+                        ) return@detectTapGestures
                         if (!config.longPressSpeedEnabled) return@detectTapGestures
                         savedSpeed = player.playbackParameters.speed
                         holdSpeed = LONG_PRESS_SPEED_FACTOR
@@ -255,57 +284,6 @@ fun PlayerGestureLayer(
 
 private val PlayerGestureConfig.seekIncrementMs: Long
     get() = doubleTapSeekSeconds.coerceIn(5, 30) * 1_000L
-
-private fun handleDragMode(
-    state: PlayerGestureState,
-    mode: DragMode,
-    delta: Offset,
-    levelDragRangePx: Float,
-    onAdjustBrightness: (Float) -> Unit,
-    onAdjustVolume: (Float) -> Unit,
-) {
-    when (mode) {
-        DragMode.Brightness -> {
-            val next = adjustLevelFraction(
-                state.brightnessFraction.floatValue,
-                delta.y,
-                levelDragRangePx,
-            )
-            state.brightnessFraction.floatValue = next
-            onAdjustBrightness(next)
-        }
-        DragMode.Volume -> {
-            val next = adjustLevelFraction(
-                state.volumeFraction.floatValue,
-                delta.y,
-                levelDragRangePx,
-            )
-            state.volumeFraction.floatValue = next
-            onAdjustVolume(next)
-        }
-        DragMode.Seek,
-        DragMode.FullscreenEnter,
-        DragMode.FullscreenExit,
-        DragMode.None,
-        -> Unit
-    }
-}
-
-internal fun adjustLevelFraction(current: Float, deltaY: Float, dragRangePx: Float): Float =
-    (current - deltaY / dragRangePx.coerceAtLeast(1f)).coerceIn(0f, 1f)
-
-internal fun levelDragRangePx(width: Float, height: Float): Float =
-    minOf(width, height) * LEVEL_DRAG_VIEW_FRACTION
-
-internal fun pickDragMode(dragAmount: Offset, startX: Float, width: Float): DragMode = when {
-    abs(dragAmount.x) > abs(dragAmount.y) * 1.5f -> DragMode.Seek
-    abs(dragAmount.x) > abs(dragAmount.y) -> DragMode.None
-    startX in (width * 0.35f)..(width * 0.65f) && dragAmount.y < 0f -> DragMode.FullscreenEnter
-    startX in (width * 0.35f)..(width * 0.65f) && dragAmount.y > 0f -> DragMode.FullscreenExit
-    startX < width / 2f -> DragMode.Brightness
-    startX > width * 2f / 3f -> DragMode.Volume
-    else -> DragMode.None
-}
 
 private fun resetDragState(state: PlayerGestureState) {
     state.dragMode.value = DragMode.None

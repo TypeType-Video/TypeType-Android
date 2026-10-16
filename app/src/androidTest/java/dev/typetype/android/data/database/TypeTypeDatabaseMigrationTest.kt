@@ -206,6 +206,36 @@ class TypeTypeDatabaseMigrationTest {
     }
 
     @Test
+    fun migratesVersion23WithRecommendationCapabilityDefaults() {
+        helper.createDatabase(DATABASE_NAME, 23).apply {
+            execSQL(
+                "INSERT INTO servers(id, baseUrl, displayName, addedAt) " +
+                    "VALUES('instance-a', 'https://example.test/api', 'TypeType', 1)",
+            )
+            close()
+        }
+
+        val migrated = helper.runMigrationsAndValidate(
+            DATABASE_NAME,
+            24,
+            true,
+            TypeTypeDatabaseMigrations.MIGRATION_23_24,
+        )
+
+        migrated.query(
+            "SELECT displayName, recommenderInstalled, recommenderEnabled, " +
+                "recommenderExperimental FROM servers WHERE id = 'instance-a'",
+        ).use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("TypeType", cursor.getString(0))
+            assertEquals(0, cursor.getInt(1))
+            assertEquals(0, cursor.getInt(2))
+            assertEquals(0, cursor.getInt(3))
+        }
+        migrated.close()
+    }
+
+    @Test
     fun migratesVersion13WithDurableScopedLibraryMutations() {
         helper.createDatabase(DATABASE_NAME, 13).apply {
             execSQL(
@@ -286,7 +316,7 @@ class TypeTypeDatabaseMigrationTest {
     private companion object {
         const val DATABASE_NAME = "migration-test.db"
         const val FIRST_RETAINED_VERSION = 1
-        const val CURRENT_VERSION = 23
+        const val CURRENT_VERSION = 24
         const val DRAFT_VERSION_10_SERVERS =
             "CREATE TABLE `servers` (" +
                 "`id` TEXT NOT NULL, `baseUrl` TEXT NOT NULL, `displayName` TEXT NOT NULL, " +
