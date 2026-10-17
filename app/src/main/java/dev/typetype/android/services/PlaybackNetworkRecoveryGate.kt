@@ -6,6 +6,11 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.HttpDataSource
 import dev.typetype.android.core.error.CodedFailure
 import dev.typetype.android.data.network.PlaybackNetworkState
+import java.net.ConnectException
+import java.net.NoRouteToHostException
+import java.net.SocketException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 
 internal sealed interface PlaybackNetworkRecoveryAction {
     data object Wait : PlaybackNetworkRecoveryAction
@@ -41,9 +46,9 @@ internal class PlaybackNetworkRecoveryGate {
             attempt = 0
         }
         if (!network.isAvailable) return PlaybackNetworkRecoveryAction.Wait
-        val delayMs = RETRY_DELAYS_MS.getOrNull(attempt)
-            ?: return PlaybackNetworkRecoveryAction.Wait
-        attempt++
+        val retryIndex = attempt.coerceAtMost(RETRY_DELAYS_MS.lastIndex)
+        val delayMs = RETRY_DELAYS_MS[retryIndex]
+        attempt = (retryIndex + 1).coerceAtMost(RETRY_DELAYS_MS.lastIndex)
         return PlaybackNetworkRecoveryAction.RetryAfter(delayMs)
     }
 
@@ -112,6 +117,15 @@ private fun Throwable.hasHttpTransportFailure(): Boolean {
             current is HttpDataSource.HttpDataSourceException &&
             current !is HttpDataSource.InvalidContentTypeException &&
             current !is HttpDataSource.CleartextNotPermittedException
+        ) {
+            return true
+        }
+        if (
+            current is ConnectException ||
+            current is NoRouteToHostException ||
+            current is SocketException ||
+            current is SocketTimeoutException ||
+            current is UnknownHostException
         ) {
             return true
         }
