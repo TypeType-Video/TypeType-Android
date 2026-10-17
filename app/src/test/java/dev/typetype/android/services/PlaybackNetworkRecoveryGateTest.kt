@@ -4,6 +4,7 @@ import androidx.media3.common.PlaybackException
 import dev.typetype.android.core.error.CodedFailure
 import dev.typetype.android.data.network.PlaybackNetworkState
 import java.io.IOException
+import java.net.ConnectException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -36,17 +37,20 @@ class PlaybackNetworkRecoveryGateTest {
     }
 
     @Test
-    fun `same route recovery uses a bounded progressive schedule`() {
+    fun `same route recovery keeps retrying at a capped interval`() {
         val gate = PlaybackNetworkRecoveryGate()
         val network = PlaybackNetworkState(true, 3L)
         val expectedDelays = listOf(1_000L, 3_000L, 10_000L, 30_000L) +
-            List(4) { 60_000L }
+            List(8) { 60_000L }
 
-        val actions = expectedDelays.map { gate.failed("video", network) }
-        val exhausted = gate.failed("video", network)
+        val actions = List(expectedDelays.size) { gate.failed("video", network) }
+        val cappedRetries = List(3) { gate.failed("video", network) }
 
         assertEquals(expectedDelays.map(PlaybackNetworkRecoveryAction::RetryAfter), actions)
-        assertEquals(PlaybackNetworkRecoveryAction.Wait, exhausted)
+        assertEquals(
+            List(3) { PlaybackNetworkRecoveryAction.RetryAfter(60_000L) },
+            cappedRetries,
+        )
     }
 
     @Test
@@ -115,6 +119,16 @@ class PlaybackNetworkRecoveryGateTest {
         val isNetworkFailure = isNetworkPlaybackFailure(
             PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
             IOException("offline"),
+        )
+
+        assertTrue(isNetworkFailure)
+    }
+
+    @Test
+    fun `raw connection refusal with unspecified code is classified as network interruption`() {
+        val isNetworkFailure = isNetworkPlaybackFailure(
+            PlaybackException.ERROR_CODE_IO_UNSPECIFIED,
+            ConnectException("Connection refused"),
         )
 
         assertTrue(isNetworkFailure)
