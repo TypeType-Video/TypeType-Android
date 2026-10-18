@@ -87,6 +87,15 @@ class PlaybackNetworkStateTrackerTest {
         assertEquals(PlaybackNetworkState(true, 1L), changed)
     }
 
+    @Test
+    fun `metered change advances generation`() {
+        val tracker = tracker(route(metered = false))
+
+        val changed = tracker.update(route(metered = true))
+
+        assertEquals(PlaybackNetworkState(true, 1L, isMetered = true), changed)
+    }
+
     private fun tracker(route: PlaybackNetworkRoute) = PlaybackNetworkStateTracker(route)
 
     private fun route(
@@ -94,10 +103,12 @@ class PlaybackNetworkStateTrackerTest {
         blocked: Boolean = false,
         validated: Boolean? = true,
         suspended: Boolean? = false,
+        metered: Boolean = false,
     ) = PlaybackNetworkRoute(
         identity = identity,
         isBlocked = blocked,
         isValidated = validated,
         isSuspended = suspended,
+        isMetered = metered,
     )
 }

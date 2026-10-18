@@ -28,6 +28,17 @@ class PlayerSettingsPlaybackControlsTest {
     }
 
     @Test
+    fun mobileDataQualityCanBeLimited() {
+        val action = AtomicReference<PlayerSettingsAction>()
+        showSettings(action)
+
+        composeRule.onNodeWithText("Mobile data quality").performClick()
+        composeRule.onNodeWithText("720p").performClick()
+
+        assertEquals(PlayerSettingsAction.SetMobileDataQuality("720p"), action.get())
+    }
+
+    @Test
     fun doubleTapSeekTimeOffersFiveSeconds() {
         val action = AtomicReference<PlayerSettingsAction>()
         showSettings(action)

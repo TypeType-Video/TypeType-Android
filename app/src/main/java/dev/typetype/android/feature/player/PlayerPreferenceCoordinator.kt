@@ -1,6 +1,8 @@
 package dev.typetype.android.feature.player
 
+import dev.typetype.android.data.network.PlaybackNetworkState
 import dev.typetype.android.domain.preferences.PreferencesRepository
+import dev.typetype.android.domain.preferences.effectivePlaybackQualityCap
 import dev.typetype.android.domain.usersettings.UserSettings
 import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import dev.typetype.android.feature.player.components.PlayerGestureConfig
@@ -8,18 +10,26 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 internal class PlayerPreferenceCoordinator(
     private val local: PreferencesRepository,
     private val server: UserSettingsRepository,
+    private val networkStates: StateFlow<PlaybackNetworkState>,
     private val scope: CoroutineScope,
 ) {
-    val states: Flow<PlayerPreferenceState> = combine(local.observe(), server.observe()) {
-            preferences,
-            userSettings,
-        ->
+    val states: Flow<PlayerPreferenceState> = combine(
+        local.observe(),
+        server.observe(),
+        networkStates,
+    ) { preferences, userSettings, network ->
+        val automaticQualityCap = effectivePlaybackQualityCap(
+            defaultQuality = preferences.playerDefaultQuality,
+            mobileDataQuality = preferences.playerMobileDataQuality,
+            isMetered = network.isMetered,
+        )
         PlayerPreferenceState(
             gestureConfig = PlayerGestureConfig(
                 doubleTapSeekEnabled = preferences.playerDoubleTapSeekEnabled,
@@ -33,7 +43,7 @@ internal class PlayerPreferenceCoordinator(
             autoplayCountdownSeconds = preferences.playerAutoplayCountdownSeconds,
             audioOnlyPlaybackDefault = preferences.playerAudioOnlyPlayback,
             preferredCodec = preferences.playerPreferredCodec,
-            userSettings = userSettings,
+            userSettings = userSettings.copy(defaultQuality = automaticQualityCap),
         )
     }
 

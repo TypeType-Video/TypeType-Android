@@ -67,6 +67,7 @@ class PlayerViewModel @Inject constructor(
     private val playerPreferences = PlayerPreferenceCoordinator(
         preferencesRepository,
         userSettingsRepository,
+        networkMonitor.states,
         viewModelScope,
     )
     private val navigationController = PlayerNavigationController(playerHostController, playbackQueueCoordinator)
