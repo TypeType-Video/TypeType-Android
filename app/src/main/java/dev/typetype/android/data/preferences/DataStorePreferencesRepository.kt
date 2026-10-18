@@ -17,6 +17,7 @@ import dev.typetype.android.domain.preferences.AppPreferences
 import dev.typetype.android.domain.preferences.MangaHeadlineMarker
 import dev.typetype.android.domain.preferences.MangaPaper
 import dev.typetype.android.domain.preferences.PreferencesRepository
+import dev.typetype.android.domain.preferences.normalizePlaybackQuality
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -50,6 +51,12 @@ class DataStorePreferencesRepository @Inject constructor(
                 .takeIf(ALLOWED_DOUBLE_TAP_SEEK_SECONDS::contains) ?: 10,
             playerPreferredCodec = prefs[KEY_PLAYER_PREFERRED_CODEC]
                 ?.takeIf(ALLOWED_PLAYER_CODECS::contains) ?: "recommended",
+            playerDefaultQuality = normalizePlaybackQuality(
+                prefs[KEY_PLAYER_DEFAULT_QUALITY] ?: "1080p",
+            ),
+            playerMobileDataQuality = normalizePlaybackQuality(
+                prefs[KEY_PLAYER_MOBILE_DATA_QUALITY] ?: "1080p",
+            ),
             playerSwipeSeekEnabled = prefs[KEY_PLAYER_SWIPE_SEEK] ?: true,
             playerSwipeBrightnessVolumeEnabled = prefs[KEY_PLAYER_SWIPE_BRIGHT_VOL] ?: true,
             playerPlaybackBrightnessPercent = prefs[KEY_PLAYER_PLAYBACK_BRIGHTNESS]
@@ -112,6 +119,16 @@ class DataStorePreferencesRepository @Inject constructor(
     override suspend fun setPlayerPreferredCodec(codec: String) {
         val value = codec.takeIf(ALLOWED_PLAYER_CODECS::contains) ?: "recommended"
         dataStore.edit { it[KEY_PLAYER_PREFERRED_CODEC] = value }
+    }
+
+    override suspend fun setPlayerDefaultQuality(quality: String) {
+        dataStore.edit { it[KEY_PLAYER_DEFAULT_QUALITY] = normalizePlaybackQuality(quality) }
+    }
+
+    override suspend fun setPlayerMobileDataQuality(quality: String) {
+        dataStore.edit {
+            it[KEY_PLAYER_MOBILE_DATA_QUALITY] = normalizePlaybackQuality(quality)
+        }
     }
 
     override suspend fun setPlayerSwipeSeekEnabled(enabled: Boolean) {
@@ -193,6 +210,8 @@ class DataStorePreferencesRepository @Inject constructor(
         val KEY_PLAYER_DOUBLE_TAP_SEEK = booleanPreferencesKey("player_double_tap_seek")
         val KEY_PLAYER_DOUBLE_TAP_SEEK_SECONDS = intPreferencesKey("player_double_tap_seek_seconds")
         val KEY_PLAYER_PREFERRED_CODEC = stringPreferencesKey("player_preferred_codec")
+        val KEY_PLAYER_DEFAULT_QUALITY = stringPreferencesKey("player_default_quality")
+        val KEY_PLAYER_MOBILE_DATA_QUALITY = stringPreferencesKey("player_mobile_data_quality")
         val KEY_PLAYER_SWIPE_SEEK = booleanPreferencesKey("player_swipe_seek")
         val KEY_PLAYER_SWIPE_BRIGHT_VOL = booleanPreferencesKey("player_swipe_bright_vol")
         val KEY_PLAYER_PLAYBACK_BRIGHTNESS = intPreferencesKey("player_playback_brightness")

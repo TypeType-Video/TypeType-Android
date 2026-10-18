@@ -70,6 +70,8 @@ class DataStorePreferencesRepositoryTest {
         )
         first.setPlayerDoubleTapSeekSeconds(5)
         first.setPlayerPreferredCodec("vp9")
+        first.setPlayerDefaultQuality("2160p")
+        first.setPlayerMobileDataQuality("720p")
         first.setPlayerAccessibleControlsEnabled(true)
         firstJob.cancelAndJoin()
 
@@ -82,6 +84,8 @@ class DataStorePreferencesRepositoryTest {
 
         assertEquals(5, preferences.playerDoubleTapSeekSeconds)
         assertEquals("vp9", preferences.playerPreferredCodec)
+        assertEquals("2160p", preferences.playerDefaultQuality)
+        assertEquals("720p", preferences.playerMobileDataQuality)
         assertEquals(true, preferences.playerAccessibleControlsEnabled)
         secondJob.cancelAndJoin()
         directory.deleteRecursively()

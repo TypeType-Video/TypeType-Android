@@ -40,13 +40,14 @@ import dev.typetype.android.core.ui.components.DropdownRow
 import dev.typetype.android.core.ui.components.ServiceRow
 import dev.typetype.android.core.ui.components.SettingsSectionHeader
 import dev.typetype.android.core.ui.components.SwitchRow
+import dev.typetype.android.domain.preferences.PLAYBACK_MOBILE_QUALITY_OPTIONS
+import dev.typetype.android.domain.preferences.PLAYBACK_QUALITY_OPTIONS
 import dev.typetype.android.feature.player.AV1_CODEC_KEY
 import dev.typetype.android.feature.player.H264_CODEC_KEY
 import dev.typetype.android.feature.player.RECOMMENDED_CODEC_KEY
 import dev.typetype.android.feature.player.VP9_CODEC_KEY
 import dev.typetype.android.feature.settings.SettingsDetailTopBar
 
-private val QUALITY_OPTIONS = listOf("144p", "240p", "360p", "480p", "720p", "1080p", "1440p", "2160p")
 private val AUTOPLAY_COUNTDOWN_OPTIONS = listOf(0, 5, 10, 15, 30, 60)
 private val PLAYBACK_SPEED_OPTIONS = listOf(0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 4.0)
 
@@ -194,9 +195,26 @@ fun PlayerSettingsScreen(
                     DropdownRow(
                         title = stringResource(R.string.settings_player_default_quality),
                         subtitle = stringResource(R.string.settings_player_default_quality_subtitle),
-                        options = QUALITY_OPTIONS.map { it to it },
+                        options = PLAYBACK_QUALITY_OPTIONS.map { quality ->
+                            quality to if (quality == "auto") {
+                                stringResource(R.string.playback_options_auto)
+                            } else {
+                                quality
+                            }
+                        },
                         selectedKey = state.defaultQuality,
                         onSelect = { onAction(PlayerSettingsAction.SetDefaultQuality(it)) },
+                    )
+                }
+                item {
+                    DropdownRow(
+                        title = stringResource(R.string.settings_player_mobile_quality),
+                        subtitle = stringResource(R.string.settings_player_mobile_quality_subtitle),
+                        options = PLAYBACK_MOBILE_QUALITY_OPTIONS.map { it to it },
+                        selectedKey = state.mobileDataQuality,
+                        onSelect = {
+                            onAction(PlayerSettingsAction.SetMobileDataQuality(it))
+                        },
                     )
                 }
                 item {

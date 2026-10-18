@@ -21,6 +21,8 @@ interface PreferencesRepository {
     suspend fun setPlayerDoubleTapSeekEnabled(enabled: Boolean)
     suspend fun setPlayerDoubleTapSeekSeconds(seconds: Int)
     suspend fun setPlayerPreferredCodec(codec: String)
+    suspend fun setPlayerDefaultQuality(quality: String)
+    suspend fun setPlayerMobileDataQuality(quality: String)
     suspend fun setPlayerSwipeSeekEnabled(enabled: Boolean)
     suspend fun setPlayerSwipeBrightnessVolumeEnabled(enabled: Boolean)
     suspend fun setPlayerPlaybackBrightnessPercent(percent: Int)

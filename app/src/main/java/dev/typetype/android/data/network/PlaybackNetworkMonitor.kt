@@ -184,5 +184,8 @@ class PlaybackNetworkMonitor @Inject constructor(
             } else {
                 null
             },
+            isMetered = activeCapabilities?.let {
+                !it.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED)
+            } ?: connectivityManager.isActiveNetworkMetered,
         )
 }

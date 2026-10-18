@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 data class PlaybackNetworkState(
     val isAvailable: Boolean,
     val generation: Long,
+    val isMetered: Boolean = false,
 )
 
 interface PlaybackNetworkObserver {
@@ -21,7 +22,11 @@ interface NetworkAvailabilityObserver {
 }
 
 internal object AlwaysAvailablePlaybackNetworkObserver : PlaybackNetworkObserver {
-    private val state = PlaybackNetworkState(isAvailable = true, generation = 0L)
+    private val state = PlaybackNetworkState(
+        isAvailable = true,
+        generation = 0L,
+        isMetered = false,
+    )
 
     override fun snapshot(): PlaybackNetworkState = state
 
