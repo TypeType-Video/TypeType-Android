@@ -302,6 +302,8 @@
     <string name="settings_player_default_codec">Default codec</string>
     <string name="settings_player_default_codec_subtitle">Smart prefers efficient hardware decoding</string>
     <string name="settings_player_default_quality_subtitle">Preferred video resolution</string>
+    <string name="settings_player_mobile_quality">Mobile data quality</string>
+    <string name="settings_player_mobile_quality_subtitle">Maximum quality on mobile data</string>
     <string name="settings_player_default_speed">Default playback speed</string>
     <string name="settings_player_default_speed_subtitle">Applied when a video starts</string>
     <string name="settings_player_section_subtitles">Subtitles</string>

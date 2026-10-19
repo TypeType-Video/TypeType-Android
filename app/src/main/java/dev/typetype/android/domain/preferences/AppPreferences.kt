@@ -18,6 +18,8 @@ data class AppPreferences(
     val playerDoubleTapSeekEnabled: Boolean = true,
     val playerDoubleTapSeekSeconds: Int = 10,
     val playerPreferredCodec: String = "recommended",
+    val playerDefaultQuality: String = "1080p",
+    val playerMobileDataQuality: String = "1080p",
     val playerSwipeSeekEnabled: Boolean = true,
     val playerSwipeBrightnessVolumeEnabled: Boolean = true,
     val playerPlaybackBrightnessPercent: Int? = null,

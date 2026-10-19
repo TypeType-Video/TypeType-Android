@@ -7,7 +7,6 @@ import dev.typetype.android.domain.preferences.PreferencesRepository
 import dev.typetype.android.domain.usersettings.DEFAULT_SPONSOR_BLOCK_CATEGORY_ACTIONS
 import dev.typetype.android.domain.usersettings.SponsorBlockMode
 import dev.typetype.android.domain.usersettings.UserSettings
-import dev.typetype.android.domain.usersettings.normalizeQualityName
 import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,7 +46,8 @@ class PlayerSettingsViewModel @Inject constructor(
                     danmakuEnabled = prefs.danmakuEnabled,
                     danmakuSpeed = prefs.danmakuSpeed,
                     danmakuSize = prefs.danmakuSize,
-                    defaultQuality = normalizeQualityName(server.defaultQuality),
+                    defaultQuality = prefs.playerDefaultQuality,
+                    mobileDataQuality = prefs.playerMobileDataQuality,
                     defaultPlaybackSpeed = server.defaultPlaybackSpeed,
                     defaultService = server.defaultService,
                     subtitlesEnabled = server.subtitlesEnabled,
@@ -105,7 +105,9 @@ class PlayerSettingsViewModel @Inject constructor(
                 is PlayerSettingsAction.SetAudioOnlyPlayback ->
                     preferencesRepository.setPlayerAudioOnlyPlayback(action.enabled)
                 is PlayerSettingsAction.SetDefaultQuality ->
-                    updateServer { it.copy(defaultQuality = action.quality) }
+                    preferencesRepository.setPlayerDefaultQuality(action.quality)
+                is PlayerSettingsAction.SetMobileDataQuality ->
+                    preferencesRepository.setPlayerMobileDataQuality(action.quality)
                 is PlayerSettingsAction.SetDefaultPlaybackSpeed ->
                     updateServer { it.copy(defaultPlaybackSpeed = action.speed.coerceIn(0.25, 4.0)) }
                 is PlayerSettingsAction.SetDefaultService ->

@@ -21,6 +21,7 @@ data class PlayerSettingsState(
     val danmakuSpeed: Float = 1f,
     val danmakuSize: Float = 1f,
     val defaultQuality: String = "1080p",
+    val mobileDataQuality: String = "1080p",
     val defaultPlaybackSpeed: Double = 1.0,
     val defaultService: Int = 0,
     val subtitlesEnabled: Boolean = false,
