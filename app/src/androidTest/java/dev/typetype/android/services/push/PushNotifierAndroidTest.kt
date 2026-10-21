@@ -39,11 +39,12 @@ class PushNotifierAndroidTest {
         val notificationId = subscriptionNotificationId(payload.videoId, payload.videoUrl, payload.eventId)
 
         try {
-            PushNotifier(context).notify(payload)
+            val result = PushNotifier(context).notify(payload)
             val notification = manager.activeNotifications
                 .firstOrNull { record -> record.id == notificationId }
                 ?.notification
 
+            assertEquals(NotificationPostResult.Posted, result)
             assertNotNull(notification)
             assertEquals(
                 payload.channelName,
