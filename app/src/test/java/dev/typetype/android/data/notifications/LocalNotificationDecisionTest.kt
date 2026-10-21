@@ -97,6 +97,22 @@ class LocalNotificationDecisionTest {
         assertEquals(listOf("older", "newest"), decision.notified.map { it.video.id })
     }
 
+    @Test
+    fun `failed notifications stay eligible for the next poll`() {
+        val decision = decideLocalNotifications(
+            items = listOf(
+                item(videoId = "posted", channelUrl = CHANNEL),
+                item(videoId = "failed", channelUrl = CHANNEL),
+                item(videoId = "silent", channelUrl = OTHER_CHANNEL),
+            ),
+            knownKeys = emptySet(),
+            seeded = true,
+            enabledChannels = listOf(ChannelNotificationsPreference(CHANNEL, enabled = true)),
+        )
+
+        assertEquals(listOf("posted", "silent"), decision.keysToPersist(setOf("failed")))
+    }
+
     private fun item(videoId: String, channelUrl: String) = NotificationItem(
         type = "subscription_new_video",
         title = "Video $videoId",
