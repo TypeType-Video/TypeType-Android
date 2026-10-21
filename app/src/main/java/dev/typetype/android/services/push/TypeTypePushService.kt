@@ -102,6 +102,7 @@ class TypeTypePushService : PushService() {
                 traceId = traceId,
             )
         }
+        registrationManager.acknowledgeDelivery(scope, payload.eventId, result)
     }
 
     override fun onRegistrationFailed(reason: FailedReason, instance: String) {

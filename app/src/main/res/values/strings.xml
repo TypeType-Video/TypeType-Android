@@ -1225,6 +1225,7 @@
     <string name="push_choose_distributor">Choose distributor</string>
     <string name="push_error_generic">Couldn\'t update push notifications</string>
     <string name="push_local_fallback">The app also checks for new videos every 15 minutes</string>
+    <string name="push_channel_bell_hint">Push alerts are sent only for channels where you turned on the bell.</string>
     <string name="channel_notifications_enable">Turn on new video notifications</string>
     <string name="channel_notifications_disable">Turn off new video notifications</string>
     <string name="push_battery_hint">Disable battery optimization for reliable notification delivery.</string>
