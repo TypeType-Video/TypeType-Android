@@ -9,4 +9,5 @@ data class DiagnosticEntry(
     val requestId: String?,
     val sabr: SabrDiagnosticDetail? = null,
     val failureCode: String? = null,
+    val traceId: String? = null,
 )
