@@ -25,6 +25,7 @@ fun buildDiagnosticReport(entries: List<DiagnosticEntry>, crashReport: CrashRepo
             }
             entry.failureCode?.let { append("  code $it") }
             entry.requestId?.let { append("  request $it") }
+            entry.traceId?.let { append("  trace $it") }
             appendLine()
             entry.sabr?.let {
                 appendLine("  SABR ${it.redactedSummary()}")

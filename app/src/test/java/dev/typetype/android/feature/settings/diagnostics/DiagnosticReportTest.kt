@@ -26,6 +26,25 @@ class DiagnosticReportTest {
     }
 
     @Test
+    fun reportIncludesRedactedPushTraceId() {
+        val entry = DiagnosticEntry(
+            timestampEpochMillis = 1_700_000_000_000,
+            method = "LOCAL",
+            route = "/push/notification/posted",
+            statusCode = null,
+            durationMillis = 0,
+            requestId = null,
+            traceId = "abcdef0123456789",
+        )
+
+        val report = buildDiagnosticReport(listOf(entry))
+
+        assertTrue(report.contains("LOCAL /push/notification/posted"))
+        assertTrue(report.contains("trace abcdef0123456789"))
+        assertFalse(report.contains("notifications disabled"))
+    }
+
+    @Test
     fun reportContainsOnlyRedactedSabrMetadata() {
         val entry = DiagnosticEntry(
             timestampEpochMillis = 1_700_000_000_000,
