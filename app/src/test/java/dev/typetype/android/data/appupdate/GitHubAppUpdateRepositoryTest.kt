@@ -101,6 +101,15 @@ class GitHubAppUpdateRepositoryTest {
     }
 
     @Test
+    fun stableReportsOlderReleaseWhenInstalledBetaHasNewerPatch() = runBlocking {
+        server.enqueue(MockResponse().setHeader("Content-Type", "application/json").setBody(stableRelease()))
+
+        val result = repository.check(AppUpdateChannel.GITHUB_STABLE, "1.10.1-beta.1", 11005)
+
+        assertTrue(result is AppUpdateCheck.NewerBuildInstalled)
+    }
+
+    @Test
     fun rejectsReleaseAssetsOutsideOfficialGitHubPath() = runBlocking {
         val body = stableRelease().replace(
             "https://github.com/TypeType-Video/TypeType-Android/releases/download/",

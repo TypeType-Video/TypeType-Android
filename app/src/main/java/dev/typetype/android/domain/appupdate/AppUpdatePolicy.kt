@@ -23,10 +23,11 @@ internal object AppUpdatePolicy {
         }
         val candidate = AppVersion.parse(release.versionName)
         val installed = AppVersion.parse(installedVersionName)
-        return if (candidate == null || installed == null || candidate > installed) {
-            AppUpdateCheck.Available(release)
-        } else {
-            AppUpdateCheck.UpToDate
+        return when {
+            candidate == null || installed == null || candidate > installed ->
+                AppUpdateCheck.Available(release)
+            candidate == installed -> AppUpdateCheck.UpToDate
+            else -> AppUpdateCheck.NewerBuildInstalled(release)
         }
     }
 
