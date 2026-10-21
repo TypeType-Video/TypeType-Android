@@ -214,6 +214,7 @@ private fun statusLabel(status: PushRegistrationStatus): Int = when (status) {
     PushRegistrationStatus.Registering -> R.string.push_status_connecting
     PushRegistrationStatus.MissingDistributor -> R.string.push_status_missing_distributor
     PushRegistrationStatus.Unavailable -> R.string.push_status_unavailable
+    PushRegistrationStatus.ActionRequired -> R.string.push_status_action_required
     PushRegistrationStatus.Failed -> R.string.push_status_failed
     PushRegistrationStatus.Disabled -> R.string.push_status_disabled
 }

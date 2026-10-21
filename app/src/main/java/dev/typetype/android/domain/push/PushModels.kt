@@ -26,5 +26,7 @@ sealed interface PushRegistrationStatus {
 
     data object Registered : PushRegistrationStatus
 
+    data object ActionRequired : PushRegistrationStatus
+
     data object Failed : PushRegistrationStatus
 }

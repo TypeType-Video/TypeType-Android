@@ -358,7 +358,7 @@
     <string name="settings_privacy_subtitle">Control history tracking and stored activity</string>
     <string name="diagnostics_title">Diagnostics</string>
     <string name="diagnostics_subtitle">Review redacted app and network activity</string>
-    <string name="diagnostics_explanation">Stored only on this device, separately for the active instance and account. The journal contains redacted network metadata, app exit reasons and predefined SABR failure categories. A crash report keeps exception class names, method names and line numbers, but never exception messages. Session IDs are replaced with local fingerprints. URLs, search terms, video IDs, headers, cookies, tokens, request bodies and raw server messages are never recorded.</string>
+    <string name="diagnostics_explanation">Stored only on this device, separately for the active instance and account. The journal contains redacted network metadata, app exit reasons, predefined SABR failure categories and opaque push trace IDs. A crash report keeps exception class names, method names and line numbers, but never exception messages. Session IDs are replaced with local fingerprints. URLs, search terms, video IDs, headers, cookies, tokens, request bodies and raw server messages are never recorded.</string>
     <string name="diagnostics_refresh">Refresh</string>
     <string name="diagnostics_clear">Clear</string>
     <string name="diagnostics_share">Share</string>
@@ -369,9 +369,13 @@
     <string name="diagnostics_sabr_detail">SABR %1$s</string>
     <string name="diagnostics_request_id">Request %1$s</string>
     <string name="diagnostics_failure_code">Code %1$s</string>
+    <string name="diagnostics_trace_id">Trace %1$s</string>
+    <string name="diagnostics_local_event">Local event</string>
     <string name="diagnostics_copy_request_id">Copy request ID</string>
-    <string name="diagnostics_clipboard_label">TypeType request ID</string>
+    <string name="diagnostics_clipboard_label">TypeType diagnostic ID</string>
     <string name="diagnostics_request_id_copied">Request ID copied</string>
+    <string name="diagnostics_trace_id_copied">Trace ID copied</string>
+    <string name="diagnostics_copy_trace_id">Copy trace ID</string>
     <string name="error_request_id">Request %1$s</string>
     <string name="error_code">Code %1$s</string>
     <string name="diagnostics_event_crash">App stopped unexpectedly</string>
@@ -1209,11 +1213,12 @@
     <string name="push_notification_channel_name">New videos</string>
     <string name="settings_push_title">Push notifications</string>
     <string name="settings_push_subtitle">New video alerts via UnifiedPush</string>
-    <string name="push_status_active">Active</string>
+    <string name="push_status_active">Registered</string>
     <string name="push_status_connecting">Connecting…</string>
     <string name="push_status_disabled">Off</string>
     <string name="push_status_missing_distributor">No push distributor installed</string>
     <string name="push_status_unavailable">Not offered by this instance</string>
+    <string name="push_status_action_required">Open your push distributor and complete its pending action</string>
     <string name="push_status_failed">Registration failed</string>
     <string name="push_devices_count">%1$d of %2$d devices registered</string>
     <string name="push_install_hint">Install a UnifiedPush distributor such as ntfy to receive notifications.</string>
