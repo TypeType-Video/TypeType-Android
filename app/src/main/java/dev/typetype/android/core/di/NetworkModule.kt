@@ -44,4 +44,15 @@ object NetworkModule {
             .build()
     }
 
+    @Provides
+    @Singleton
+    @Named("appUpdates")
+    fun provideAppUpdatesOkHttpClient(): OkHttpClient =
+        OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .callTimeout(5, TimeUnit.MINUTES)
+            .retryOnConnectionFailure(true)
+            .build()
 }

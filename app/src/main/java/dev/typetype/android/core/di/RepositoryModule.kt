@@ -6,6 +6,9 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dev.typetype.android.data.actions.VideoActionsRepositoryImpl
 import dev.typetype.android.data.account.RoomAccountRepository
+import dev.typetype.android.data.appupdate.AppUpdateDownloader
+import dev.typetype.android.data.appupdate.DataStoreAppUpdateSettingsRepository
+import dev.typetype.android.data.appupdate.GitHubAppUpdateRepository
 import dev.typetype.android.data.account.AccountScopeProvider
 import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.auth.AuthRepositoryImpl
@@ -59,6 +62,9 @@ import dev.typetype.android.data.youtubesession.RemoteYoutubeSessionRepository
 import dev.typetype.android.data.youtubesession.OkHttpYoutubeRemoteBrowserConnector
 import dev.typetype.android.domain.actions.VideoActionsRepository
 import dev.typetype.android.domain.account.AccountRepository
+import dev.typetype.android.domain.appupdate.AppUpdateFileDownloader
+import dev.typetype.android.domain.appupdate.AppUpdateRepository
+import dev.typetype.android.domain.appupdate.AppUpdateSettingsRepository
 import dev.typetype.android.domain.auth.AuthRepository
 import dev.typetype.android.domain.branding.DeArrowRepository
 import dev.typetype.android.domain.channel.ChannelRepository
@@ -106,6 +112,20 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
+
+    @Binds
+    @Singleton
+    abstract fun bindAppUpdateFileDownloader(impl: AppUpdateDownloader): AppUpdateFileDownloader
+
+    @Binds
+    @Singleton
+    abstract fun bindAppUpdateRepository(impl: GitHubAppUpdateRepository): AppUpdateRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAppUpdateSettingsRepository(
+        impl: DataStoreAppUpdateSettingsRepository,
+    ): AppUpdateSettingsRepository
 
     @Binds
     @Singleton
