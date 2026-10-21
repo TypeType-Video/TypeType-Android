@@ -33,5 +33,8 @@ internal fun decideLocalNotifications(
     )
 }
 
-private fun NotificationItem.localNotificationKey(): String =
+internal fun NotificationItem.localNotificationKey(): String =
     video.id.takeIf { it.isNotBlank() } ?: video.url
+
+internal fun LocalNotificationDecision.keysToPersist(unpostedKeys: Set<String>): List<String> =
+    keysToRecord.filterNot(unpostedKeys::contains)

@@ -16,7 +16,6 @@ import dev.typetype.android.R
 import dev.typetype.android.domain.navigation.toPublicWatchParameter
 import dev.typetype.android.domain.notifications.NotificationItem
 import dev.typetype.android.domain.push.PushPayload
-import dev.typetype.android.domain.push.parsePushPayload
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -24,41 +23,61 @@ import javax.inject.Singleton
 class PushNotifier @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
-    fun canNotify(): Boolean = NotificationManagerCompat.from(context).areNotificationsEnabled()
+    fun canNotify(): Boolean = blockedReason() == null
 
-    fun notify(payload: PushPayload) {
-        show(
-            title = payload.channelName.ifBlank { payload.serviceName },
-            text = payload.title,
+    fun blockedReason(): NotificationPostResult? = when {
+        !NotificationManagerCompat.from(context).areNotificationsEnabled() ->
+            NotificationPostResult.NotificationsDisabled
+        isChannelBlocked() -> NotificationPostResult.ChannelBlocked
+        else -> null
+    }
+
+    fun notify(payload: PushPayload): NotificationPostResult = show(
+        title = payload.channelName.ifBlank { payload.serviceName },
+        text = payload.title,
+        videoUrl = payload.videoUrl,
+        notificationId = subscriptionNotificationId(
+            videoId = payload.videoId,
             videoUrl = payload.videoUrl,
-            notificationId = subscriptionNotificationId(
-                videoId = payload.videoId,
-                videoUrl = payload.videoUrl,
-                fallback = payload.eventId,
-            ),
-        )
-    }
+            fallback = payload.eventId,
+        ),
+    )
 
-    fun notifySubscription(item: NotificationItem) {
-        show(
-            title = item.channelName.ifBlank { item.video.uploaderName },
-            text = item.title,
+    fun notifySubscription(item: NotificationItem): NotificationPostResult = show(
+        title = item.channelName.ifBlank { item.video.uploaderName },
+        text = item.title,
+        videoUrl = item.video.url,
+        notificationId = subscriptionNotificationId(
+            videoId = item.video.id,
             videoUrl = item.video.url,
-            notificationId = subscriptionNotificationId(
-                videoId = item.video.id,
-                videoUrl = item.video.url,
-                fallback = item.video.url,
-            ),
-        )
-    }
+            fallback = item.video.url,
+        ),
+    )
 
-    private fun show(title: String, text: String, videoUrl: String, notificationId: Int) {
-        val manager = context.getSystemService(NotificationManager::class.java) ?: return
-        if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
+    private fun show(
+        title: String,
+        text: String,
+        videoUrl: String,
+        notificationId: Int,
+    ): NotificationPostResult {
+        val manager = context.getSystemService(NotificationManager::class.java)
+            ?: return NotificationPostResult.Failed
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             manager.createNotificationChannel(notificationChannel())
         }
-        manager.notify(notificationId, buildNotification(title, text, videoUrl, notificationId))
+        blockedReason()?.let { return it }
+        return try {
+            manager.notify(notificationId, buildNotification(title, text, videoUrl, notificationId))
+            NotificationPostResult.Posted
+        } catch (_: SecurityException) {
+            NotificationPostResult.PermissionDenied
+        }
+    }
+
+    private fun isChannelBlocked(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return false
+        val manager = context.getSystemService(NotificationManager::class.java) ?: return false
+        return manager.getNotificationChannel(CHANNEL_ID)?.importance == NotificationManager.IMPORTANCE_NONE
     }
 
     private fun buildNotification(
@@ -98,6 +117,14 @@ class PushNotifier @Inject constructor(
     private companion object {
         const val CHANNEL_ID = "subscription_push"
     }
+}
+
+enum class NotificationPostResult {
+    Posted,
+    NotificationsDisabled,
+    ChannelBlocked,
+    PermissionDenied,
+    Failed,
 }
 
 internal fun subscriptionNotificationId(videoId: String, videoUrl: String, fallback: String): Int =

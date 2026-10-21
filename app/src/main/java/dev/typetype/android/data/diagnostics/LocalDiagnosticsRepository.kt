@@ -101,9 +101,32 @@ class LocalDiagnosticsRepository @Inject constructor(
         statusCode: Int? = null,
         requestId: String? = null,
         failureCode: String? = null,
+        traceId: String? = null,
     ) {
-        if (route !in LOCAL_EVENT_ROUTES) return
         val scope = currentScope()?.copy(route = route) ?: return
+        recordLocalEvent(
+            serverId = scope.serverId,
+            accountId = scope.accountId,
+            route = route,
+            timestampEpochMillis = timestampEpochMillis,
+            statusCode = statusCode,
+            requestId = requestId,
+            failureCode = failureCode,
+            traceId = traceId,
+        )
+    }
+
+    internal fun recordLocalEvent(
+        serverId: String,
+        accountId: String,
+        route: String,
+        timestampEpochMillis: Long = System.currentTimeMillis(),
+        statusCode: Int? = null,
+        requestId: String? = null,
+        failureCode: String? = null,
+        traceId: String? = null,
+    ) {
+        if (serverId.isBlank() || accountId.isBlank() || route !in LOCAL_EVENT_ROUTES) return
         val entry = DiagnosticEntry(
             timestampEpochMillis = timestampEpochMillis,
             method = LOCAL_METHOD,
@@ -112,10 +135,11 @@ class LocalDiagnosticsRepository @Inject constructor(
             durationMillis = 0,
             requestId = requestId?.takeIf(REQUEST_ID_PATTERN::matches),
             failureCode = failureCode?.takeIf(FAILURE_CODE_PATTERN::matches),
+            traceId = traceId?.takeIf(TRACE_ID_PATTERN::matches),
         )
         synchronized(lock) {
             directory.mkdirs()
-            val file = fileFor(scope)
+            val file = fileFor(DiagnosticScope(serverId, accountId, route))
             file.appendText(encode(entry) + "\n", Charsets.UTF_8)
             if (file.length() > MAX_FILE_BYTES) trim(file)
         }
@@ -168,11 +192,12 @@ class LocalDiagnosticsRepository @Inject constructor(
         entry.requestId.orEmpty(),
         entry.sabr?.let(SabrDiagnosticDetailCodec::encode).orEmpty(),
         entry.failureCode.orEmpty(),
+        entry.traceId.orEmpty(),
     ).joinToString("\t")
 
     private fun decode(line: String): DiagnosticEntry? {
-        val fields = line.split('\t', limit = 8)
-        if (fields.size !in 6..8) return null
+        val fields = line.split('\t', limit = 9)
+        if (fields.size !in 6..9) return null
         val route = fields[2].takeIf { it.startsWith('/') && it.length <= 40 } ?: return null
         return DiagnosticEntry(
             timestampEpochMillis = fields[0].toLongOrNull() ?: return null,
@@ -189,6 +214,7 @@ class LocalDiagnosticsRepository @Inject constructor(
                 ?.takeIf(String::isNotEmpty)
                 ?.let(SabrDiagnosticDetailCodec::decode),
             failureCode = fields.getOrNull(7)?.takeIf(FAILURE_CODE_PATTERN::matches),
+            traceId = fields.getOrNull(8)?.takeIf(TRACE_ID_PATTERN::matches),
         )
     }
 
@@ -216,6 +242,7 @@ class LocalDiagnosticsRepository @Inject constructor(
         val ALLOWED_METHODS = setOf("DELETE", "GET", "PATCH", "POST", "PUT")
         val REQUEST_ID_PATTERN = Regex("[A-Za-z0-9_-]{8,64}")
         val FAILURE_CODE_PATTERN = Regex("[a-z0-9_]{3,64}")
+        val TRACE_ID_PATTERN = Regex("[A-Fa-f0-9]{8,64}")
         const val LOCAL_METHOD = "LOCAL"
         const val LEGACY_APPLICATION_METHOD = "APP"
         val LOCAL_EVENT_ROUTES = setOf(
@@ -234,6 +261,22 @@ class LocalDiagnosticsRepository @Inject constructor(
             "/subscriptions/feed/persistence",
             "/subscriptions/feed/ready",
             "/subscriptions/feed/server",
+            "/push/instance/invalid",
+            "/push/registration/requested",
+            "/push/registration/endpoint",
+            "/push/registration/registered",
+            "/push/registration/failed",
+            "/push/registration/disabled",
+            "/push/message/received",
+            "/push/message/invalid",
+            "/push/notification/posted",
+            "/push/notification/suppressed",
+            "/push/notification/failed",
+            "/push/distributor/unavailable",
+            "/notifications/local/checked",
+            "/notifications/local/posted",
+            "/notifications/local/suppressed",
+            "/notifications/local/failed",
         )
     }
 }

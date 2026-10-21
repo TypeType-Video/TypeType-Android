@@ -24,6 +24,14 @@ data class PushDeviceRegistrationResponseDto(
 )
 
 @Serializable
+data class PushDeliveryAcknowledgementRequestDto(
+    val eventId: String,
+    val deviceId: String,
+    val outcome: String,
+    val reasonCode: String? = null,
+)
+
+@Serializable
 data class ChannelNotificationPreferenceRequestDto(
     val channelUrl: String,
     val enabled: Boolean,

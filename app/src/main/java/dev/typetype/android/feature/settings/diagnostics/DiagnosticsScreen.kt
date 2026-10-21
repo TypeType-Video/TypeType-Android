@@ -196,8 +196,11 @@ private fun DiagnosticRow(entry: DiagnosticEntry) {
         ApplicationDiagnosticRow(entry, formatter)
         return
     }
-    val outcome = entry.statusCode?.let { stringResource(R.string.diagnostics_http_status, it) }
-        ?: stringResource(R.string.diagnostics_network_error)
+    val outcome = when (entry.method) {
+        "LOCAL", "APP" -> stringResource(R.string.diagnostics_local_event)
+        else -> entry.statusCode?.let { stringResource(R.string.diagnostics_http_status, it) }
+            ?: stringResource(R.string.diagnostics_network_error)
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -211,11 +214,19 @@ private fun DiagnosticRow(entry: DiagnosticEntry) {
             fontWeight = FontWeight.SemiBold,
             fontFamily = FontFamily.Monospace,
         )
-        Text(
-            text = stringResource(R.string.diagnostics_result, outcome, entry.durationMillis),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        if (entry.method == "LOCAL" || entry.method == "APP") {
+            Text(
+                text = outcome,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else {
+            Text(
+                text = stringResource(R.string.diagnostics_result, outcome, entry.durationMillis),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         Text(
             text = formatter.format(Date(entry.timestampEpochMillis)),
             style = MaterialTheme.typography.labelSmall,
@@ -259,6 +270,32 @@ private fun DiagnosticRow(entry: DiagnosticEntry) {
                     Icon(
                         imageVector = Icons.Filled.ContentCopy,
                         contentDescription = stringResource(R.string.diagnostics_copy_request_id),
+                    )
+                }
+            }
+        }
+        entry.traceId?.let {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(R.string.diagnostics_trace_id, it),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontFamily = FontFamily.Monospace,
+                    modifier = Modifier.weight(1f),
+                )
+                IconButton(
+                    onClick = {
+                        copyPlainText(
+                            context = context,
+                            value = it,
+                            labelRes = R.string.diagnostics_clipboard_label,
+                            confirmationRes = R.string.diagnostics_trace_id_copied,
+                        )
+                    },
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.ContentCopy,
+                        contentDescription = stringResource(R.string.diagnostics_copy_trace_id),
                     )
                 }
             }
