@@ -124,7 +124,9 @@ internal fun loadProgressiveStream(
                     enriched = stream.withMetadataFrom(metadataStream)
                     send(PlayerStreamUpdate.MetadataEnriched(enriched))
                 }
-                if (details != null && enriched.relatedStreams.isEmpty()) {
+                if (details != null &&
+                    (enriched.relatedStreams.isEmpty() || enriched.viewCount < 0L)
+                ) {
                     for (delayMillis in RELATED_METADATA_RETRY_DELAYS) {
                         retryDelay(delayMillis)
                         val retry = loadMetadata() ?: break
@@ -132,7 +134,7 @@ internal fun loadProgressiveStream(
                             enriched = enriched.withMetadataFrom(metadataStream)
                             send(PlayerStreamUpdate.MetadataEnriched(enriched))
                         }
-                        if (enriched.relatedStreams.isNotEmpty()) break
+                        if (enriched.relatedStreams.isNotEmpty() && enriched.viewCount >= 0L) break
                     }
                 }
                 if (enriched.needsChannelMetadata()) {

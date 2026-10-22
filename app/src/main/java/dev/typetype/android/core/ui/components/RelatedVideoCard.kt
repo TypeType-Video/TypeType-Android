@@ -37,7 +37,9 @@ import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.feed.VideoAvailability
 import dev.typetype.android.domain.feed.availabilityAt
+import dev.typetype.android.domain.feed.badgeStatusAt
 import dev.typetype.android.domain.feed.releaseTimeMillis
+import dev.typetype.android.domain.feed.VideoBadgeStatus
 import dev.typetype.android.feature.player.CARD_PREWARM_DELAY_MILLIS
 import dev.typetype.android.feature.player.LocalPlaybackPrewarm
 import kotlinx.coroutines.delay
@@ -177,16 +179,28 @@ private fun formatRelatedViews(views: Long): String = when {
 
 @Composable
 private fun Video.metadataText(): String {
-    val views = stringResource(R.string.video_views_short, formatRelatedViews(viewCount))
+    val nowMillis = System.currentTimeMillis()
+    val scheduledAt = releaseTimeMillis()?.takeIf { it > nowMillis }
+    val badge = badgeStatusAt(nowMillis)
+    val views = when {
+        viewCount >= 0L -> stringResource(R.string.video_views_short, formatRelatedViews(viewCount))
+        scheduledAt != null &&
+            (badge == VideoBadgeStatus.Premiere || badge == VideoBadgeStatus.Upcoming) ->
+            stringResource(R.string.video_premieres_at, formatRelativeDate(scheduledAt))
+        else -> stringResource(R.string.video_views_hidden_by_provider)
+    }
     val published = releaseTimeMillis()
-        ?.takeIf { it <= System.currentTimeMillis() }
+        ?.takeIf { scheduledAt == null }
         ?.let { timestamp ->
-            DateUtils.getRelativeTimeSpanString(
-                timestamp,
-                System.currentTimeMillis(),
-                DateUtils.MINUTE_IN_MILLIS,
-                DateUtils.FORMAT_ABBREV_RELATIVE,
-            ).toString()
+            formatRelativeDate(timestamp)
         }
     return listOfNotNull(views, published).joinToString(" · ")
 }
+
+private fun formatRelativeDate(timestampMillis: Long): String =
+    DateUtils.getRelativeTimeSpanString(
+        timestampMillis,
+        System.currentTimeMillis(),
+        DateUtils.MINUTE_IN_MILLIS,
+        DateUtils.FORMAT_ABBREV_RELATIVE,
+    ).toString()
