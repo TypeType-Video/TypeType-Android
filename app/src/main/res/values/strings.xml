@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="video_views_short">%1$s views</string>
+    <string name="video_premieres_at">Premieres %1$s</string>
+    <string name="video_views_hidden_by_provider">Views hidden by provider</string>
     <string name="welcome_title">Welcome aboard</string>
     <string name="welcome_get_started">Get started</string>
     <string name="uploader_subscribers_short">%1$s subscribers</string>

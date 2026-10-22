@@ -45,7 +45,9 @@ import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.feed.VideoAvailability
 import dev.typetype.android.domain.feed.availabilityAt
+import dev.typetype.android.domain.feed.badgeStatusAt
 import dev.typetype.android.domain.feed.releaseTimeMillis
+import dev.typetype.android.domain.feed.VideoBadgeStatus
 import dev.typetype.android.feature.player.CARD_PREWARM_DELAY_MILLIS
 import dev.typetype.android.feature.player.LocalPlaybackPrewarm
 
@@ -214,13 +216,24 @@ private fun WatchedBadge(modifier: Modifier = Modifier) {
 
 @Composable
 private fun Video.metadataText(): String? {
-    val views = formatViews(viewCount)?.let { stringResource(R.string.video_views_short, it) }
-    val published = releaseTimeMillis()?.let(::formatPublishedDate)
+    val nowMillis = System.currentTimeMillis()
+    val scheduledAt = releaseTimeMillis()?.takeIf { it > nowMillis }
+    val badge = badgeStatusAt(nowMillis)
+    val views = when {
+        viewCount >= 0L -> stringResource(
+            R.string.video_views_short,
+            formatViews(viewCount),
+        )
+        scheduledAt != null &&
+            (badge == VideoBadgeStatus.Premiere || badge == VideoBadgeStatus.Upcoming) ->
+            stringResource(R.string.video_premieres_at, formatPublishedDate(scheduledAt))
+        else -> stringResource(R.string.video_views_hidden_by_provider)
+    }
+    val published = releaseTimeMillis()?.takeIf { scheduledAt == null }?.let(::formatPublishedDate)
     return listOfNotNull(views, published).takeIf { it.isNotEmpty() }?.joinToString(" · ")
 }
 
-private fun formatViews(views: Long): String? = when {
-    views < 0L -> null
+private fun formatViews(views: Long): String = when {
     views >= 1_000_000_000 -> "%.1fB".format(views / 1_000_000_000.0)
     views >= 1_000_000 -> "%.1fM".format(views / 1_000_000.0)
     views >= 1_000 -> "%.1fK".format(views / 1_000.0)
