@@ -10,6 +10,7 @@ import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.stream.StreamRepository
 import javax.inject.Inject
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
@@ -96,6 +97,7 @@ internal fun loadProgressiveStream(
     loadChannelMetadata: suspend (Stream) -> Result<Stream>? = { null },
     loadProgress: suspend () -> Long,
     prefetchedMetadata: Stream? = null,
+    retryDelay: suspend (Long) -> Unit = { delay(it) },
 ): Flow<PlayerStreamUpdate> = channelFlow {
     val savedProgress = async { loadProgress() }
     val metadata = if (prefetchedMetadata == null) async { loadMetadata() } else null
@@ -121,6 +123,17 @@ internal fun loadProgressiveStream(
                 details?.onSuccess { metadataStream ->
                     enriched = stream.withMetadataFrom(metadataStream)
                     send(PlayerStreamUpdate.MetadataEnriched(enriched))
+                }
+                if (details != null && enriched.relatedStreams.isEmpty()) {
+                    for (delayMillis in RELATED_METADATA_RETRY_DELAYS) {
+                        retryDelay(delayMillis)
+                        val retry = loadMetadata() ?: break
+                        retry.onSuccess { metadataStream ->
+                            enriched = enriched.withMetadataFrom(metadataStream)
+                            send(PlayerStreamUpdate.MetadataEnriched(enriched))
+                        }
+                        if (enriched.relatedStreams.isNotEmpty()) break
+                    }
                 }
                 if (enriched.needsChannelMetadata()) {
                     loadChannelMetadata(enriched)?.onSuccess { channelStream ->
@@ -156,3 +169,4 @@ private fun computeResumeMillis(
 
 private const val RESUME_MIN_MILLIS = 5_000L
 private const val RESUME_MAX_FRACTION = 0.95
+private val RELATED_METADATA_RETRY_DELAYS = longArrayOf(350L, 1_000L)
