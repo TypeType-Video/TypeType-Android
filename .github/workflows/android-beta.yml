@@ -172,6 +172,20 @@ jobs:
             sha256sum -c "dev.typetype.android_${RELEASE_CODE}.apk.sha256"
           )
 
+      - name: Prepare beta update manifest
+        run: |
+          apk_name="dev.typetype.android_"$RELEASE_CODE".apk"
+          apk_sha256="$(cut -d ' ' -f1 "artifacts/$apk_name.sha256")"
+          jq -n \
+            --arg channel beta \
+            --arg packageName dev.typetype.android \
+            --arg versionName "$RELEASE_VERSION" \
+            --argjson versionCode "$RELEASE_CODE" \
+            --arg apkAsset "$apk_name" \
+            --arg sha256 "$apk_sha256" \
+            '{schemaVersion:1,channel:$channel,packageName:$packageName,versionName:$versionName,versionCode:$versionCode,apkAsset:$apkAsset,sha256:$sha256}' \
+            > artifacts/typetype-update.json
+
       - name: Upload beta APK
         uses: actions/upload-artifact@v7.0.1
         with:
@@ -179,6 +193,7 @@ jobs:
           path: |
             artifacts/*.apk
             artifacts/*.sha256
+            artifacts/typetype-update.json
           if-no-files-found: error
           compression-level: 0
           retention-days: 30
@@ -208,4 +223,5 @@ jobs:
           files: |
             artifacts/*.apk
             artifacts/*.sha256
+            artifacts/typetype-update.json
           fail_on_unmatched_files: true

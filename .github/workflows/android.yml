@@ -143,11 +143,14 @@ jobs:
           INPUT_TAG_NAME: ${{ inputs.tag_name }}
         run: |
           version="$(sed -nE 's/^[[:space:]]*versionName = "([^"]+)"/\1/p' app/build.gradle.kts)"
+          version_code="$(sed -nE 's/^[[:space:]]*versionCode = ([0-9]+)/\1/p' app/build.gradle.kts)"
           test -n "$version"
+          [[ "$version_code" =~ ^[1-9][0-9]*$ ]]
           expected_tag="v$version"
           release_tag="${INPUT_TAG_NAME:-$expected_tag}"
           test "$release_tag" = "$expected_tag"
           echo "RELEASE_VERSION=$version" >> "$GITHUB_ENV"
+          echo "RELEASE_CODE=$version_code" >> "$GITHUB_ENV"
           echo "RELEASE_TAG=$release_tag" >> "$GITHUB_ENV"
 
       - name: Prepare signing
@@ -215,13 +218,27 @@ jobs:
           test -n "$build_tools"
           "$build_tools/zipalign" -c -P 16 -v 4 "$apk"
           "$build_tools/apksigner" verify --verbose --print-certs "$apk"
+          apk_application_id="$("$ANDROID_HOME/cmdline-tools/latest/bin/apkanalyzer" manifest application-id "$apk")"
           apk_version="$("$ANDROID_HOME/cmdline-tools/latest/bin/apkanalyzer" manifest version-name "$apk")"
+          apk_code="$("$ANDROID_HOME/cmdline-tools/latest/bin/apkanalyzer" manifest version-code "$apk")"
+          test "$apk_application_id" = "dev.typetype.android"
           test "$apk_version" = "$RELEASE_VERSION"
+          test "$apk_code" = "$RELEASE_CODE"
           cp "$apk" "artifacts/TypeType-$RELEASE_TAG.apk"
           (
             cd artifacts
             sha256sum "TypeType-$RELEASE_TAG.apk" \
               > "TypeType-$RELEASE_TAG.apk.sha256"
+            apk_sha256="$(cut -d ' ' -f1 "TypeType-$RELEASE_TAG.apk.sha256")"
+            jq -n \
+              --arg channel stable \
+              --arg packageName dev.typetype.android \
+              --arg versionName "$RELEASE_VERSION" \
+              --argjson versionCode "$RELEASE_CODE" \
+              --arg apkAsset "TypeType-$RELEASE_TAG.apk" \
+              --arg sha256 "$apk_sha256" \
+              '{schemaVersion:1,channel:$channel,packageName:$packageName,versionName:$versionName,versionCode:$versionCode,apkAsset:$apkAsset,sha256:$sha256}' \
+              > typetype-update.json
           )
 
       - name: Upload release APK
@@ -231,6 +248,7 @@ jobs:
           path: |
             artifacts/*.apk
             artifacts/*.sha256
+            artifacts/typetype-update.json
           if-no-files-found: error
           compression-level: 0
           retention-days: 30
@@ -244,4 +262,5 @@ jobs:
           files: |
             artifacts/*.apk
             artifacts/*.sha256
+            artifacts/typetype-update.json
           fail_on_unmatched_files: true
