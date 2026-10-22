@@ -49,6 +49,7 @@ import coil3.compose.AsyncImage
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
 import dev.typetype.android.core.ui.share.buildImageUrl
+import dev.typetype.android.core.ui.util.knownCountOrNull
 import dev.typetype.android.domain.channel.Channel
 
 private val BannerAspectRatio = 16f / 6f
@@ -150,12 +151,14 @@ private fun ChannelHeaderContent(
             )
             Column(modifier = Modifier.weight(1f)) {
                 ChannelName(channel, expanded)
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    text = formatSubscribers(channel.subscriberCount),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                channel.subscriberCount.knownCountOrNull()?.let { subscriberCount ->
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = formatSubscribers(subscriberCount),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
             if (notificationsAvailable) {
                 IconButton(
