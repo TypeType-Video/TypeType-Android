@@ -34,6 +34,7 @@ import coil3.compose.AsyncImage
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
 import dev.typetype.android.core.ui.share.buildImageUrl
+import dev.typetype.android.core.ui.util.knownCountOrNull
 import dev.typetype.android.domain.search.SearchChannel
 import dev.typetype.android.domain.search.SearchPlaylist
 import java.text.NumberFormat
@@ -80,16 +81,17 @@ fun SearchChannelCard(
             }
             Text(
                 text = when {
-                    channel.subscriberCount >= 0 && channel.streamCount >= 0 -> stringResource(
+                    channel.subscriberCount.knownCountOrNull() != null &&
+                        channel.streamCount.knownCountOrNull() != null -> stringResource(
                         R.string.search_channel_metadata,
                         formatCount(channel.subscriberCount),
                         formatCount(channel.streamCount),
                     )
-                    channel.subscriberCount >= 0 -> stringResource(
+                    channel.subscriberCount.knownCountOrNull() != null -> stringResource(
                         R.string.search_channel_metadata_subscribers_only,
                         formatCount(channel.subscriberCount),
                     )
-                    channel.streamCount >= 0 -> stringResource(
+                    channel.streamCount.knownCountOrNull() != null -> stringResource(
                         R.string.search_channel_videos_count,
                         formatCount(channel.streamCount),
                     )
@@ -118,7 +120,7 @@ fun SearchPlaylistCard(
     modifier: Modifier = Modifier,
 ) {
     val serverBaseUrl = LocalServerBaseUrl.current
-    val countLabel = displayablePlaylistStreamCount(playlist.streamCount)?.let {
+    val countLabel = playlist.streamCount.knownCountOrNull()?.let {
         stringResource(R.string.search_playlist_video_count, formatCount(it))
     } ?: stringResource(R.string.search_playlist_type)
     Column(
@@ -178,5 +180,3 @@ fun SearchPlaylistCard(
 }
 
 private fun formatCount(value: Long): String = NumberFormat.getIntegerInstance().format(value)
-
-internal fun displayablePlaylistStreamCount(value: Long): Long? = value.takeIf { it >= 0L }

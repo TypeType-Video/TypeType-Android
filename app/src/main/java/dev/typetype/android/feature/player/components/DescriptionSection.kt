@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.compose.ui.unit.sp
+import dev.typetype.android.core.ui.util.knownCountOrNull
 import dev.typetype.android.domain.navigation.sameVideoTimestampMillis
 import java.text.DateFormat
 import java.util.Date
@@ -86,17 +87,20 @@ fun DescriptionSection(
             Spacer(Modifier.height(6.dp))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                VideoStat(
-                    value = formatCompact(viewCount),
-                    icon = Icons.Outlined.Visibility,
-                    contentDescription = stringResource(
-                        dev.typetype.android.R.string.player_views_count,
-                        formatCompact(viewCount),
-                    ),
-                )
+                viewCount.knownCountOrNull()?.let { knownViews ->
+                    val formattedViews = formatCompact(knownViews)
+                    VideoStat(
+                        value = formattedViews,
+                        icon = Icons.Outlined.Visibility,
+                        contentDescription = stringResource(
+                            dev.typetype.android.R.string.player_views_count,
+                            formattedViews,
+                        ),
+                    )
+                }
                 if (likeCount > 0) {
-                    Spacer(Modifier.width(16.dp))
                     VideoStat(
                         value = formatCompact(likeCount),
                         icon = Icons.Outlined.ThumbUp,
@@ -107,7 +111,6 @@ fun DescriptionSection(
                     )
                 }
                 releaseDate?.let {
-                    Spacer(Modifier.width(16.dp))
                     VideoStat(
                         value = it,
                         icon = Icons.Outlined.Event,

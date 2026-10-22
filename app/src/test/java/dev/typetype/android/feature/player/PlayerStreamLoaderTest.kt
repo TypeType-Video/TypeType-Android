@@ -1,5 +1,6 @@
 package dev.typetype.android.feature.player
 
+import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.stream.StreamPlaybackContract
 import dev.typetype.android.domain.stream.StreamRequestScope
@@ -157,11 +158,35 @@ class PlayerStreamLoaderTest {
         assertEquals(1, metadataRequests.get())
     }
 
+    @Test
+    fun `empty bootstrap related videos trigger metadata retries`() = runBlocking {
+        val metadataRequests = AtomicInteger()
+        val updates = loadProgressiveStream(
+            loadPlayback = { Result.success(stream("Bootstrap")) },
+            loadMetadata = {
+                val request = metadataRequests.incrementAndGet()
+                val related = if (request == 1) {
+                    emptyList()
+                } else {
+                    listOf(relatedVideo())
+                }
+                Result.success(stream("Detailed", related = related))
+            },
+            loadProgress = { 0L },
+            retryDelay = {},
+        ).take(3).toList()
+
+        val retried = updates[2] as PlayerStreamUpdate.MetadataEnriched
+        assertEquals(2, metadataRequests.get())
+        assertEquals(listOf("related"), retried.stream.relatedStreams.map(Video::id))
+    }
+
     private fun stream(
         title: String,
         accountId: String = "account",
         uploaderUrl: String = "",
         subscriberCount: Long = -1L,
+        related: List<Video> = emptyList(),
     ) = Stream(
         playbackContract = StreamPlaybackContract.ServerSabr,
         id = "video",
@@ -185,5 +210,23 @@ class PlayerStreamLoaderTest {
         serverHlsManifestUrl = null,
         requestScope = StreamRequestScope("server", accountId, "https://instance.example/api/"),
         startPositionMillis = 0L,
+        relatedStreams = related,
+    )
+
+    private fun relatedVideo() = Video(
+        id = "related",
+        url = "https://www.youtube.com/watch?v=related",
+        title = "Related",
+        thumbnailUrl = "",
+        uploaderName = "Channel",
+        uploaderUrl = "",
+        uploaderAvatarUrl = "",
+        uploaderVerified = false,
+        durationSeconds = 60L,
+        isLive = false,
+        viewCount = 1L,
+        uploadedAtMillis = -1L,
+        isShortFormContent = false,
+        shortDescription = null,
     )
 }
