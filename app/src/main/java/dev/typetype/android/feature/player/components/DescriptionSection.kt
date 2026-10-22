@@ -89,17 +89,19 @@ fun DescriptionSection(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                viewCount.knownCountOrNull()?.let { knownViews ->
-                    val formattedViews = formatCompact(knownViews)
-                    VideoStat(
-                        value = formattedViews,
-                        icon = Icons.Outlined.Visibility,
-                        contentDescription = stringResource(
+                val knownViews = viewCount.knownCountOrNull()
+                val formattedViews = knownViews?.let(::formatCompact)
+                    ?: stringResource(dev.typetype.android.R.string.video_views_hidden_by_provider)
+                VideoStat(
+                    value = formattedViews,
+                    icon = Icons.Outlined.Visibility,
+                    contentDescription = knownViews?.let {
+                        stringResource(
                             dev.typetype.android.R.string.player_views_count,
-                            formattedViews,
-                        ),
-                    )
-                }
+                            formatCompact(it),
+                        )
+                    } ?: formattedViews,
+                )
                 if (likeCount > 0) {
                     VideoStat(
                         value = formatCompact(likeCount),

@@ -15,11 +15,13 @@ class DescriptionSectionCountTest {
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun unknownViewCountIsHidden() {
+    fun unknownViewCountExplainsProviderLimit() {
         setDescription(viewCount = -1)
 
         composeRule.onNodeWithText("-1").assertDoesNotExist()
-        composeRule.onNodeWithContentDescription(viewsLabel("-1")).assertDoesNotExist()
+        composeRule.onNodeWithText(
+            composeRule.activity.getString(R.string.video_views_hidden_by_provider),
+        ).assertIsDisplayed()
     }
 
     @Test
@@ -27,7 +29,9 @@ class DescriptionSectionCountTest {
         setDescription(viewCount = 0)
 
         composeRule.onNodeWithText("0").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription(viewsLabel("0")).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(
+            composeRule.activity.getString(R.string.player_views_count, "0"),
+        ).assertIsDisplayed()
     }
 
     private fun setDescription(viewCount: Long) {
@@ -45,7 +49,4 @@ class DescriptionSectionCountTest {
             }
         }
     }
-
-    private fun viewsLabel(count: String): String =
-        composeRule.activity.getString(R.string.player_views_count, count)
 }

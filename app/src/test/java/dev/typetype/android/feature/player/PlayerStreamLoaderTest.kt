@@ -170,7 +170,7 @@ class PlayerStreamLoaderTest {
                 } else {
                     listOf(relatedVideo())
                 }
-                Result.success(stream("Detailed", related = related))
+                Result.success(stream("Detailed", related = related, viewCount = 42L))
             },
             loadProgress = { 0L },
             retryDelay = {},
@@ -181,12 +181,37 @@ class PlayerStreamLoaderTest {
         assertEquals(listOf("related"), retried.stream.relatedStreams.map(Video::id))
     }
 
+    @Test
+    fun `unknown bootstrap view count is recovered from metadata`() = runBlocking {
+        val metadataRequests = AtomicInteger()
+        val updates = loadProgressiveStream(
+            loadPlayback = { Result.success(stream("Bootstrap", viewCount = -1L)) },
+            loadMetadata = {
+                val request = metadataRequests.incrementAndGet()
+                Result.success(
+                    stream(
+                        "Detailed",
+                        viewCount = if (request == 1) -1L else 42L,
+                        related = listOf(relatedVideo()),
+                    ),
+                )
+            },
+            loadProgress = { 0L },
+            retryDelay = {},
+        ).take(3).toList()
+
+        val recovered = updates[2] as PlayerStreamUpdate.MetadataEnriched
+        assertEquals(2, metadataRequests.get())
+        assertEquals(42L, recovered.stream.viewCount)
+    }
+
     private fun stream(
         title: String,
         accountId: String = "account",
         uploaderUrl: String = "",
         subscriberCount: Long = -1L,
         related: List<Video> = emptyList(),
+        viewCount: Long = -1L,
     ) = Stream(
         playbackContract = StreamPlaybackContract.ServerSabr,
         id = "video",
@@ -199,7 +224,7 @@ class PlayerStreamLoaderTest {
         thumbnailUrl = "",
         description = "",
         durationSeconds = 120L,
-        viewCount = -1L,
+        viewCount = viewCount,
         likeCount = -1L,
         dislikeCount = -1L,
         uploadedAtMillis = -1L,
