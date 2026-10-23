@@ -50,6 +50,16 @@ class PlaybackErrorClassifierTest {
     }
 
     @Test
+    fun `classifies gateway failures as temporary instance outage`() {
+        listOf(502, 503, 504).forEach { status ->
+            assertEquals(
+                PlaybackFailureKind.ServerUnavailable,
+                classifyHttpPlaybackFailure(responseBody = null, statusCode = status),
+            )
+        }
+    }
+
+    @Test
     fun `reads a safe request id from response headers`() {
         val result = requestIdFromHeaders(mapOf("x-request-id" to listOf("req-123:retry")))
 

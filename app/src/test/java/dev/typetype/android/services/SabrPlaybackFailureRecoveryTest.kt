@@ -15,12 +15,24 @@ import org.junit.Test
 class SabrPlaybackFailureRecoveryTest {
     @Test
     fun `only session recovery HTTP statuses are accepted`() {
-        listOf(202, 404, 409, 410).forEach { status ->
+        listOf(202, 404, 409, 410, 502, 503, 504).forEach { status ->
             assertTrue(status.isRecoverableSabrSessionStatus())
         }
-        listOf(400, 401, 403, 429, 500, 503).forEach { status ->
+        listOf(400, 401, 403, 429, 500).forEach { status ->
             assertFalse(status.isRecoverableSabrSessionStatus())
         }
+    }
+
+    @Test
+    fun `gateway failures and missing SABR session use reconnect recovery`() {
+        listOf(502, 503, 504).forEach { status ->
+            assertTrue(serverFailure(status).isRecoverableSabrInstanceInterruption())
+        }
+        assertTrue(
+            serverFailure(404, "sabr_playback_not_found")
+                .isRecoverableSabrInstanceInterruption(),
+        )
+        assertFalse(serverFailure(404, "video_not_found").isRecoverableSabrInstanceInterruption())
     }
 
     @Test
@@ -219,6 +231,10 @@ class SabrPlaybackFailureRecoveryTest {
         videoItag = 137,
         audioItag = 140,
         audioTrackId = "en.0",
+    )
+
+    private fun serverFailure(status: Int, code: String? = null) = ServerResponseException(
+        ServerError("server failure", code, status),
     )
 
     private fun exhaustedGate() = SabrPlaybackRecoveryGate().apply {

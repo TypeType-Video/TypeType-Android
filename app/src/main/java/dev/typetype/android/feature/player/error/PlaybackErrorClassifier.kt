@@ -13,6 +13,7 @@ enum class PlaybackFailureKind {
     YouTubeSessionRequired,
     SabrServerContract,
     SabrRecoveryExhausted,
+    ServerUnavailable,
     MediaDelivery,
     Network,
     UnsupportedFormat,
@@ -71,6 +72,7 @@ internal fun classifyHttpPlaybackFailure(
         statusCode == 401 -> PlaybackFailureKind.AuthenticationExpired
         statusCode == 404 || statusCode == 410 -> PlaybackFailureKind.PlaybackSessionExpired
         statusCode == 409 -> PlaybackFailureKind.PlaybackGenerationChanged
+        statusCode in TRANSIENT_SERVER_STATUS_CODES -> PlaybackFailureKind.ServerUnavailable
         isYouTubeSessionRequiredMessage(responseBody) -> PlaybackFailureKind.YouTubeSessionRequired
         else -> PlaybackFailureKind.MediaDelivery
     }
@@ -116,6 +118,7 @@ private fun Throwable.findHttpFailure(): HttpDataSource.InvalidResponseCodeExcep
 
 private const val MAX_RESPONSE_BODY_BYTES = 8_192
 private const val MAX_CAUSE_DEPTH = 8
+private val TRANSIENT_SERVER_STATUS_CODES = setOf(502, 503, 504)
 private const val REQUEST_ID_HEADER = "X-Request-ID"
 private const val SABR_CONTRACT_FAILURE_CODE = "youtube_sabr_contract_mismatch"
 private const val SABR_RECOVERY_EXHAUSTED_FAILURE_CODE = "youtube_sabr_recovery_exhausted"
