@@ -49,9 +49,14 @@ internal fun SabrPlaybackResponse.windowRequest(
     audioItag = audioItag,
     audioTrackId = audioTrackId,
     playbackRate = playbackRate.sanitizedPlaybackRate(),
-    bufferGoalMs = playbackRate.rateAwareBufferGoalMs(
-        isLive,
-        hasBufferedPlayback(ranges, playerTimeMs, audioOnly),
+    bufferGoalMs = requestedBufferGoalMs(
+        videoItag = videoItag,
+        audioItag = audioItag,
+        audioOnly = audioOnly,
+        isLive = isLive,
+        ranges = ranges,
+        playerTimeMs = playerTimeMs,
+        playbackRate = playbackRate,
     ),
     bufferedRanges = ranges.map {
         SabrPlaybackBufferedRangeDto(it.itag, it.startMs, it.endMs)
@@ -67,6 +72,33 @@ internal fun SabrPlaybackWindowResponseDto.requireWindowIdentity(
     }
     return this
 }
+
+internal fun SabrPlaybackTarget.requestedBufferGoalMs(
+    ranges: List<SabrPlaybackBufferedRange>,
+    playerTimeMs: Long,
+    playbackRate: Float,
+): Long = requestedBufferGoalMs(
+    videoItag = videoItag,
+    audioItag = audioItag,
+    audioOnly = audioOnly,
+    isLive = isLive,
+    ranges = ranges,
+    playerTimeMs = playerTimeMs,
+    playbackRate = playbackRate,
+)
+
+private fun requestedBufferGoalMs(
+    videoItag: Int,
+    audioItag: Int,
+    audioOnly: Boolean,
+    isLive: Boolean,
+    ranges: List<SabrPlaybackBufferedRange>,
+    playerTimeMs: Long,
+    playbackRate: Float,
+): Long = playbackRate.rateAwareBufferGoalMs(
+    isLive,
+    hasBufferedPlayback(videoItag, audioItag, audioOnly, ranges, playerTimeMs),
+)
 
 internal fun SabrPlaybackWindowResponseDto.throwTerminalFailure() {
     val message = terminalError?.takeIf { it.isNotBlank() } ?: return
@@ -145,10 +177,12 @@ private fun Float.rateAwareBufferGoalMs(isLive: Boolean, hasBufferedPlayback: Bo
         .toLong()
         .coerceAtMost(MAX_BUFFER_GOAL_MS)
 
-private fun SabrPlaybackResponse.hasBufferedPlayback(
+private fun hasBufferedPlayback(
+    videoItag: Int,
+    audioItag: Int,
+    audioOnly: Boolean,
     ranges: List<SabrPlaybackBufferedRange>,
     playerTimeMs: Long,
-    audioOnly: Boolean,
 ): Boolean {
     val requiredItags = listOfNotNull(videoItag.takeUnless { audioOnly }, audioItag)
     return requiredItags.isNotEmpty() && requiredItags.all { itag ->
