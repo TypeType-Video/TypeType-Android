@@ -48,6 +48,9 @@ internal class TypeTypeMediaPeriod(
     private var loader: SequenceableLoader = DefaultCompositeSequenceableLoaderFactory().empty()
     private var callback: MediaPeriod.Callback? = null
     private var released = false
+    private val refreshCadence = PlaybackWindowRefreshCadence()
+    private var availableWindowAheadUs =
+        initialWindow.availableWindowAheadUs(playbackPositionUs())
     private val refreshPlaybackWindow = object : Runnable {
         override fun run() {
             pollPlaybackWindow()
@@ -106,6 +109,10 @@ internal class TypeTypeMediaPeriod(
     override fun readDiscontinuity(): Long = C.TIME_UNSET
 
     override fun seekToUs(positionUs: Long): Long {
+        refreshCadence.reset()
+        availableWindowAheadUs = coordinator.window
+            ?.availableWindowAheadUs(positionUs)
+            ?: 0L
         val bufferedStartUs = retainedPlaybackStartUs(
             streams.map { it.chunkSource.bufferedStartPositionUs },
         )
@@ -145,6 +152,15 @@ internal class TypeTypeMediaPeriod(
 
     override fun onWindowAvailable(window: PlaybackWindow) {
         try {
+            val nextAvailableAheadUs = window.availableWindowAheadUs(playbackPositionUs())
+            if (window.live?.active != true) {
+                refreshCadence.onWindowAvailable(
+                    previousAheadUs = availableWindowAheadUs,
+                    nextAheadUs = nextAvailableAheadUs,
+                    refreshThresholdUs = playbackWindowRefreshThresholdUs(window.bufferGoalUs),
+                )
+            }
+            availableWindowAheadUs = nextAvailableAheadUs
             streams.forEach { it.chunkSource.update(window) }
             callback?.onContinueLoadingRequested(this)
         } catch (failure: IOException) {
@@ -211,6 +227,7 @@ internal class TypeTypeMediaPeriod(
                 playbackPositionUs = positionUs,
                 bufferedEndUs = bufferedEndUs,
                 availableEndUs = availableEndUs,
+                bufferGoalUs = window.bufferGoalUs,
                 endOfStream = window.endOfStream,
                 activeLive = window.live?.active == true,
             )
@@ -223,7 +240,7 @@ internal class TypeTypeMediaPeriod(
         if (coordinator.window?.live?.active == true) {
             LIVE_WINDOW_POLL_INTERVAL_MS
         } else {
-            WINDOW_POLL_INTERVAL_MS
+            refreshCadence.pollIntervalMs
         }
 
     private fun requestWindow(playbackPositionUs: Long, bufferedEndUs: Long) {
@@ -248,9 +265,6 @@ internal class TypeTypeMediaPeriod(
         coordinator.load(playbackPositionUs, ranges)
     }
 
-    private companion object {
-        const val WINDOW_POLL_INTERVAL_MS = 500L
-    }
 }
 
 internal fun shouldRefreshPlaybackWindow(
@@ -258,18 +272,24 @@ internal fun shouldRefreshPlaybackWindow(
     bufferedEndUs: Long,
     availableEndUs: Long,
     endOfStream: Boolean,
+    bufferGoalUs: Long = DEFAULT_VOD_BUFFER_GOAL_US,
     activeLive: Boolean = false,
 ): Boolean {
     if (endOfStream) return false
-    val refreshThresholdUs = if (activeLive) {
-        LIVE_WINDOW_REFRESH_THRESHOLD_US
-    } else {
-        WINDOW_REFRESH_THRESHOLD_US
-    }
+    val refreshThresholdUs = playbackWindowRefreshThresholdUs(bufferGoalUs, activeLive)
     val bufferedAheadUs = bufferedEndUs - playbackPositionUs
     val availableAheadUs = availableEndUs - playbackPositionUs
     return bufferedAheadUs < refreshThresholdUs &&
         availableAheadUs < refreshThresholdUs
+}
+
+internal fun playbackWindowRefreshThresholdUs(
+    bufferGoalUs: Long,
+    activeLive: Boolean = false,
+): Long = if (activeLive) {
+    LIVE_WINDOW_REFRESH_THRESHOLD_US
+} else {
+    (bufferGoalUs / VOD_REFRESH_WATERMARK_DIVISOR).coerceAtLeast(1L)
 }
 
 internal fun playbackBufferStartUs(
@@ -302,6 +322,7 @@ internal fun retainedPlaybackStartUs(trackStartsUs: List<Long>): Long =
 
 private const val LOCAL_SEEK_END_MARGIN_US = 250_000L
 private const val BACK_BUFFER_US = 30_000_000L
-private const val WINDOW_REFRESH_THRESHOLD_US = 20_000_000L
+private const val DEFAULT_VOD_BUFFER_GOAL_US = 10_000_000L
+private const val VOD_REFRESH_WATERMARK_DIVISOR = 2L
 private const val LIVE_WINDOW_REFRESH_THRESHOLD_US = 5_000_000L
 private const val LIVE_WINDOW_POLL_INTERVAL_MS = 250L

@@ -8,10 +8,10 @@ import org.junit.Test
 
 class SabrLoadErrorHandlingPolicyTest {
     @Test
-    fun `segment readiness polling is bounded to sixty requests`() {
+    fun `segment readiness polling is bounded to nine requests`() {
         assertEquals(250L, sabrSegmentRetryDelayMs(1, 250L))
-        assertEquals(250L, sabrSegmentRetryDelayMs(59, 250L))
-        assertEquals(C.TIME_UNSET, sabrSegmentRetryDelayMs(60, 250L))
+        assertEquals(250L, sabrSegmentRetryDelayMs(8, 250L))
+        assertEquals(C.TIME_UNSET, sabrSegmentRetryDelayMs(9, 250L))
     }
 
     @Test

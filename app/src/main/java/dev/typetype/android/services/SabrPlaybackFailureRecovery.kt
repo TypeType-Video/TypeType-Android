@@ -131,6 +131,30 @@ internal fun Throwable.isRecoverableSabrSessionFailure(): Boolean {
     return false
 }
 
+internal fun Throwable.isRecoverableSabrInstanceInterruption(): Boolean {
+    var current: Throwable? = this
+    repeat(MAX_CAUSE_DEPTH) {
+        val coded = current as? CodedFailure
+        if (
+            coded?.failureCode == MISSING_SABR_SESSION_CODE ||
+            coded?.statusCode in TRANSIENT_SERVER_STATUS_CODES
+        ) {
+            return true
+        }
+        val response = current as? HttpDataSource.InvalidResponseCodeException
+        if (response?.isTransientSabrPayloadFailure() == true) {
+            return true
+        }
+        current = current?.cause?.takeUnless { it === current }
+    }
+    return false
+}
+
+@androidx.annotation.OptIn(markerClass = [UnstableApi::class])
+private fun HttpDataSource.InvalidResponseCodeException.isTransientSabrPayloadFailure(): Boolean =
+    responseCode in TRANSIENT_SERVER_STATUS_CODES &&
+        dataSpec.uri.pathSegments.isSabrPlaybackPayloadPath()
+
 private fun Throwable.sabrPlaybackRecoveryExhaustedFailure():
     SabrPlaybackRecoveryExhaustedException? {
     var current: Throwable? = this
@@ -180,11 +204,13 @@ internal fun Throwable.sabrSessionReplacementFailure():
 internal fun Int.isRecoverableSabrSessionStatus(): Boolean =
     this in RECOVERABLE_SESSION_STATUS_CODES
 
-private val RECOVERABLE_SESSION_STATUS_CODES = setOf(202, 404, 409, 410)
+private val RECOVERABLE_SESSION_STATUS_CODES = setOf(202, 404, 409, 410, 502, 503, 504)
+private val TRANSIENT_SERVER_STATUS_CODES = setOf(502, 503, 504)
 private val RECOVERABLE_WINDOW_ACTIONS = setOf(
     "retry_fresh_session",
     "retry_fresh_session_lower_video_itag",
 )
+private const val MISSING_SABR_SESSION_CODE = "sabr_playback_not_found"
 private const val MAX_SESSION_RECOVERIES = 2
 private const val MAX_CAUSE_DEPTH = 8
 private const val STABLE_PLAYBACK_RESET_MS = 30_000L

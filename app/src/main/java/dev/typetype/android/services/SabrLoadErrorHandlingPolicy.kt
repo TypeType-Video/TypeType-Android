@@ -18,6 +18,7 @@ internal class SabrLoadErrorHandlingPolicy(
     network: PlaybackNetworkObserver = AlwaysAvailablePlaybackNetworkObserver,
 ) : LoadErrorHandlingPolicy {
     private val transportRetryBudget = PlaybackLoadRetryBudget(network)
+    private val segmentRetryBudget = SabrSegmentRetryBudget()
 
     override fun getFallbackSelectionFor(
         fallbackOptions: LoadErrorHandlingPolicy.FallbackOptions,
@@ -34,10 +35,11 @@ internal class SabrLoadErrorHandlingPolicy(
                 response.responseCode == SABR_RETRY_RESPONSE_CODE &&
                 response.dataSpec.uri.pathSegments.isSabrPlaybackPayloadPath()
             ) {
-                return sabrSegmentRetryDelayMs(
+                return segmentRetryBudget.retryDelayMs(
+                    loadTaskId = loadErrorInfo.loadEventInfo.loadTaskId,
                     errorCount = loadErrorInfo.errorCount,
                     requestedDelayMs = response.responseBody.sabrResponseRetryAfterMs(),
-                )
+                ) ?: C.TIME_UNSET
             }
             if (isTransientHttpStatus(response.responseCode)) {
                 return transientHttpRetryDelayMs(
@@ -60,6 +62,7 @@ internal class SabrLoadErrorHandlingPolicy(
 
     override fun onLoadTaskConcluded(loadTaskId: Long) {
         transportRetryBudget.conclude(loadTaskId)
+        segmentRetryBudget.conclude(loadTaskId)
         delegate.onLoadTaskConcluded(loadTaskId)
     }
 }
@@ -102,7 +105,7 @@ private fun Throwable.hasFailureCode(code: String): Boolean {
 internal fun sabrSegmentRetryDelayMs(errorCount: Int, requestedDelayMs: Long?): Long =
     boundedRetryDelayMs(
         errorCount = errorCount,
-        maximumRetries = MAX_SEGMENT_RETRIES,
+        maximumRetries = MAX_SABR_SEGMENT_RETRIES,
         requestedDelayMs = requestedDelayMs,
         defaultDelayMs = DEFAULT_SABR_RETRY_MS,
         minimumDelayMs = MIN_SABR_RETRY_MS,
@@ -131,5 +134,4 @@ private const val DEFAULT_SABR_RETRY_MS = 250L
 private const val MIN_SABR_RETRY_MS = 100L
 private const val MAX_SEGMENT_RETRY_DELAY_MS = 3_000L
 private const val MAX_CAUSE_DEPTH = 8
-private const val MAX_SEGMENT_RETRIES = 59
 private const val MAX_MEDIA_LOAD_RETRIES = 24

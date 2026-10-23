@@ -38,7 +38,7 @@ internal class SabrPlaybackServiceBridge(
     )
     private val recoveryGate = SabrPlaybackRecoveryGate()
     private val networkRecoveryGate = PlaybackNetworkRecoveryGate()
-    private val liveFollower = LivePlaybackFollower()
+    private val liveFollower = SabrLivePlaybackFollower(player)
     private var activeBinding: SabrPlaybackBinding? = null
     private var networkRetryJob: Job? = null
 
@@ -90,7 +90,7 @@ internal class SabrPlaybackServiceBridge(
                         nowMs = SystemClock.elapsedRealtime(),
                     )
                 }
-                followLiveEdge()
+                liveFollower.followEdge()
                 delay(PLAYBACK_CLOCK_INTERVAL_MS)
             }
         }
@@ -127,6 +127,13 @@ internal class SabrPlaybackServiceBridge(
     }
 
     override fun onPlayerError(error: PlaybackException) {
+        if (error.isRecoverableSabrInstanceInterruption()) {
+            val mediaId = player.currentMediaItem?.mediaId ?: return
+            scheduleNetworkRecovery(
+                networkRecoveryGate.failed(mediaId, networkMonitor.snapshot()),
+            )
+            return
+        }
         if (!error.isRecoverableSabrSessionFailure()) {
             if (error.isNetworkPlaybackFailure()) {
                 val mediaId = player.currentMediaItem?.mediaId ?: return
@@ -195,11 +202,7 @@ internal class SabrPlaybackServiceBridge(
         reason: Int,
     ) {
         if (reason != Player.DISCONTINUITY_REASON_SEEK) return
-        liveFollower.observeSeek(
-            currentMediaId = player.currentMediaItem?.mediaId,
-            positionMs = newPosition.positionMs,
-            targetMs = player.currentLiveTargetPositionMs(),
-        )
+        liveFollower.observeSeek(newPosition.positionMs)
     }
 
     override fun onRecoveryRequired(
@@ -297,20 +300,6 @@ internal class SabrPlaybackServiceBridge(
         player.stop()
         player.prepare()
         player.playWhenReady = playWhenReady
-    }
-
-    private fun followLiveEdge() {
-        val mediaId = player.currentMediaItem?.mediaId
-        val targetMs = player.currentLiveTargetPositionMs()
-        liveFollower.initialize(mediaId, player.currentPosition, targetMs)
-        liveFollower.nextTarget(
-            currentMediaId = mediaId,
-            positionMs = player.currentPosition,
-            targetMs = targetMs,
-            playing = player.isPlaying,
-            busy = player.playbackState != Player.STATE_READY || player.isLoading,
-            nowMs = SystemClock.elapsedRealtime(),
-        )?.let(player::seekTo)
     }
 
     override fun close() {

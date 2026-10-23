@@ -98,6 +98,7 @@ private fun PlaybackFailureKind.messageResource(): Int = when (this) {
     PlaybackFailureKind.YouTubeSessionRequired -> R.string.state_youtube_session_required_message
     PlaybackFailureKind.SabrServerContract -> R.string.state_sabr_server_contract_failed
     PlaybackFailureKind.SabrRecoveryExhausted -> R.string.state_sabr_recovery_exhausted
+    PlaybackFailureKind.ServerUnavailable -> R.string.state_playback_server_unavailable
     PlaybackFailureKind.MediaDelivery -> R.string.state_media_delivery_failed
     PlaybackFailureKind.Network -> R.string.state_playback_network_failed
     PlaybackFailureKind.UnsupportedFormat -> R.string.state_playback_format_unsupported

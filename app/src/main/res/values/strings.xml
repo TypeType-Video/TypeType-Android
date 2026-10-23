@@ -1013,8 +1013,9 @@
     <string name="state_sabr_server_contract_failed">This instance returned an invalid SABR playback window. Update the server to continue playback.</string>
     <string name="state_sabr_recovery_exhausted">The server stopped providing media for this video. TypeType tried lower compatible qualities, but playback could not continue.</string>
     <string name="state_media_delivery_failed">This instance could not deliver the media. Retry to request a fresh source.</string>
-    <string name="state_playback_session_expired">The playback session expired or was lost. Retry to request a fresh stream.</string>
+    <string name="state_playback_session_expired">The TypeType instance no longer has this playback session. TypeType is reconnecting from your current position. Choose Retry to request a fresh stream now.</string>
     <string name="state_playback_generation_changed">The playback selection changed. Retry to reload the current stream.</string>
+    <string name="state_playback_server_unavailable">The TypeType instance is temporarily unavailable. TypeType will keep retrying and resume from your current position when it is back.</string>
     <string name="state_playback_network_failed">The connection was interrupted while loading the media.</string>
     <string name="state_playback_format_unsupported">This device could not decode the selected media format.</string>
     <string name="state_playback_cleartext_blocked">Android blocked an insecure media connection.</string>
