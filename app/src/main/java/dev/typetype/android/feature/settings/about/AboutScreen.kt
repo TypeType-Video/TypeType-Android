@@ -32,7 +32,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.typetype.android.app.BuildConfig
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.SectionHeader
 import dev.typetype.android.core.ui.components.KomiStoreAttribution
@@ -56,7 +55,7 @@ fun AboutScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                item { AppHeader() }
+                item { AppHeader(viewModel.versionName) }
                 item { Spacer(Modifier.size(8.dp)) }
                 item { SectionHeader(stringResource(R.string.about_section_app)) }
                 item {
@@ -65,7 +64,7 @@ fun AboutScreen(
                             label = stringResource(R.string.about_app_name),
                             value = stringResource(R.string.app_name),
                         )
-                        InfoRow(label = stringResource(R.string.about_version), value = BuildConfig.VERSION_NAME)
+                        InfoRow(label = stringResource(R.string.about_version), value = viewModel.versionName)
                         InfoRow(
                             label = stringResource(R.string.about_license),
                             value = stringResource(R.string.about_license_value),
@@ -122,7 +121,7 @@ fun AboutScreen(
 }
 
 @Composable
-private fun AppHeader() {
+private fun AppHeader(versionName: String) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -148,7 +147,7 @@ private fun AppHeader() {
                 color = MaterialTheme.colorScheme.onBackground,
             )
             Text(
-                text = BuildConfig.VERSION_NAME,
+                text = versionName,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

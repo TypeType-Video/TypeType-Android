@@ -40,12 +40,12 @@ import dev.typetype.android.core.ui.components.DropdownRow
 import dev.typetype.android.core.ui.components.ServiceRow
 import dev.typetype.android.core.ui.components.SettingsSectionHeader
 import dev.typetype.android.core.ui.components.SwitchRow
+import dev.typetype.android.domain.preferences.AV1_CODEC_KEY
+import dev.typetype.android.domain.preferences.H264_CODEC_KEY
 import dev.typetype.android.domain.preferences.PLAYBACK_MOBILE_QUALITY_OPTIONS
 import dev.typetype.android.domain.preferences.PLAYBACK_QUALITY_OPTIONS
-import dev.typetype.android.feature.player.AV1_CODEC_KEY
-import dev.typetype.android.feature.player.H264_CODEC_KEY
-import dev.typetype.android.feature.player.RECOMMENDED_CODEC_KEY
-import dev.typetype.android.feature.player.VP9_CODEC_KEY
+import dev.typetype.android.domain.preferences.RECOMMENDED_CODEC_KEY
+import dev.typetype.android.domain.preferences.VP9_CODEC_KEY
 import dev.typetype.android.feature.settings.SettingsDetailTopBar
 
 private val AUTOPLAY_COUNTDOWN_OPTIONS = listOf(0, 5, 10, 15, 30, 60)

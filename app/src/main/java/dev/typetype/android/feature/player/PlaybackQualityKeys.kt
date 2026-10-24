@@ -1,15 +1,14 @@
 package dev.typetype.android.feature.player
 
+import dev.typetype.android.domain.preferences.AV1_CODEC_KEY
+import dev.typetype.android.domain.preferences.H264_CODEC_KEY
+import dev.typetype.android.domain.preferences.HEVC_CODEC_KEY
+import dev.typetype.android.domain.preferences.OTHER_CODEC_KEY
+import dev.typetype.android.domain.preferences.VP9_CODEC_KEY
 import dev.typetype.android.domain.stream.StreamVideoSource
 
 internal const val AUTO_QUALITY_KEY = "auto"
 internal const val RECOMMENDED_QUALITY_KEY = "recommended"
-internal const val RECOMMENDED_CODEC_KEY = "recommended"
-internal const val H264_CODEC_KEY = "h264"
-internal const val HEVC_CODEC_KEY = "hevc"
-internal const val VP9_CODEC_KEY = "vp9"
-internal const val AV1_CODEC_KEY = "av1"
-internal const val OTHER_CODEC_KEY = "other"
 private const val VIDEO_ITAG_PREFIX = "itag:"
 private const val VIDEO_FORMAT_PREFIX = "format:"
 

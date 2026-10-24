@@ -22,8 +22,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
@@ -38,10 +38,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.Player
 import dev.typetype.android.R
+import dev.typetype.android.domain.preferences.RECOMMENDED_CODEC_KEY
 import dev.typetype.android.domain.stream.StreamPlaybackContract
 import dev.typetype.android.feature.player.components.LocalMediaController
-import dev.typetype.android.feature.player.components.PlaybackOptionsSheet
 import dev.typetype.android.feature.player.components.PlaybackKeepScreenOnEffect
+import dev.typetype.android.feature.player.components.PlaybackOptionsSheet
 import dev.typetype.android.feature.player.components.PlayerSubtitleOverlay
 import dev.typetype.android.feature.player.components.ResilientPlayerSurface
 import dev.typetype.android.feature.player.components.SponsorBlockPlaybackFeedback

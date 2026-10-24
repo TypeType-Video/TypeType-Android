@@ -4,6 +4,7 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.session.MediaController
+import dev.typetype.android.domain.preferences.RECOMMENDED_CODEC_KEY
 import dev.typetype.android.domain.stream.SabrPlaybackBinding
 import dev.typetype.android.domain.stream.SabrPlaybackTarget
 import dev.typetype.android.domain.stream.Stream
@@ -12,9 +13,9 @@ import dev.typetype.android.domain.stream.StreamPlaybackContract
 import dev.typetype.android.domain.stream.StreamSubtitleSource
 import dev.typetype.android.domain.stream.StreamVideoSource
 import dev.typetype.android.services.MergedStreamMediaKeys
+import dev.typetype.android.services.sabrMediaTimeMs
 import dev.typetype.android.services.sabrPlaybackBinding
 import dev.typetype.android.services.sabrPlaybackTarget
-import dev.typetype.android.services.sabrMediaTimeMs
 import dev.typetype.android.services.toSubtitleConfigurations
 
 internal suspend fun bindStreamToController(

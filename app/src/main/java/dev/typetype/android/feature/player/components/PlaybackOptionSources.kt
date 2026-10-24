@@ -1,5 +1,6 @@
 package dev.typetype.android.feature.player.components
 
+import dev.typetype.android.domain.preferences.RECOMMENDED_CODEC_KEY
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.stream.StreamAudioSource
 import dev.typetype.android.domain.stream.StreamPlaybackContract
@@ -8,7 +9,6 @@ import dev.typetype.android.domain.stream.StreamVideoSource
 import dev.typetype.android.domain.stream.isServerSabrVideoFormat
 import dev.typetype.android.feature.player.DecoderSupport
 import dev.typetype.android.feature.player.PlaybackCodecSupport
-import dev.typetype.android.feature.player.RECOMMENDED_CODEC_KEY
 import dev.typetype.android.feature.player.codecDisplayName
 import dev.typetype.android.feature.player.codecSelectionKey
 import dev.typetype.android.feature.player.key

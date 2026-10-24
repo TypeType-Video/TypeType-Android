@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.typetype.android.domain.profile.ProfileRepository
 import dev.typetype.android.domain.server.ServerRepository
 import dev.typetype.android.domain.version.ComponentVersions
+import dev.typetype.android.domain.version.AppVersion
 import dev.typetype.android.domain.version.ComponentVersionsRepository
 import javax.inject.Inject
 import kotlinx.coroutines.Job
@@ -33,7 +34,9 @@ class AboutViewModel @Inject constructor(
     serverRepository: ServerRepository,
     profileRepository: ProfileRepository,
     private val componentVersionsRepository: ComponentVersionsRepository,
+    appVersion: AppVersion,
 ) : ViewModel() {
+    val versionName: String = appVersion.name
     private val versionLoadState = MutableStateFlow(VersionLoadState())
     private var versionRefreshJob: Job? = null
 

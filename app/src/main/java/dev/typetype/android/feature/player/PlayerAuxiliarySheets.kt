@@ -6,9 +6,9 @@ import androidx.paging.PagingData
 import dev.typetype.android.domain.comments.Comment
 import dev.typetype.android.domain.comments.CommentsRepository
 import dev.typetype.android.domain.library.Playlist
-import dev.typetype.android.feature.download.DownloadSelectionSheet
+import dev.typetype.android.feature.menu.DownloadSelectionSheet
+import dev.typetype.android.feature.menu.PlaylistPickerSheet
 import dev.typetype.android.feature.player.components.CommentsSheet
-import dev.typetype.android.feature.player.components.PlaylistPickerSheet
 import kotlinx.coroutines.flow.Flow
 
 @Composable

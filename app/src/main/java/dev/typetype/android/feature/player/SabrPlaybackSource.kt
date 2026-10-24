@@ -2,6 +2,7 @@ package dev.typetype.android.feature.player
 
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
+import dev.typetype.android.domain.preferences.RECOMMENDED_CODEC_KEY
 import dev.typetype.android.domain.stream.SabrPlaybackBinding
 import dev.typetype.android.domain.stream.SabrPlaybackSelection
 import dev.typetype.android.domain.stream.SabrPlaybackSession

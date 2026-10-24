@@ -17,13 +17,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import dev.typetype.android.R
+import dev.typetype.android.domain.preferences.RECOMMENDED_CODEC_KEY
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.stream.StreamPlaybackContract
 import dev.typetype.android.feature.player.AUTO_QUALITY_KEY
 import dev.typetype.android.feature.player.PlaybackCodecSupport
 import dev.typetype.android.feature.player.PlayerDanmakuAction
 import dev.typetype.android.feature.player.PlayerDanmakuState
-import dev.typetype.android.feature.player.RECOMMENDED_CODEC_KEY
 import dev.typetype.android.feature.player.RECOMMENDED_QUALITY_KEY
 import dev.typetype.android.feature.player.hasAdaptiveSource
 import dev.typetype.android.feature.player.state.PLAYBACK_SPEEDS

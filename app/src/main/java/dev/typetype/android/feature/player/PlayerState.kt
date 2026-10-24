@@ -2,6 +2,7 @@ package dev.typetype.android.feature.player
 
 import dev.typetype.android.domain.library.Playlist
 import dev.typetype.android.domain.playback.PlaybackQueueState
+import dev.typetype.android.domain.preferences.RECOMMENDED_CODEC_KEY
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.usersettings.UserSettings
 import dev.typetype.android.feature.player.components.PlayerGestureConfig
