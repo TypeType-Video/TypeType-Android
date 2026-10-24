@@ -13,7 +13,7 @@ import androidx.annotation.RequiresApi
 import dev.typetype.android.R
 
 @RequiresApi(Build.VERSION_CODES.O)
-internal object PictureInPictureApi26 {
+object PictureInPictureApi26 {
     fun enter(
         activity: Activity,
         aspectRatio: Rational,
@@ -64,7 +64,7 @@ internal object PictureInPictureApi26 {
         runCatching { activity.setPictureInPictureParams(params) }
     }
 
-    internal fun buildParams(
+    fun buildParams(
         activity: Activity,
         aspectRatio: Rational,
         autoEnter: Boolean,

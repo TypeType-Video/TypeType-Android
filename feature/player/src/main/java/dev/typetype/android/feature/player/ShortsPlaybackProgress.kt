@@ -20,7 +20,7 @@ import dev.typetype.android.feature.player.components.formatPlayerTime
 
 @OptIn(markerClass = [UnstableApi::class])
 @Composable
-internal fun ShortsPlaybackProgress(
+fun ShortsPlaybackProgress(
     player: Player,
     fallbackDurationMs: Long,
     modifier: Modifier = Modifier,

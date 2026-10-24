@@ -52,7 +52,7 @@ internal fun playerContentLayoutMode(
 }
 
 @Composable
-internal fun PlayerContentLayout(
+fun PlayerContentLayout(
     isFullscreen: Boolean,
     isInPip: Boolean = false,
     hostTransitionProgress: () -> Float = { 0f },
@@ -220,4 +220,4 @@ private val MINI_VIDEO_HEIGHT = 45.dp
 private val MINI_VIDEO_START = 8.dp
 private val MINI_VIDEO_TOP = 9.dp
 private val MINI_VIDEO_CORNER = 6.dp
-internal const val PLAYER_VIEWPORT_TAG = "player_viewport"
+const val PLAYER_VIEWPORT_TAG = "player_viewport"

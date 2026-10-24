@@ -30,7 +30,7 @@ import dev.typetype.android.feature.player.components.rememberAccessiblePlayerCo
 import dev.typetype.android.feature.player.components.rememberIsInPipMode
 
 private val MINI_PLAYER_HEIGHT = 64.dp
-internal const val PLAYER_HOST_OVERLAY_TAG = "player_host_overlay"
+const val PLAYER_HOST_OVERLAY_TAG = "player_host_overlay"
 
 @Composable
 fun PlayerHost(

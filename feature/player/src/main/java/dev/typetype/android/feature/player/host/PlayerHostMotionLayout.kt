@@ -46,7 +46,7 @@ import kotlinx.coroutines.flow.drop
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-internal fun PlayerHostMotionLayout(
+fun PlayerHostMotionLayout(
     target: PlayerHostTarget,
     requestStamp: Long,
     miniAnchorPx: Float,

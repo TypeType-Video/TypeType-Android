@@ -16,7 +16,7 @@ import dev.typetype.android.feature.player.error.classifyPlaybackError
 import dev.typetype.android.services.isRecoverableSabrSessionFailure
 import kotlinx.coroutines.delay
 
-internal data class PlayerPlaybackStatus(
+data class PlayerPlaybackStatus(
     val playbackState: Int,
     val isPlaying: Boolean,
     val isLoading: Boolean,
@@ -31,7 +31,7 @@ internal data class PlayerPlaybackStatus(
 }
 
 @Composable
-internal fun rememberPlayerPlaybackStatus(
+fun rememberPlayerPlaybackStatus(
     player: Player,
     onSabrRecoveryExhausted: (() -> Unit)? = null,
 ): PlayerPlaybackStatus {

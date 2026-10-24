@@ -9,7 +9,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 @Singleton
-internal class PlaybackPrewarmLauncher @Inject constructor(
+class PlaybackPrewarmLauncher @Inject constructor(
     private val preheater: PlaybackPreheater,
 ) : PlaybackPrewarm {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)

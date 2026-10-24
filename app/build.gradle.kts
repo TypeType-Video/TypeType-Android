@@ -108,6 +108,8 @@ dependencies {
     implementation(project(":feature:library"))
     implementation(project(":feature:subscriptions"))
     implementation(project(":feature:settings"))
+    implementation(project(":feature:player"))
+    implementation(project(":feature:shorts"))
     implementation(project(":player"))
     baselineProfile(project(":baseline-profile"))
     implementation(libs.androidx.core.ktx)

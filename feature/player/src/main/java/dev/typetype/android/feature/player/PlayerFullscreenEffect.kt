@@ -8,7 +8,7 @@ import androidx.compose.runtime.LaunchedEffect
 import dev.typetype.android.core.ui.util.WindowHelper
 
 @Composable
-internal fun PlayerFullscreenEffect(
+fun PlayerFullscreenEffect(
     activity: Activity?,
     isFullscreen: Boolean,
     locksLandscape: Boolean,

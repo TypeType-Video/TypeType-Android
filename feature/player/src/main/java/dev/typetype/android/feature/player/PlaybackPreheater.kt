@@ -34,7 +34,7 @@ class PlaybackPreheater @Inject constructor(
         preheat(videoUrl, settings, codecSupport, { true })
     }
 
-    internal suspend fun preheat(
+    suspend fun preheat(
         videoUrl: String,
         settings: UserSettings,
         codecSupport: PlaybackCodecSupport,

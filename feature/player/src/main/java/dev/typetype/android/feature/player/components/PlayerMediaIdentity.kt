@@ -10,7 +10,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 
 @Composable
-internal fun rememberCurrentMediaId(player: Player?): String? {
+fun rememberCurrentMediaId(player: Player?): String? {
     var mediaId by remember(player) { mutableStateOf(player?.currentMediaItem?.mediaId) }
     DisposableEffect(player) {
         val listener = object : Player.Listener {
