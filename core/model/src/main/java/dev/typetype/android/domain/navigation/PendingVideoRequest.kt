@@ -1,6 +1,6 @@
 package dev.typetype.android.domain.navigation
 
-internal class PendingVideoRequest {
+class PendingVideoRequest {
     private var ready = false
     private var pendingUrl: String? = null
     private var revision = 0L

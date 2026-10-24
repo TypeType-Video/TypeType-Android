@@ -84,7 +84,7 @@ class RemoteSupportRepository @Inject constructor(
 
     private fun List<DiagnosticEntry>.toApiErrors(): List<BugApiErrorRequest> =
         asSequence()
-            .filter { it.method != APPLICATION_METHOD && it.statusCode != null && it.statusCode >= 400 }
+            .filter { it.method != APPLICATION_METHOD && (it.statusCode ?: 0) >= 400 }
             .take(MAX_API_ERRORS)
             .map { entry ->
                 BugApiErrorRequest(

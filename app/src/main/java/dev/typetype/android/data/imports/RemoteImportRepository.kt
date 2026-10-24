@@ -112,25 +112,27 @@ class RemoteImportRepository @Inject constructor(
 }
 
 internal fun validatePipePipeDocument(document: ImportDocument) {
+    val sizeBytes = document.sizeBytes
     require(document.displayName.endsWith(".zip", ignoreCase = true)) {
         "IMPORT_FILE_NOT_ZIP"
     }
-    require(document.sizeBytes == null || document.sizeBytes <= MAX_PIPEPIPE_BACKUP_BYTES) {
+    require(sizeBytes == null || sizeBytes <= MAX_PIPEPIPE_BACKUP_BYTES) {
         "IMPORT_FILE_TOO_LARGE"
     }
-    require(document.sizeBytes == null || document.sizeBytes > 0L) {
+    require(sizeBytes == null || sizeBytes > 0L) {
         "IMPORT_FILE_EMPTY"
     }
 }
 
 internal fun validateTypeTypeDocument(document: ImportDocument) {
+    val sizeBytes = document.sizeBytes
     require(document.displayName.endsWith(".json", ignoreCase = true)) {
         "BACKUP_FILE_NOT_JSON"
     }
-    require(document.sizeBytes == null || document.sizeBytes <= MAX_TYPETYPE_BACKUP_BYTES) {
+    require(sizeBytes == null || sizeBytes <= MAX_TYPETYPE_BACKUP_BYTES) {
         "IMPORT_FILE_TOO_LARGE"
     }
-    require(document.sizeBytes == null || document.sizeBytes > 0L) {
+    require(sizeBytes == null || sizeBytes > 0L) {
         "IMPORT_FILE_EMPTY"
     }
 }

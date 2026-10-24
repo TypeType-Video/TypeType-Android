@@ -36,9 +36,9 @@ object ServerAddress {
         return isLocalHost(host)
     }
 
-    internal fun host(rawValue: String): String? = parseHost(rawValue)
+    fun host(rawValue: String): String? = parseHost(rawValue)
 
-    internal fun isAddressLiteral(host: String): Boolean =
+    fun isAddressLiteral(host: String): Boolean =
         isIpv4Literal(host) || ':' in host
 
     fun usesCleartextHttp(rawValue: String): Boolean {

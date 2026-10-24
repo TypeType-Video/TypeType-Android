@@ -1,10 +1,9 @@
 package dev.typetype.android.domain.auth
 
-import dev.typetype.android.app.BuildConfig
 import java.net.URI
 
-object OidcRedirect {
-    val scheme: String = BuildConfig.APPLICATION_ID
+// The app's own scheme receives the sign-in callback, so it follows the installed package (".debug" included).
+class OidcRedirect(val scheme: String) {
     val uri: String = "$scheme://oidc/callback"
 
     fun matches(value: String): Boolean = runCatching {

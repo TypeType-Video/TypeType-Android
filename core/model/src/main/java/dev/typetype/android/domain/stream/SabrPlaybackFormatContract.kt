@@ -1,6 +1,6 @@
 package dev.typetype.android.domain.stream
 
-internal fun isServerSabrVideoFormat(codec: String?): Boolean {
+fun isServerSabrVideoFormat(codec: String?): Boolean {
     val normalized = codec?.trim()?.lowercase().orEmpty()
     return normalized.startsWith("avc1") ||
         normalized.startsWith("vp9") ||
@@ -8,6 +8,6 @@ internal fun isServerSabrVideoFormat(codec: String?): Boolean {
         normalized.startsWith("av01")
 }
 
-internal fun isServerSabrAudioFormat(mimeType: String, codec: String?): Boolean =
+fun isServerSabrAudioFormat(mimeType: String, codec: String?): Boolean =
     mimeType.substringBefore(';').trim().equals("audio/mp4", ignoreCase = true) &&
         codec?.trim()?.startsWith("mp4a", ignoreCase = true) == true

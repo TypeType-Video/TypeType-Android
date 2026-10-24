@@ -102,6 +102,7 @@ androidComponents.onVariants { variant ->
 }
 
 dependencies {
+    implementation(project(":core:model"))
     implementation(project(":core:resources"))
     implementation(project(":player"))
     baselineProfile(project(":baseline-profile"))

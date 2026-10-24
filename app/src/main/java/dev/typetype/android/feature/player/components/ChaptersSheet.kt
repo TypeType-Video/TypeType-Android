@@ -86,7 +86,8 @@ private fun ChapterRow(
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (chapter.previewUrl != null) {
+        val previewUrl = chapter.previewUrl
+        if (previewUrl != null) {
             Box(
                 modifier = Modifier
                     .width(96.dp)
@@ -95,7 +96,7 @@ private fun ChapterRow(
                     .background(MaterialTheme.colorScheme.surfaceVariant),
             ) {
                 AsyncImage(
-                    model = buildImageUrl(serverBaseUrl, chapter.previewUrl),
+                    model = buildImageUrl(serverBaseUrl, previewUrl),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxWidth(),

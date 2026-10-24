@@ -58,8 +58,9 @@ class OidcCallbackParserTest {
 
     @Test
     fun `recognizes only the application callback destination`() {
-        assertTrue(OidcRedirect.matches("${OidcRedirect.uri}?code=a&state=b"))
-        assertFalse(OidcRedirect.matches("${OidcRedirect.scheme}://other/callback?code=a&state=b"))
-        assertFalse(OidcRedirect.matches("https://example.com/oidc/callback?code=a&state=b"))
+        val redirect = OidcRedirect("dev.typetype.android")
+        assertTrue(redirect.matches("${redirect.uri}?code=a&state=b"))
+        assertFalse(redirect.matches("${redirect.scheme}://other/callback?code=a&state=b"))
+        assertFalse(redirect.matches("https://example.com/oidc/callback?code=a&state=b"))
     }
 }

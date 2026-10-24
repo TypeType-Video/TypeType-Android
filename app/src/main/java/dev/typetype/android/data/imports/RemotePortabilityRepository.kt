@@ -153,10 +153,11 @@ internal const val PORTABILITY_NO_CATEGORIES = "BACKUP_NO_CATEGORIES"
 internal const val MAX_PORTABILITY_UPLOAD_BYTES = 2L * 1024 * 1024 * 1024
 
 internal fun validatePortabilityDocument(document: ImportDocument) {
-    require(document.sizeBytes == null || document.sizeBytes > 0L) {
+    val sizeBytes = document.sizeBytes
+    require(sizeBytes == null || sizeBytes > 0L) {
         "IMPORT_FILE_EMPTY"
     }
-    require(document.sizeBytes == null || document.sizeBytes <= MAX_PORTABILITY_UPLOAD_BYTES) {
+    require(sizeBytes == null || sizeBytes <= MAX_PORTABILITY_UPLOAD_BYTES) {
         "IMPORT_FILE_TOO_LARGE"
     }
 }

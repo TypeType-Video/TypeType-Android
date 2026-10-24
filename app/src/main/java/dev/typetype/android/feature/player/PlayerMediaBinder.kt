@@ -192,18 +192,10 @@ internal suspend fun pickPlayableSource(
         selectedCodec = selectedCodec,
     )
     if (mergedSource != null) return mergedSource
-    if (!stream.serverHlsManifestUrl.isNullOrBlank()) {
-        return PlayableSource(stream.serverHlsManifestUrl, MimeTypes.APPLICATION_M3U8)
-    }
-    if (!stream.serverDashManifestUrl.isNullOrBlank()) {
-        return PlayableSource(stream.serverDashManifestUrl, MimeTypes.APPLICATION_MPD)
-    }
-    if (!stream.dashMpdUrl.isNullOrBlank()) {
-        return PlayableSource(stream.dashMpdUrl, MimeTypes.APPLICATION_MPD)
-    }
-    if (!stream.hlsUrl.isNullOrBlank()) {
-        return PlayableSource(stream.hlsUrl, MimeTypes.APPLICATION_M3U8)
-    }
+    stream.serverHlsManifestUrl?.takeIf(String::isNotBlank)?.let { return PlayableSource(it, MimeTypes.APPLICATION_M3U8) }
+    stream.serverDashManifestUrl?.takeIf(String::isNotBlank)?.let { return PlayableSource(it, MimeTypes.APPLICATION_MPD) }
+    stream.dashMpdUrl?.takeIf(String::isNotBlank)?.let { return PlayableSource(it, MimeTypes.APPLICATION_MPD) }
+    stream.hlsUrl?.takeIf(String::isNotBlank)?.let { return PlayableSource(it, MimeTypes.APPLICATION_M3U8) }
     return pickMuxedSource(stream, effectiveQuality, codecSupport, selectedCodec)
         ?: stream.progressiveUrl?.let { PlayableSource(it, MimeTypes.VIDEO_MP4) }
 }

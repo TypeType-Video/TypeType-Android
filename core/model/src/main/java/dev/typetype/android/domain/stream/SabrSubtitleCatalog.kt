@@ -3,7 +3,7 @@ package dev.typetype.android.domain.stream
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 
-internal fun List<StreamSubtitleSource>.sabrSubtitleCatalogFingerprint(): String {
+fun List<StreamSubtitleSource>.sabrSubtitleCatalogFingerprint(): String {
     val digest = MessageDigest.getInstance("SHA-256")
     forEach { subtitle ->
         listOf(

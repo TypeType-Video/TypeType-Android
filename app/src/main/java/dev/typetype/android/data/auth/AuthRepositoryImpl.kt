@@ -40,6 +40,7 @@ class AuthRepositoryImpl @Inject constructor(
     private val accountScopeStore: AccountScopeStore,
     private val oidcTransactionStore: OidcTransactionStore,
     private val scopedApiFactory: ScopedApiFactory,
+    private val oidcRedirect: OidcRedirect,
 ) : AuthRepository {
 
     override suspend fun loginWithCredentials(
@@ -190,7 +191,7 @@ class AuthRepositoryImpl @Inject constructor(
         val server = requireNotNull(serverRepository.getServer(serverId)) { "Instance not found" }
         cookieJar.beginAuthentication(serverId, server.baseUrl)
         val api = retrofitFactory.createWithoutAutomaticAuthentication(server.baseUrl)
-        val response = withContext(Dispatchers.IO) { api.startOidc(OidcRedirect.uri) }
+        val response = withContext(Dispatchers.IO) { api.startOidc(oidcRedirect.uri) }
         response.requireSuccessfulResponse()
         val authorizationUrl = response.body()?.authorizationUrl
             ?: error("The instance returned an empty authorization URL")
@@ -204,7 +205,7 @@ class AuthRepositoryImpl @Inject constructor(
         oidcTransactionStore.start(serverId, state)
         OidcAuthorization(
             authorizationUrl = authorizationUrl,
-            redirectScheme = OidcRedirect.scheme,
+            redirectScheme = oidcRedirect.scheme,
         )
     }.onFailure {
         oidcTransactionStore.clear(serverId)
@@ -216,7 +217,7 @@ class AuthRepositoryImpl @Inject constructor(
         callbackUrl: String,
         expectedAccountId: String?,
     ): Result<Unit> = runCatching {
-        val callback = OidcCallbackParser.parse(callbackUrl, OidcRedirect.scheme)
+        val callback = OidcCallbackParser.parse(callbackUrl, oidcRedirect.scheme)
         oidcTransactionStore.requireMatches(serverId, callback.state)
         val server = requireNotNull(serverRepository.getServer(serverId)) { "Instance not found" }
         cookieJar.resumeAuthentication(serverId, server.baseUrl)
@@ -225,7 +226,7 @@ class AuthRepositoryImpl @Inject constructor(
                 OidcCallbackRequest(
                     code = callback.code,
                     state = callback.state,
-                    redirectUri = OidcRedirect.uri,
+                    redirectUri = oidcRedirect.uri,
                 ),
             )
         }

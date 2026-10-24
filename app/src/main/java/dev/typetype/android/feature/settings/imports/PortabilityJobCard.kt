@@ -53,8 +53,10 @@ internal fun PortabilityJobCard(
         PortabilityJobState.Applying,
         PortabilityJobState.Encoding,
     )
-    val percent = job.progress?.total?.takeIf { it > 0 }?.let { total ->
-        (job.progress.processed * 100f / total).toInt().coerceIn(0, 100)
+    val percent = job.progress?.let { progress ->
+        progress.total?.takeIf { it > 0 }?.let { total ->
+            (progress.processed * 100f / total).toInt().coerceIn(0, 100)
+        }
     }
 
     Surface(

@@ -13,7 +13,7 @@ class SabrPlaybackWindowCache @Inject constructor() {
     @Synchronized
     fun put(session: SabrPlaybackSession) {
         if (session.audioWindow?.segments.isNullOrEmpty()) return
-        if (session.videoWindow != null && session.videoWindow.segments.isEmpty()) return
+        if (session.videoWindow?.segments?.isEmpty() == true) return
         sessions[session.binding.toKey()] = session
         sessions.keys.removeIf { it.sessionId == session.sessionId && it.generation != session.generation }
         while (sessions.size > MAX_SESSIONS) sessions.remove(sessions.keys.first())

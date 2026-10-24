@@ -58,6 +58,9 @@ class MainActivity : ComponentActivity(), PictureInPictureActionStateOwner {
     lateinit var oidcCallbackRelay: OidcCallbackRelay
 
     @Inject
+    lateinit var oidcRedirect: OidcRedirect
+
+    @Inject
     lateinit var playbackPrewarm: PlaybackPrewarm
 
     private val viewModel: MainViewModel by viewModels()
@@ -168,7 +171,7 @@ class MainActivity : ComponentActivity(), PictureInPictureActionStateOwner {
 
     private fun receiveOidcCallback(intent: Intent) {
         val callbackUrl = intent.dataString ?: return
-        if (OidcRedirect.matches(callbackUrl)) {
+        if (oidcRedirect.matches(callbackUrl)) {
             oidcCallbackRelay.submit(callbackUrl)
         }
     }
