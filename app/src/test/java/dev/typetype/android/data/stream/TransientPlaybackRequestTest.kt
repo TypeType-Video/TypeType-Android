@@ -146,8 +146,8 @@ class TransientPlaybackRequestTest {
         }
 
         assertEquals(503, response.code())
-        assertEquals(25, attempt)
-        assertEquals(24, pauses.size)
+        assertEquals(7, attempt)
+        assertEquals(6, pauses.size)
         assertEquals(listOf(500L, 1_000L, 2_000L, 3_000L), pauses.take(4))
         assertEquals(3_000L, pauses.last())
     }
