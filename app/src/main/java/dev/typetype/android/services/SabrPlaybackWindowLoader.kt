@@ -18,6 +18,7 @@ import dev.typetype.player.PlaybackTrackKind
 import dev.typetype.player.PlaybackWindow
 import dev.typetype.player.PlaybackWindowLoader
 import dev.typetype.player.PlaybackWindowRequest
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -31,9 +32,14 @@ internal class SabrPlaybackWindowLoader(
     private val recoveryDispatcher: SabrPlaybackRecoveryDispatcher,
     private val playbackRate: () -> Float,
     initialWindow: PlaybackWindow? = null,
+    context: CoroutineContext = Dispatchers.Main.immediate,
 ) : PlaybackWindowLoader {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val scope = CoroutineScope(SupervisorJob() + context)
     private var currentWindow = initialWindow
+
+    // The service matches recovery requests against the media item, which keeps the session it was built with. A
+    // stuck session replaced in place only moves the transport binding, so requests name the original session.
+    private val sourceSessionId = transportState.currentBinding().sessionId
 
     override fun load(
         request: () -> PlaybackWindowRequest,
@@ -90,7 +96,7 @@ internal class SabrPlaybackWindowLoader(
             val recovery = response.exceptionOrNull()?.sabrPlaybackRecoveryFailure()
             if (recovery != null) {
                 recoveryDispatcher.request(
-                    sessionId = transportState.currentBinding().sessionId,
+                    sessionId = sourceSessionId,
                     failure = recovery,
                 ) { result ->
                     result.exceptionOrNull()?.let {
