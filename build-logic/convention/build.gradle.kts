@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     compileOnly(libs.android.gradlePlugin)
+    compileOnly(libs.compose.gradlePlugin)
     compileOnly(libs.hilt.gradlePlugin)
     compileOnly(libs.ksp.gradlePlugin)
 }
@@ -13,6 +14,10 @@ gradlePlugin {
         register("androidApplication") {
             id = "typetype.android.application"
             implementationClass = "AndroidApplicationConventionPlugin"
+        }
+        register("androidCompose") {
+            id = "typetype.android.compose"
+            implementationClass = "AndroidComposeConventionPlugin"
         }
         register("androidHilt") {
             id = "typetype.android.hilt"
