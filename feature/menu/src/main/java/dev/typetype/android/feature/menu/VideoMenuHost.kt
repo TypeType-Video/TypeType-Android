@@ -23,7 +23,7 @@ import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.navigation.canonicalVideoIdentity
 
 @Stable
-class VideoMenuScope internal constructor(
+class VideoMenuScope(
     val watchedUrls: Set<String>,
     val blockedVideoUrls: Set<String>,
     val blockedChannelUrls: Set<String>,
