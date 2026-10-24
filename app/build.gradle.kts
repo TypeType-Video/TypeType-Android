@@ -106,6 +106,7 @@ dependencies {
     implementation(project(":feature:channel"))
     implementation(project(":feature:library"))
     implementation(project(":feature:subscriptions"))
+    implementation(project(":feature:settings"))
     implementation(project(":player"))
     baselineProfile(project(":baseline-profile"))
     implementation(libs.androidx.core.ktx)
