@@ -3,9 +3,7 @@ package dev.typetype.android.data.stream
 import dev.typetype.android.data.network.AlwaysAvailablePlaybackNetworkObserver
 import dev.typetype.android.data.network.PlaybackNetworkObserver
 import dev.typetype.android.data.network.TypeTypeMediaApi
-import dev.typetype.android.data.network.dto.SabrPlaybackPositionRequestDto
 import dev.typetype.android.data.network.dto.SabrPlaybackResponse
-import dev.typetype.android.data.network.dto.SabrPlaybackWindowRequestDto
 import dev.typetype.android.data.network.serverResponseException
 import dev.typetype.android.domain.stream.SabrPlaybackBinding
 import dev.typetype.android.domain.stream.SabrPlaybackBufferedRange
@@ -20,6 +18,8 @@ internal class SabrPlaybackSessionPreparer(
     private val maxWindowPolls: Int = 60,
     private val stuckRecoveryAttempts: Int = STUCK_RECOVERY_ATTEMPTS,
 ) {
+    private val windows = SabrPlaybackWindowWait(pause, network, maxWindowPolls, stuckRecoveryAttempts)
+
     suspend fun prepare(
         api: TypeTypeMediaApi,
         baseUrl: String,
@@ -58,7 +58,7 @@ internal class SabrPlaybackSessionPreparer(
         val control = response.body()
             ?.requireControlResponse(target)
             ?: sabrContractMismatch("SABR returned an empty session response")
-        return waitForWindow(api, baseUrl, target, control, emptyList())
+        return windows.await(api, baseUrl, target, control, emptyList())
     }
 
     suspend fun seek(
@@ -85,7 +85,7 @@ internal class SabrPlaybackSessionPreparer(
             ?.requireControlResponse(target, binding.sessionId, binding.generation)
             ?: sabrContractMismatch("SABR returned an empty seek response")
         return try {
-            waitForWindow(api, baseUrl, target, control, emptyList())
+            windows.await(api, baseUrl, target, control, emptyList())
         } catch (failure: SabrControlException) {
             if (failure.failureCode != "youtube_sabr_preparation_timeout") throw failure
             createSession(api, baseUrl, target, startTimeMs)
@@ -125,7 +125,7 @@ internal class SabrPlaybackSessionPreparer(
             ready = true,
             status = "ready",
         )
-        return waitForWindow(api, baseUrl, target, control) {
+        return windows.await(api, baseUrl, target, control) {
             val current = snapshot()
             control.windowRequest(
                 current.bufferedRanges,
@@ -160,7 +160,7 @@ internal class SabrPlaybackSessionPreparer(
     ) {
         binding.requireTarget(target)
         val control = binding.controlResponse(target, playerTimeMs)
-        updatePosition(
+        windows.updatePosition(
             api,
             baseUrl,
             control,
@@ -170,72 +170,6 @@ internal class SabrPlaybackSessionPreparer(
                 isLive = target.isLive,
                 playbackRate = playbackRate,
             ),
-        )
-    }
-
-    private suspend fun waitForWindow(
-        api: TypeTypeMediaApi,
-        baseUrl: String,
-        target: SabrPlaybackTarget,
-        control: SabrPlaybackResponse,
-        bufferedRanges: List<SabrPlaybackBufferedRange>,
-    ): SabrPlaybackSession = waitForWindow(api, baseUrl, target, control) {
-        control.windowRequest(
-            ranges = bufferedRanges,
-            audioOnly = target.audioOnly,
-            isLive = target.isLive,
-        )
-    }
-
-    private suspend fun waitForWindow(
-        api: TypeTypeMediaApi,
-        baseUrl: String,
-        target: SabrPlaybackTarget,
-        control: SabrPlaybackResponse,
-        request: () -> SabrPlaybackWindowRequestDto,
-    ): SabrPlaybackSession {
-        updatePosition(api, baseUrl, control, request())
-        var previousEdgeMs: Long? = null
-        var stagnantAttempts = 0
-        repeat(maxWindowPolls) {
-            val prefetch = transientPlaybackRequest(pause, network) {
-                api.prefetchSabrPlayback(control.sessionId, request())
-            }
-            prefetch.requireWindowEndpoint(baseUrl, control.sessionId, "prefetch")
-            if (!prefetch.isSuccessful) throw serverResponseException(prefetch)
-            val pending = prefetch.body()
-                ?.requireWindowIdentity(control)
-                ?: sabrContractMismatch("SABR returned an empty prefetch response")
-            pending.throwTerminalFailure()
-            if (pending.ready) {
-                val segments = transientPlaybackRequest(pause, network) {
-                    api.sabrPlaybackSegments(control.sessionId, request())
-                }
-                segments.requireWindowEndpoint(baseUrl, control.sessionId, "segments")
-                if (!segments.isSuccessful) throw serverResponseException(segments)
-                val window = segments.body()
-                    ?.requireWindowIdentity(control)
-                    ?: sabrContractMismatch("SABR returned an empty segment window")
-                window.throwTerminalFailure()
-                if (window.ready) return window.requireWindowResponse(baseUrl, target, control)
-                stagnantAttempts = window.stagnantAttempts(previousEdgeMs, stagnantAttempts)
-                previousEdgeMs = window.bufferedEdgeMs
-                pause(window.retryDelay(stagnantAttempts))
-            } else {
-                stagnantAttempts = pending.stagnantAttempts(previousEdgeMs, stagnantAttempts)
-                previousEdgeMs = pending.bufferedEdgeMs
-                if (stagnantAttempts >= stuckRecoveryAttempts) {
-                    throw sabrPreparationFailure(
-                        "SABR prefetch stuck: segment-pending",
-                        "youtube_sabr_preparation_timeout",
-                    )
-                }
-                pause(pending.retryDelay(stagnantAttempts))
-            }
-        }
-        throw sabrPreparationFailure(
-            "SABR playback window timed out",
-            "youtube_sabr_preparation_timeout",
         )
     }
 
@@ -260,41 +194,6 @@ internal class SabrPlaybackSessionPreparer(
         }
         throw failure
     }
-
-    private suspend fun updatePosition(
-        api: TypeTypeMediaApi,
-        baseUrl: String,
-        control: SabrPlaybackResponse,
-        request: SabrPlaybackWindowRequestDto,
-    ) {
-        val response = transientPlaybackRequest(pause, network) {
-            api.updateSabrPlaybackPosition(
-                control.sessionId,
-                SabrPlaybackPositionRequestDto(
-                    generation = request.generation,
-                    playerTimeMs = request.playerTimeMs,
-                    videoItag = request.videoItag,
-                    audioItag = request.audioItag,
-                    audioTrackId = request.audioTrackId,
-                    playbackRate = request.playbackRate,
-                    bufferedRanges = request.bufferedRanges,
-                    audioOnly = request.audioOnly,
-                ),
-            )
-        }
-        response.requireControlEndpoint(
-            baseUrl,
-            listOf("sabr", "playback", control.sessionId, "position"),
-            "SABR position update left its server session endpoint",
-        )
-        if (!response.isSuccessful) throw serverResponseException(response)
-        val body = response.body()
-            ?: sabrContractMismatch("SABR returned an empty position response")
-        if (body.sessionId != control.sessionId || body.generation != control.generation) {
-            sabrContractMismatch("SABR position update changed its session identity")
-        }
-    }
-
 }
 
 private const val STUCK_RECOVERY_ATTEMPTS = 5
