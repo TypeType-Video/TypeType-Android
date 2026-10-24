@@ -2,7 +2,7 @@ package dev.typetype.android.core.url
 
 private const val HEX = "0123456789ABCDEF"
 
-internal fun percentEncode(value: String): String {
+fun percentEncode(value: String): String {
     val bytes = value.toByteArray(Charsets.UTF_8)
     val encoded = StringBuilder(bytes.size)
     for (byte in bytes) {
