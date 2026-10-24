@@ -127,5 +127,5 @@ enum class NotificationPostResult {
     Failed,
 }
 
-internal fun subscriptionNotificationId(videoId: String, videoUrl: String, fallback: String): Int =
+fun subscriptionNotificationId(videoId: String, videoUrl: String, fallback: String): Int =
     videoId.trim().ifBlank { videoUrl.trim() }.ifBlank { fallback.trim() }.hashCode()
