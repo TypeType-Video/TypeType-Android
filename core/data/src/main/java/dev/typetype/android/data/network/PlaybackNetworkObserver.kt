@@ -21,7 +21,7 @@ interface NetworkAvailabilityObserver {
     val states: StateFlow<PlaybackNetworkState>
 }
 
-internal object AlwaysAvailablePlaybackNetworkObserver : PlaybackNetworkObserver {
+object AlwaysAvailablePlaybackNetworkObserver : PlaybackNetworkObserver {
     private val state = PlaybackNetworkState(
         isAvailable = true,
         generation = 0L,

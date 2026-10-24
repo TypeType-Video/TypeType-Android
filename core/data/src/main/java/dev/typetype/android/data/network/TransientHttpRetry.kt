@@ -4,10 +4,10 @@ import java.time.DateTimeException
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
-internal fun isTransientHttpStatus(statusCode: Int): Boolean =
+fun isTransientHttpStatus(statusCode: Int): Boolean =
     statusCode in TRANSIENT_HTTP_STATUS_CODES
 
-internal fun transientHttpRetryDelayMs(
+fun transientHttpRetryDelayMs(
     errorCount: Int,
     maximumRetries: Int,
     requestedDelayMs: Long?,
@@ -18,7 +18,7 @@ internal fun transientHttpRetryDelayMs(
     return (requestedDelayMs ?: backoffMs).coerceIn(0L, MAX_TRANSIENT_RETRY_DELAY_MS)
 }
 
-internal fun Map<String, List<String>>.retryAfterMillis(
+fun Map<String, List<String>>.retryAfterMillis(
     nowMs: Long = System.currentTimeMillis(),
 ): Long? {
     val value = entries

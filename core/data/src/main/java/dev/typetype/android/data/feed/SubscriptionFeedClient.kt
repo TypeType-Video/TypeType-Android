@@ -101,9 +101,9 @@ internal class SubscriptionFeedContractException(
 ) : IllegalStateException(message), CodedFailure {
 }
 
-internal const val INVALID_CURSOR_CODE = "subscription_feed_invalid_cursor"
-internal const val STALE_GENERATION_CODE = "subscription_feed_stale_generation"
-internal const val GENERATION_MISMATCH_CODE = "subscription_feed_generation_mismatch"
+const val INVALID_CURSOR_CODE = "subscription_feed_invalid_cursor"
+const val STALE_GENERATION_CODE = "subscription_feed_stale_generation"
+const val GENERATION_MISMATCH_CODE = "subscription_feed_generation_mismatch"
 internal const val PREPARATION_TIMEOUT_CODE = "subscription_feed_preparation_timeout"
 private const val CONTRACT_MISMATCH_CODE = "subscription_feed_contract_mismatch"
 private const val PREPARING_CODE = "subscription_feed_preparing"

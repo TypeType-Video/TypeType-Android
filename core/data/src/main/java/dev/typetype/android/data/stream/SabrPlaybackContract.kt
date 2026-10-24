@@ -256,14 +256,14 @@ private fun HttpUrl.requireGeneration(expected: Long) {
     }
 }
 
-internal const val SABR_PREPARATION_TIMEOUT = "youtube_sabr_preparation_timeout"
+const val SABR_PREPARATION_TIMEOUT = "youtube_sabr_preparation_timeout"
 
 internal fun sabrPreparationFailure(
     message: String,
     code: String = "youtube_sabr_preparation_failed",
 ): SabrControlException = SabrControlException(message, code)
 
-internal class SabrControlException(
+class SabrControlException(
     message: String,
     override val failureCode: String,
     cause: Throwable? = null,
@@ -272,7 +272,7 @@ internal class SabrControlException(
     override val statusCode: Int? = null
 }
 
-internal class SabrPlaybackRecoveryException(
+class SabrPlaybackRecoveryException(
     message: String,
     val action: String?,
     val retryVideoItags: List<Int>,

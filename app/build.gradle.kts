@@ -7,8 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.hilt)
-    alias(libs.plugins.ksp)
+    id("typetype.android.hilt")
     alias(libs.plugins.aboutlibraries)
 }
 
@@ -25,10 +24,6 @@ android {
         applicationId = "dev.typetype.android"
         versionCode = 10902
         versionName = "1.9.1"
-    }
-
-    ksp {
-        arg("room.schemaLocation", "$projectDir/schemas")
     }
 
     signingConfigs {
@@ -60,10 +55,6 @@ android {
         }
     }
 
-    compileOptions {
-        isCoreLibraryDesugaringEnabled = true
-    }
-
     kotlin {
         compilerOptions {
             jvmTarget = JvmTarget.JVM_17
@@ -85,8 +76,6 @@ android {
     androidResources {
         generateLocaleConfig = true
     }
-
-    sourceSets["androidTest"].assets.directories.add("$projectDir/schemas")
 }
 
 androidComponents.onVariants { variant ->
@@ -102,6 +91,7 @@ androidComponents.onVariants { variant ->
 }
 
 dependencies {
+    implementation(project(":core:data"))
     implementation(project(":core:model"))
     implementation(project(":core:resources"))
     implementation(project(":player"))
@@ -113,9 +103,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.espressoCore)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.uiautomator)
-    androidTestImplementation(libs.room.testing)
     androidTestImplementation(libs.okhttp.mockwebserver)
-    coreLibraryDesugaring(libs.desugaring)
 
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core)
@@ -142,8 +130,6 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
     implementation(libs.androidx.hilt.work)
@@ -151,7 +137,6 @@ dependencies {
     implementation(libs.androidx.work.runtime)
 
     implementation(libs.androidx.datastore.preferences)
-    implementation(libs.google.tink.android)
 
     implementation(libs.coil)
     implementation(libs.coil.compose)
@@ -159,12 +144,6 @@ dependencies {
     implementation(libs.coil.svg)
     implementation(libs.coil.network.okhttp)
 
-    implementation(libs.room)
-    implementation(libs.room.paging)
-    ksp(libs.room.compiler)
-
-    implementation(libs.square.retrofit)
-    implementation(libs.converter.kotlinx.serialization)
     implementation(libs.okhttp)
     implementation(libs.kotlinx.serialization)
 

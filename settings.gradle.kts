@@ -24,6 +24,7 @@ dependencyResolutionManagement {
 rootProject.name = "TypeType-Android"
 
 include(":app")
+include(":core:data")
 include(":core:model")
 include(":core:resources")
 include(":baseline-profile")

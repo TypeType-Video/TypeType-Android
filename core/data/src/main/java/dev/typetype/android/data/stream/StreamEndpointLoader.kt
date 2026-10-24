@@ -64,7 +64,7 @@ internal fun StreamResponse.hasPlayableLiveContract(baseUrl: String? = null): Bo
 private fun String?.isAllowedServerManifest(baseUrl: String?): Boolean =
     !isNullOrBlank() && (baseUrl == null || resolveServerUrl(baseUrl, this) != null)
 
-internal fun String.streamProvider(): StreamProvider {
+fun String.streamProvider(): StreamProvider {
     val host = toHttpUrlOrNull()?.host?.lowercase().orEmpty()
     return when {
         host == "youtu.be" || host == "youtube.com" || host.endsWith(".youtube.com") ||
@@ -75,6 +75,6 @@ internal fun String.streamProvider(): StreamProvider {
     }
 }
 
-internal enum class StreamProvider { YouTube, NicoNico, BiliBili, Generic }
+enum class StreamProvider { YouTube, NicoNico, BiliBili, Generic }
 
 private const val SABR_DELIVERY_METHOD = "sabr"

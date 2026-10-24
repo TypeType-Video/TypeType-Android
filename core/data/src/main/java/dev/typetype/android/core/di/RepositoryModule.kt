@@ -23,8 +23,6 @@ import dev.typetype.android.data.imports.RemotePortabilityRepository
 import dev.typetype.android.data.imports.RoomYoutubeTakeoutImportRepository
 import dev.typetype.android.data.library.RoomVideoMetaRepository
 import dev.typetype.android.data.notifications.RemoteNotificationsRepository
-import dev.typetype.android.feature.player.PlaybackPrewarm
-import dev.typetype.android.feature.player.PlaybackPrewarmLauncher
 import dev.typetype.android.data.network.NetworkAvailabilityObserver
 import dev.typetype.android.data.network.PlaybackNetworkMonitor
 import dev.typetype.android.data.network.PlaybackNetworkObserver
@@ -79,7 +77,6 @@ import dev.typetype.android.domain.push.PushRepository
 import dev.typetype.android.domain.podcast.PodcastRepository
 import dev.typetype.android.domain.playback.PlaybackResumeRepository
 import dev.typetype.android.domain.playback.PlaybackQueueRepository
-import dev.typetype.android.domain.playback.PlaybackQueueController
 import dev.typetype.android.domain.profile.ProfileRepository
 import dev.typetype.android.domain.publicplaylist.PublicPlaylistRepository
 import dev.typetype.android.domain.publicplaylist.SavedPublicPlaylistRepository
@@ -100,16 +97,11 @@ import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import dev.typetype.android.domain.version.ComponentVersionsRepository
 import dev.typetype.android.domain.youtubesession.YoutubeSessionRepository
 import dev.typetype.android.domain.youtubesession.YoutubeRemoteBrowserConnector
-import dev.typetype.android.services.PlaybackQueueCoordinator
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
-
-    @Binds
-    @Singleton
-    abstract fun bindPlaybackQueueController(impl: PlaybackQueueCoordinator): PlaybackQueueController
 
     @Binds
     @Singleton
@@ -180,10 +172,6 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindPushRepository(impl: RemotePushRepository): PushRepository
-
-    @Binds
-    @Singleton
-    internal abstract fun bindPlaybackPrewarm(impl: PlaybackPrewarmLauncher): PlaybackPrewarm
 
     @Binds
     @Singleton
