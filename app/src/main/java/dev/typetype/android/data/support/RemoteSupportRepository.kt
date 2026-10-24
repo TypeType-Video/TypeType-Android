@@ -1,7 +1,6 @@
 package dev.typetype.android.data.support
 
 import android.os.Build
-import dev.typetype.android.app.BuildConfig
 import dev.typetype.android.data.account.AccountDao
 import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.network.TypeTypeApiHolder
@@ -15,6 +14,7 @@ import dev.typetype.android.domain.support.SupportReportCategory
 import dev.typetype.android.domain.support.SupportReportDraft
 import dev.typetype.android.domain.support.SupportReportReceipt
 import dev.typetype.android.domain.support.SupportRepository
+import dev.typetype.android.domain.version.AppVersion
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -26,6 +26,7 @@ class RemoteSupportRepository @Inject constructor(
     private val activeAccountScope: ActiveAccountScope,
     private val accountDao: AccountDao,
     private val apiHolder: TypeTypeApiHolder,
+    private val appVersion: AppVersion,
 ) : SupportRepository {
 
     override suspend fun canSubmitReport(): Boolean {
@@ -97,7 +98,7 @@ class RemoteSupportRepository @Inject constructor(
             .toList()
 
     private fun nativeClientIdentity(): String =
-        "TypeType Android/${BuildConfig.VERSION_NAME} " +
+        "TypeType Android/${appVersion.name} " +
             "(Android ${Build.VERSION.RELEASE}; API ${Build.VERSION.SDK_INT}; native)"
 
     private val SupportReportCategory.wireValue: String

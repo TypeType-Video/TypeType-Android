@@ -1,6 +1,5 @@
 package dev.typetype.android.data.session
 
-import dev.typetype.android.app.BuildConfig
 import dev.typetype.android.data.account.AccountDao
 import dev.typetype.android.data.account.AccountScope
 import dev.typetype.android.data.account.ActiveAccountScope
@@ -12,11 +11,12 @@ import dev.typetype.android.data.network.requireSuccessfulResponse
 import dev.typetype.android.domain.session.ActivePlaybackSnapshot
 import dev.typetype.android.domain.session.ActiveSessionRepository
 import dev.typetype.android.domain.stream.StreamRequestScope
+import dev.typetype.android.domain.version.AppVersion
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 
 @Singleton
 class RemoteActiveSessionRepository @Inject constructor(
@@ -24,6 +24,7 @@ class RemoteActiveSessionRepository @Inject constructor(
     private val accountDao: AccountDao,
     private val apiHolder: TypeTypeApiHolder,
     private val deviceIdentityStore: DeviceIdentityStore,
+    private val appVersion: AppVersion,
 ) : ActiveSessionRepository {
 
     override fun observeDeviceName(): Flow<String> = deviceIdentityStore.observeDeviceName()
@@ -89,7 +90,7 @@ class RemoteActiveSessionRepository @Inject constructor(
 
     private fun deviceRequest(): SessionDeviceRequest = SessionDeviceRequest(
         clientName = CLIENT_NAME,
-        clientVersion = BuildConfig.VERSION_NAME,
+        clientVersion = appVersion.name,
         deviceId = deviceIdentityStore.getOrCreate(),
         deviceName = deviceIdentityStore.getDeviceName().trim().ifBlank { DEFAULT_DEVICE_NAME },
         deviceType = DEVICE_TYPE,

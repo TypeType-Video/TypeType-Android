@@ -6,9 +6,9 @@ import android.content.Context
 import android.os.Build
 import android.os.Process
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dev.typetype.android.app.BuildConfig
 import dev.typetype.android.data.network.ApiBaseUrlHolder
 import dev.typetype.android.domain.diagnostics.CrashReportRepository
+import dev.typetype.android.domain.version.AppVersion
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -24,6 +24,7 @@ class ApplicationLifecycleDiagnostics @Inject constructor(
     private val repository: LocalDiagnosticsRepository,
     private val crashReports: CrashReportRepository,
     private val endpointHolder: ApiBaseUrlHolder,
+    private val appVersion: AppVersion,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var started = false
@@ -65,8 +66,8 @@ class ApplicationLifecycleDiagnostics @Inject constructor(
     }
 
     private fun currentEnvironment(): CrashEnvironment = CrashEnvironment(
-        appVersion = BuildConfig.VERSION_NAME,
-        appVersionCode = BuildConfig.VERSION_CODE.toLong(),
+        appVersion = appVersion.name,
+        appVersionCode = appVersion.code,
         androidVersion = Build.VERSION.RELEASE,
         apiLevel = Build.VERSION.SDK_INT,
         deviceManufacturer = Build.MANUFACTURER,
