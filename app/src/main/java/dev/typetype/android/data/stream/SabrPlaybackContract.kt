@@ -256,6 +256,8 @@ private fun HttpUrl.requireGeneration(expected: Long) {
     }
 }
 
+internal const val SABR_PREPARATION_TIMEOUT = "youtube_sabr_preparation_timeout"
+
 internal fun sabrPreparationFailure(
     message: String,
     code: String = "youtube_sabr_preparation_failed",

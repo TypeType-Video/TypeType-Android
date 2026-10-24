@@ -84,11 +84,8 @@ internal class SabrPlaybackSessionPreparer(
         val control = response.body()
             ?.requireControlResponse(target, binding.sessionId, binding.generation)
             ?: sabrContractMismatch("SABR returned an empty seek response")
-        return try {
+        return replacingStuckSession(api, baseUrl, target, { startTimeMs }) {
             windows.await(api, baseUrl, target, control, emptyList())
-        } catch (failure: SabrControlException) {
-            if (failure.failureCode != "youtube_sabr_preparation_timeout") throw failure
-            createSession(api, baseUrl, target, startTimeMs)
         }
     }
 
@@ -125,16 +122,33 @@ internal class SabrPlaybackSessionPreparer(
             ready = true,
             status = "ready",
         )
-        return windows.await(api, baseUrl, target, control) {
-            val current = snapshot()
-            control.windowRequest(
-                current.bufferedRanges,
-                target.audioOnly,
-                target.isLive,
-                current.playerTimeMs,
-                current.playbackRate,
-            )
+        return replacingStuckSession(api, baseUrl, target, { snapshot().playerTimeMs }) {
+            windows.await(api, baseUrl, target, control) {
+                val current = snapshot()
+                control.windowRequest(
+                    current.bufferedRanges,
+                    target.audioOnly,
+                    target.isLive,
+                    current.playerTimeMs,
+                    current.playbackRate,
+                )
+            }
         }
+    }
+
+    // The server can leave a session waiting on a segment that never comes, while a new session at the same position
+    // plays at once. Replacing it here keeps the player's buffer and media item; a second stall is reported.
+    private suspend fun replacingStuckSession(
+        api: TypeTypeMediaApi,
+        baseUrl: String,
+        target: SabrPlaybackTarget,
+        positionMs: () -> Long,
+        wait: suspend () -> SabrPlaybackSession,
+    ): SabrPlaybackSession = try {
+        wait()
+    } catch (failure: SabrControlException) {
+        if (failure.failureCode != SABR_PREPARATION_TIMEOUT) throw failure
+        createSession(api, baseUrl, target, positionMs())
     }
 
     private suspend fun createSessionWithRecovery(

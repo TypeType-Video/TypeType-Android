@@ -70,7 +70,7 @@ internal class SabrPlaybackWindowWait(
                 if (stagnantAttempts >= stuckRecoveryAttempts) {
                     throw sabrPreparationFailure(
                         "SABR prefetch stuck: segment-pending",
-                        "youtube_sabr_preparation_timeout",
+                        SABR_PREPARATION_TIMEOUT,
                     )
                 }
                 pause(pending.retryDelay(stagnantAttempts))
@@ -78,7 +78,7 @@ internal class SabrPlaybackWindowWait(
         }
         throw sabrPreparationFailure(
             "SABR playback window timed out",
-            "youtube_sabr_preparation_timeout",
+            SABR_PREPARATION_TIMEOUT,
         )
     }
 
