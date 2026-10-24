@@ -32,7 +32,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.typetype.android.BuildConfig
+import dev.typetype.android.app.BuildConfig
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.SectionHeader
 import dev.typetype.android.core.ui.components.KomiStoreAttribution

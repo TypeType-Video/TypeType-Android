@@ -35,7 +35,7 @@ import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
-import dev.typetype.android.R
+import dev.typetype.android.app.R as AppR
 import dev.typetype.android.domain.usersettings.CaptionStyles
 import dev.typetype.android.feature.player.state.ResizeMode
 import kotlin.math.max
@@ -78,7 +78,7 @@ internal fun ResilientPlayerSurface(
             AndroidView(
                 factory = { context ->
                     val parent = FrameLayout(context)
-                    (LayoutInflater.from(context).inflate(R.layout.player_view_texture, parent, false) as PlayerView).apply {
+                    (LayoutInflater.from(context).inflate(AppR.layout.player_view_texture, parent, false) as PlayerView).apply {
                         useController = false
                         setShutterBackgroundColor(Color.TRANSPARENT)
                         retainContentAcrossPlayerResets()

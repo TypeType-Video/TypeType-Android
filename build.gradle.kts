@@ -16,7 +16,7 @@ tasks.register<Delete>("clean") {
 tasks.register("buildLanguages") {
     val projectDirectory = layout.projectDirectory
 
-    val resPath = projectDirectory.file("app/src/main/res")
+    val resPath = projectDirectory.file("core/resources/src/main/res")
     val locales = resPath.asFile.listFiles()
         .filter {
             it.nameWithoutExtension.startsWith("values-") && File(
@@ -36,7 +36,7 @@ tasks.register("buildLanguages") {
                 "</string-array>\n" +
                 "</resources>"
 
-    val outputFile = projectDirectory.file("app/src/main/res/values/languages.xml").asFile
+    val outputFile = projectDirectory.file("core/resources/src/main/res/values/languages.xml").asFile
     if (!outputFile.exists()) outputFile.createNewFile()
     outputFile.bufferedWriter().use {
         it.write(localesConfig)

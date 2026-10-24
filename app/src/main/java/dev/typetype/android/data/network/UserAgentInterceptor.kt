@@ -1,7 +1,7 @@
 package dev.typetype.android.data.network
 
 import android.os.Build
-import dev.typetype.android.BuildConfig
+import dev.typetype.android.app.BuildConfig
 import javax.inject.Inject
 import javax.inject.Singleton
 import okhttp3.Interceptor

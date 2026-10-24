@@ -1,6 +1,6 @@
 package dev.typetype.android.domain.auth
 
-import dev.typetype.android.BuildConfig
+import dev.typetype.android.app.BuildConfig
 import java.net.URI
 
 object OidcRedirect {

@@ -19,13 +19,12 @@ if (keystoreFileExists) {
 }
 
 android {
-    namespace = "dev.typetype.android"
+    namespace = "dev.typetype.android.app"
 
     defaultConfig {
         applicationId = "dev.typetype.android"
         versionCode = 10902
         versionName = "1.9.1"
-        resValue("string", "app_name", "TypeType")
     }
 
     ksp {
@@ -103,6 +102,7 @@ androidComponents.onVariants { variant ->
 }
 
 dependencies {
+    implementation(project(":core:resources"))
     implementation(project(":player"))
     baselineProfile(project(":baseline-profile"))
     implementation(libs.androidx.core.ktx)

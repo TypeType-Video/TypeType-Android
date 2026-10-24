@@ -1,7 +1,7 @@
 package dev.typetype.android.data.support
 
 import android.os.Build
-import dev.typetype.android.BuildConfig
+import dev.typetype.android.app.BuildConfig
 import dev.typetype.android.data.account.AccountDao
 import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.network.TypeTypeApiHolder

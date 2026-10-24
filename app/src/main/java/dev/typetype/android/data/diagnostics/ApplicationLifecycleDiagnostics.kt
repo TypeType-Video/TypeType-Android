@@ -6,7 +6,7 @@ import android.content.Context
 import android.os.Build
 import android.os.Process
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dev.typetype.android.BuildConfig
+import dev.typetype.android.app.BuildConfig
 import dev.typetype.android.data.network.ApiBaseUrlHolder
 import dev.typetype.android.domain.diagnostics.CrashReportRepository
 import java.io.File

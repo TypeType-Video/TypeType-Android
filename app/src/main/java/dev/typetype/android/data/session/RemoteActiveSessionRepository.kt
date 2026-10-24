@@ -1,6 +1,6 @@
 package dev.typetype.android.data.session
 
-import dev.typetype.android.BuildConfig
+import dev.typetype.android.app.BuildConfig
 import dev.typetype.android.data.account.AccountDao
 import dev.typetype.android.data.account.AccountScope
 import dev.typetype.android.data.account.ActiveAccountScope
