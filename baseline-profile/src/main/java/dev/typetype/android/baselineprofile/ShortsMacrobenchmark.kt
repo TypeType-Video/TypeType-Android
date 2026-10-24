@@ -1,6 +1,5 @@
 package dev.typetype.android.baselineprofile
 
-import android.content.Intent
 import androidx.benchmark.macro.CompilationMode
 import androidx.benchmark.macro.ExperimentalMetricApi
 import androidx.benchmark.macro.FrameTimingMetric
@@ -20,20 +19,20 @@ class ShortsMacrobenchmark {
 
     @Test
     fun startup() = benchmarkRule.measureRepeated(
-        packageName = PACKAGE_NAME,
+        packageName = TARGET_PACKAGE,
         metrics = listOf(StartupTimingMetric()),
         compilationMode = CompilationMode.Partial(),
         startupMode = StartupMode.COLD,
         iterations = 5,
         setupBlock = { pressHome() },
     ) {
-        startActivityAndWait(benchmarkIntent())
+        startActivityAndWait(benchmarkActivity("ShortsBenchmarkActivity"))
     }
 
     @OptIn(ExperimentalMetricApi::class)
     @Test
     fun verticalPaging() = benchmarkRule.measureRepeated(
-        packageName = PACKAGE_NAME,
+        packageName = TARGET_PACKAGE,
         metrics = listOf(
             FrameTimingMetric(),
             MemoryUsageMetric(
@@ -46,7 +45,7 @@ class ShortsMacrobenchmark {
         ),
         compilationMode = CompilationMode.Partial(),
         iterations = 5,
-        setupBlock = { startActivityAndWait(benchmarkIntent()) },
+        setupBlock = { startActivityAndWait(benchmarkActivity("ShortsBenchmarkActivity")) },
     ) {
         repeat(6) {
             device.swipe(
@@ -58,12 +57,5 @@ class ShortsMacrobenchmark {
             )
             device.waitForIdle()
         }
-    }
-
-    private fun benchmarkIntent() = Intent().setClassName(PACKAGE_NAME, ACTIVITY_NAME)
-
-    private companion object {
-        const val PACKAGE_NAME = "dev.typetype.android"
-        const val ACTIVITY_NAME = "dev.typetype.android.benchmark.ShortsBenchmarkActivity"
     }
 }

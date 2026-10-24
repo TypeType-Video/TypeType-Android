@@ -19,7 +19,7 @@ class MainStartupMacrobenchmark {
     @Test
     @OptIn(ExperimentalMetricApi::class)
     fun startup() = benchmarkRule.measureRepeated(
-        packageName = PACKAGE_NAME,
+        packageName = TARGET_PACKAGE,
         metrics = listOf(
             StartupTimingMetric(),
             MemoryUsageMetric(
@@ -38,9 +38,5 @@ class MainStartupMacrobenchmark {
     ) {
         pressHome()
         startActivityAndWait()
-    }
-
-    private companion object {
-        const val PACKAGE_NAME = "dev.typetype.android"
     }
 }

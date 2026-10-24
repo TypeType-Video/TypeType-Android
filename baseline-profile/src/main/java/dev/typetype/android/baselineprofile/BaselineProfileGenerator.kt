@@ -13,7 +13,7 @@ class BaselineProfileGenerator {
 
     @Test
     fun startup() = baselineProfileRule.collect(
-        packageName = PACKAGE_NAME,
+        packageName = TARGET_PACKAGE,
         includeInStartupProfile = true,
         strictStability = true,
         filterPredicate = STARTUP_RULE::containsMatchIn,
@@ -22,7 +22,6 @@ class BaselineProfileGenerator {
     }
 
     private companion object {
-        const val PACKAGE_NAME = "dev.typetype.android"
         val STARTUP_RULE = Regex(
             "^[HSP]*Ldev/typetype/android/" +
                 "(MainActivity|MainViewModel|TypeTypeApp|AppShellKt|AppNavHostKt|" +
