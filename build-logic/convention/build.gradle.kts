@@ -19,6 +19,10 @@ gradlePlugin {
             id = "typetype.android.compose"
             implementationClass = "AndroidComposeConventionPlugin"
         }
+        register("androidFeature") {
+            id = "typetype.android.feature"
+            implementationClass = "AndroidFeatureConventionPlugin"
+        }
         register("androidHilt") {
             id = "typetype.android.hilt"
             implementationClass = "AndroidHiltConventionPlugin"
