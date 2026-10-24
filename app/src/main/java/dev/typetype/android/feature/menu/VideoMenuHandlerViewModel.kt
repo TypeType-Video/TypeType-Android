@@ -6,8 +6,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.typetype.android.R
-import dev.typetype.android.toPlaybackQueueEntry
 import dev.typetype.android.core.ui.error.UserErrorMapper
+import dev.typetype.android.core.ui.player.PlayerHostController
 import dev.typetype.android.domain.actions.VideoActionsRepository
 import dev.typetype.android.domain.download.DownloadProgress
 import dev.typetype.android.domain.download.DownloadRepository
@@ -15,10 +15,10 @@ import dev.typetype.android.domain.download.DownloadSelection
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.library.LibraryRepository
 import dev.typetype.android.domain.navigation.canonicalVideoIdentity
+import dev.typetype.android.domain.playback.PlaybackQueueController
 import dev.typetype.android.domain.playback.PlaybackQueueEntry
 import dev.typetype.android.domain.playback.PlaybackQueueMutationResult
-import dev.typetype.android.feature.player.host.PlayerHostController
-import dev.typetype.android.services.PlaybackQueueCoordinator
+import dev.typetype.android.domain.playback.toPlaybackQueueEntry
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -39,7 +39,7 @@ class VideoMenuHandlerViewModel @Inject constructor(
     internal val videoActionsRepository: VideoActionsRepository,
     private val downloadRepository: DownloadRepository,
     private val errorMapper: UserErrorMapper,
-    private val playbackQueueCoordinator: PlaybackQueueCoordinator,
+    private val playbackQueue: PlaybackQueueController,
     private val playerHostController: PlayerHostController,
 ) : ViewModel() {
 
@@ -295,7 +295,7 @@ class VideoMenuHandlerViewModel @Inject constructor(
     }
 
     private fun updateQueue(entry: PlaybackQueueEntry, playNext: Boolean) {
-        val result = playbackQueueCoordinator.enqueue(entry, playNext)
+        val result = playbackQueue.enqueue(entry, playNext)
         val message = when (result) {
             PlaybackQueueMutationResult.Added -> if (playNext) {
                 R.string.snackbar_queue_play_next

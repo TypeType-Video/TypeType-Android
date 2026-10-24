@@ -18,13 +18,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.cancel
+import androidx.compose.ui.test.down
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.moveTo
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.down
-import androidx.compose.ui.test.moveTo
-import androidx.compose.ui.test.cancel
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -34,13 +34,14 @@ import androidx.media3.common.SimpleBasePlayer
 import androidx.media3.ui.PlayerView
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
-import dev.typetype.android.feature.player.PlayerContentLayout
+import dev.typetype.android.core.ui.player.PlayerHostTarget
 import dev.typetype.android.feature.player.PLAYER_VIEWPORT_TAG
+import dev.typetype.android.feature.player.PlayerContentLayout
 import dev.typetype.android.feature.player.components.PlayerGestureLayer
 import dev.typetype.android.feature.player.state.PlayerGestureState
-import org.junit.Assert.assertTrue
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 

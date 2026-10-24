@@ -1,8 +1,8 @@
 package dev.typetype.android.feature.player
 
-import dev.typetype.android.feature.player.host.PlayerHostStateSnapshot
-import dev.typetype.android.feature.player.error.classifyStreamError
+import dev.typetype.android.core.ui.player.PlayerHostStateSnapshot
 import dev.typetype.android.domain.stream.Stream
+import dev.typetype.android.feature.player.error.classifyStreamError
 
 internal fun PlayerState.applyStreamUpdate(
     update: PlayerStreamUpdate,

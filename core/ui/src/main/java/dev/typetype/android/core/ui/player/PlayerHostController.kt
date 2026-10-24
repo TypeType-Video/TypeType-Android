@@ -1,4 +1,4 @@
-package dev.typetype.android.feature.player.host
+package dev.typetype.android.core.ui.player
 
 import javax.inject.Inject
 import javax.inject.Singleton

@@ -185,7 +185,7 @@ class PlaybackQueueCoordinator @Inject internal constructor(
         }
     }
 
-    fun enqueue(entry: PlaybackQueueEntry, playNext: Boolean): PlaybackQueueMutationResult {
+    override fun enqueue(entry: PlaybackQueueEntry, playNext: Boolean): PlaybackQueueMutationResult {
         val current = mutableState.value
         if (current.isActive) {
             val mutation = current.enqueueEntry(entry, playNext)

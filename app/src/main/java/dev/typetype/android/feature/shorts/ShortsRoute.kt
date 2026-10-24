@@ -1,5 +1,6 @@
 package dev.typetype.android.feature.shorts
 
+import androidx.activity.compose.LocalActivity
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -10,26 +11,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.activity.compose.LocalActivity
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.Player
 import dev.typetype.android.R
-import dev.typetype.android.core.ui.copyPlainText
 import dev.typetype.android.core.ui.components.LocalAppSnackbarHost
+import dev.typetype.android.core.ui.copyPlainText
+import dev.typetype.android.core.ui.player.PlayerHostController
+import dev.typetype.android.core.ui.player.PlayerHostTarget
 import dev.typetype.android.feature.menu.rememberVideoMenuScope
-import dev.typetype.android.feature.player.PlayerChannelActionsViewModel
 import dev.typetype.android.feature.player.DevicePlaybackCodecSupport
-import dev.typetype.android.feature.player.PlayerViewModel
+import dev.typetype.android.feature.player.PlayerChannelActionsViewModel
 import dev.typetype.android.feature.player.PlayerFullscreenEffect
+import dev.typetype.android.feature.player.PlayerViewModel
 import dev.typetype.android.feature.player.ShortsPlayerRoute
 import dev.typetype.android.feature.player.components.CommentsSheet
 import dev.typetype.android.feature.player.components.LocalMediaController
 import dev.typetype.android.feature.player.components.rememberCurrentMediaId
 import dev.typetype.android.feature.player.components.rememberPlayerPlaybackStatus
-import dev.typetype.android.feature.player.host.PlayerHostController
-import dev.typetype.android.feature.player.host.PlayerHostTarget
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

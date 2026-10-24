@@ -9,8 +9,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.unit.dp
+import dev.typetype.android.core.ui.player.PlayerHostController
 import dev.typetype.android.domain.playback.PlaybackQueueController
 import dev.typetype.android.domain.playback.PlaybackQueueEntry
+import dev.typetype.android.domain.playback.PlaybackQueueMutationResult
 import dev.typetype.android.domain.playback.PlaybackQueueSnapshot
 import dev.typetype.android.domain.playback.PlaybackQueueState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -92,4 +94,6 @@ private class FakePlaybackQueueController : PlaybackQueueController {
     override fun start(title: String, entries: List<PlaybackQueueEntry>, shuffle: Boolean) = Unit
     override fun restore(snapshot: PlaybackQueueSnapshot) = Unit
     override fun clear() = Unit
+    override fun enqueue(entry: PlaybackQueueEntry, playNext: Boolean) =
+        PlaybackQueueMutationResult.NoActivePlayback
 }

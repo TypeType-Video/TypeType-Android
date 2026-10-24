@@ -25,21 +25,21 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.R
-import dev.typetype.android.toPlaybackQueueEntry
 import dev.typetype.android.core.ui.components.LibraryFilterBar
 import dev.typetype.android.core.ui.components.LibrarySortMode
 import dev.typetype.android.core.ui.components.LocalAppSnackbarHost
 import dev.typetype.android.core.ui.components.PlaylistVideoActionsSheet
 import dev.typetype.android.core.ui.components.PlaylistVideoCard
+import dev.typetype.android.core.ui.share.ShareChooserSheet
 import dev.typetype.android.domain.library.PlaylistVideo
-import dev.typetype.android.feature.library.components.rememberVideoMetas
+import dev.typetype.android.domain.playback.toPlaybackQueueEntry
 import dev.typetype.android.feature.library.LibrarySyncStatusBar
+import dev.typetype.android.feature.library.components.rememberVideoMetas
 import dev.typetype.android.feature.menu.VideoMenuEvent
 import dev.typetype.android.feature.menu.VideoMenuHandlerViewModel
 import dev.typetype.android.feature.menu.blockVideoUrl
 import dev.typetype.android.feature.menu.removeFromPlaylist
 import dev.typetype.android.feature.menu.toggleWatchedUrl
-import dev.typetype.android.core.ui.share.ShareChooserSheet
 
 @Composable
 fun PlaylistRoute(

@@ -14,12 +14,12 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.PagingData
 import dev.typetype.android.R
-import dev.typetype.android.toPlaybackQueueEntry
 import dev.typetype.android.core.ui.components.FullScreenLoader
 import dev.typetype.android.core.ui.components.LibraryFilterBar
 import dev.typetype.android.core.ui.components.LibrarySortMode
-import dev.typetype.android.domain.library.HistoryItem
 import dev.typetype.android.domain.library.HistoryDateRange
+import dev.typetype.android.domain.library.HistoryItem
+import dev.typetype.android.domain.playback.toPlaybackQueueEntry
 import dev.typetype.android.feature.menu.blockVideoUrl
 import dev.typetype.android.feature.menu.clearWatchHistory
 import dev.typetype.android.feature.menu.removeFavoriteUrl

@@ -22,10 +22,12 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.session.MediaController
+import dev.typetype.android.core.ui.player.PlayerHostController
+import dev.typetype.android.core.ui.player.PlayerHostTarget
 import dev.typetype.android.feature.player.PlayerFullscreenEffect
 import dev.typetype.android.feature.player.PlayerRoute as PlayerRouteScreen
-import dev.typetype.android.feature.player.components.rememberIsInPipMode
 import dev.typetype.android.feature.player.components.rememberAccessiblePlayerControls
+import dev.typetype.android.feature.player.components.rememberIsInPipMode
 
 private val MINI_PLAYER_HEIGHT = 64.dp
 internal const val PLAYER_HOST_OVERLAY_TAG = "player_host_overlay"

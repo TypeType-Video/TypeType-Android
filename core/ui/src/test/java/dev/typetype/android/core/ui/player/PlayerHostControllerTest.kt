@@ -1,7 +1,8 @@
-package dev.typetype.android.feature.player.host
+package dev.typetype.android.core.ui.player
 
 import dev.typetype.android.domain.playback.PlaybackQueueController
 import dev.typetype.android.domain.playback.PlaybackQueueEntry
+import dev.typetype.android.domain.playback.PlaybackQueueMutationResult
 import dev.typetype.android.domain.playback.PlaybackQueueSnapshot
 import dev.typetype.android.domain.playback.PlaybackQueueState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -209,4 +210,6 @@ private class FakePlaybackQueueController : PlaybackQueueController {
     override fun start(title: String, entries: List<PlaybackQueueEntry>, shuffle: Boolean) = Unit
     override fun restore(snapshot: PlaybackQueueSnapshot) = Unit
     override fun clear() = Unit
+    override fun enqueue(entry: PlaybackQueueEntry, playNext: Boolean) =
+        PlaybackQueueMutationResult.NoActivePlayback
 }

@@ -6,8 +6,9 @@ import androidx.navigation.compose.composable
 import dev.typetype.android.core.ui.navigation.ChannelRoute
 import dev.typetype.android.core.ui.navigation.PodcastRoute
 import dev.typetype.android.core.ui.navigation.PublicPlaylistRoute
+import dev.typetype.android.core.ui.player.PlayerHostController
+import dev.typetype.android.domain.playback.toPlaybackQueueEntry
 import dev.typetype.android.feature.channel.ChannelRoute as ChannelRouteScreen
-import dev.typetype.android.feature.player.host.PlayerHostController
 import dev.typetype.android.feature.podcast.PodcastRoute as PodcastRouteScreen
 
 internal fun NavGraphBuilder.channelAndPodcastDestinations(

@@ -3,12 +3,12 @@ package dev.typetype.android.feature.player
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.typetype.android.core.ui.player.PlayerHostController
 import dev.typetype.android.domain.comments.BulletCommentsRepository
 import dev.typetype.android.domain.preferences.AppPreferences
 import dev.typetype.android.domain.preferences.PreferencesRepository
 import dev.typetype.android.domain.usersettings.UserSettings
 import dev.typetype.android.domain.usersettings.UserSettingsRepository
-import dev.typetype.android.feature.player.host.PlayerHostController
 import dev.typetype.android.services.PlaybackQueueCoordinator
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi

@@ -1,7 +1,7 @@
 package dev.typetype.android.feature.player
 
+import dev.typetype.android.core.ui.player.PlayerHostController
 import dev.typetype.android.domain.playback.PlaybackQueueState
-import dev.typetype.android.feature.player.host.PlayerHostController
 import dev.typetype.android.services.PlaybackQueueCoordinator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

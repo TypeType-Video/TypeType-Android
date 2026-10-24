@@ -1,63 +1,64 @@
 package dev.typetype.android
 
 import androidx.activity.ComponentActivity
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.requiredWidth
-import androidx.compose.runtime.MutableState
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.test.junit4.StateRestorationTester
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertTextEquals
-import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.junit4.StateRestorationTester
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.NavHostController
 import androidx.test.espresso.Espresso.closeSoftKeyboard
-import dev.typetype.android.core.ui.navigation.HomeRoute
 import dev.typetype.android.core.ui.navigation.ChannelRoute
+import dev.typetype.android.core.ui.navigation.HomeRoute
 import dev.typetype.android.core.ui.navigation.LibraryRoute
 import dev.typetype.android.core.ui.navigation.SearchRoute
 import dev.typetype.android.core.ui.navigation.SubscriptionsRoute
+import dev.typetype.android.core.ui.player.PlayerHostController
 import dev.typetype.android.domain.playback.PlaybackQueueController
 import dev.typetype.android.domain.playback.PlaybackQueueEntry
+import dev.typetype.android.domain.playback.PlaybackQueueMutationResult
 import dev.typetype.android.domain.playback.PlaybackQueueSnapshot
 import dev.typetype.android.domain.playback.PlaybackQueueState
-import dev.typetype.android.feature.player.host.PlayerHostController
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import org.junit.Rule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
 
 class AppShellNavigationLayoutTest {
@@ -194,4 +195,6 @@ private class TabletLayoutQueueController : PlaybackQueueController {
     override fun start(title: String, entries: List<PlaybackQueueEntry>, shuffle: Boolean) = Unit
     override fun restore(snapshot: PlaybackQueueSnapshot) = Unit
     override fun clear() = Unit
+    override fun enqueue(entry: PlaybackQueueEntry, playNext: Boolean) =
+        PlaybackQueueMutationResult.NoActivePlayback
 }

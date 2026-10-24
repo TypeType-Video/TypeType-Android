@@ -3,6 +3,7 @@ package dev.typetype.android.feature.player
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.typetype.android.core.ui.player.PlayerHostController
 import dev.typetype.android.data.network.PlaybackNetworkMonitor
 import dev.typetype.android.domain.comments.CommentsRepository
 import dev.typetype.android.domain.download.DownloadProgress
@@ -13,10 +14,10 @@ import dev.typetype.android.domain.preferences.PreferencesRepository
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import dev.typetype.android.feature.player.error.classifyStreamError
-import dev.typetype.android.feature.player.host.PlayerHostController
 import dev.typetype.android.services.PlaybackQueueCoordinator
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,7 +27,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
