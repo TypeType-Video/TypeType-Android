@@ -11,10 +11,10 @@ import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.feed.shortIdentity
 import dev.typetype.android.domain.library.VideoMetaRepository
 import dev.typetype.android.domain.library.cacheVideos
-import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import dev.typetype.android.domain.usersettings.UserSettings
-import dev.typetype.android.feature.player.PlaybackCodecSupport
+import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import dev.typetype.android.feature.player.PlaybackPreheater
+import dev.typetype.android.playback.PlaybackCodecSupport
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job

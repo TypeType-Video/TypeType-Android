@@ -21,7 +21,6 @@ import dev.typetype.android.core.ui.copyPlainText
 import dev.typetype.android.core.ui.player.PlayerHostController
 import dev.typetype.android.core.ui.player.PlayerHostTarget
 import dev.typetype.android.feature.menu.rememberVideoMenuScope
-import dev.typetype.android.feature.player.DevicePlaybackCodecSupport
 import dev.typetype.android.feature.player.PlayerChannelActionsViewModel
 import dev.typetype.android.feature.player.PlayerFullscreenEffect
 import dev.typetype.android.feature.player.PlayerViewModel
@@ -30,6 +29,7 @@ import dev.typetype.android.feature.player.components.CommentsSheet
 import dev.typetype.android.feature.player.components.LocalMediaController
 import dev.typetype.android.feature.player.components.rememberCurrentMediaId
 import dev.typetype.android.feature.player.components.rememberPlayerPlaybackStatus
+import dev.typetype.android.playback.DevicePlaybackCodecSupport
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

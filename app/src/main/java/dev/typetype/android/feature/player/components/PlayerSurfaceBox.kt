@@ -1,15 +1,15 @@
 package dev.typetype.android.feature.player.components
 
-import android.media.AudioManager
 import android.graphics.Rect
+import android.media.AudioManager
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.OptIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -18,9 +18,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
@@ -31,16 +31,16 @@ import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.stream.StreamPlaybackContract
 import dev.typetype.android.domain.usersettings.CaptionStyles
 import dev.typetype.android.feature.player.LoadSubtitleCues
-import dev.typetype.android.feature.player.PlaybackCodecSupport
 import dev.typetype.android.feature.player.PlayerDanmakuAction
 import dev.typetype.android.feature.player.PlayerDanmakuState
 import dev.typetype.android.feature.player.PlayerNavigationControls
 import dev.typetype.android.feature.player.SponsorBlockPlaybackPolicy
-import dev.typetype.android.feature.player.key
-import dev.typetype.android.feature.player.state.PlayerGestureState
 import dev.typetype.android.feature.player.state.DragMode
+import dev.typetype.android.feature.player.state.PlayerGestureState
 import dev.typetype.android.feature.player.state.ResizeMode
 import dev.typetype.android.feature.player.state.next
+import dev.typetype.android.playback.PlaybackCodecSupport
+import dev.typetype.android.playback.key
 import kotlinx.coroutines.delay
 
 private const val AUTO_HIDE_DELAY_MS = 3_500L

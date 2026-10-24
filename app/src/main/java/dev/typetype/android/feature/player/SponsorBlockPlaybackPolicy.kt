@@ -8,6 +8,7 @@ import dev.typetype.android.domain.stream.SponsorCategory
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.usersettings.SponsorBlockMode
 import dev.typetype.android.domain.usersettings.UserSettings
+import dev.typetype.android.playback.key
 
 internal data class SponsorBlockPlaybackPolicy(
     val visibleSegments: List<SponsorBlockSegment> = emptyList(),

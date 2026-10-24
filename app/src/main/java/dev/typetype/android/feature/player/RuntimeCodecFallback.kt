@@ -8,6 +8,7 @@ import androidx.media3.common.Format
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Tracks
+import dev.typetype.android.playback.PlaybackCodecSupport
 
 @Composable
 internal fun RuntimeCodecFallbackEffect(

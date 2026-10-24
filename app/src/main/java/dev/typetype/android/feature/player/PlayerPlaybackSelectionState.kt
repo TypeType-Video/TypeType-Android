@@ -10,6 +10,10 @@ import androidx.compose.runtime.setValue
 import dev.typetype.android.domain.preferences.RECOMMENDED_CODEC_KEY
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.stream.StreamSubtitleSource
+import dev.typetype.android.playback.initialAudioKey
+import dev.typetype.android.playback.initialQuality
+import dev.typetype.android.playback.initialSubtitleKey
+import dev.typetype.android.playback.key
 
 internal class PlayerPlaybackSelectionState(
     stream: Stream,

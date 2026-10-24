@@ -2,6 +2,7 @@ package dev.typetype.android.feature.player
 
 import dev.typetype.android.domain.stream.StreamRequestScope
 import dev.typetype.android.domain.subscriptions.canonicalChannelUrl
+import dev.typetype.android.playback.key
 
 internal data class PlayerChannelMetadata(
     val name: String,

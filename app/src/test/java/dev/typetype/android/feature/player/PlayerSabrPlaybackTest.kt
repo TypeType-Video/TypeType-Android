@@ -12,6 +12,8 @@ import dev.typetype.android.domain.stream.StreamRequestScope
 import dev.typetype.android.domain.stream.StreamSubtitleSource
 import dev.typetype.android.domain.stream.StreamVideoSource
 import dev.typetype.android.domain.stream.sabrPlaybackTarget
+import dev.typetype.android.playback.PlayableSource
+import dev.typetype.android.playback.playbackSubtitles
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test

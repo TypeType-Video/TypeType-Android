@@ -4,10 +4,10 @@ import androidx.compose.runtime.Composable
 import androidx.media3.session.MediaController
 import dev.typetype.android.domain.stream.Chapter
 import dev.typetype.android.domain.stream.Stream
-import dev.typetype.android.feature.player.PlaybackCodecSupport
 import dev.typetype.android.feature.player.PlayerDanmakuAction
 import dev.typetype.android.feature.player.PlayerDanmakuState
 import dev.typetype.android.feature.player.state.ResizeMode
+import dev.typetype.android.playback.PlaybackCodecSupport
 
 internal data class PlayerOptionsState(
     val selectedCodec: String,

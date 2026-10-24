@@ -20,14 +20,15 @@ import dev.typetype.android.R
 import dev.typetype.android.domain.preferences.RECOMMENDED_CODEC_KEY
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.stream.StreamPlaybackContract
-import dev.typetype.android.feature.player.AUTO_QUALITY_KEY
-import dev.typetype.android.feature.player.PlaybackCodecSupport
 import dev.typetype.android.feature.player.PlayerDanmakuAction
 import dev.typetype.android.feature.player.PlayerDanmakuState
-import dev.typetype.android.feature.player.RECOMMENDED_QUALITY_KEY
-import dev.typetype.android.feature.player.hasAdaptiveSource
 import dev.typetype.android.feature.player.state.PLAYBACK_SPEEDS
 import dev.typetype.android.feature.player.state.ResizeMode
+import dev.typetype.android.playback.AUTO_QUALITY_KEY
+import dev.typetype.android.playback.DecoderSupport
+import dev.typetype.android.playback.PlaybackCodecSupport
+import dev.typetype.android.playback.RECOMMENDED_QUALITY_KEY
+import dev.typetype.android.playback.hasAdaptiveSource
 
 @kotlin.OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -271,9 +272,9 @@ private fun PickerPage(
         }
         items(options, key = { it.key ?: "off" }) { option ->
             val decoderLabel = when (option.decoderSupport) {
-                dev.typetype.android.feature.player.DecoderSupport.Hardware ->
+                DecoderSupport.Hardware ->
                     stringResource(R.string.playback_options_hardware_decoder)
-                dev.typetype.android.feature.player.DecoderSupport.Software ->
+                DecoderSupport.Software ->
                     stringResource(R.string.playback_options_software_decoder)
                 else -> null
             }

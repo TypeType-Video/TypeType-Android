@@ -5,8 +5,8 @@ import dev.typetype.android.domain.stream.StreamAudioSource
 import dev.typetype.android.domain.stream.StreamPlaybackContract
 import dev.typetype.android.domain.stream.StreamSubtitleSource
 import dev.typetype.android.domain.stream.StreamVideoSource
-import dev.typetype.android.feature.player.DecoderSupport
-import dev.typetype.android.feature.player.PlaybackCodecSupport
+import dev.typetype.android.playback.DecoderSupport
+import dev.typetype.android.playback.PlaybackCodecSupport
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

@@ -49,6 +49,9 @@ import dev.typetype.android.feature.player.components.SponsorBlockPlaybackFeedba
 import dev.typetype.android.feature.player.components.rememberCurrentMediaId
 import dev.typetype.android.feature.player.components.rememberPlayerPlaybackStatus
 import dev.typetype.android.feature.player.state.ResizeMode
+import dev.typetype.android.playback.DevicePlaybackCodecSupport
+import dev.typetype.android.playback.PrepareSabrPlayback
+import dev.typetype.android.playback.key
 
 @Composable
 fun ShortsPlayerRoute(

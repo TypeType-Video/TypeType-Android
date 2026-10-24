@@ -13,8 +13,8 @@ import androidx.media3.common.Player
 import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
 import dev.typetype.android.domain.stream.Stream
-import dev.typetype.android.feature.player.codecDisplayName
-import dev.typetype.android.feature.player.codecSelectionKey
+import dev.typetype.android.playback.codecDisplayName
+import dev.typetype.android.playback.codecSelectionKey
 import dev.typetype.android.services.MergedStreamMediaKeys
 
 internal data class PlaybackActiveVideoFormat(

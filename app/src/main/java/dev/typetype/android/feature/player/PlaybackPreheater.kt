@@ -9,6 +9,12 @@ import dev.typetype.android.domain.stream.StreamRepository
 import dev.typetype.android.domain.stream.sabrPlaybackTarget
 import dev.typetype.android.domain.usersettings.UserSettings
 import dev.typetype.android.domain.usersettings.UserSettingsRepository
+import dev.typetype.android.playback.DevicePlaybackCodecSupport
+import dev.typetype.android.playback.PlaybackCodecSupport
+import dev.typetype.android.playback.effectiveQuality
+import dev.typetype.android.playback.initialAudioKey
+import dev.typetype.android.playback.initialQuality
+import dev.typetype.android.playback.sabrSelection
 import javax.inject.Inject
 import javax.inject.Singleton
 

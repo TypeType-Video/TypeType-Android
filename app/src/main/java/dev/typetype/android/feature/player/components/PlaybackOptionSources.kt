@@ -7,11 +7,11 @@ import dev.typetype.android.domain.stream.StreamPlaybackContract
 import dev.typetype.android.domain.stream.StreamSubtitleSource
 import dev.typetype.android.domain.stream.StreamVideoSource
 import dev.typetype.android.domain.stream.isServerSabrVideoFormat
-import dev.typetype.android.feature.player.DecoderSupport
-import dev.typetype.android.feature.player.PlaybackCodecSupport
-import dev.typetype.android.feature.player.codecDisplayName
-import dev.typetype.android.feature.player.codecSelectionKey
-import dev.typetype.android.feature.player.key
+import dev.typetype.android.playback.DecoderSupport
+import dev.typetype.android.playback.PlaybackCodecSupport
+import dev.typetype.android.playback.codecDisplayName
+import dev.typetype.android.playback.codecSelectionKey
+import dev.typetype.android.playback.key
 
 internal fun Stream.codecOptions(codecSupport: PlaybackCodecSupport): List<PlaybackPickerOption> =
     supportedVideoSources(codecSupport)

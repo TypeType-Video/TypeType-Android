@@ -26,7 +26,7 @@ import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.feature.player.components.ResilientPlayerSurface
 import dev.typetype.android.feature.player.state.ResizeMode
 import dev.typetype.android.services.PlaybackService
-import dev.typetype.android.services.createSyntheticH264Video
+import dev.typetype.android.testing.createSyntheticH264Video
 import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
