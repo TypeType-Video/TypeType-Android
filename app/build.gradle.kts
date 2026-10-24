@@ -2,7 +2,7 @@ import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    alias(libs.plugins.androidApplication)
+    id("typetype.android.application")
     alias(libs.plugins.baselineprofile)
     alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.kotlin.serialization)
@@ -19,16 +19,12 @@ if (keystoreFileExists) {
 }
 
 android {
-    compileSdk = 37
     namespace = "dev.typetype.android"
 
     defaultConfig {
         applicationId = "dev.typetype.android"
-        minSdk = 23
-        targetSdk = 37
         versionCode = 10902
         versionName = "1.9.1"
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         resValue("string", "app_name", "TypeType")
     }
 
@@ -67,8 +63,6 @@ android {
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlin {
@@ -76,11 +70,6 @@ android {
             jvmTarget = JvmTarget.JVM_17
             javaParameters = true
         }
-    }
-
-    lint {
-        abortOnError = true
-        checkReleaseBuilds = false
     }
 
     buildFeatures {
