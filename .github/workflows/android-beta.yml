@@ -127,10 +127,8 @@ jobs:
         run: |
           ./gradlew --build-cache --stacktrace \
             :baseline-profile:assemble \
-            :player:testDebugUnitTest \
-            :app:testDebugUnitTest \
-            :player:lintDebug \
-            :app:lintDebug \
+            testDebugUnitTest \
+            lintDebug \
             :app:assembleDebug \
             :app:assembleRelease
 
@@ -140,8 +138,7 @@ jobs:
         with:
           name: typetype-beta-lint-report
           path: |
-            app/build/reports/lint-results-debug.html
-            player/build/reports/lint-results-debug.html
+            **/build/reports/lint-results-debug.html
           if-no-files-found: ignore
           retention-days: 14
 
