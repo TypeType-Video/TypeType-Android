@@ -1,4 +1,4 @@
-package dev.typetype.android.data.notifications
+package dev.typetype.android.services.notifications
 
 import dev.typetype.android.data.account.AccountDao
 import dev.typetype.android.data.account.AccountScope

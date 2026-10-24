@@ -1,4 +1,4 @@
-package dev.typetype.android.data.notifications
+package dev.typetype.android.services.notifications
 
 import android.content.Context
 import androidx.hilt.work.HiltWorker

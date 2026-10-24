@@ -3,7 +3,7 @@ package dev.typetype.android.feature.settings.notifications
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.typetype.android.data.notifications.LocalNotificationScheduler
+import dev.typetype.android.services.notifications.LocalNotificationScheduler
 import dev.typetype.android.domain.push.PushRegistrationStatus
 import dev.typetype.android.domain.push.PushRepository
 import dev.typetype.android.services.push.PushRegistrationManager

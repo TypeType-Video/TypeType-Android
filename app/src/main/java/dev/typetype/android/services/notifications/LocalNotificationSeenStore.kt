@@ -1,4 +1,4 @@
-package dev.typetype.android.data.notifications
+package dev.typetype.android.services.notifications
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences

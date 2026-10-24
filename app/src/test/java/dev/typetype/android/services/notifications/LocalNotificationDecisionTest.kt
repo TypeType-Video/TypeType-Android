@@ -1,4 +1,4 @@
-package dev.typetype.android.data.notifications
+package dev.typetype.android.services.notifications
 
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.notifications.NotificationItem
