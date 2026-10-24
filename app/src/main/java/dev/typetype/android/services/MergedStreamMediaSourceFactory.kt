@@ -114,6 +114,7 @@ internal class MergedStreamMediaSourceFactory(
                 transportState = transportState,
                 recoveryDispatcher = recoveryDispatcher,
                 playbackRate = playbackRate,
+                windowRecovery = SabrWindowRecovery(sabrPlaybackRepository, target, networkMonitor),
                 initialWindow = initialWindow,
             ),
             dataSourceFactory = mediaDataSource,

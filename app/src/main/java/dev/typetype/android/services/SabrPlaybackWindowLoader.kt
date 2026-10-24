@@ -31,6 +31,7 @@ internal class SabrPlaybackWindowLoader(
     private val transportState: SabrPlaybackTransportState,
     private val recoveryDispatcher: SabrPlaybackRecoveryDispatcher,
     private val playbackRate: () -> Float,
+    private val windowRecovery: SabrWindowRecovery,
     initialWindow: PlaybackWindow? = null,
     context: CoroutineContext = Dispatchers.Main.immediate,
 ) : PlaybackWindowLoader {
@@ -45,7 +46,7 @@ internal class SabrPlaybackWindowLoader(
         request: () -> PlaybackWindowRequest,
         callback: (Result<PlaybackWindow>) -> Unit,
     ): PlaybackLoadCancellation {
-        return launchWindowRequest(callback) {
+        return launchWindowRequest(callback, { request().positionUs.toMilliseconds() }) {
             val activeBinding = transportState.currentBinding()
             repository.refresh(
                 target = target,
@@ -65,7 +66,7 @@ internal class SabrPlaybackWindowLoader(
         positionUs: Long,
         callback: (Result<PlaybackWindow>) -> Unit,
     ): PlaybackLoadCancellation {
-        return launchWindowRequest(callback) {
+        return launchWindowRequest(callback, { positionUs.toMilliseconds() }) {
             repository.seek(
                 target = target,
                 binding = transportState.currentBinding(),
@@ -89,10 +90,11 @@ internal class SabrPlaybackWindowLoader(
 
     private fun launchWindowRequest(
         callback: (Result<PlaybackWindow>) -> Unit,
+        positionMs: () -> Long,
         request: suspend () -> Result<SabrPlaybackSession>,
     ): PlaybackLoadCancellation {
         val job = scope.launch {
-            val response = request()
+            val response = windowRecovery.run(positionMs, request)
             val recovery = response.exceptionOrNull()?.sabrPlaybackRecoveryFailure()
             if (recovery != null) {
                 recoveryDispatcher.request(

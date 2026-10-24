@@ -1,5 +1,6 @@
 package dev.typetype.android.services
 
+import dev.typetype.android.data.network.AlwaysAvailablePlaybackNetworkObserver
 import dev.typetype.android.data.stream.SabrPlaybackRecoveryException
 import dev.typetype.android.domain.stream.SabrPlaybackBinding
 import dev.typetype.android.domain.stream.SabrPlaybackBufferedRange
@@ -22,7 +23,7 @@ class SabrPlaybackWindowLoaderRecoveryTest {
             listOf(
                 Result.success(session("fresh")),
                 Result.failure<SabrPlaybackSession>(
-                    SabrPlaybackRecoveryException("window failed", "retry_fresh_session", emptyList()),
+                    SabrPlaybackRecoveryException("lower", "retry_fresh_session_lower_video_itag", listOf(136)),
                 ),
             ),
         )
@@ -51,6 +52,7 @@ class SabrPlaybackWindowLoaderRecoveryTest {
             transportState = SabrPlaybackTransportState(original.binding),
             recoveryDispatcher = dispatcher,
             playbackRate = { 1f },
+            windowRecovery = SabrWindowRecovery(repository, TARGET, AlwaysAvailablePlaybackNetworkObserver, clock = { 0L }),
             context = Dispatchers.Unconfined,
         )
         val request = { PlaybackWindowRequest(30_000_000, emptyList()) }
