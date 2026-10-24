@@ -95,6 +95,7 @@ dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:resources"))
     implementation(project(":core:ui"))
+    implementation(project(":feature:menu"))
     implementation(project(":player"))
     baselineProfile(project(":baseline-profile"))
     implementation(libs.androidx.core.ktx)
