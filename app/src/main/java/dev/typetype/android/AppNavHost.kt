@@ -51,6 +51,7 @@ import dev.typetype.android.feature.settings.accounts.AccountSettingsRoute as Ac
 import dev.typetype.android.feature.settings.appearance.AppearanceRoute as AppearanceRouteScreen
 import dev.typetype.android.feature.settings.blocked.BlockedSettingsRoute as BlockedSettingsRouteScreen
 import dev.typetype.android.feature.settings.content.ContentSettingsRoute as ContentSettingsRouteScreen
+import dev.typetype.android.feature.settings.recommender.RecommenderSettingsRoute as RecommenderSettingsRouteScreen
 import dev.typetype.android.feature.settings.diagnostics.DiagnosticsRoute as DiagnosticsRouteScreen
 import dev.typetype.android.feature.settings.player.PlayerSettingsRoute as PlayerSettingsRouteScreen
 import dev.typetype.android.feature.settings.privacy.PrivacySettingsRoute as PrivacySettingsRouteScreen
@@ -238,7 +239,13 @@ fun AppNavHost(
             composable<ContentSettingsRoute> {
                 ContentSettingsRouteScreen(
                     onNavigateBack = { navController.popBackStack() },
+                    onOpenRecommender = {
+                        navController.navigate(dev.typetype.android.core.ui.navigation.RecommenderSettingsRoute)
+                    },
                 )
+            }
+            composable<dev.typetype.android.core.ui.navigation.RecommenderSettingsRoute> {
+                RecommenderSettingsRouteScreen(onNavigateBack = { navController.popBackStack() })
             }
             composable<PlayerSettingsRoute> {
                 PlayerSettingsRouteScreen(

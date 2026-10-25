@@ -27,6 +27,8 @@ interface TypeTypeFeedApi {
         @Query("limit") limit: Int = 30,
         @Query("intent") intent: String? = null,
         @Query("cursor") cursor: String? = null,
+        @Query("locale") locale: String? = null,
+        @Query("timezone") timezone: String? = null,
     ): Response<HomeRecommendationsResponse>
 
     @GET("recommendations/shorts")

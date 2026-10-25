@@ -38,6 +38,7 @@ import dev.typetype.android.feature.settings.SettingsDetailTopBar
 @Composable
 fun ContentSettingsRoute(
     onNavigateBack: () -> Unit,
+    onOpenRecommender: () -> Unit = {},
     viewModel: ContentSettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -45,6 +46,7 @@ fun ContentSettingsRoute(
         state = state,
         onAction = viewModel::onAction,
         onNavigateBack = onNavigateBack,
+        onOpenRecommender = onOpenRecommender,
     )
 }
 
@@ -53,6 +55,7 @@ fun ContentSettingsScreen(
     state: ContentSettingsState,
     onAction: (ContentSettingsAction) -> Unit,
     onNavigateBack: () -> Unit,
+    onOpenRecommender: () -> Unit = {},
 ) {
     val controlsEnabled = !state.isLoading && !state.isUpdating
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -192,6 +195,9 @@ fun ContentSettingsScreen(
                             },
                             enabled = !state.isRecommenderLoading && !state.isRecommenderUpdating,
                         )
+                    }
+                    item {
+                        RecommenderEntryRow(onClick = onOpenRecommender)
                     }
                     state.recommenderErrorMessage?.let { message ->
                         item {
