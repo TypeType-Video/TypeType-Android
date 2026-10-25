@@ -47,6 +47,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7.0.1
 
+      - name: Check file length
+        run: |
+          set -euo pipefail
+          status=0
+          while IFS= read -r file; do
+            limit=330
+            case "$file" in */src/test/*|*/src/androidTest/*) limit=350 ;; esac
+            lines="$(wc -l < "$file")"
+            if [ "$lines" -gt "$limit" ]; then
+              echo "::error file=$file::$lines lines, the limit is $limit"
+              status=1
+            fi
+          done < <(git ls-files '*.kt')
+          exit "$status"
+
       - name: Set up Java
         uses: actions/setup-java@v6.0.1
         with:
