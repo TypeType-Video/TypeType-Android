@@ -289,7 +289,7 @@ internal fun playbackWindowRefreshThresholdUs(
 ): Long = if (activeLive) {
     LIVE_WINDOW_REFRESH_THRESHOLD_US
 } else {
-    (bufferGoalUs / VOD_REFRESH_WATERMARK_DIVISOR).coerceAtLeast(1L)
+    maxOf(MIN_VOD_REFRESH_THRESHOLD_US, bufferGoalUs * 2 / 3).coerceIn(1L, bufferGoalUs)
 }
 
 internal fun playbackBufferStartUs(
@@ -323,6 +323,6 @@ internal fun retainedPlaybackStartUs(trackStartsUs: List<Long>): Long =
 private const val LOCAL_SEEK_END_MARGIN_US = 250_000L
 private const val BACK_BUFFER_US = 30_000_000L
 private const val DEFAULT_VOD_BUFFER_GOAL_US = 10_000_000L
-private const val VOD_REFRESH_WATERMARK_DIVISOR = 2L
+private const val MIN_VOD_REFRESH_THRESHOLD_US = 5_000_000L
 private const val LIVE_WINDOW_REFRESH_THRESHOLD_US = 5_000_000L
 private const val LIVE_WINDOW_POLL_INTERVAL_MS = 250L

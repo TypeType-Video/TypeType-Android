@@ -51,8 +51,8 @@ class PlaybackWindowTest {
         assertFalse(
             shouldRefreshPlaybackWindow(
                 playbackPositionUs = 10_000_000,
-                bufferedEndUs = 15_000_000,
-                availableEndUs = 15_000_000,
+                bufferedEndUs = 17_000_000,
+                availableEndUs = 17_000_000,
                 endOfStream = false,
                 bufferGoalUs = 10_000_000,
             ),
@@ -60,7 +60,7 @@ class PlaybackWindowTest {
         assertFalse(
             shouldRefreshPlaybackWindow(
                 playbackPositionUs = 10_000_000,
-                bufferedEndUs = 14_999_999,
+                bufferedEndUs = 16_000_000,
                 availableEndUs = 20_000_000,
                 endOfStream = false,
                 bufferGoalUs = 10_000_000,
@@ -69,8 +69,8 @@ class PlaybackWindowTest {
         assertTrue(
             shouldRefreshPlaybackWindow(
                 playbackPositionUs = 10_000_000,
-                bufferedEndUs = 14_999_999,
-                availableEndUs = 14_999_999,
+                bufferedEndUs = 16_000_000,
+                availableEndUs = 16_000_000,
                 endOfStream = false,
                 bufferGoalUs = 10_000_000,
             ),
@@ -83,8 +83,8 @@ class PlaybackWindowTest {
         val windowEndUs = 10_000_000L
 
         assertFalse(shouldRefreshPlaybackWindow(0L, windowEndUs, windowEndUs, false, 10_000_000L))
-        assertFalse(shouldRefreshPlaybackWindow(4_999_999L, windowEndUs, windowEndUs, false, 10_000_000L))
-        assertTrue(shouldRefreshPlaybackWindow(5_000_001L, windowEndUs, windowEndUs, false, 10_000_000L))
+        assertFalse(shouldRefreshPlaybackWindow(3_333_333L, windowEndUs, windowEndUs, false, 10_000_000L))
+        assertTrue(shouldRefreshPlaybackWindow(3_333_335L, windowEndUs, windowEndUs, false, 10_000_000L))
     }
 
     @Test
