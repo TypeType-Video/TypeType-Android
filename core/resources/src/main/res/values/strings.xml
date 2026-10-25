@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name" translatable="false">TypeType</string>
     <string name="video_views_short">%1$s views</string>
     <string name="video_premieres_at">Premieres %1$s</string>
@@ -101,7 +101,7 @@
     <string name="playback_options_auto">Auto</string>
     <string name="playback_options_recommended">Recommended</string>
     <string name="playback_options_smart">Smart</string>
-    <string name="playback_options_codec_av1">AV1</string>
+    <string name="playback_options_codec_av1" tools:ignore="Typos">AV1</string>
     <string name="playback_options_codec_vp9">VP9</string>
     <string name="playback_options_codec_h264">H.264</string>
     <string name="playback_options_auto_summary">Adapts quality to your connection</string>
@@ -1167,7 +1167,7 @@
     <string name="rss_settings_title">Private RSS feeds</string>
     <string name="rss_settings_subtitle">Create and manage private feed links</string>
     <string name="rss_private_notice">These links are private. Anyone with a link can read that feed.</string>
-    <string name="rss_limits">%1$d of %2$d feeds · up to %3$d items · refresh every %4$d minutes or more</string>
+    <string name="rss_limits" tools:ignore="PluralsCandidate">%1$d of %2$d feeds · up to %3$d items · refresh every %4$d minutes or more</string>
     <string name="rss_create">Create a feed</string>
     <string name="rss_default_name">My subscriptions</string>
     <string name="rss_create_title">Create private RSS feed</string>
@@ -1187,9 +1187,8 @@
     <string name="rss_scope_title">Channels</string>
     <string name="rss_scope_all">All subscriptions</string>
     <string name="rss_scope_selected">Selected subscriptions</string>
-    <string name="rss_scope_selected_count">%1$d selected channels</string>
     <string name="rss_search_subscriptions">Search subscriptions</string>
-    <string name="rss_selected_channel_limit">%1$d of %2$d channels selected</string>
+    <string name="rss_selected_channel_limit" tools:ignore="PluralsCandidate">%1$d of %2$d channels selected</string>
     <string name="rss_no_subscriptions">Subscribe to a channel before creating a selected-channels feed.</string>
     <string name="rss_no_matching_subscriptions">No matching subscriptions.</string>
     <string name="rss_services_title">Services</string>
@@ -1223,7 +1222,7 @@
     <string name="push_status_unavailable">Not offered by this instance</string>
     <string name="push_status_action_required">Open your push distributor and complete its pending action</string>
     <string name="push_status_failed">Registration failed</string>
-    <string name="push_devices_count">%1$d of %2$d devices registered</string>
+    <string name="push_devices_count" tools:ignore="PluralsCandidate">%1$d of %2$d devices registered</string>
     <string name="push_install_hint">Install a UnifiedPush distributor such as ntfy to receive notifications.</string>
     <string name="push_choose_distributor">Choose distributor</string>
     <string name="push_error_generic">Couldn\'t update push notifications</string>

@@ -18,6 +18,11 @@ internal fun CommonExtension.configureAndroidDefaults(project: Project) {
     compileOptions.isCoreLibraryDesugaringEnabled = true
     lint.abortOnError = true
     lint.checkReleaseBuilds = false
+    lint.warningsAsErrors = true
+    // Newer versions appear on their own schedule; a build should not start failing because a day passed.
+    lint.disable += setOf("GradleDependency", "NewerVersionAvailable", "AndroidGradlePluginVersion")
+    // Verifying the TypeType links needs an assetlinks file on the domain, which is a release decision.
+    lint.informational += "AppLinkWarning"
     val libs = project.extensions.getByType<VersionCatalogsExtension>().named("libs")
     project.dependencies {
         add("coreLibraryDesugaring", libs.findLibrary("desugaring").get())
