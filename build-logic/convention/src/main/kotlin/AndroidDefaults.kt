@@ -8,7 +8,6 @@ import org.gradle.kotlin.dsl.getByType
 internal const val COMPILE_SDK = 37
 internal const val MIN_SDK = 23
 
-// java.time and other newer APIs are desugared for API 23, in every module that uses them.
 internal fun CommonExtension.configureAndroidDefaults(project: Project) {
     compileSdk = COMPILE_SDK
     defaultConfig.minSdk = MIN_SDK
@@ -19,9 +18,7 @@ internal fun CommonExtension.configureAndroidDefaults(project: Project) {
     lint.abortOnError = true
     lint.checkReleaseBuilds = false
     lint.warningsAsErrors = true
-    // Newer versions appear on their own schedule; a build should not start failing because a day passed.
     lint.disable += setOf("GradleDependency", "NewerVersionAvailable", "AndroidGradlePluginVersion")
-    // Verifying the TypeType links needs an assetlinks file on the domain, which is a release decision.
     lint.informational += "AppLinkWarning"
     val libs = project.extensions.getByType<VersionCatalogsExtension>().named("libs")
     project.dependencies {

@@ -23,12 +23,9 @@ interface PlaybackCodecSupport {
     fun video(source: StreamVideoSource): DecoderSupport
     fun audio(source: StreamAudioSource): DecoderSupport
 
-    // lasting keeps the rejection across launches; without it the format is avoided until the app restarts.
     fun rejectVideo(format: Format, lasting: Boolean): Boolean = false
 }
 
-// One instance for the whole app: the player, Shorts, prewarming and the queue share what each decoder can play
-// and which formats already failed.
 @OptIn(markerClass = [UnstableApi::class])
 @Singleton
 class DevicePlaybackCodecSupport @Inject constructor(

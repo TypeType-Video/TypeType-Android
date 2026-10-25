@@ -41,7 +41,6 @@ class PlayerHostController @Inject constructor(
     private val _state = MutableStateFlow(PlayerHostStateSnapshot())
     val state: StateFlow<PlayerHostStateSnapshot> = _state.asStateFlow()
 
-    // Opening a video the player already holds, such as one restored paused at launch, must still start it.
     private val _playRequests = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val playRequests: SharedFlow<String> = _playRequests
 

@@ -7,9 +7,6 @@ import dev.typetype.android.domain.stream.SabrPlaybackSession
 import dev.typetype.android.domain.stream.SabrPlaybackTarget
 import kotlinx.coroutines.delay
 
-// Keeps asking for the next window until the recovery window runs out, inside the media source: the player goes on
-// with its buffer and media item, and nothing is shown unless the buffer runs dry. A lost or stalled session is
-// replaced by a fresh one at the player position; a quality change still needs the service to rebuild the item.
 internal class SabrWindowRecovery(
     private val repository: SabrPlaybackRepository,
     private val target: SabrPlaybackTarget,

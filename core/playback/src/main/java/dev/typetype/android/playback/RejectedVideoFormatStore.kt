@@ -7,8 +7,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-// Video formats a decoder failed on, kept across launches so "Smart" does not pick them again and fail the same
-// way each time. A system update can bring new decoders, so the list starts over when the build fingerprint changes.
 @Singleton
 class RejectedVideoFormatStore @Inject constructor(@ApplicationContext context: Context) {
     private val preferences = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)

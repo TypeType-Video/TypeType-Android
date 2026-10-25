@@ -136,8 +136,6 @@ internal class SabrPlaybackSessionPreparer(
         }
     }
 
-    // The server can leave a session waiting on a segment that never comes, while a new session at the same position
-    // plays at once. Replacing it here keeps the player's buffer and media item; a second stall is reported.
     private suspend fun replacingStuckSession(
         api: TypeTypeMediaApi,
         baseUrl: String,

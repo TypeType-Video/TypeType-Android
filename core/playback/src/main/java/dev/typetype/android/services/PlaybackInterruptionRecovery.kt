@@ -10,9 +10,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 
-// Restarts an item whose playback failed for a reason worth retrying: a fresh SABR session at the current position,
-// or a new prepare for other streams. It owns the recovery window of the current item and publishes, through
-// PlaybackRecoveryStatus, whether it is still trying, so the player UI never has to guess from the exception.
 internal class PlaybackInterruptionRecovery(
     private val player: Player,
     private val coordinator: SabrPlaybackSeekCoordinator,

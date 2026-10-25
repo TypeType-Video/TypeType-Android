@@ -11,7 +11,6 @@ import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 
-// Queues the control responses of a TypeType server for one SABR video, in the order the client asks for them.
 internal class SabrServerScript {
     val server = MockWebServer().apply { start() }
     val baseUrl: String = server.url("/api/").toString()
@@ -61,7 +60,6 @@ internal class SabrServerScript {
         )
     }
 
-    // A pending prefetch keeps the same buffered edge, so repeating it is what the client reads as a stuck session.
     fun enqueuePrefetch(ready: Boolean, sessionId: String = "session", generation: Long = 0) {
         val retry = if (ready) "null" else "250"
         val status = if (ready) "ready" else "preparing"

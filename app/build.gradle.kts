@@ -79,7 +79,6 @@ android {
 }
 
 androidComponents.onVariants { variant ->
-    // Benchmarks and profile generation install their own package, so they never replace the user's app.
     if (variant.name == "benchmarkRelease" || variant.name == "nonMinifiedRelease") {
         variant.applicationId.set("dev.typetype.android.benchmark")
     }

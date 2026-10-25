@@ -50,8 +50,6 @@ fun ShortsRoute(
     val currentMediaId = rememberCurrentMediaId(mediaController)
     val playbackStatus = mediaController?.let { rememberPlayerPlaybackStatus(it) }
     val menuScope = rememberVideoMenuScope(onOpenChannel)
-    // Player state changes several times while a Short opens. A fresh copy on each of them would make every
-    // composed page recompose in the middle of the swipe.
     val visibleState = remember(state, menuScope) {
         state.copy(videos = state.videos.filterNot(menuScope::isHidden))
     }

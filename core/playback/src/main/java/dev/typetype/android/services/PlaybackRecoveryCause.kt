@@ -11,26 +11,18 @@ import java.net.SocketException
 import java.net.UnknownHostException
 import javax.net.ssl.SSLException
 
-// What a playback failure asks for. Every recovery layer reads this instead of matching exceptions itself.
 internal enum class PlaybackRecoveryCause {
-    // No route or a broken connection: retry once a network is there.
     Network,
 
-    // The server answered with a temporary error or is still busy: retry the same request later.
     Server,
 
-    // The server lost, refused or stalled the session: a fresh session at the same position plays on.
     Session,
 
-    // The server switched quality or needs a lower one: the media item has to be rebuilt.
     Rebuild,
 
-    // Nothing to retry; the user sees why.
     Fatal,
 }
 
-// The deepest failure that says something wins: Media3 and the window coordinator wrap the real cause in a plain
-// IOException, which alone does not mean the network failed.
 @OptIn(UnstableApi::class)
 internal fun Throwable.playbackRecoveryCause(): PlaybackRecoveryCause {
     var transport = false
@@ -70,12 +62,10 @@ private fun SabrPlaybackRecoveryException.recoveryCause(): PlaybackRecoveryCause
 
 private fun CodedFailure.recoveryCause(): PlaybackRecoveryCause = when {
     failureCode in SESSION_FAILURE_CODES -> PlaybackRecoveryCause.Session
-    // The server named what is gone, such as a deleted video: a fresh session would only find the same.
     failureCode != null && statusCode in GONE_STATUS_CODES -> PlaybackRecoveryCause.Fatal
     else -> statusCode?.recoveryCause() ?: PlaybackRecoveryCause.Fatal
 }
 
-// A missing subtitle or thumbnail is not a lost session: only SABR media requests say anything about the session.
 @OptIn(UnstableApi::class)
 private fun HttpDataSource.InvalidResponseCodeException.recoveryCause(): PlaybackRecoveryCause =
     responseCode.recoveryCause(sabrMedia = dataSpec.uri.pathSegments.isSabrPlaybackPayloadPath())

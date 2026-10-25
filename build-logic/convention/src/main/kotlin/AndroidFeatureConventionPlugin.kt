@@ -5,7 +5,6 @@ import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.project
 
-// A screen family: Compose and Hilt, the shared core modules, and the libraries every screen uses.
 class AndroidFeatureConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
         pluginManager.apply("typetype.android.compose")

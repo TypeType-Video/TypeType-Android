@@ -10,8 +10,6 @@ import androidx.media3.ui.compose.ContentFrame
 import androidx.media3.ui.compose.SURFACE_TYPE_TEXTURE_VIEW
 import dev.typetype.android.feature.player.state.ResizeMode
 
-// Shorts only need the picture: their controls and subtitles are drawn in Compose. A Compose surface avoids
-// building a full PlayerView, about 9 ms of every page change on a mid-range phone.
 @OptIn(UnstableApi::class)
 @Composable
 internal fun ShortsVideoSurface(player: Player, resizeMode: ResizeMode, modifier: Modifier = Modifier) {

@@ -31,13 +31,10 @@ data class PlayerPlaybackStatus(
         get() = error == null && !isRecovering
 }
 
-// What the playback service reports about a failed item; the app root provides the service's status.
 val LocalPlaybackRecovery = staticCompositionLocalOf<StateFlow<PlaybackRecoveryState>> { NO_RECOVERY }
 
 private val NO_RECOVERY: StateFlow<PlaybackRecoveryState> = MutableStateFlow(PlaybackRecoveryState.Idle)
 
-// While the service retries a failed item the player shows buffering; its error appears only once the service
-// gave up or the failure cannot be retried.
 @Composable
 fun rememberPlayerPlaybackStatus(player: Player): PlayerPlaybackStatus {
     var playbackState by remember(player) { mutableIntStateOf(player.playbackState) }

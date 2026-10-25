@@ -11,8 +11,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-// Runs on a device where the benchmark build is already signed in to a test instance: the journeys need a home
-// feed, Shorts and a playable video, which a fresh install does not have.
 @RunWith(AndroidJUnit4::class)
 class BaselineProfileGenerator {
     @get:Rule
