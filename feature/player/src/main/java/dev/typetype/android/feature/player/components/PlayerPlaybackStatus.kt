@@ -2,19 +2,20 @@ package dev.typetype.android.feature.player.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import dev.typetype.android.feature.player.error.PlaybackFailureKind
-import dev.typetype.android.feature.player.error.classifyPlaybackError
-import dev.typetype.android.services.isRecoverableSabrSessionFailure
-import kotlinx.coroutines.delay
+import dev.typetype.android.services.PlaybackRecoveryState
+import dev.typetype.android.services.isRecovering
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 data class PlayerPlaybackStatus(
     val playbackState: Int,
@@ -30,19 +31,21 @@ data class PlayerPlaybackStatus(
         get() = error == null && !isRecovering
 }
 
+// What the playback service reports about a failed item; the app root provides the service's status.
+val LocalPlaybackRecovery = staticCompositionLocalOf<StateFlow<PlaybackRecoveryState>> { NO_RECOVERY }
+
+private val NO_RECOVERY: StateFlow<PlaybackRecoveryState> = MutableStateFlow(PlaybackRecoveryState.Idle)
+
+// While the service retries a failed item the player shows buffering; its error appears only once the service
+// gave up or the failure cannot be retried.
 @Composable
-fun rememberPlayerPlaybackStatus(
-    player: Player,
-    onSabrRecoveryExhausted: (() -> Unit)? = null,
-): PlayerPlaybackStatus {
+fun rememberPlayerPlaybackStatus(player: Player): PlayerPlaybackStatus {
     var playbackState by remember(player) { mutableIntStateOf(player.playbackState) }
     var isPlaying by remember(player) { mutableStateOf(player.isPlaying) }
     var isLoading by remember(player) { mutableStateOf(player.isLoading) }
-    var observedError by remember(player) { mutableStateOf(player.playerError) }
-    var visibleError by remember(player) { mutableStateOf<PlaybackException?>(null) }
-    var isRecovering by remember(player) { mutableStateOf(false) }
-    val automaticRecovery = remember(player) { AutomaticSabrPlaybackRecoveryGate() }
-    val retrySabrPlayback by rememberUpdatedState(onSabrRecoveryExhausted)
+    var error by remember(player) { mutableStateOf(player.playerError) }
+    var mediaId by remember(player) { mutableStateOf(player.currentMediaItem?.mediaId) }
+    val recovery by LocalPlaybackRecovery.current.collectAsState()
 
     DisposableEffect(player) {
         val listener = object : Player.Listener {
@@ -59,51 +62,23 @@ fun rememberPlayerPlaybackStatus(
             }
 
             override fun onPlayerErrorChanged(errorValue: PlaybackException?) {
-                observedError = errorValue
+                error = errorValue
+            }
+
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                mediaId = mediaItem?.mediaId
             }
         }
         player.addListener(listener)
         onDispose { player.removeListener(listener) }
     }
 
-    LaunchedEffect(player, observedError) {
-        val candidate = observedError
-        visibleError = null
-        val serviceRecovery = candidate?.isRecoverableSabrSessionFailure() == true
-        val exhaustedRecovery = candidate?.let(::classifyPlaybackError) ==
-            PlaybackFailureKind.SabrRecoveryExhausted
-        isRecovering = serviceRecovery || exhaustedRecovery && retrySabrPlayback != null
-        if (serviceRecovery) delay(RECOVERABLE_FAILURE_GRACE_PERIOD_MS)
-        if (
-            player.playerError === candidate &&
-            exhaustedRecovery &&
-            retrySabrPlayback != null &&
-            automaticRecovery.claim(player.currentMediaItem?.mediaId)
-        ) {
-            retrySabrPlayback?.invoke()
-            return@LaunchedEffect
-        }
-        if (player.playerError === candidate) {
-            visibleError = candidate
-            isRecovering = false
-        }
-    }
-
-    LaunchedEffect(player, isPlaying, observedError) {
-        if (!isPlaying || observedError != null) return@LaunchedEffect
-        val mediaId = player.currentMediaItem?.mediaId
-        delay(STABLE_PLAYBACK_RESET_MS)
-        if (player.isPlaying && player.playerError == null) automaticRecovery.rearm(mediaId)
-    }
-
+    val isRecovering = recovery.isRecovering(mediaId)
     return PlayerPlaybackStatus(
         playbackState = playbackState,
         isPlaying = isPlaying,
         isLoading = isLoading,
-        error = visibleError,
+        error = error.takeUnless { isRecovering },
         isRecovering = isRecovering,
     )
 }
-
-private const val RECOVERABLE_FAILURE_GRACE_PERIOD_MS = 10_000L
-private const val STABLE_PLAYBACK_RESET_MS = 30_000L

@@ -14,16 +14,6 @@ import org.junit.Test
 
 class SabrPlaybackFailureRecoveryTest {
     @Test
-    fun `only session recovery HTTP statuses are accepted`() {
-        listOf(202, 404, 409, 410).forEach { status ->
-            assertTrue(status.isRecoverableSabrSessionStatus())
-        }
-        listOf(400, 401, 403, 429, 500, 503).forEach { status ->
-            assertFalse(status.isRecoverableSabrSessionStatus())
-        }
-    }
-
-    @Test
     fun `automatic recovery is deduplicated and bounded twice per active media`() {
         val gate = SabrPlaybackRecoveryGate()
 
@@ -111,7 +101,7 @@ class SabrPlaybackFailureRecoveryTest {
         )
         val wrapped = IOException("source", replacement)
 
-        assertTrue(wrapped.isRecoverableSabrSessionFailure())
+        assertEquals(PlaybackRecoveryCause.Rebuild, wrapped.playbackRecoveryCause())
         assertTrue(wrapped.sabrSessionReplacementFailure() === replacement)
     }
 
@@ -123,12 +113,13 @@ class SabrPlaybackFailureRecoveryTest {
             retryVideoItags = listOf(136),
         )
 
-        assertTrue(IOException("source", recovery).isRecoverableSabrSessionFailure())
-        assertFalse(
+        assertEquals(PlaybackRecoveryCause.Rebuild, IOException("source", recovery).playbackRecoveryCause())
+        assertEquals(
+            PlaybackRecoveryCause.Fatal,
             IOException(
                 "source",
                 SabrPlaybackRecoveryException("failed", null, emptyList()),
-            ).isRecoverableSabrSessionFailure(),
+            ).playbackRecoveryCause(),
         )
     }
 
@@ -140,7 +131,7 @@ class SabrPlaybackFailureRecoveryTest {
             override val statusCode: Int? = null
         }
 
-        assertTrue(IOException("source", mismatch).isRecoverableSabrSessionFailure())
+        assertEquals(PlaybackRecoveryCause.Session, IOException("source", mismatch).playbackRecoveryCause())
     }
 
     @Test
@@ -160,12 +151,12 @@ class SabrPlaybackFailureRecoveryTest {
             ),
         )
 
-        assertTrue(IOException("source", missingSession).isRecoverableSabrSessionFailure())
-        assertFalse(IOException("source", authenticationFailure).isRecoverableSabrSessionFailure())
+        assertEquals(PlaybackRecoveryCause.Session, IOException("source", missingSession).playbackRecoveryCause())
+        assertEquals(PlaybackRecoveryCause.Fatal, IOException("source", authenticationFailure).playbackRecoveryCause())
     }
 
     @Test
-    fun `exhausted deferred recovery is not retried by the player listener`() {
+    fun `exhausted quality recovery falls back to a fresh session`() {
         val recovery = SabrPlaybackRecoveryException(
             message = "retry",
             action = "retry_fresh_session_lower_video_itag",
@@ -173,7 +164,7 @@ class SabrPlaybackFailureRecoveryTest {
         )
         val exhausted = SabrPlaybackRecoveryExhaustedException(recovery)
 
-        assertFalse(IOException("source", exhausted).isRecoverableSabrSessionFailure())
+        assertEquals(PlaybackRecoveryCause.Session, IOException("source", exhausted).playbackRecoveryCause())
     }
 
     @Test

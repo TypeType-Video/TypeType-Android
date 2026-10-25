@@ -38,10 +38,10 @@ internal fun Throwable.playbackRecoveryCause(): PlaybackRecoveryCause {
     var depth = 0
     while (current != null && depth < MAX_CAUSE_DEPTH) {
         when (current) {
-            is SabrPlaybackRecoveryExhaustedException -> return PlaybackRecoveryCause.Fatal
+            is SabrPlaybackRecoveryExhaustedException -> return PlaybackRecoveryCause.Session
             is SabrPlaybackSessionReplacementRequiredException -> return PlaybackRecoveryCause.Rebuild
             is SabrPlaybackRecoveryException -> return current.recoveryCause()
-            is HttpDataSource.InvalidResponseCodeException -> return current.responseCode.recoveryCause()
+            is HttpDataSource.InvalidResponseCodeException -> return current.recoveryCause()
             is CodedFailure -> return current.recoveryCause()
             is HttpDataSource.InvalidContentTypeException,
             is HttpDataSource.CleartextNotPermittedException,
@@ -74,9 +74,16 @@ private fun CodedFailure.recoveryCause(): PlaybackRecoveryCause = when {
     else -> statusCode?.recoveryCause() ?: PlaybackRecoveryCause.Fatal
 }
 
-private fun Int.recoveryCause(): PlaybackRecoveryCause = when (this) {
-    202, 408, 429, in 500..599 -> PlaybackRecoveryCause.Server
-    404, 409, 410 -> PlaybackRecoveryCause.Session
+// A missing subtitle or thumbnail is not a lost session: only SABR media requests say anything about the session.
+@OptIn(UnstableApi::class)
+private fun HttpDataSource.InvalidResponseCodeException.recoveryCause(): PlaybackRecoveryCause =
+    responseCode.recoveryCause(sabrMedia = dataSpec.uri.pathSegments.isSabrPlaybackPayloadPath())
+
+private fun Int.recoveryCause(sabrMedia: Boolean = true): PlaybackRecoveryCause = when {
+    this == 408 || this == 429 || this in 500..599 -> PlaybackRecoveryCause.Server
+    !sabrMedia -> PlaybackRecoveryCause.Fatal
+    this == 202 -> PlaybackRecoveryCause.Server
+    this == 404 || this == 409 || this == 410 -> PlaybackRecoveryCause.Session
     else -> PlaybackRecoveryCause.Fatal
 }
 

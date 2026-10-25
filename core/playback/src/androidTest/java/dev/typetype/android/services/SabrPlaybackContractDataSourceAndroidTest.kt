@@ -56,7 +56,7 @@ class SabrPlaybackContractDataSourceAndroidTest {
             as HttpDataSource.InvalidResponseCodeException
 
         assertArrayEquals(body, failure.responseBody)
-        assertTrue(IOException("source", failure).isRecoverableSabrSessionFailure())
+        assertEquals(PlaybackRecoveryCause.Server, IOException("source", failure).playbackRecoveryCause())
         val policy = SabrLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(5))
         assertEquals(500L, policy.getRetryDelayMsFor(failure.toLoadErrorInfo(request)))
         assertEquals(500L, policy.getRetryDelayMsFor(failure.toLoadErrorInfo(request, 59)))
@@ -95,7 +95,7 @@ class SabrPlaybackContractDataSourceAndroidTest {
         val policy = SabrLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(5))
 
         assertEquals(C.TIME_UNSET, policy.getRetryDelayMsFor(failure.toLoadErrorInfo(request)))
-        assertFalse(failure.isRecoverableSabrSessionFailure())
+        assertEquals(PlaybackRecoveryCause.Fatal, failure.playbackRecoveryCause())
     }
 
     @Test
@@ -156,7 +156,7 @@ class SabrPlaybackContractDataSourceAndroidTest {
 
         assertTrue(failure is IOException)
         assertEquals("SABR media contract mismatch: response_redirect", failure?.message)
-        assertTrue(requireNotNull(failure).isRecoverableSabrSessionFailure())
+        assertEquals(PlaybackRecoveryCause.Session, requireNotNull(failure).playbackRecoveryCause())
     }
 
     @Test
@@ -173,7 +173,7 @@ class SabrPlaybackContractDataSourceAndroidTest {
             byteArrayOf(),
         )
 
-        assertFalse(failure.isRecoverableSabrSessionFailure())
+        assertEquals(PlaybackRecoveryCause.Fatal, failure.playbackRecoveryCause())
     }
 
 }

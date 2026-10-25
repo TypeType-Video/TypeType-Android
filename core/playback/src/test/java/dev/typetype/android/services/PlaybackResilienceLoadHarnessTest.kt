@@ -1,6 +1,5 @@
 package dev.typetype.android.services
 
-import dev.typetype.android.data.network.PlaybackNetworkState
 import dev.typetype.android.domain.stream.SabrPlaybackBinding
 import dev.typetype.android.domain.stream.SabrPlaybackRepository
 import dev.typetype.android.domain.stream.SabrPlaybackSession
@@ -18,7 +17,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -61,30 +59,6 @@ class PlaybackResilienceLoadHarnessTest {
         assertEquals(positions.last(), appliedPositions.last())
         coordinator.cancel()
         scope.cancel()
-    }
-
-    @Test
-    fun `repeated route changes never overlap recovery`() {
-        val gate = PlaybackNetworkRecoveryGate()
-        gate.transition(MEDIA_ID)
-
-        repeat(NETWORK_CYCLE_COUNT) { cycle ->
-            val lostGeneration = cycle.toLong() * 2L
-            val restoredGeneration = lostGeneration + 1L
-
-            assertEquals(
-                PlaybackNetworkRecoveryAction.Wait,
-                gate.networkChanged(PlaybackNetworkState(false, lostGeneration)),
-            )
-            assertEquals(
-                PlaybackNetworkRecoveryAction.RetryAfter(0L),
-                gate.networkChanged(PlaybackNetworkState(true, restoredGeneration)),
-            )
-            assertTrue(gate.startRecovery(MEDIA_ID))
-            assertFalse(gate.startRecovery(MEDIA_ID))
-            gate.recovered()
-            assertFalse(gate.isPending(MEDIA_ID))
-        }
     }
 
     private fun state() = SabrPlaybackSeekState(

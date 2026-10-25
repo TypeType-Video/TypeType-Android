@@ -49,6 +49,7 @@ import dev.typetype.android.feature.home.HomeViewModel
 import dev.typetype.android.feature.library.playlist.PlaylistRoute as PlaylistRouteScreen
 import dev.typetype.android.feature.notifications.rememberNotificationBadge
 import dev.typetype.android.feature.player.PlayerViewModel
+import dev.typetype.android.feature.player.components.LocalPlaybackRecovery
 import dev.typetype.android.feature.search.SearchRoute as SearchRouteScreen
 import dev.typetype.android.feature.settings.about.AboutScreen
 import dev.typetype.android.feature.settings.accounts.AccountSettingsRoute as AccountSettingsRouteScreen
@@ -61,6 +62,8 @@ import dev.typetype.android.feature.settings.privacy.PrivacySettingsRoute as Pri
 import dev.typetype.android.feature.settings.storage.StorageSettingsRoute as StorageSettingsRouteScreen
 import dev.typetype.android.feature.shorts.ShortsRoute as ShortsRouteScreen
 import dev.typetype.android.feature.subscriptions.SubscriptionsRoute as SubscriptionsRouteScreen
+import dev.typetype.android.services.PlaybackRecoveryState
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -68,6 +71,7 @@ fun AppNavHost(
     startRoute: Any,
     mainViewModel: MainViewModel,
     playbackPrewarm: PlaybackPrewarm? = null,
+    playbackRecovery: StateFlow<PlaybackRecoveryState>? = null,
 ) {
     val navController: NavHostController = rememberNavController()
     val playerHostController = remember { mainViewModel.playerHostController }
@@ -141,6 +145,7 @@ fun AppNavHost(
         LocalServerBaseUrl provides currentServer?.baseUrl,
         LocalDeArrowBranding provides deArrowEnvironment,
         LocalPlaybackPrewarm provides playbackPrewarm,
+        LocalPlaybackRecovery provides (playbackRecovery ?: LocalPlaybackRecovery.current),
     ) {
     AppShell(
         navController = navController,

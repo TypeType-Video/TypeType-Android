@@ -42,6 +42,7 @@ import dev.typetype.android.feature.player.components.PictureInPictureActionStat
 import dev.typetype.android.feature.player.components.updatePictureInPicturePlaybackAction
 import dev.typetype.android.feature.settings.diagnostics.CrashReportRoute
 import dev.typetype.android.services.PlaybackAudioOnlyCommand
+import dev.typetype.android.services.PlaybackRecoveryStatus
 import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -62,6 +63,9 @@ class MainActivity : ComponentActivity(), PictureInPictureActionStateOwner {
 
     @Inject
     lateinit var playbackPrewarm: PlaybackPrewarm
+
+    @Inject
+    lateinit var playbackRecoveryStatus: PlaybackRecoveryStatus
 
     private val viewModel: MainViewModel by viewModels()
     private var activityReportingJob: Job? = null
@@ -116,6 +120,7 @@ class MainActivity : ComponentActivity(), PictureInPictureActionStateOwner {
                         startRoute = startRoute,
                         mainViewModel = viewModel,
                         playbackPrewarm = playbackPrewarm,
+                        playbackRecovery = playbackRecoveryStatus.state,
                     )
                     else -> FullScreenLoader()
                 }

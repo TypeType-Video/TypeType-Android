@@ -42,6 +42,9 @@ class PlaybackService : MediaSessionService() {
     lateinit var sabrPlaybackWindowCache: SabrPlaybackWindowCache
 
     @Inject
+    lateinit var playbackRecoveryStatus: PlaybackRecoveryStatus
+
+    @Inject
     lateinit var playbackResumeRepository: PlaybackResumeRepository
 
     @Inject
@@ -88,6 +91,7 @@ class PlaybackService : MediaSessionService() {
             playbackClock,
             recoveryDispatcher,
             playbackNetworkMonitor,
+            playbackRecoveryStatus,
         )
         val playbackBridge = PlaybackAudioOnlyServiceBridge(
             player = player,

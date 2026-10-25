@@ -51,9 +51,9 @@ class PlaybackRecoveryCauseTest {
     }
 
     @Test
-    fun anExhaustedRecoveryIsNotRetriedAgain() {
-        val exhausted = SabrPlaybackRecoveryExhaustedException(action("retry_fresh_session"))
-        assertEquals(PlaybackRecoveryCause.Fatal, exhausted.playbackRecoveryCause())
+    fun anExhaustedQualityChangeFallsBackToAFreshSession() {
+        val exhausted = SabrPlaybackRecoveryExhaustedException(action("retry_fresh_session_lower_video_itag"))
+        assertEquals(PlaybackRecoveryCause.Session, exhausted.playbackRecoveryCause())
     }
 
     private fun windowFailure(cause: Throwable) = IOException("Playback window failed", cause)

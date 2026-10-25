@@ -21,12 +21,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.ui.compose.state.rememberPresentationState
 import dev.typetype.android.domain.stream.Chapter
-import dev.typetype.android.domain.stream.SponsorBlockSegment
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.stream.StreamPlaybackContract
 import dev.typetype.android.domain.usersettings.CaptionStyles
@@ -37,7 +35,6 @@ import dev.typetype.android.feature.player.PlayerNavigationControls
 import dev.typetype.android.feature.player.SponsorBlockPlaybackPolicy
 import dev.typetype.android.feature.player.state.DragMode
 import dev.typetype.android.feature.player.state.PlayerGestureState
-import dev.typetype.android.feature.player.state.ResizeMode
 import dev.typetype.android.feature.player.state.next
 import dev.typetype.android.playback.PlaybackCodecSupport
 import dev.typetype.android.playback.key
@@ -98,10 +95,7 @@ internal fun PlayerSurfaceBox(
         gestureConfig.accessibleControlsEnabled,
     )
     val audioOnlySnackbar = remember { SnackbarHostState() }
-    val playbackStatus = rememberPlayerPlaybackStatus(
-        player,
-        onRetryPlayback.takeIf { stream.playbackContract == StreamPlaybackContract.ServerSabr },
-    )
+    val playbackStatus = rememberPlayerPlaybackStatus(player)
     val isInPip by rememberIsInPipMode()
     val isPipAvailable = remember(activity) { supportsPictureInPicture(activity) }
     val externalSubtitle = stream.subtitles.firstOrNull {

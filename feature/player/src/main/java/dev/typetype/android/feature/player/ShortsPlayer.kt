@@ -121,10 +121,7 @@ private fun ShortsPlayerSurface(
     var resizeMode by remember(stream.id) { mutableStateOf(ResizeMode.Crop) }
     var codecFallbackGeneration by remember(stream.id) { mutableLongStateOf(0L) }
     val playbackStatus = controller?.let {
-        rememberPlayerPlaybackStatus(
-            it,
-            onRetry.takeIf { stream.playbackContract == StreamPlaybackContract.ServerSabr },
-        )
+        rememberPlayerPlaybackStatus(it)
     }
     val currentMediaId = rememberCurrentMediaId(controller)
     val externalSubtitle = stream.subtitles.firstOrNull {
