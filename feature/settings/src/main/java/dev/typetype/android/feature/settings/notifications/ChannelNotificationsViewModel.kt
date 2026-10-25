@@ -112,17 +112,51 @@ class ChannelNotificationsViewModel @Inject constructor(
         if (targets.isEmpty()) return
         viewModelScope.launch {
             _state.update { it.copy(bulkInFlight = true, bulkDone = 0, bulkTotal = targets.size, showError = false) }
-            val gate = Semaphore(BULK_PARALLELISM)
-            val results = coroutineScope {
-                targets.map { channel ->
-                    async {
-                        gate.withPermit { save(channel, enabled) }
-                            .also { _state.update { it.copy(bulkDone = it.bulkDone + 1) } }
-                    }
-                }.awaitAll()
+            val saved = when (saveAllAtOnce(targets, enabled)) {
+                BulkSave.Saved -> true
+                BulkSave.Failed -> false
+                BulkSave.Unsupported -> saveOneByOne(targets, enabled)
             }
-            _state.update { it.copy(bulkInFlight = false, showError = results.any { saved -> !saved }) }
+            _state.update { it.copy(bulkInFlight = false, showError = !saved) }
         }
+    }
+
+    private suspend fun saveAllAtOnce(targets: List<ChannelBell>, enabled: Boolean): BulkSave {
+        val urls = targets.mapTo(hashSetOf(), ChannelBell::channelUrl)
+        _state.update { state ->
+            state.copy(channels = state.channels.map { if (it.channelUrl in urls) it.copy(pending = true) else it })
+        }
+        val failure = suspendRunCatching {
+            pushRepository.setChannelPreferences(urls.toList(), enabled).getOrThrow()
+        }.exceptionOrNull()
+        val result = when {
+            failure == null -> BulkSave.Saved
+            (failure as? CodedFailure)?.statusCode in BULK_UNSUPPORTED_STATUSES -> BulkSave.Unsupported
+            else -> BulkSave.Failed
+        }
+        _state.update { state ->
+            state.copy(
+                bulkDone = if (result == BulkSave.Saved) state.bulkTotal else state.bulkDone,
+                channels = state.channels.map { channel ->
+                    if (channel.channelUrl !in urls) return@map channel
+                    channel.copy(enabled = if (result == BulkSave.Saved) enabled else channel.enabled, pending = false)
+                },
+            )
+        }
+        return result
+    }
+
+    private suspend fun saveOneByOne(targets: List<ChannelBell>, enabled: Boolean): Boolean {
+        val gate = Semaphore(BULK_PARALLELISM)
+        val results = coroutineScope {
+            targets.map { channel ->
+                async {
+                    gate.withPermit { save(channel, enabled) }
+                        .also { _state.update { it.copy(bulkDone = it.bulkDone + 1) } }
+                }
+            }.awaitAll()
+        }
+        return results.all { it }
     }
 
     private suspend fun save(channel: ChannelBell, enabled: Boolean): Boolean {
@@ -154,7 +188,10 @@ class ChannelNotificationsViewModel @Inject constructor(
         }
     }
 
+    private enum class BulkSave { Saved, Failed, Unsupported }
+
     private companion object {
+        val BULK_UNSUPPORTED_STATUSES = setOf(404, 405)
         const val BULK_PARALLELISM = 4
         const val MAX_ATTEMPTS = 5
         const val HTTP_TOO_MANY_REQUESTS = 429

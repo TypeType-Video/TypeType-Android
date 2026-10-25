@@ -4,6 +4,7 @@ import dev.typetype.android.data.network.dto.MarkNotificationsReadResponseDto
 import dev.typetype.android.data.network.dto.NotificationsResponseDto
 import dev.typetype.android.data.network.dto.ChannelNotificationPreferenceDto
 import dev.typetype.android.data.network.dto.ChannelNotificationPreferenceRequestDto
+import dev.typetype.android.data.network.dto.ChannelNotificationPreferencesBulkRequestDto
 import dev.typetype.android.data.network.dto.PushDeviceRegistrationRequestDto
 import dev.typetype.android.data.network.dto.PushDeviceRegistrationResponseDto
 import dev.typetype.android.data.network.dto.PushDeliveryAcknowledgementRequestDto
@@ -55,4 +56,9 @@ interface TypeTypeNotificationsApi {
     suspend fun setChannelNotificationPreference(
         @Body request: ChannelNotificationPreferenceRequestDto,
     ): Response<ChannelNotificationPreferenceDto>
+
+    @PUT("notifications/channel-preferences/bulk")
+    suspend fun setChannelNotificationPreferences(
+        @Body request: ChannelNotificationPreferencesBulkRequestDto,
+    ): Response<List<ChannelNotificationPreferenceDto>>
 }
