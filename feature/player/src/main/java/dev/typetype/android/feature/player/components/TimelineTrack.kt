@@ -35,6 +35,7 @@ internal fun TimelineTrack(
     durationMs: Long,
     segments: List<SponsorBlockSegment>,
     compact: Boolean,
+    modifier: Modifier = Modifier,
     emphasized: Boolean = false,
     expanded: Boolean = false,
     interactive: Boolean = true,
@@ -43,7 +44,6 @@ internal fun TimelineTrack(
     onScrubCancelled: () -> Unit,
     accessibilityLabel: String,
     accessibilityStateDescription: String,
-    modifier: Modifier = Modifier,
 ) {
     val activeColor = MaterialTheme.colorScheme.primary
     val inactiveColor = if (expanded) Color.White.copy(alpha = 0.3f) else Color.Black.copy(alpha = 0.38f)

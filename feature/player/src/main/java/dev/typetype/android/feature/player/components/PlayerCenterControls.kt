@@ -32,10 +32,10 @@ import dev.typetype.android.feature.player.PlayerNavigationControls
 internal fun PlayerCenterControls(
     player: Player,
     isFullscreen: Boolean,
+    modifier: Modifier = Modifier,
     compact: Boolean = false,
     expanded: Boolean = false,
     navigation: PlayerNavigationControls,
-    modifier: Modifier = Modifier,
 ) {
     val playPauseState = rememberPlayPauseButtonState(player)
     val seekBackState = rememberSeekBackButtonState(player)

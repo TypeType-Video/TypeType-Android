@@ -242,9 +242,9 @@ internal fun ReadyImportPreview(
 @Composable
 internal fun PanelButton(
     text: String,
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     emphasized: Boolean = false,
-    modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
     Surface(

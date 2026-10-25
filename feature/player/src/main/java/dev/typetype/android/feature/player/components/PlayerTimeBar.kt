@@ -47,8 +47,8 @@ private val CLASSIC_PREVIEW_LIFT = 52.dp
 @Composable
 fun PlayerTimeBar(
     player: Player,
-    storyboard: StreamStoryboard? = null,
     modifier: Modifier = Modifier,
+    storyboard: StreamStoryboard? = null,
     segments: List<SponsorBlockSegment> = emptyList(),
     compact: Boolean = false,
     expanded: Boolean = false,

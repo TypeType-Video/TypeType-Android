@@ -54,9 +54,9 @@ internal fun playerContentLayoutMode(
 @Composable
 fun PlayerContentLayout(
     isFullscreen: Boolean,
+    modifier: Modifier = Modifier,
     isInPip: Boolean = false,
     hostTransitionProgress: () -> Float = { 0f },
-    modifier: Modifier = Modifier,
     viewport: @Composable (Modifier) -> Unit,
     details: @Composable (Modifier) -> Unit,
     recommendations: @Composable (Modifier) -> Unit = {},

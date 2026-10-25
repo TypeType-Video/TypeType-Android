@@ -37,10 +37,10 @@ import dev.typetype.android.feature.player.state.ResizeMode
 @OptIn(ExperimentalLayoutApi::class)
 internal fun PlayerControls(
     player: Player,
+    modifier: Modifier = Modifier,
     storyboard: StreamStoryboard? = null,
     title: String,
     onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier,
     onOpenOptions: () -> Unit = {},
     onOpenChapters: () -> Unit = {},
     onEnterPip: () -> Unit = {},

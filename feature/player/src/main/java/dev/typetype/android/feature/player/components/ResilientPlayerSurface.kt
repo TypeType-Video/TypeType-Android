@@ -47,8 +47,8 @@ fun ResilientPlayerSurface(
     surfaceKey: String,
     resizeMode: ResizeMode,
     showNativeSubtitles: Boolean,
-    captionStyles: CaptionStyles = CaptionStyles(),
     modifier: Modifier = Modifier,
+    captionStyles: CaptionStyles = CaptionStyles(),
 ) {
     val surfaceSnapping = LocalPlayerSurfaceSnapping.current
     val lifecycleOwner = LocalLifecycleOwner.current

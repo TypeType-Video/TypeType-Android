@@ -94,8 +94,8 @@ fun SwitchRow(
 fun TypeTypeSwitch(
     checked: Boolean,
     onCheckedChange: ((Boolean) -> Unit)?,
-    enabled: Boolean = true,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     Switch(
         checked = checked,

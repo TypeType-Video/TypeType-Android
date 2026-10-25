@@ -54,8 +54,8 @@ fun TypeTypeSkeleton(
 @Composable
 fun TypeTypeSkeletonLine(
     widthFraction: Float,
-    height: Dp = 10.dp,
     modifier: Modifier = Modifier,
+    height: Dp = 10.dp,
     alpha: Float = skeletonPulseAlpha(),
 ) {
     TypeTypeSkeleton(

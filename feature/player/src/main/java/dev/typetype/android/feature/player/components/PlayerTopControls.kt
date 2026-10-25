@@ -39,9 +39,9 @@ internal fun PlayerTopBar(
     isFullscreen: Boolean,
     isPipAvailable: Boolean,
     chaptersAvailable: Boolean,
+    modifier: Modifier = Modifier,
     compact: Boolean = false,
     expanded: Boolean = false,
-    modifier: Modifier = Modifier,
 ) {
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         BackButton(onNavigateBack, compact, expanded)

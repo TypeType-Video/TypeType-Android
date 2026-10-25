@@ -1,5 +1,6 @@
 package dev.typetype.android.feature.shorts
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -43,6 +44,8 @@ internal fun shortsOverlayAlpha(pageOffset: Float): Float =
 internal fun shortsOverlayTranslationY(pageOffset: Float): Float =
     pageOffset.coerceIn(0f, 1f) * 24f
 
+// overlayMotion animates the overlay only; the page itself takes no outside modifier.
+@SuppressLint("ModifierParameter")
 @Composable
 internal fun ShortPage(
     video: Video,

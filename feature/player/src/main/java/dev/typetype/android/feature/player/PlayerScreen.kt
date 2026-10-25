@@ -31,6 +31,7 @@ private const val PLAYLIST_NAME_PLACEHOLDER = "__PLAYLIST_NAME__"
 @Composable
 fun PlayerRoute(
     isFullscreen: Boolean,
+    modifier: Modifier = Modifier,
     hostTransitionProgress: () -> Float = { 0f },
     onFullscreenChange: (Boolean) -> Unit,
     onNavigateBack: () -> Unit,
@@ -38,7 +39,6 @@ fun PlayerRoute(
     onPlayVideo: (videoUrl: String) -> Unit,
     onAutoplayVideo: (videoUrl: String) -> Unit = onPlayVideo,
     onOpenChannel: (channelUrl: String) -> Unit = {},
-    modifier: Modifier = Modifier,
     viewModel: PlayerViewModel = hiltViewModel(),
     channelActionsViewModel: PlayerChannelActionsViewModel = hiltViewModel(),
     danmakuViewModel: PlayerDanmakuViewModel = hiltViewModel(),
@@ -83,6 +83,7 @@ fun PlayerRoute(
 fun PlayerScreen(
     state: PlayerState,
     commentsFlow: Flow<PagingData<Comment>>,
+    modifier: Modifier = Modifier,
     eventsFlow: Flow<PlayerEvent> = emptyFlow(),
     commentsRepository: dev.typetype.android.domain.comments.CommentsRepository? = null,
     prepareSabrPlayback: PrepareSabrPlayback = { _, _, _ -> null },
@@ -102,7 +103,6 @@ fun PlayerScreen(
     danmakuState: PlayerDanmakuState = PlayerDanmakuState(),
     onDanmakuAction: (PlayerDanmakuAction) -> Unit = {},
     onAction: (PlayerAction) -> Unit = {},
-    modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val favoriteAdded = stringResource(R.string.player_snackbar_favorite_added)
