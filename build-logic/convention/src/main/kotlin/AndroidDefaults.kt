@@ -19,5 +19,8 @@ internal fun CommonExtension.configureAndroidDefaults(project: Project) {
     lint.abortOnError = true
     lint.checkReleaseBuilds = false
     val libs = project.extensions.getByType<VersionCatalogsExtension>().named("libs")
-    project.dependencies { add("coreLibraryDesugaring", libs.findLibrary("desugaring").get()) }
+    project.dependencies {
+        add("coreLibraryDesugaring", libs.findLibrary("desugaring").get())
+        add("androidTestImplementation", libs.findLibrary("androidx-test-runner").get())
+    }
 }
