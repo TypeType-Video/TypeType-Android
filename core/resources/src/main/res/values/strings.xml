@@ -65,6 +65,16 @@
     <string name="shorts_title_clipboard_label">Short title</string>
     <string name="shorts_title_copied">Title copied</string>
     <string name="player_rewind">Rewind</string>
+    <string name="player_seek_forward_hint">+%1$d s</string>
+    <string name="player_seek_rewind_hint">−%1$d s</string>
+    <plurals name="player_seek_forward_announcement">
+        <item quantity="one">Forward %1$d second</item>
+        <item quantity="other">Forward %1$d seconds</item>
+    </plurals>
+    <plurals name="player_seek_rewind_announcement">
+        <item quantity="one">Back %1$d second</item>
+        <item quantity="other">Back %1$d seconds</item>
+    </plurals>
     <string name="player_previous_video">Previous video</string>
     <string name="player_play_pause">Play / pause</string>
     <string name="player_play">Play</string>
