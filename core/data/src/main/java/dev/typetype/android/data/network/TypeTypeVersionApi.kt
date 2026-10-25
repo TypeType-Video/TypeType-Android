@@ -16,4 +16,7 @@ interface TypeTypeVersionApi {
 
     @GET("version/downloader")
     suspend fun downloaderVersion(): Response<ComponentVersionDto>
+
+    @GET("version/recommender")
+    suspend fun recommenderVersion(): Response<ComponentVersionDto>
 }

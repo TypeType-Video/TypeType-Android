@@ -26,11 +26,13 @@ class RemoteComponentVersionsRepository @Inject constructor(
             val server = async { loadComponentVersion(api::serverVersion) }
             val token = async { loadComponentVersion(api::tokenVersion) }
             val downloader = async { loadComponentVersion(api::downloaderVersion) }
+            val recommender = async { loadComponentVersion(api::recommenderVersion) }
             ComponentVersions(
                 frontend = frontend.await(),
                 server = server.await(),
                 token = token.await(),
                 downloader = downloader.await(),
+                recommender = recommender.await(),
             )
         }
         activeAccountScope.verify(scope)
