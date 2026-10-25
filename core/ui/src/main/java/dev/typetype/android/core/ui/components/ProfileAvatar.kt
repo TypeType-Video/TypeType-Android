@@ -24,7 +24,7 @@ import coil3.request.ImageRequest
 import dev.typetype.android.core.openmoji.openMojiUrl
 import dev.typetype.android.core.openmoji.pickOpenMojiCode
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
-import dev.typetype.android.core.ui.share.buildImageUrl
+import dev.typetype.android.core.url.buildImageUrl
 import java.net.URI
 
 @Composable

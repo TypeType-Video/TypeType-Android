@@ -1,5 +1,6 @@
 package dev.typetype.android.core.ui.share
 
+import dev.typetype.android.core.url.buildImageUrl
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.ChannelAvatar
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
-import dev.typetype.android.core.ui.share.buildImageUrl
+import dev.typetype.android.core.url.buildImageUrl
 
 @Composable
 fun UploaderCard(

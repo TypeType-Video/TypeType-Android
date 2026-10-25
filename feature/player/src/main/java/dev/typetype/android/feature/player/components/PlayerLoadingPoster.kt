@@ -13,7 +13,7 @@ import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
 import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
-import dev.typetype.android.core.ui.share.buildImageUrl
+import dev.typetype.android.core.url.buildImageUrl
 import dev.typetype.android.domain.stream.Stream
 
 @Composable
