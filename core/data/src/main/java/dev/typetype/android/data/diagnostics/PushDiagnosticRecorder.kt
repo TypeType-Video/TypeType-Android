@@ -66,4 +66,6 @@ enum class PushDiagnosticEvent(val route: String) {
     LocalNotificationPosted("/notifications/local/posted"),
     LocalNotificationSuppressed("/notifications/local/suppressed"),
     LocalNotificationFailed("/notifications/local/failed"),
+    DeliveryAcknowledgementSent("/push/delivery/acknowledged"),
+    DeliveryAcknowledgementFailed("/push/delivery/acknowledgement-failed"),
 }

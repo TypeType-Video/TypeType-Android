@@ -84,6 +84,13 @@ class NetworkRouteClassifierTest {
     }
 
     @Test
+    fun identifiesProviderMediaWithoutRecordingItsHandle() {
+        val url = "https://video.example/api/v1/media/private-handle?token=secret".toHttpUrl()
+
+        assertEquals("/media", NetworkRouteClassifier.classify(endpoint, url))
+    }
+
+    @Test
     fun labelsUnknownRoutesWithoutCopyingTheirValue() {
         val url = "https://video.example/api/v1/private-value?token=secret".toHttpUrl()
 

@@ -69,8 +69,9 @@ private fun SabrPlaybackRecoveryException.recoveryCause(): PlaybackRecoveryCause
 }
 
 private fun CodedFailure.recoveryCause(): PlaybackRecoveryCause = when {
-    failureCode == SABR_PREPARATION_TIMEOUT || failureCode == SABR_CONTRACT_FAILURE_CODE ->
-        PlaybackRecoveryCause.Session
+    failureCode in SESSION_FAILURE_CODES -> PlaybackRecoveryCause.Session
+    // The server named what is gone, such as a deleted video: a fresh session would only find the same.
+    failureCode != null && statusCode in GONE_STATUS_CODES -> PlaybackRecoveryCause.Fatal
     else -> statusCode?.recoveryCause() ?: PlaybackRecoveryCause.Fatal
 }
 
@@ -87,4 +88,10 @@ private fun Int.recoveryCause(sabrMedia: Boolean = true): PlaybackRecoveryCause 
     else -> PlaybackRecoveryCause.Fatal
 }
 
+private val SESSION_FAILURE_CODES = setOf(
+    SABR_PREPARATION_TIMEOUT,
+    SABR_CONTRACT_FAILURE_CODE,
+    "sabr_playback_not_found",
+)
+private val GONE_STATUS_CODES = setOf(404, 409, 410)
 private const val MAX_CAUSE_DEPTH = 8

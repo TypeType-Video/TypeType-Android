@@ -19,7 +19,7 @@ class PlaybackFailureOverlayTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun mediaDeliveryFailureRemainsActionableAtLargeFont() {
+    fun unrecognizedMediaContainerRemainsActionableAtLargeFont() {
         val retried = AtomicBoolean(false)
         val backedOut = AtomicBoolean(false)
         composeRule.setContent {
@@ -30,9 +30,9 @@ class PlaybackFailureOverlayTest {
                 TypeTypeTheme {
                     PlaybackFailureOverlay(
                         error = PlaybackException(
-                            "HTTP failure",
+                            "Unrecognized input format",
                             null,
-                            PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS,
+                            PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
                         ),
                         onRetry = { retried.set(true) },
                         onOpenAccounts = {},

@@ -41,6 +41,20 @@ class PlaybackRecoveryCauseTest {
     }
 
     @Test
+    fun aLostSessionIsRetriedButAMissingVideoIsNot() {
+        assertEquals(PlaybackRecoveryCause.Session, server(404, "sabr_playback_not_found").playbackRecoveryCause())
+        assertEquals(PlaybackRecoveryCause.Fatal, server(404, "video_not_found").playbackRecoveryCause())
+        listOf(502, 503, 504).forEach { status ->
+            assertEquals(PlaybackRecoveryCause.Server, server(status, "upstream_unavailable").playbackRecoveryCause())
+        }
+    }
+
+    @Test
+    fun aRefusedConnectionIsANetworkFailure() {
+        assertEquals(PlaybackRecoveryCause.Network, java.net.ConnectException("refused").playbackRecoveryCause())
+    }
+
+    @Test
     fun serverRecoveryActionsChooseBetweenAFreshSessionAndARebuild() {
         assertEquals(PlaybackRecoveryCause.Session, action("retry_fresh_session").playbackRecoveryCause())
         assertEquals(
@@ -58,7 +72,8 @@ class PlaybackRecoveryCauseTest {
 
     private fun windowFailure(cause: Throwable) = IOException("Playback window failed", cause)
 
-    private fun server(status: Int) = ServerResponseException(ServerError("failed", null, status))
+    private fun server(status: Int, code: String? = null) =
+        ServerResponseException(ServerError("failed", code, status))
 
     private fun action(name: String?) = SabrPlaybackRecoveryException("window failed", name, emptyList())
 }

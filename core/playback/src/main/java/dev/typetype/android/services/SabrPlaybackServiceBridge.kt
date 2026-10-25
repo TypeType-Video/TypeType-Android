@@ -36,7 +36,7 @@ internal class SabrPlaybackServiceBridge(
     )
     private val recoveryGate = SabrPlaybackRecoveryGate()
     private val interruption = PlaybackInterruptionRecovery(player, coordinator, networkMonitor, recoveryStatus, scope)
-    private val liveFollower = LivePlaybackFollower()
+    private val liveFollower = SabrLivePlaybackFollower(player)
     private var activeBinding: SabrPlaybackBinding? = null
     private var stablePlaybackMs = 0L
 
@@ -85,7 +85,7 @@ internal class SabrPlaybackServiceBridge(
                         nowMs = SystemClock.elapsedRealtime(),
                     )
                 }
-                followLiveEdge()
+                liveFollower.followEdge()
                 delay(PLAYBACK_CLOCK_INTERVAL_MS)
             }
         }
@@ -170,11 +170,7 @@ internal class SabrPlaybackServiceBridge(
         reason: Int,
     ) {
         if (reason != Player.DISCONTINUITY_REASON_SEEK) return
-        liveFollower.observeSeek(
-            currentMediaId = player.currentMediaItem?.mediaId,
-            positionMs = newPosition.positionMs,
-            targetMs = player.currentLiveTargetPositionMs(),
-        )
+        liveFollower.observeSeek(newPosition.positionMs)
     }
 
     override fun onRecoveryRequired(
@@ -228,20 +224,6 @@ internal class SabrPlaybackServiceBridge(
         )
         player.prepare()
         player.playWhenReady = playWhenReady
-    }
-
-    private fun followLiveEdge() {
-        val mediaId = player.currentMediaItem?.mediaId
-        val targetMs = player.currentLiveTargetPositionMs()
-        liveFollower.initialize(mediaId, player.currentPosition, targetMs)
-        liveFollower.nextTarget(
-            currentMediaId = mediaId,
-            positionMs = player.currentPosition,
-            targetMs = targetMs,
-            playing = player.isPlaying,
-            busy = player.playbackState != Player.STATE_READY || player.isLoading,
-            nowMs = SystemClock.elapsedRealtime(),
-        )?.let(player::seekTo)
     }
 
     override fun close() {

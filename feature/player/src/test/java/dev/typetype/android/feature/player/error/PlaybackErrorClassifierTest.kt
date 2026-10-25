@@ -50,6 +50,16 @@ class PlaybackErrorClassifierTest {
     }
 
     @Test
+    fun `classifies gateway failures as temporary instance outage`() {
+        listOf(502, 503, 504).forEach { status ->
+            assertEquals(
+                PlaybackFailureKind.ServerUnavailable,
+                classifyHttpPlaybackFailure(responseBody = null, statusCode = status),
+            )
+        }
+    }
+
+    @Test
     fun `reads a safe request id from response headers`() {
         val result = requestIdFromHeaders(mapOf("x-request-id" to listOf("req-123:retry")))
 
@@ -79,6 +89,20 @@ class PlaybackErrorClassifierTest {
         )
 
         assertEquals(PlaybackFailureKind.UnsupportedFormat, result)
+    }
+
+    @Test
+    fun `classifies unreadable media containers and manifests as media delivery`() {
+        val errorCodes = listOf(
+            PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED,
+            PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
+            PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED,
+            PlaybackException.ERROR_CODE_PARSING_MANIFEST_UNSUPPORTED,
+        )
+
+        errorCodes.forEach { errorCode ->
+            assertEquals(PlaybackFailureKind.MediaDelivery, classifyPlaybackErrorCode(errorCode))
+        }
     }
 
     @Test

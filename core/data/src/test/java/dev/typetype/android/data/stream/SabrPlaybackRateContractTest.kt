@@ -2,6 +2,8 @@ package dev.typetype.android.data.stream
 
 import dev.typetype.android.data.network.dto.SabrPlaybackResponse
 import dev.typetype.android.domain.stream.SabrPlaybackBufferedRange
+import dev.typetype.android.domain.stream.SabrPlaybackTarget
+import dev.typetype.android.domain.stream.StreamRequestScope
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -58,6 +60,23 @@ class SabrPlaybackRateContractTest {
     fun bothSelectedTracksMustCoverThePositionBeforeExpanding() {
         assertEquals(2_500L, response().windowRequest(bufferedTracks().take(1)).bufferGoalMs)
         assertEquals(10_000L, response().windowRequest(bufferedTracks()).bufferGoalMs)
+    }
+
+    @Test
+    fun playerWindowAndServerRequestUseTheSameBufferGoal() {
+        val ranges = bufferedTracks()
+        val playbackTarget = SabrPlaybackTarget(
+            videoId = "video",
+            requestScope = StreamRequestScope("server", "account", "https://example.test/api/"),
+            videoItag = 137,
+            audioItag = 140,
+            audioTrackId = "en.0",
+        )
+
+        assertEquals(
+            response().windowRequest(ranges, playerTimeMs = 5_000L, playbackRate = 1.5f).bufferGoalMs,
+            playbackTarget.requestedBufferGoalMs(ranges, 5_000L, 1.5f),
+        )
     }
 
     @Test

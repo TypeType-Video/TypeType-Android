@@ -20,6 +20,7 @@ data class SabrPlaybackSession(
     val audioWindow: SabrPlaybackWindowTrack? = null,
     val videoWindow: SabrPlaybackWindowTrack? = null,
     val live: SabrLivePlaybackWindow? = null,
+    val requestedBufferGoalMs: Long = 2_500L,
 )
 
 data class SabrPlaybackBufferedRange(

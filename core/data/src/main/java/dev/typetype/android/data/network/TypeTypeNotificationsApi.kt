@@ -6,6 +6,7 @@ import dev.typetype.android.data.network.dto.ChannelNotificationPreferenceDto
 import dev.typetype.android.data.network.dto.ChannelNotificationPreferenceRequestDto
 import dev.typetype.android.data.network.dto.PushDeviceRegistrationRequestDto
 import dev.typetype.android.data.network.dto.PushDeviceRegistrationResponseDto
+import dev.typetype.android.data.network.dto.PushDeliveryAcknowledgementRequestDto
 import dev.typetype.android.data.network.dto.UnreadNotificationsCountDto
 import retrofit2.Response
 import retrofit2.http.Body
@@ -40,6 +41,11 @@ interface TypeTypeNotificationsApi {
     @DELETE("notifications/push/devices/{deviceId}")
     suspend fun deletePushDevice(
         @Path("deviceId") deviceId: String,
+    ): Response<Unit>
+
+    @POST("notifications/push/deliveries/acknowledgement")
+    suspend fun acknowledgePushDelivery(
+        @Body request: PushDeliveryAcknowledgementRequestDto,
     ): Response<Unit>
 
     @GET("notifications/channel-preferences")

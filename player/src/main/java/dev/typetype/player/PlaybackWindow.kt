@@ -8,9 +8,11 @@ data class PlaybackWindow(
     val audio: PlaybackTrack,
     val video: PlaybackTrack?,
     val live: PlaybackLiveWindow? = null,
+    val bufferGoalUs: Long = 10_000_000L,
 ) {
     init {
         require(generation >= 0L)
+        require(bufferGoalUs > 0L)
         require(durationUs > 0L)
         require(startPositionUs >= 0L)
         require(audio.kind == PlaybackTrackKind.Audio)

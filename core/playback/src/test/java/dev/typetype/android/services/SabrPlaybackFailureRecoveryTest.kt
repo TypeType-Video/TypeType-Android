@@ -212,6 +212,10 @@ class SabrPlaybackFailureRecoveryTest {
         audioTrackId = "en.0",
     )
 
+    private fun serverFailure(status: Int, code: String? = null) = ServerResponseException(
+        ServerError("server failure", code, status),
+    )
+
     private fun exhaustedGate() = SabrPlaybackRecoveryGate().apply {
         assertEquals(SabrPlaybackRecoveryDecision.Recover, begin("video", "session-1"))
         assertTrue(takeAttempt())

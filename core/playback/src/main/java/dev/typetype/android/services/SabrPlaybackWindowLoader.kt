@@ -1,5 +1,6 @@
 package dev.typetype.android.services
 
+import dev.typetype.android.data.stream.requestedBufferGoalMs
 import dev.typetype.android.domain.stream.SabrPlaybackBinding
 import dev.typetype.android.domain.stream.SabrPlaybackBufferedRange
 import dev.typetype.android.domain.stream.SabrPlaybackRepository
@@ -48,17 +49,26 @@ internal class SabrPlaybackWindowLoader(
     ): PlaybackLoadCancellation {
         return launchWindowRequest(callback, { request().positionUs.toMilliseconds() }) {
             val activeBinding = transportState.currentBinding()
+            var requestedBufferGoalMs = 2_500L
             repository.refresh(
                 target = target,
                 binding = activeBinding,
             ) {
                 val current = request()
-                SabrPlaybackSnapshot(
-                    playerTimeMs = current.positionUs.toMilliseconds(),
-                    bufferedRanges = current.bufferedRanges.mapNotNull(::toDomainRange),
-                    playbackRate = playbackRate(),
+                val ranges = current.bufferedRanges.mapNotNull(::toDomainRange)
+                val playerTimeMs = current.positionUs.toMilliseconds()
+                val currentPlaybackRate = playbackRate()
+                requestedBufferGoalMs = target.requestedBufferGoalMs(
+                    ranges = ranges,
+                    playerTimeMs = playerTimeMs,
+                    playbackRate = currentPlaybackRate,
                 )
-            }
+                SabrPlaybackSnapshot(
+                    playerTimeMs = playerTimeMs,
+                    bufferedRanges = ranges,
+                    playbackRate = currentPlaybackRate,
+                )
+            }.map { session -> session.copy(requestedBufferGoalMs = requestedBufferGoalMs) }
         }
     }
 
@@ -133,6 +143,7 @@ internal fun SabrPlaybackSession.toPlayerWindow(
     val audio = requireNotNull(audioWindow) { "SABR omitted its validated audio window" }
     return PlaybackWindow(
         generation = generation,
+        bufferGoalUs = requestedBufferGoalMs.toMicroseconds(),
         durationUs = durationMs.toMicroseconds(),
         startPositionUs = startTimeMs.toMicroseconds(),
         endOfStream = endOfStream,

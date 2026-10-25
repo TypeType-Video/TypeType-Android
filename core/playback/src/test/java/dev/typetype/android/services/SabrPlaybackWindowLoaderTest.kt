@@ -16,6 +16,23 @@ import org.junit.Test
 
 class SabrPlaybackWindowLoaderTest {
     @Test
+    fun requestedBufferGoalIsPassedToThePlayerWindow() {
+        val window = SabrPlaybackSession(
+            sessionId = "session",
+            manifestUrl = "https://example.test/manifest",
+            generation = 0,
+            videoItag = 137,
+            audioItag = 140,
+            audioTrackId = null,
+            requestedBufferGoalMs = 10_000L,
+            audioWindow = windowTrack(140, "audio/mp4"),
+            videoWindow = windowTrack(137, "video/mp4"),
+        ).toPlayerWindow()
+
+        assertEquals(10_000_000L, window.bufferGoalUs)
+    }
+
+    @Test
     fun terminalWindowRetainsTheLastValidatedTracks() {
         val previous = PlaybackWindow(
             generation = 0,

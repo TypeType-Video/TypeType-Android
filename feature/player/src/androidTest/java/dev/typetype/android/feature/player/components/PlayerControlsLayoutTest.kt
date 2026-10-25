@@ -25,14 +25,10 @@ import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.captureToImage
-import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.ViewCompat
 import androidx.core.graphics.Insets
-import android.graphics.Bitmap
-import java.io.File
 import dev.typetype.android.R
 import dev.typetype.android.domain.stream.StreamStoryboard
 import dev.typetype.android.feature.player.PlayerNavigationAvailability
@@ -84,10 +80,8 @@ class PlayerControlsLayoutTest {
         dispatchStatusBarInsets(40)
         composeRule.waitForIdle()
         val visibleTop = backButtonTopInViewport()
-        captureControls("status-bars-visible.png")
         dispatchStatusBarInsets(0)
         composeRule.waitForIdle()
-        captureControls("status-bars-hidden.png")
         assertEquals(visibleTop, backButtonTopInViewport(), 1f)
     }
 
@@ -153,14 +147,6 @@ class PlayerControlsLayoutTest {
         val viewport = composeRule.onNodeWithTag(PLAYER_CONTROLS_VIEWPORT_TAG)
             .fetchSemanticsNode().boundsInRoot
         return back.top - viewport.top
-    }
-
-    private fun captureControls(name: String) {
-        val bitmap = composeRule.onNodeWithTag(PLAYER_CONTROLS_VIEWPORT_TAG)
-            .captureToImage().asAndroidBitmap()
-        File(composeRule.activity.noBackupFilesDir, name).outputStream().use {
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
-        }
     }
 
     @Test

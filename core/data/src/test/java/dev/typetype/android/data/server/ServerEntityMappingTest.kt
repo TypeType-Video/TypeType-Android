@@ -1,6 +1,7 @@
 package dev.typetype.android.data.server
 
 import dev.typetype.android.domain.server.PushCapability
+import dev.typetype.android.domain.server.RecommenderCapability
 import dev.typetype.android.domain.server.Server
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -32,7 +33,7 @@ class ServerEntityMappingTest {
     }
 
     @Test
-    fun oldRowsRemainPushUnavailableByDefault() {
+    fun oldRowsKeepOptionalCapabilitiesUnavailableByDefault() {
         val restored = ServerEntity(
             id = "server",
             baseUrl = "https://example.test/api/",
@@ -43,5 +44,27 @@ class ServerEntityMappingTest {
         assertFalse(restored.push.enabled)
         assertEquals("unifiedpush", restored.push.provider)
         assertTrue(restored.push.eventTypes.isEmpty())
+        assertFalse(restored.recommender.available)
+    }
+
+    @Test
+    fun preservesRecommenderCapabilityAcrossRoomMapping() {
+        val server = Server(
+            id = "server",
+            baseUrl = "https://example.test/api/",
+            displayName = "Test",
+            addedAt = 1L,
+            recommender = RecommenderCapability(
+                installed = true,
+                enabled = true,
+                experimental = true,
+            ),
+        )
+
+        val restored = ServerEntity.fromDomain(server).toDomain()
+
+        assertTrue(restored.recommender.installed)
+        assertTrue(restored.recommender.enabled)
+        assertTrue(restored.recommender.experimental)
     }
 }

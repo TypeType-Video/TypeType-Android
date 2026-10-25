@@ -8,6 +8,7 @@ import dev.typetype.android.data.account.AccountScope
 import dev.typetype.android.data.diagnostics.PushDiagnosticEvent
 import dev.typetype.android.data.diagnostics.PushDiagnosticRecorder
 import dev.typetype.android.data.push.PushRegistrationStore
+import dev.typetype.android.data.push.PushDeliveryAcknowledgementRepository
 import dev.typetype.android.data.push.pushInstanceName
 import dev.typetype.android.data.push.scopeFromInstanceName
 import dev.typetype.android.domain.push.PushRegistrationStatus
@@ -29,6 +30,7 @@ class PushRegistrationManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val repository: PushRepository,
     private val registrationStore: PushRegistrationStore,
+    private val deliveryAcknowledgements: PushDeliveryAcknowledgementRepository,
     private val activeAccountScope: ActiveAccountScope,
     private val pushDiagnostics: PushDiagnosticRecorder,
 ) {
@@ -158,6 +160,29 @@ class PushRegistrationManager @Inject constructor(
             registrationStore.clear(accountScope)
             pushDiagnostics.record(accountScope, PushDiagnosticEvent.RegistrationDisabled)
             update(PushRegistrationStatus.Disabled)
+        }
+    }
+
+    fun acknowledgeDelivery(scope: AccountScope, eventId: String, result: NotificationPostResult) {
+        val outcome = result.toPushDeliveryOutcome()
+        managerScope.launch {
+            deliveryAcknowledgements.acknowledge(scope, eventId, outcome.value, outcome.reasonCode).fold(
+                onSuccess = {
+                    pushDiagnostics.record(
+                        scope,
+                        PushDiagnosticEvent.DeliveryAcknowledgementSent,
+                        traceId = pushDiagnostics.traceId(eventId),
+                    )
+                },
+                onFailure = {
+                    pushDiagnostics.record(
+                        scope,
+                        PushDiagnosticEvent.DeliveryAcknowledgementFailed,
+                        failureCode = "server_acknowledgement_failed",
+                        traceId = pushDiagnostics.traceId(eventId),
+                    )
+                },
+            )
         }
     }
 
