@@ -32,7 +32,7 @@ import coil3.compose.AsyncImage
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
-import dev.typetype.android.core.ui.share.buildImageUrl
+import dev.typetype.android.core.url.buildImageUrl
 import dev.typetype.android.feature.player.AutoplayCountdownState
 
 @Composable

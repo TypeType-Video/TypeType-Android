@@ -55,7 +55,7 @@ import dev.typetype.android.core.ui.components.AnimatedLoader
 import dev.typetype.android.core.ui.components.FullScreenLoader
 import dev.typetype.android.core.ui.components.VideoMoreActionsButton
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
-import dev.typetype.android.core.ui.share.buildImageUrl
+import dev.typetype.android.core.url.buildImageUrl
 import dev.typetype.android.domain.library.HistoryItem
 import dev.typetype.android.domain.library.VideoMeta
 import dev.typetype.android.feature.library.components.rememberVideoMetas

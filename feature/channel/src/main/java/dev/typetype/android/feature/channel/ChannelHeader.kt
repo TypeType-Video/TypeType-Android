@@ -48,7 +48,7 @@ import androidx.core.content.ContextCompat
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
-import dev.typetype.android.core.ui.share.buildImageUrl
+import dev.typetype.android.core.url.buildImageUrl
 import dev.typetype.android.core.ui.util.knownCountOrNull
 import dev.typetype.android.domain.channel.Channel
 

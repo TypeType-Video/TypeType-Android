@@ -38,7 +38,7 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
-import dev.typetype.android.core.ui.share.buildImageUrl
+import dev.typetype.android.core.url.buildImageUrl
 
 @Composable
 internal fun AudioOnlyPoster(

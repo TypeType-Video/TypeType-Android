@@ -31,7 +31,7 @@ import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.core.ui.components.VideoMenuAction
 import dev.typetype.android.core.ui.components.VideoMenuItemState
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
-import dev.typetype.android.core.ui.share.buildImageUrl
+import dev.typetype.android.core.url.buildImageUrl
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.feature.player.ShortsPlaybackProgress
 import dev.typetype.android.feature.player.components.LocalMediaController

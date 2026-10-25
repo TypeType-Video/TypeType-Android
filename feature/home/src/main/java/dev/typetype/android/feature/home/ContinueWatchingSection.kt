@@ -38,7 +38,7 @@ import dev.typetype.android.core.ui.components.SectionHeader
 import dev.typetype.android.core.ui.components.VideoDurationBadge
 import dev.typetype.android.core.ui.components.SkeletonImage
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
-import dev.typetype.android.core.ui.share.buildImageUrl
+import dev.typetype.android.core.url.buildImageUrl
 import dev.typetype.android.domain.library.HistoryItem
 
 @Composable
