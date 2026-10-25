@@ -57,6 +57,9 @@ data object PushNotificationsRoute
 data object ChannelNotificationsRoute
 
 @Serializable
+data object RecommenderSettingsRoute
+
+@Serializable
 data object StorageSettingsRoute
 
 @Serializable
