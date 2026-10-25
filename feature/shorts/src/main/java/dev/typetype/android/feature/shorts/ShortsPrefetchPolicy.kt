@@ -1,5 +1,6 @@
 package dev.typetype.android.feature.shorts
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.ConnectivityManager
 import android.os.Build
@@ -14,6 +15,8 @@ internal fun Context.allowsShortsPlaybackPrefetch(): Boolean {
     )
 }
 
+// The status constant is inlined; sdkInt keeps it from being read below API 24.
+@SuppressLint("InlinedApi")
 internal fun allowsShortsPlaybackPrefetch(
     sdkInt: Int,
     restrictBackgroundStatus: Int,

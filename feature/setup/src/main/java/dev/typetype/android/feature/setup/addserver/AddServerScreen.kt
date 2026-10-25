@@ -1,6 +1,5 @@
 package dev.typetype.android.feature.setup.addserver
 
-import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -87,7 +86,7 @@ fun AddServerRoute(
                     isLocalNetworkPermissionPermanentlyDenied(
                         ActivityCompat.shouldShowRequestPermissionRationale(
                             it,
-                            Manifest.permission.ACCESS_LOCAL_NETWORK,
+                            LOCAL_NETWORK_PERMISSION,
                         ),
                     )
                 } ?: false,
@@ -97,7 +96,7 @@ fun AddServerRoute(
     val onConnect = {
         val permissionGranted = ContextCompat.checkSelfPermission(
             context,
-            Manifest.permission.ACCESS_LOCAL_NETWORK,
+            LOCAL_NETWORK_PERMISSION,
         ) == PackageManager.PERMISSION_GRANTED
         viewModel.onAction(
             AddServerAction.OnConnectRequested(
@@ -114,7 +113,7 @@ fun AddServerRoute(
                 AddServerEvent.NavigateBack -> onNavigateBack()
                 is AddServerEvent.NavigateToLogin -> onNavigateToLogin(event.serverId)
                 AddServerEvent.RequestLocalNetworkPermission ->
-                    permissionLauncher.launch(Manifest.permission.ACCESS_LOCAL_NETWORK)
+                    permissionLauncher.launch(LOCAL_NETWORK_PERMISSION)
             }
         }
     }
