@@ -43,12 +43,14 @@ import org.unifiedpush.android.connector.UnifiedPush
 @Composable
 fun PushNotificationsRoute(
     onNavigateBack: () -> Unit,
+    onOpenChannels: () -> Unit,
     viewModel: PushNotificationsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     PushNotificationsScreen(
         state = state,
         onNavigateBack = onNavigateBack,
+        onOpenChannels = onOpenChannels,
         onAction = viewModel::onAction,
     )
 }
@@ -57,6 +59,7 @@ fun PushNotificationsRoute(
 internal fun PushNotificationsScreen(
     state: PushSettingsState,
     onNavigateBack: () -> Unit,
+    onOpenChannels: () -> Unit,
     onAction: (PushSettingsAction) -> Unit,
 ) {
     val context = LocalContext.current
@@ -87,18 +90,13 @@ internal fun PushNotificationsScreen(
                     }
                 },
             )
+            ChannelsRow(onClick = onOpenChannels)
             StatusRow(label = stringResource(statusLabel(state.status)))
             if (state.status == PushRegistrationStatus.MissingDistributor) {
                 DistributorRow()
             }
             Text(
                 text = stringResource(R.string.push_local_fallback),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(20.dp, 4.dp),
-            )
-            Text(
-                text = stringResource(R.string.push_channel_bell_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(20.dp, 4.dp),
@@ -150,6 +148,27 @@ private fun PushToggleRow(
         TypeTypeSwitch(
             checked = state.status.isRegistered(),
             onCheckedChange = null,
+        )
+    }
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+}
+
+@Composable
+private fun ChannelsRow(onClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(20.dp, 12.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.push_channels_title),
+            style = MaterialTheme.typography.bodyLarge,
+        )
+        Text(
+            text = stringResource(R.string.push_channels_subtitle),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)

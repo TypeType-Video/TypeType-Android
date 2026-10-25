@@ -1,0 +1,141 @@
+package dev.typetype.android.feature.settings.notifications
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.typetype.android.core.error.suspendRunCatching
+import dev.typetype.android.domain.push.PushRepository
+import dev.typetype.android.domain.push.matchesChannel
+import dev.typetype.android.domain.subscriptions.SubscriptionsRepository
+import javax.inject.Inject
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
+
+data class ChannelBell(
+    val channelUrl: String,
+    val name: String,
+    val avatarUrl: String,
+    val enabled: Boolean,
+    val pending: Boolean = false,
+)
+
+data class ChannelNotificationsState(
+    val isLoading: Boolean = true,
+    val loadFailed: Boolean = false,
+    val channels: List<ChannelBell> = emptyList(),
+    val bulkInFlight: Boolean = false,
+    val showError: Boolean = false,
+) {
+    val enabledCount: Int get() = channels.count { it.enabled }
+}
+
+sealed interface ChannelNotificationsAction {
+    data object Retry : ChannelNotificationsAction
+
+    data class Toggle(val channelUrl: String) : ChannelNotificationsAction
+
+    data class SetAll(val enabled: Boolean) : ChannelNotificationsAction
+}
+
+@HiltViewModel
+class ChannelNotificationsViewModel @Inject constructor(
+    private val subscriptions: SubscriptionsRepository,
+    private val pushRepository: PushRepository,
+) : ViewModel() {
+    private val _state = MutableStateFlow(ChannelNotificationsState())
+    val state = _state.asStateFlow()
+
+    init {
+        load()
+    }
+
+    fun onAction(action: ChannelNotificationsAction) {
+        when (action) {
+            ChannelNotificationsAction.Retry -> load()
+            is ChannelNotificationsAction.Toggle -> toggle(action.channelUrl)
+            is ChannelNotificationsAction.SetAll -> setAll(action.enabled)
+        }
+    }
+
+    private fun load() {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true, loadFailed = false, showError = false) }
+            val channels = suspendRunCatching {
+                val subscribed = subscriptions.listSubscriptions().getOrThrow()
+                val bells = pushRepository.channelPreferences().getOrThrow().filter { it.enabled }
+                subscribed
+                    .sortedBy { it.name.lowercase() }
+                    .map { channel ->
+                        ChannelBell(
+                            channelUrl = channel.channelUrl,
+                            name = channel.name,
+                            avatarUrl = channel.avatarUrl,
+                            enabled = bells.any { it.matchesChannel(channel.channelUrl) },
+                        )
+                    }
+            }
+            _state.update {
+                it.copy(
+                    isLoading = false,
+                    loadFailed = channels.isFailure,
+                    channels = channels.getOrDefault(it.channels),
+                )
+            }
+        }
+    }
+
+    private fun toggle(channelUrl: String) {
+        val current = _state.value
+        val channel = current.channels.firstOrNull { it.channelUrl == channelUrl } ?: return
+        if (channel.pending || current.bulkInFlight) return
+        viewModelScope.launch {
+            val saved = save(channel, !channel.enabled)
+            if (!saved) _state.update { it.copy(showError = true) }
+        }
+    }
+
+    private fun setAll(enabled: Boolean) {
+        val current = _state.value
+        if (current.bulkInFlight) return
+        val targets = current.channels.filter { it.enabled != enabled && !it.pending }
+        if (targets.isEmpty()) return
+        viewModelScope.launch {
+            _state.update { it.copy(bulkInFlight = true, showError = false) }
+            val gate = Semaphore(BULK_PARALLELISM)
+            val results = coroutineScope {
+                targets.map { channel -> async { gate.withPermit { save(channel, enabled) } } }.awaitAll()
+            }
+            _state.update { it.copy(bulkInFlight = false, showError = results.any { saved -> !saved }) }
+        }
+    }
+
+    private suspend fun save(channel: ChannelBell, enabled: Boolean): Boolean {
+        updateChannel(channel.channelUrl) { it.copy(enabled = enabled, pending = true) }
+        val saved = suspendRunCatching {
+            pushRepository.setChannelPreference(channel.channelUrl, enabled).getOrThrow()
+        }.isSuccess
+        updateChannel(channel.channelUrl) {
+            it.copy(enabled = if (saved) enabled else !enabled, pending = false)
+        }
+        return saved
+    }
+
+    private fun updateChannel(channelUrl: String, transform: (ChannelBell) -> ChannelBell) {
+        _state.update { state ->
+            state.copy(
+                channels = state.channels.map { if (it.channelUrl == channelUrl) transform(it) else it },
+            )
+        }
+    }
+
+    private companion object {
+        const val BULK_PARALLELISM = 6
+    }
+}

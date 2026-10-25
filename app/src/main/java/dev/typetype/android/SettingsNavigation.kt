@@ -21,6 +21,7 @@ import dev.typetype.android.feature.settings.SettingsRoute as SettingsRouteScree
 import dev.typetype.android.feature.settings.about.LicensesScreen
 import dev.typetype.android.feature.settings.appearance.AppearanceRoute as AppearanceScreen
 import dev.typetype.android.feature.settings.imports.PortabilityRoute as ImportDataRouteScreen
+import dev.typetype.android.feature.settings.notifications.ChannelNotificationsRoute as ChannelNotificationsRouteScreen
 import dev.typetype.android.feature.settings.notifications.PushNotificationsRoute as PushNotificationsRouteScreen
 import dev.typetype.android.feature.settings.rss.RssFeedsRoute as RssFeedsRouteScreen
 
@@ -63,6 +64,12 @@ internal fun NavGraphBuilder.settingsDestinations(
     }
     composable<dev.typetype.android.core.ui.navigation.PushNotificationsRoute> {
         PushNotificationsRouteScreen(
+            onNavigateBack = { navController.popBackStack() },
+            onOpenChannels = { navController.navigate(dev.typetype.android.core.ui.navigation.ChannelNotificationsRoute) },
+        )
+    }
+    composable<dev.typetype.android.core.ui.navigation.ChannelNotificationsRoute> {
+        ChannelNotificationsRouteScreen(
             onNavigateBack = { navController.popBackStack() },
         )
     }
