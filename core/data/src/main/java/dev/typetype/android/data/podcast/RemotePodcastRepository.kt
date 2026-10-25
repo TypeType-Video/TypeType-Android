@@ -1,5 +1,6 @@
 package dev.typetype.android.data.podcast
 
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.network.TypeTypeApiHolder
 import dev.typetype.android.data.network.dto.PodcastItemDto
@@ -22,7 +23,7 @@ class RemotePodcastRepository @Inject constructor(
     override suspend fun channelPodcasts(
         channelUrl: String,
         nextPage: String?,
-    ): Result<ChannelPodcastPage> = runCatching {
+    ): Result<ChannelPodcastPage> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val api = apiHolder.require(scope)
         val response = withContext(Dispatchers.IO) { api.podcasts(channelUrl, nextPage) }
@@ -41,7 +42,7 @@ class RemotePodcastRepository @Inject constructor(
     override suspend fun episodes(
         podcastUrl: String,
         nextPage: String?,
-    ): Result<PodcastEpisodesPage> = runCatching {
+    ): Result<PodcastEpisodesPage> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val api = apiHolder.require(scope)
         val response = withContext(Dispatchers.IO) { api.podcastEpisodes(podcastUrl, nextPage) }

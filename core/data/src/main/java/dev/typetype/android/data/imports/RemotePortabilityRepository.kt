@@ -3,6 +3,7 @@ package dev.typetype.android.data.imports
 import android.content.Context
 import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.network.TypeTypeApiHolder
 import dev.typetype.android.data.network.dto.PortabilityApplyRequestDto
@@ -135,7 +136,7 @@ class RemotePortabilityRepository @Inject constructor(
 
     private suspend fun <T> request(
         block: suspend (dev.typetype.android.data.network.TypeTypeApi) -> T,
-    ): Result<T> = runCatching {
+    ): Result<T> = suspendRunCatching {
         val scope = activeAccountScope.require()
         withContext(Dispatchers.IO) { block(apiHolder.require(scope)) }
             .also { activeAccountScope.verify(scope) }

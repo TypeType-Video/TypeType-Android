@@ -1,6 +1,7 @@
 package dev.typetype.android.data.support
 
 import android.os.Build
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.data.account.AccountDao
 import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.network.TypeTypeApiHolder
@@ -30,11 +31,11 @@ class RemoteSupportRepository @Inject constructor(
 ) : SupportRepository {
 
     override suspend fun canSubmitReport(): Boolean {
-        val scope = runCatching { activeAccountScope.require() }.getOrNull() ?: return false
+        val scope = suspendRunCatching { activeAccountScope.require() }.getOrNull() ?: return false
         return accountDao.get(scope.serverId, scope.accountId)?.isGuest == false
     }
 
-    override suspend fun submitReport(draft: SupportReportDraft): Result<SupportReportReceipt> = runCatching {
+    override suspend fun submitReport(draft: SupportReportDraft): Result<SupportReportReceipt> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val account = requireNotNull(accountDao.get(scope.serverId, scope.accountId)) {
             "Account not found"

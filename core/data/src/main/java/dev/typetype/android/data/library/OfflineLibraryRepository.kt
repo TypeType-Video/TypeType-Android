@@ -1,6 +1,7 @@
 package dev.typetype.android.data.library
 
 import androidx.paging.PagingData
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.library.local.HistoryDao
 import dev.typetype.android.data.library.local.PlaylistEntity
@@ -81,9 +82,9 @@ class OfflineLibraryRepository @Inject constructor(
         refreshCoordinator.playlist(playlistId)
 
     override suspend fun retryPendingWrites(collection: LibraryCollection): Result<Boolean> =
-        runCatching { mutations.retry(collection) }
+        suspendRunCatching { mutations.retry(collection) }
 
-    override suspend fun resumePendingWrites(): Result<Boolean> = runCatching { mutations.resume() }
+    override suspend fun resumePendingWrites(): Result<Boolean> = suspendRunCatching { mutations.resume() }
 
     override suspend fun addFavorite(
         videoUrl: String,
@@ -94,7 +95,7 @@ class OfflineLibraryRepository @Inject constructor(
         channelUrl: String,
         channelAvatarUrl: String,
         viewCount: Long,
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> = suspendRunCatching {
         mutations.favorite(
             MutationVideo(
                 url = videoUrl,
@@ -110,7 +111,7 @@ class OfflineLibraryRepository @Inject constructor(
         )
     }
 
-    override suspend fun removeFavorite(videoUrl: String): Result<Unit> = runCatching {
+    override suspend fun removeFavorite(videoUrl: String): Result<Unit> = suspendRunCatching {
         mutations.favorite(MutationVideo(videoUrl), desiredPresent = false)
     }
 
@@ -123,7 +124,7 @@ class OfflineLibraryRepository @Inject constructor(
         channelUrl: String,
         channelAvatarUrl: String,
         viewCount: Long,
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> = suspendRunCatching {
         mutations.watchLater(
             MutationVideo(
                 url = url,
@@ -139,7 +140,7 @@ class OfflineLibraryRepository @Inject constructor(
         )
     }
 
-    override suspend fun removeWatchLater(url: String): Result<Unit> = runCatching {
+    override suspend fun removeWatchLater(url: String): Result<Unit> = suspendRunCatching {
         mutations.watchLater(MutationVideo(url), desiredPresent = false)
     }
 
@@ -174,7 +175,7 @@ class OfflineLibraryRepository @Inject constructor(
         }
     }
 
-    override suspend fun removeFromHistory(videoUrl: String): Result<Unit> = runCatching {
+    override suspend fun removeFromHistory(videoUrl: String): Result<Unit> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val id = historyDao.getIdByUrl(scope.serverId, scope.accountId, videoUrl)
         if (id != null) network.deleteHistory(scope, id)
@@ -182,7 +183,7 @@ class OfflineLibraryRepository @Inject constructor(
         if (id != null) refreshCoordinator.recordHistoryRemoved(scope)
     }
 
-    override suspend fun clearHistory(): Result<Unit> = runCatching {
+    override suspend fun clearHistory(): Result<Unit> = suspendRunCatching {
         val scope = activeAccountScope.require()
         network.deleteAllHistory(scope)
         historyDao.replaceAll(scope.serverId, scope.accountId, emptyList())
@@ -201,19 +202,19 @@ class OfflineLibraryRepository @Inject constructor(
         progressSync.discardPending(activeAccountScope.require())
     }
 
-    override suspend fun fetchProgressMillis(videoUrl: String): Result<Long?> = runCatching {
+    override suspend fun fetchProgressMillis(videoUrl: String): Result<Long?> = suspendRunCatching {
         val scope = activeAccountScope.require()
         progressSync.fetch(scope, videoUrl)
     }
 
-    override suspend fun createPlaylist(name: String): Result<String> = runCatching {
+    override suspend fun createPlaylist(name: String): Result<String> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val playlist = network.postCreatePlaylist(scope, name)
         mutations.recordCreatedPlaylist(playlist)
         playlist.id
     }
 
-    override suspend fun renamePlaylist(playlistId: String, name: String): Result<Unit> = runCatching {
+    override suspend fun renamePlaylist(playlistId: String, name: String): Result<Unit> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val cacheKey = PlaylistEntity.cacheKey(scope, playlistId)
         val playlist = checkNotNull(playlistsDao.getPlaylist(cacheKey)) { "Playlist not found" }
@@ -221,7 +222,7 @@ class OfflineLibraryRepository @Inject constructor(
         mutations.recordRenamedPlaylist(playlistId, name)
     }
 
-    override suspend fun deletePlaylist(playlistId: String): Result<Unit> = runCatching {
+    override suspend fun deletePlaylist(playlistId: String): Result<Unit> = suspendRunCatching {
         val scope = activeAccountScope.require()
         network.deletePlaylist(scope, playlistId)
         mutations.recordDeletedPlaylist(playlistId)
@@ -230,7 +231,7 @@ class OfflineLibraryRepository @Inject constructor(
     override suspend fun reorderPlaylist(
         playlistId: String,
         orderedVideoUrls: List<String>,
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val cacheKey = PlaylistEntity.cacheKey(scope, playlistId)
         val cachedUrls = playlistsDao.getVideoUrls(cacheKey)
@@ -254,7 +255,7 @@ class OfflineLibraryRepository @Inject constructor(
         channelUrl: String,
         channelAvatarUrl: String,
         viewCount: Long,
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> = suspendRunCatching {
         mutations.playlistVideo(
             playlistId = playlistId,
             video = MutationVideo(
@@ -274,7 +275,7 @@ class OfflineLibraryRepository @Inject constructor(
     override suspend fun removeVideoFromPlaylist(
         playlistId: String,
         videoUrl: String,
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> = suspendRunCatching {
         mutations.playlistVideo(
             playlistId = playlistId,
             video = MutationVideo(videoUrl),

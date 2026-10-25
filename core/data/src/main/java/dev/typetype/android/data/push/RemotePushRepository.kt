@@ -1,5 +1,6 @@
 package dev.typetype.android.data.push
 
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.data.account.AccountDao
 import dev.typetype.android.data.account.AccountScope
 import dev.typetype.android.data.account.ActiveAccountScope
@@ -30,7 +31,7 @@ class RemotePushRepository @Inject constructor(
 
     override suspend fun currentCapability(): PushCapability {
         val scope = activeAccountScope.require()
-        val refreshed = runCatching { capabilitiesRepository.refresh(scope.serverId).getOrThrow() }
+        val refreshed = suspendRunCatching { capabilitiesRepository.refresh(scope.serverId).getOrThrow() }
         return refreshed.getOrNull()?.push
             ?: serverRepository.getServer(scope.serverId)?.push
             ?: PushCapability()

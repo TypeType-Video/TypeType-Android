@@ -4,8 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.typetype.android.R
-import dev.typetype.android.core.ui.error.UserErrorMapper
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.core.ui.error.UserErrorDetails
+import dev.typetype.android.core.ui.error.UserErrorMapper
 import dev.typetype.android.domain.feed.HomeFeedRepository
 import dev.typetype.android.domain.library.LibraryRepository
 import dev.typetype.android.domain.library.VideoMetaRepository
@@ -101,7 +102,7 @@ class HomeViewModel @Inject constructor(
         }
         loadJob = viewModelScope.launch {
             if (_state.value.videos.isEmpty()) {
-                val cached = runCatching { feedRepository.loadCachedHomeFeed() }
+                val cached = suspendRunCatching { feedRepository.loadCachedHomeFeed() }
                     .getOrDefault(emptyList())
                 if (cached.isNotEmpty()) _state.update { it.copy(videos = cached) }
             }
@@ -117,7 +118,7 @@ class HomeViewModel @Inject constructor(
                     )
                 }
                 videoMetaRepository.cacheVideos(page.videos)
-                runCatching { feedRepository.cacheHomeFeed(page.videos, append = false) }
+                suspendRunCatching { feedRepository.cacheHomeFeed(page.videos, append = false) }
                 return@launch
             }
             loadTrendingFallback(recommendations.exceptionOrNull())
@@ -136,7 +137,7 @@ class HomeViewModel @Inject constructor(
                     )
                 }
                 videoMetaRepository.cacheVideos(videos)
-                runCatching { feedRepository.cacheHomeFeed(videos, append = false) }
+                suspendRunCatching { feedRepository.cacheHomeFeed(videos, append = false) }
             },
             onFailure = { trendingFailure ->
                 val failure = recommendationsFailure ?: trendingFailure
@@ -169,7 +170,7 @@ class HomeViewModel @Inject constructor(
                         )
                     }
                     videoMetaRepository.cacheVideos(page.videos)
-                    runCatching { feedRepository.cacheHomeFeed(page.videos, append = true) }
+                    suspendRunCatching { feedRepository.cacheHomeFeed(page.videos, append = true) }
                 },
                 onFailure = {
                     _state.update { it.copy(isLoadingMore = false, loadMoreError = true) }

@@ -1,5 +1,6 @@
 package dev.typetype.android.services
 
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.domain.stream.SabrPlaybackBinding
 import dev.typetype.android.domain.stream.SabrPlaybackRepository
 import dev.typetype.android.domain.stream.SabrPlaybackSession
@@ -106,14 +107,14 @@ internal class SabrPlaybackSeekCoordinator(
                 complete(Result.failure(it))
                 return@launch
             }
-            val acceptedTarget = runCatching {
+            val acceptedTarget = suspendRunCatching {
                 prepared.target.accept(prepared.session)
             }.getOrElse {
                 complete(Result.failure(it))
                 return@launch
             }
             if (requestedId == requestId && currentState() == state) {
-                runCatching {
+                suspendRunCatching {
                     apply(prepared.session, acceptedTarget, requestedPositionMs)
                 }.fold(
                     onSuccess = { complete(Result.success(Unit)) },

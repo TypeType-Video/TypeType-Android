@@ -3,6 +3,7 @@ package dev.typetype.android.feature.player
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.core.ui.player.PlayerHostController
 import dev.typetype.android.data.network.PlaybackNetworkMonitor
 import dev.typetype.android.domain.comments.CommentsRepository
@@ -241,7 +242,7 @@ class PlayerViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { if (it.videoUrl == url) it.copy(downloadInFlight = true) else it }
             var queuedSent = false
-            runCatching {
+            suspendRunCatching {
                 downloadRepository.downloadVideo(
                     videoUrl = url,
                     title = stream.title,

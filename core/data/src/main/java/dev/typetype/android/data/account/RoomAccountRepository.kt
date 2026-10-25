@@ -1,14 +1,15 @@
 package dev.typetype.android.data.account
 
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.data.network.AccessTokenStore
 import dev.typetype.android.data.network.PersistentCookieJar
 import dev.typetype.android.data.network.RetrofitFactory
 import dev.typetype.android.domain.account.Account
 import dev.typetype.android.domain.account.AccountRepository
 import dev.typetype.android.domain.server.ServerRepository
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
-import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -27,7 +28,7 @@ class RoomAccountRepository @Inject constructor(
     override fun observeAccounts(): Flow<List<Account>> =
         accountDao.observeAll().map { accounts -> accounts.map(AccountEntity::toDomain) }
 
-    override suspend fun select(serverId: String, accountId: String): Result<Unit> = runCatching {
+    override suspend fun select(serverId: String, accountId: String): Result<Unit> = suspendRunCatching {
         val server = requireNotNull(serverRepository.getServer(serverId)) { "Instance not found" }
         requireNotNull(accountDao.get(serverId, accountId)) { "Account not found" }
         val token = tokenStore.getAccessToken(serverId, accountId)
@@ -45,7 +46,7 @@ class RoomAccountRepository @Inject constructor(
         accountDao.updateLastUsed(serverId, accountId, System.currentTimeMillis())
     }
 
-    override suspend fun forget(serverId: String, accountId: String): Result<Unit> = runCatching {
+    override suspend fun forget(serverId: String, accountId: String): Result<Unit> = suspendRunCatching {
         val selectedServer = serverRepository.observeCurrentServer().first()?.id
         val selectedAccount = accountScopeStore.getCurrentAccountId(serverId)
         check(selectedServer != serverId || selectedAccount != accountId) {

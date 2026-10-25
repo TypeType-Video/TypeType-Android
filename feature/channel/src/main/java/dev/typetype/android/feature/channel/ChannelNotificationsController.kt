@@ -1,5 +1,6 @@
 package dev.typetype.android.feature.channel
 
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.domain.push.PushRepository
 import dev.typetype.android.domain.push.matchesChannel
@@ -13,10 +14,10 @@ class ChannelNotificationsController @Inject constructor(
 ) {
     suspend fun isAvailable(isSubscribed: Boolean): Boolean {
         if (!isSubscribed) return false
-        val scope = runCatching { activeAccountScope.require() }.getOrNull() ?: return false
+        val scope = suspendRunCatching { activeAccountScope.require() }.getOrNull() ?: return false
         val cachedCapability = serverRepository.getServer(scope.serverId)?.push
         if (cachedCapability?.enabled == true) return true
-        return runCatching { pushRepository.currentCapability().enabled }.getOrDefault(false)
+        return suspendRunCatching { pushRepository.currentCapability().enabled }.getOrDefault(false)
     }
 
     suspend fun currentEnabled(channelUrl: String): Boolean? =

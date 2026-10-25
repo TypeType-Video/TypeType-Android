@@ -1,15 +1,17 @@
 package dev.typetype.android.data.publicplaylist
 
+import androidx.room.withTransaction
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.data.account.AccountDao
 import dev.typetype.android.data.account.AccountScope
 import dev.typetype.android.data.account.ActiveAccountScope
+import dev.typetype.android.data.database.TypeTypeDatabase
+import dev.typetype.android.data.library.sync.LibraryRefreshToken
+import dev.typetype.android.data.library.sync.LibrarySyncTracker
 import dev.typetype.android.data.network.TypeTypeApiHolder
 import dev.typetype.android.data.network.dto.SavePublicPlaylistRequest
 import dev.typetype.android.data.network.dto.SavedPublicPlaylistDto
 import dev.typetype.android.data.network.requireSuccessfulResponse
-import dev.typetype.android.data.database.TypeTypeDatabase
-import dev.typetype.android.data.library.sync.LibraryRefreshToken
-import dev.typetype.android.data.library.sync.LibrarySyncTracker
 import dev.typetype.android.domain.library.LibraryCollection
 import dev.typetype.android.domain.publicplaylist.SavedPublicPlaylist
 import dev.typetype.android.domain.publicplaylist.SavedPublicPlaylistRepository
@@ -23,7 +25,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import androidx.room.withTransaction
 
 @Singleton
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -106,7 +107,7 @@ class OfflineSavedPublicPlaylistRepository @Inject constructor(
         accountDao.get(scope.serverId, scope.accountId)?.isGuest != false
 
     private suspend fun recordFailure(token: LibraryRefreshToken, failure: Throwable) {
-        val current = runCatching { activeAccountScope.verify(token.scope) }.isSuccess
+        val current = suspendRunCatching { activeAccountScope.verify(token.scope) }.isSuccess
         if (current) syncTracker.fail(token, failure)
     }
 

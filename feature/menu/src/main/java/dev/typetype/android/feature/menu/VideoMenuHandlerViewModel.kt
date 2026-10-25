@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.typetype.android.R
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.core.ui.error.UserErrorMapper
 import dev.typetype.android.core.ui.player.PlayerHostController
 import dev.typetype.android.domain.actions.VideoActionsRepository
@@ -235,7 +236,7 @@ class VideoMenuHandlerViewModel @Inject constructor(
     fun download(video: Video, selection: DownloadSelection) {
         viewModelScope.launch {
             var queuedSent = false
-            runCatching {
+            suspendRunCatching {
                 downloadRepository.downloadVideo(
                     videoUrl = video.url,
                     title = video.title,

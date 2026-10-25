@@ -1,5 +1,6 @@
 package dev.typetype.android.data.publicplaylist
 
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.network.TypeTypeApiHolder
 import dev.typetype.android.data.network.dto.SearchPlaylistDto
@@ -18,7 +19,7 @@ class RemotePublicPlaylistRepository @Inject constructor(
     private val apiHolder: TypeTypeApiHolder,
     private val activeAccountScope: ActiveAccountScope,
 ) : PublicPlaylistRepository {
-    override suspend fun load(url: String, nextPage: String?): Result<PublicPlaylistPage> = runCatching {
+    override suspend fun load(url: String, nextPage: String?): Result<PublicPlaylistPage> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val api = apiHolder.require(scope)
         val response = withContext(Dispatchers.IO) { api.publicPlaylist(url, nextPage) }

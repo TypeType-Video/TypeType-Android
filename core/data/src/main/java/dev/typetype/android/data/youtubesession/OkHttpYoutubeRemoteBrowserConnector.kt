@@ -1,5 +1,6 @@
 package dev.typetype.android.data.youtubesession
 
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.data.account.AccountScope
 import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.network.AccessTokenStore
@@ -20,10 +21,10 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl
@@ -45,7 +46,7 @@ class OkHttpYoutubeRemoteBrowserConnector @Inject constructor(
 ) : YoutubeRemoteBrowserConnector {
     override suspend fun connect(
         session: YoutubeRemoteBrowserSession,
-    ): Result<YoutubeRemoteBrowserConnection> = runCatching {
+    ): Result<YoutubeRemoteBrowserConnection> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val server = serverRepository.getServer(scope.serverId) ?: error("Instance not found")
         val token = tokenStore.getAccessToken(scope.serverId, scope.accountId)

@@ -1,5 +1,6 @@
 package dev.typetype.android.data.comments
 
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.network.TypeTypeApiHolder
 import dev.typetype.android.data.network.dto.CommentItem
@@ -19,7 +20,7 @@ class CommentsRepositoryImpl @Inject constructor(
 ) : CommentsRepository {
 
     override suspend fun loadPage(videoUrl: String, nextpage: String?): Result<CommentsPage> =
-        runCatching {
+        suspendRunCatching {
             val scope = activeAccountScope.require()
             val api = apiHolder.require(scope)
             val response = withContext(Dispatchers.IO) {
@@ -36,7 +37,7 @@ class CommentsRepositoryImpl @Inject constructor(
         }
 
     override suspend fun loadReplies(videoUrl: String, repliesPage: String): Result<CommentsPage> =
-        runCatching {
+        suspendRunCatching {
             val scope = activeAccountScope.require()
             val api = apiHolder.require(scope)
             val response = withContext(Dispatchers.IO) {

@@ -1,5 +1,6 @@
 package dev.typetype.android.data.session
 
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.data.account.AccountDao
 import dev.typetype.android.data.account.AccountScope
 import dev.typetype.android.data.account.ActiveAccountScope
@@ -33,9 +34,9 @@ class RemoteActiveSessionRepository @Inject constructor(
         withContext(Dispatchers.IO) { deviceIdentityStore.setDeviceName(name) }
     }
 
-    override suspend fun reportActivity(): Result<Unit> = runCatching {
+    override suspend fun reportActivity(): Result<Unit> = suspendRunCatching {
         val scope = activeAccountScope.require()
-        if (!scope.canReport()) return@runCatching
+        if (!scope.canReport()) return@suspendRunCatching
         val response = withContext(Dispatchers.IO) {
             apiHolder.requireActiveSession(scope).reportActivity(deviceRequest())
         }
@@ -57,10 +58,10 @@ class RemoteActiveSessionRepository @Inject constructor(
         api.reportPlaybackProgress(request)
     }
 
-    override suspend fun reportPlaybackStop(requestScope: StreamRequestScope): Result<Unit> = runCatching {
+    override suspend fun reportPlaybackStop(requestScope: StreamRequestScope): Result<Unit> = suspendRunCatching {
         val scope = requestScope.accountScope()
         activeAccountScope.verify(scope)
-        if (!scope.canReport()) return@runCatching
+        if (!scope.canReport()) return@suspendRunCatching
         val response = withContext(Dispatchers.IO) {
             apiHolder.requireActiveSession(scope).reportPlaybackStop(deviceRequest())
         }
@@ -72,10 +73,10 @@ class RemoteActiveSessionRepository @Inject constructor(
         requestScope: StreamRequestScope,
         snapshot: ActivePlaybackSnapshot,
         request: suspend (TypeTypeActiveSessionApi, SessionPlaybackRequest) -> retrofit2.Response<Unit>,
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> = suspendRunCatching {
         val scope = requestScope.accountScope()
         activeAccountScope.verify(scope)
-        if (!scope.canReport()) return@runCatching
+        if (!scope.canReport()) return@suspendRunCatching
         val response = withContext(Dispatchers.IO) {
             request(apiHolder.requireActiveSession(scope), snapshot.toRequest())
         }

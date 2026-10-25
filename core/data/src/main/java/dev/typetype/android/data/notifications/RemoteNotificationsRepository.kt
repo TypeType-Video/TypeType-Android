@@ -1,5 +1,6 @@
 package dev.typetype.android.data.notifications
 
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.data.account.AccountDao
 import dev.typetype.android.data.account.AccountEntity
 import dev.typetype.android.data.account.AccountScope
@@ -34,8 +35,8 @@ class RemoteNotificationsRepository @Inject constructor(
         ::notificationBadge,
     )
 
-    override suspend fun refreshUnreadCount(): Result<Unit> = runCatching {
-        val scope = eligibleScope() ?: return@runCatching
+    override suspend fun refreshUnreadCount(): Result<Unit> = suspendRunCatching {
+        val scope = eligibleScope() ?: return@suspendRunCatching
         val response = withContext(Dispatchers.IO) {
             apiHolder.require(scope).unreadNotificationsCount()
         }
@@ -45,7 +46,7 @@ class RemoteNotificationsRepository @Inject constructor(
         unreadState.value = AccountScopedValue(scope, body.unreadCount.coerceAtLeast(0))
     }
 
-    override suspend fun page(page: Int): Result<NotificationsPage> = runCatching {
+    override suspend fun page(page: Int): Result<NotificationsPage> = suspendRunCatching {
         val scope = requireNotNull(eligibleScope()) {
             "Notifications are unavailable for guest accounts"
         }
@@ -60,7 +61,7 @@ class RemoteNotificationsRepository @Inject constructor(
         result
     }
 
-    override suspend fun markAllRead(): Result<Unit> = runCatching {
+    override suspend fun markAllRead(): Result<Unit> = suspendRunCatching {
         val scope = requireNotNull(eligibleScope()) {
             "Notifications are unavailable for guest accounts"
         }

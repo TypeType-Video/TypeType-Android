@@ -3,9 +3,10 @@ package dev.typetype.android.feature.settings.notifications
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.typetype.android.services.notifications.LocalNotificationScheduler
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.domain.push.PushRegistrationStatus
 import dev.typetype.android.domain.push.PushRepository
+import dev.typetype.android.services.notifications.LocalNotificationScheduler
 import dev.typetype.android.services.push.PushRegistrationManager
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,7 +41,7 @@ class PushNotificationsViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            runCatching { registrationManager.refreshStatus() }
+            suspendRunCatching { registrationManager.refreshStatus() }
             load()
         }
         viewModelScope.launch {
@@ -61,8 +62,8 @@ class PushNotificationsViewModel @Inject constructor(
     private fun load() {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, showError = false) }
-            val capability = runCatching { pushRepository.currentCapability() }.getOrNull()
-            val devices = runCatching { pushRepository.devices() }.getOrNull()
+            val capability = suspendRunCatching { pushRepository.currentCapability() }.getOrNull()
+            val devices = suspendRunCatching { pushRepository.devices() }.getOrNull()
             _state.update {
                 it.copy(
                     isLoading = false,
@@ -78,14 +79,14 @@ class PushNotificationsViewModel @Inject constructor(
         if (_state.value.inFlight) return
         viewModelScope.launch {
             _state.update { it.copy(inFlight = true, showError = false) }
-            val result = runCatching {
+            val result = suspendRunCatching {
                 if (_state.value.status == PushRegistrationStatus.Registered) {
                     registrationManager.disable()
                 } else {
                     registrationManager.enable()
                 }
             }
-            val devices = runCatching { pushRepository.devices() }.getOrNull()
+            val devices = suspendRunCatching { pushRepository.devices() }.getOrNull()
             _state.update {
                 it.copy(
                     inFlight = false,

@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.typetype.android.core.error.CodedFailure
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.domain.actions.VideoActionsRepository
 import dev.typetype.android.domain.imports.ImportDocument
 import dev.typetype.android.domain.imports.ImportRepository
@@ -132,7 +133,7 @@ class ImportDataViewModel @Inject constructor(
         update: ImportDataState.(ImportDocument) -> ImportDataState,
     ) {
         viewModelScope.launch {
-            runCatching {
+            suspendRunCatching {
                 withContext(Dispatchers.IO) { documentReader.read(uri, fallbackName) }
             }
                 .onSuccess { document ->

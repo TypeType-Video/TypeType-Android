@@ -1,8 +1,9 @@
 package dev.typetype.android.data.profile
 
-import dev.typetype.android.data.account.AccountScopedValue
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.data.account.AccountDao
 import dev.typetype.android.data.account.AccountEntity
+import dev.typetype.android.data.account.AccountScopedValue
 import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.network.TypeTypeApiHolder
 import dev.typetype.android.data.network.dto.AccountIdentityDto
@@ -11,10 +12,10 @@ import dev.typetype.android.data.network.dto.AvatarEmojiRequest
 import dev.typetype.android.data.network.dto.ProfileUpdateRequest
 import dev.typetype.android.data.network.dto.UserProfile
 import dev.typetype.android.data.network.requireSuccessfulResponse
-import dev.typetype.android.domain.profile.Profile
-import dev.typetype.android.domain.profile.ProfileRepository
 import dev.typetype.android.domain.profile.AccountIdentity
 import dev.typetype.android.domain.profile.AvatarUpload
+import dev.typetype.android.domain.profile.Profile
+import dev.typetype.android.domain.profile.ProfileRepository
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
@@ -48,7 +49,7 @@ class RemoteProfileRepository @Inject constructor(
         }
     }
 
-    override suspend fun refresh(): Result<Unit> = runCatching {
+    override suspend fun refresh(): Result<Unit> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val response = withContext(Dispatchers.IO) { apiHolder.require(scope).me() }
         response.requireSuccessfulResponse()
@@ -68,7 +69,7 @@ class RemoteProfileRepository @Inject constructor(
         state.value = AccountScopedValue(scope, profile)
     }
 
-    override suspend fun updateProfile(publicUsername: String?, bio: String?): Result<Unit> = runCatching {
+    override suspend fun updateProfile(publicUsername: String?, bio: String?): Result<Unit> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val response = withContext(Dispatchers.IO) {
             apiHolder.require(scope).updateProfile(
@@ -80,7 +81,7 @@ class RemoteProfileRepository @Inject constructor(
         refresh().getOrThrow()
     }
 
-    override suspend fun uploadCustomAvatar(upload: AvatarUpload): Result<Unit> = runCatching {
+    override suspend fun uploadCustomAvatar(upload: AvatarUpload): Result<Unit> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val body = upload.bytes.toRequestBody(upload.mediaType.toMediaTypeOrNull())
         val response = withContext(Dispatchers.IO) {
@@ -91,7 +92,7 @@ class RemoteProfileRepository @Inject constructor(
         refresh().getOrThrow()
     }
 
-    override suspend fun setAvatarEmoji(code: String): Result<Unit> = runCatching {
+    override suspend fun setAvatarEmoji(code: String): Result<Unit> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val response = withContext(Dispatchers.IO) {
             apiHolder.require(scope).setAvatarEmoji(AvatarEmojiRequest(code = code))
@@ -101,7 +102,7 @@ class RemoteProfileRepository @Inject constructor(
         refresh().getOrThrow()
     }
 
-    override suspend fun clearAvatar(): Result<Unit> = runCatching {
+    override suspend fun clearAvatar(): Result<Unit> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val response = withContext(Dispatchers.IO) { apiHolder.require(scope).clearAvatar() }
         response.requireSuccessfulResponse()
@@ -109,7 +110,7 @@ class RemoteProfileRepository @Inject constructor(
         refresh().getOrThrow()
     }
 
-    override suspend fun getAccountIdentity(): Result<AccountIdentity> = runCatching {
+    override suspend fun getAccountIdentity(): Result<AccountIdentity> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val response = withContext(Dispatchers.IO) { apiHolder.require(scope).accountIdentity() }
         response.requireSuccessfulResponse()
@@ -122,7 +123,7 @@ class RemoteProfileRepository @Inject constructor(
         email: String,
         name: String,
         currentPassword: String,
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val response = withContext(Dispatchers.IO) {
             apiHolder.require(scope).updateAccountIdentity(

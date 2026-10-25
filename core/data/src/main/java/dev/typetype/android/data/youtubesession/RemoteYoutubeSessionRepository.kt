@@ -1,5 +1,6 @@
 package dev.typetype.android.data.youtubesession
 
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.network.TypeTypeApiHolder
 import dev.typetype.android.data.network.dto.YoutubeRemoteBrowserStartRequest
@@ -20,7 +21,7 @@ class RemoteYoutubeSessionRepository @Inject constructor(
     private val apiHolder: TypeTypeApiHolder,
     private val activeAccountScope: ActiveAccountScope,
 ) : YoutubeSessionRepository {
-    override suspend fun getStatus(): Result<YoutubeSession> = runCatching {
+    override suspend fun getStatus(): Result<YoutubeSession> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val response = withContext(Dispatchers.IO) {
             apiHolder.require(scope).youtubeSessionStatus()
@@ -33,7 +34,7 @@ class RemoteYoutubeSessionRepository @Inject constructor(
 
     override suspend fun startRemoteBrowser(
         returnTo: String?,
-    ): Result<YoutubeRemoteBrowserSession> = runCatching {
+    ): Result<YoutubeRemoteBrowserSession> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val response = withContext(Dispatchers.IO) {
             apiHolder.require(scope).startYoutubeRemoteBrowser(
@@ -46,7 +47,7 @@ class RemoteYoutubeSessionRepository @Inject constructor(
         session.toDomain()
     }
 
-    override suspend fun cancelRemoteBrowser(sessionId: String): Result<Unit> = runCatching {
+    override suspend fun cancelRemoteBrowser(sessionId: String): Result<Unit> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val response = withContext(Dispatchers.IO) {
             apiHolder.require(scope).cancelYoutubeRemoteBrowser(sessionId)
@@ -57,7 +58,7 @@ class RemoteYoutubeSessionRepository @Inject constructor(
         activeAccountScope.verify(scope)
     }
 
-    override suspend fun disconnect(): Result<Unit> = runCatching {
+    override suspend fun disconnect(): Result<Unit> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val response = withContext(Dispatchers.IO) {
             apiHolder.require(scope).disconnectYoutubeSession()

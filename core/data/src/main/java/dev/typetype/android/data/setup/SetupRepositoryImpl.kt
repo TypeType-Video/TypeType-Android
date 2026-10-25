@@ -1,11 +1,12 @@
 package dev.typetype.android.data.setup
 
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.data.network.RetrofitFactory
-import dev.typetype.android.domain.server.Server
-import dev.typetype.android.domain.server.ServerRepository
 import dev.typetype.android.domain.server.PushCapability
 import dev.typetype.android.domain.server.RecommenderCapability
 import dev.typetype.android.domain.server.RssCapability
+import dev.typetype.android.domain.server.Server
+import dev.typetype.android.domain.server.ServerRepository
 import dev.typetype.android.domain.setup.ProbeResult
 import dev.typetype.android.domain.setup.ServerAddress
 import dev.typetype.android.domain.setup.SetupRepository
@@ -23,7 +24,7 @@ class SetupRepositoryImpl @Inject constructor(
     override suspend fun probeServer(
         rawUrl: String,
         allowCleartextHttp: Boolean,
-    ): Result<ProbeResult> = runCatching {
+    ): Result<ProbeResult> = suspendRunCatching {
         val candidates = ServerAddress.candidateBaseUrls(rawUrl, allowCleartextHttp)
         val attempts = candidates.map { tryCandidate(it) }
         val resolved = attempts.filterIsInstance<Attempt.Resolved>().firstOrNull()?.value

@@ -8,6 +8,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.data.account.AccountDao
 import dev.typetype.android.data.network.AccessTokenStore
 import dev.typetype.android.data.network.ScopedApiFactory
@@ -208,7 +209,7 @@ class YoutubeTakeoutImportWorker @AssistedInject constructor(
 
     private suspend fun releaseDocumentPermission() {
         val entry = importDao.getByWorkId(id.toString()) ?: return
-        runCatching {
+        suspendRunCatching {
             applicationContext.contentResolver.releasePersistableUriPermission(
                 Uri.parse(entry.documentUri),
                 Intent.FLAG_GRANT_READ_URI_PERMISSION,

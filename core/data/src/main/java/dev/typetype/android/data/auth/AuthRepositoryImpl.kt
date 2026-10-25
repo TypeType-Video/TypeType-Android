@@ -1,18 +1,19 @@
 package dev.typetype.android.data.auth
 
-import dev.typetype.android.data.network.AccessTokenStore
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.data.account.AccountDao
 import dev.typetype.android.data.account.AccountEntity
 import dev.typetype.android.data.account.AccountScopeStore
+import dev.typetype.android.data.network.AccessTokenStore
 import dev.typetype.android.data.network.PersistentCookieJar
 import dev.typetype.android.data.network.RetrofitFactory
 import dev.typetype.android.data.network.ScopedApiFactory
 import dev.typetype.android.data.network.TypeTypeApi
-import dev.typetype.android.data.network.requireSuccessfulResponse
 import dev.typetype.android.data.network.dto.LoginRequest
 import dev.typetype.android.data.network.dto.OidcCallbackRequest
-import dev.typetype.android.data.network.dto.ResetPasswordRequest
 import dev.typetype.android.data.network.dto.RegisterRequest
+import dev.typetype.android.data.network.dto.ResetPasswordRequest
+import dev.typetype.android.data.network.requireSuccessfulResponse
 import dev.typetype.android.domain.auth.AuthRepository
 import dev.typetype.android.domain.auth.LoginMethods
 import dev.typetype.android.domain.auth.OidcAuthorization
@@ -48,7 +49,7 @@ class AuthRepositoryImpl @Inject constructor(
         identifier: String,
         password: String,
         expectedAccountId: String?,
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> = suspendRunCatching {
         val server = requireNotNull(serverRepository.getServer(serverId)) { "Server not found" }
         cookieJar.beginAuthentication(serverId, server.baseUrl)
         val api = retrofitFactory.createWithoutAutomaticAuthentication(server.baseUrl)
@@ -60,7 +61,7 @@ class AuthRepositoryImpl @Inject constructor(
         establishSession(serverId, api, token, expectedAccountId)
     }.onFailure { cookieJar.cancelAuthentication(serverId) }
 
-    override suspend fun loginAsGuest(serverId: String): Result<Unit> = runCatching {
+    override suspend fun loginAsGuest(serverId: String): Result<Unit> = suspendRunCatching {
         val server = requireNotNull(serverRepository.getServer(serverId)) { "Server not found" }
         cookieJar.beginAuthentication(serverId, server.baseUrl)
         val api = retrofitFactory.createWithoutAutomaticAuthentication(server.baseUrl)
@@ -75,7 +76,7 @@ class AuthRepositoryImpl @Inject constructor(
         name: String,
         email: String,
         password: String,
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> = suspendRunCatching {
         val server = requireNotNull(serverRepository.getServer(serverId)) { "Server not found" }
         cookieJar.beginAuthentication(serverId, server.baseUrl)
         val api = retrofitFactory.createWithoutAutomaticAuthentication(server.baseUrl)
@@ -88,7 +89,7 @@ class AuthRepositoryImpl @Inject constructor(
     }.onFailure { cookieJar.cancelAuthentication(serverId) }
 
     override suspend fun getRegistrationStatus(serverId: String): Result<RegistrationStatus> =
-        runCatching {
+        suspendRunCatching {
             val server = requireNotNull(serverRepository.getServer(serverId)) { "Instance not found" }
             val response = withContext(Dispatchers.IO) {
                 retrofitFactory.createWithoutAutomaticAuthentication(server.baseUrl).registerStatus()
@@ -106,7 +107,7 @@ class AuthRepositoryImpl @Inject constructor(
         serverId: String,
         resetToken: String,
         newPassword: String,
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> = suspendRunCatching {
         val server = requireNotNull(serverRepository.getServer(serverId)) { "Server not found" }
         val response = withContext(Dispatchers.IO) {
             retrofitFactory.create(server.baseUrl).resetPassword(
@@ -158,7 +159,7 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun logout(serverId: String): Result<Unit> {
         val server = serverRepository.getServer(serverId)
             ?: return Result.failure(IllegalStateException("Server not found"))
-        val remoteResult = runCatching {
+        val remoteResult = suspendRunCatching {
             val token = tokenStore.getAccessToken(serverId)
             val api = retrofitFactory.createWithoutAutomaticAuthentication(server.baseUrl)
             val response = withContext(Dispatchers.IO) {
@@ -172,7 +173,7 @@ class AuthRepositoryImpl @Inject constructor(
         return if (failure == null) Result.success(Unit) else Result.failure(failure)
     }
 
-    override suspend fun getLoginMethods(serverId: String): Result<LoginMethods> = runCatching {
+    override suspend fun getLoginMethods(serverId: String): Result<LoginMethods> = suspendRunCatching {
         val server = requireNotNull(serverRepository.getServer(serverId)) { "Instance not found" }
         val response = withContext(Dispatchers.IO) {
             retrofitFactory.createWithoutAutomaticAuthentication(server.baseUrl).oidcStatus()
@@ -187,7 +188,7 @@ class AuthRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun startOidc(serverId: String): Result<OidcAuthorization> = runCatching {
+    override suspend fun startOidc(serverId: String): Result<OidcAuthorization> = suspendRunCatching {
         val server = requireNotNull(serverRepository.getServer(serverId)) { "Instance not found" }
         cookieJar.beginAuthentication(serverId, server.baseUrl)
         val api = retrofitFactory.createWithoutAutomaticAuthentication(server.baseUrl)
@@ -216,7 +217,7 @@ class AuthRepositoryImpl @Inject constructor(
         serverId: String,
         callbackUrl: String,
         expectedAccountId: String?,
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> = suspendRunCatching {
         val callback = OidcCallbackParser.parse(callbackUrl, oidcRedirect.scheme)
         oidcTransactionStore.requireMatches(serverId, callback.state)
         val server = requireNotNull(serverRepository.getServer(serverId)) { "Instance not found" }

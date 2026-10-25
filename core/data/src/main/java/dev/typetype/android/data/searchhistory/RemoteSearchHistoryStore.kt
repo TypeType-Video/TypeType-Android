@@ -1,14 +1,15 @@
 package dev.typetype.android.data.searchhistory
 
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.network.TypeTypeApiHolder
 import dev.typetype.android.data.network.dto.SearchHistoryEntryRequest
 import dev.typetype.android.data.network.requireSuccessfulResponse
 import dev.typetype.android.domain.searchhistory.SearchHistoryRepository
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Singleton
 class RemoteSearchHistoryStore @Inject constructor(
@@ -16,7 +17,7 @@ class RemoteSearchHistoryStore @Inject constructor(
     private val activeAccountScope: ActiveAccountScope,
 ) : SearchHistoryRepository {
 
-    override suspend fun loadHistory(): Result<List<String>> = runCatching {
+    override suspend fun loadHistory(): Result<List<String>> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val api = apiHolder.require(scope)
         val response = withContext(Dispatchers.IO) { api.searchHistory() }
@@ -27,7 +28,7 @@ class RemoteSearchHistoryStore @Inject constructor(
             .filter { it.isNotBlank() }
     }
 
-    override suspend fun addEntry(query: String): Result<Unit> = runCatching {
+    override suspend fun addEntry(query: String): Result<Unit> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val api = apiHolder.require(scope)
         val response = withContext(Dispatchers.IO) {
@@ -37,7 +38,7 @@ class RemoteSearchHistoryStore @Inject constructor(
         activeAccountScope.verify(scope)
     }
 
-    override suspend fun clearHistory(): Result<Unit> = runCatching {
+    override suspend fun clearHistory(): Result<Unit> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val response = withContext(Dispatchers.IO) { apiHolder.require(scope).clearSearchHistory() }
         response.requireSuccessfulResponse()

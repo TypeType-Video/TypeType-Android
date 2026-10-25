@@ -3,6 +3,7 @@ package dev.typetype.android.data.imports
 import android.content.Context
 import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.network.TypeTypeApiHolder
 import dev.typetype.android.data.network.dto.toDomain
@@ -28,7 +29,7 @@ class RemoteImportRepository @Inject constructor(
     override suspend fun exportTypeType(
         categories: Set<TypeTypeBackupCategory>,
         destinationUri: String,
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> = suspendRunCatching {
         require(categories.isNotEmpty()) { "BACKUP_NO_CATEGORIES" }
         val scope = activeAccountScope.require()
         val response = withContext(Dispatchers.IO) {
@@ -54,7 +55,7 @@ class RemoteImportRepository @Inject constructor(
 
     override suspend fun restoreTypeType(
         document: ImportDocument,
-    ): Result<TypeTypeRestoreSummary> = runCatching {
+    ): Result<TypeTypeRestoreSummary> = suspendRunCatching {
         validateTypeTypeDocument(document)
         val scope = activeAccountScope.require()
         val body = ContentUriRequestBody(
@@ -86,7 +87,7 @@ class RemoteImportRepository @Inject constructor(
 
     override suspend fun restorePipePipe(
         document: ImportDocument,
-    ): Result<PipePipeRestoreSummary> = runCatching {
+    ): Result<PipePipeRestoreSummary> = suspendRunCatching {
         validatePipePipeDocument(document)
         val scope = activeAccountScope.require()
         val body = ContentUriRequestBody(

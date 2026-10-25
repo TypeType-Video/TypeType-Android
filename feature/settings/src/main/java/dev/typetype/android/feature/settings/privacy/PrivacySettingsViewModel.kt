@@ -4,9 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.typetype.android.R
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.core.ui.error.UserErrorMapper
-import dev.typetype.android.domain.library.LibraryRepository
 import dev.typetype.android.data.account.ActiveAccountScope
+import dev.typetype.android.domain.library.LibraryRepository
 import dev.typetype.android.domain.playback.PlaybackResumeRepository
 import dev.typetype.android.domain.searchhistory.SearchHistoryRepository
 import dev.typetype.android.domain.session.ActiveSessionRepository
@@ -218,8 +219,8 @@ class PrivacySettingsViewModel @Inject constructor(
         }
     }
 
-    private suspend fun discardPlaybackResume(): Result<Unit> = runCatching {
-        val scope = activeAccountScope.observe().first() ?: return@runCatching
+    private suspend fun discardPlaybackResume(): Result<Unit> = suspendRunCatching {
+        val scope = activeAccountScope.observe().first() ?: return@suspendRunCatching
         playbackResumeRepository.clear(scope.serverId, scope.accountId)
     }
 

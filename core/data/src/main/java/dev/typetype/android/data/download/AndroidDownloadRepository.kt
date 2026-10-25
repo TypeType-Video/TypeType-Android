@@ -8,9 +8,10 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import dagger.hilt.android.qualifiers.ApplicationContext
+import dev.typetype.android.core.error.suspendRunCatching
+import dev.typetype.android.data.account.AccountDao
 import dev.typetype.android.data.account.AccountScope
 import dev.typetype.android.data.account.ActiveAccountScope
-import dev.typetype.android.data.account.AccountDao
 import dev.typetype.android.data.network.AccessTokenStore
 import dev.typetype.android.data.network.DownloaderGatewayApi
 import dev.typetype.android.data.network.ScopedApiFactory
@@ -129,14 +130,14 @@ class AndroidDownloadRepository @Inject constructor(
         )
     }.flowOn(Dispatchers.IO)
 
-    override suspend fun openDownload(requestId: String): Result<Unit> = runCatching {
+    override suspend fun openDownload(requestId: String): Result<Unit> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val entry = downloadDao.get(scope.serverId, scope.accountId, requestId)
             ?: error("Download not found")
         artifactManager.open(requireNotNull(entry.systemDownloadId) { "Download is not ready" })
     }
 
-    override suspend fun cancelDownload(requestId: String): Result<Unit> = runCatching {
+    override suspend fun cancelDownload(requestId: String): Result<Unit> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val entry = requireEntry(scope, requestId)
         if (entry.serverJobId != null && entry.status != STATUS_ENQUEUED) {
@@ -155,7 +156,7 @@ class AndroidDownloadRepository @Inject constructor(
         )
     }
 
-    override suspend fun retryDownload(requestId: String): Result<Unit> = runCatching {
+    override suspend fun retryDownload(requestId: String): Result<Unit> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val entry = requireEntry(scope, requestId)
         require(entry.status == STATUS_FAILED || entry.status == STATUS_CANCELLED) { "Download is active" }
@@ -181,7 +182,7 @@ class AndroidDownloadRepository @Inject constructor(
         workManager.enqueueUniqueWork(workName(requestId), ExistingWorkPolicy.REPLACE, request)
     }
 
-    override suspend fun removeDownload(requestId: String): Result<Unit> = runCatching {
+    override suspend fun removeDownload(requestId: String): Result<Unit> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val entry = requireEntry(scope, requestId)
         require(entry.status != STATUS_RUNNING && entry.status != STATUS_QUEUED) { "Cancel the download first" }

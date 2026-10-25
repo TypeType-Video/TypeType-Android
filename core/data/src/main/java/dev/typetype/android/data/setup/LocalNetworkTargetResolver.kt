@@ -1,5 +1,6 @@
 package dev.typetype.android.data.setup
 
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.domain.setup.ServerAddress
 import java.net.Inet6Address
 import java.net.InetAddress
@@ -25,7 +26,7 @@ internal suspend fun localNetworkTarget(
     if (ServerAddress.requiresLocalNetworkAccess(rawValue)) return true
     val host = ServerAddress.host(rawValue) ?: return false
     if (ServerAddress.isAddressLiteral(host)) return false
-    return runCatching { resolve(host).any(InetAddress::isLocalNetworkAddress) }
+    return suspendRunCatching { resolve(host).any(InetAddress::isLocalNetworkAddress) }
         .getOrDefault(false)
 }
 

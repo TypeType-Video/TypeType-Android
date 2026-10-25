@@ -5,10 +5,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.typetype.android.core.error.CodedFailure
+import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.domain.imports.ImportDocument
 import dev.typetype.android.domain.imports.PortabilityDuplicatePolicy
-import dev.typetype.android.domain.imports.PortabilityJob
 import dev.typetype.android.domain.imports.PortabilityFormat
+import dev.typetype.android.domain.imports.PortabilityJob
 import dev.typetype.android.domain.imports.PortabilityJobState
 import dev.typetype.android.domain.imports.PortabilityRepository
 import dev.typetype.android.domain.imports.TypeTypeBackupCategory
@@ -113,7 +114,7 @@ class PortabilityViewModel @Inject constructor(
 
     fun chooseImportFile(uri: Uri) {
         viewModelScope.launch {
-            runCatching {
+            suspendRunCatching {
                 documentReader.read(uri, "portability-import")
             }.onSuccess(::uploadImport)
                 .onFailure(::showFailure)
