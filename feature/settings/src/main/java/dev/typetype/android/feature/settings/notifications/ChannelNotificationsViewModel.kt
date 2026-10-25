@@ -3,6 +3,7 @@ package dev.typetype.android.feature.settings.notifications
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.typetype.android.core.error.CodedFailure
 import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.domain.push.PushRepository
 import dev.typetype.android.domain.push.matchesChannel
@@ -11,6 +12,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -31,6 +33,8 @@ data class ChannelNotificationsState(
     val loadFailed: Boolean = false,
     val channels: List<ChannelBell> = emptyList(),
     val bulkInFlight: Boolean = false,
+    val bulkDone: Int = 0,
+    val bulkTotal: Int = 0,
     val showError: Boolean = false,
 ) {
     val enabledCount: Int get() = channels.count { it.enabled }
@@ -107,10 +111,15 @@ class ChannelNotificationsViewModel @Inject constructor(
         val targets = current.channels.filter { it.enabled != enabled && !it.pending }
         if (targets.isEmpty()) return
         viewModelScope.launch {
-            _state.update { it.copy(bulkInFlight = true, showError = false) }
+            _state.update { it.copy(bulkInFlight = true, bulkDone = 0, bulkTotal = targets.size, showError = false) }
             val gate = Semaphore(BULK_PARALLELISM)
             val results = coroutineScope {
-                targets.map { channel -> async { gate.withPermit { save(channel, enabled) } } }.awaitAll()
+                targets.map { channel ->
+                    async {
+                        gate.withPermit { save(channel, enabled) }
+                            .also { _state.update { it.copy(bulkDone = it.bulkDone + 1) } }
+                    }
+                }.awaitAll()
             }
             _state.update { it.copy(bulkInFlight = false, showError = results.any { saved -> !saved }) }
         }
@@ -118,13 +127,23 @@ class ChannelNotificationsViewModel @Inject constructor(
 
     private suspend fun save(channel: ChannelBell, enabled: Boolean): Boolean {
         updateChannel(channel.channelUrl) { it.copy(enabled = enabled, pending = true) }
-        val saved = suspendRunCatching {
-            pushRepository.setChannelPreference(channel.channelUrl, enabled).getOrThrow()
-        }.isSuccess
+        val saved = sendWithRetry(channel.channelUrl, enabled)
         updateChannel(channel.channelUrl) {
             it.copy(enabled = if (saved) enabled else !enabled, pending = false)
         }
         return saved
+    }
+
+    private suspend fun sendWithRetry(channelUrl: String, enabled: Boolean): Boolean {
+        repeat(MAX_ATTEMPTS) {
+            val result = suspendRunCatching {
+                pushRepository.setChannelPreference(channelUrl, enabled).getOrThrow()
+            }
+            val failure = result.exceptionOrNull() ?: return true
+            if ((failure as? CodedFailure)?.statusCode != HTTP_TOO_MANY_REQUESTS) return false
+            delay(RATE_LIMIT_PAUSE_MS)
+        }
+        return false
     }
 
     private fun updateChannel(channelUrl: String, transform: (ChannelBell) -> ChannelBell) {
@@ -136,6 +155,9 @@ class ChannelNotificationsViewModel @Inject constructor(
     }
 
     private companion object {
-        const val BULK_PARALLELISM = 6
+        const val BULK_PARALLELISM = 4
+        const val MAX_ATTEMPTS = 5
+        const val HTTP_TOO_MANY_REQUESTS = 429
+        const val RATE_LIMIT_PAUSE_MS = 20_000L
     }
 }

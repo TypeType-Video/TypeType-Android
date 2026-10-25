@@ -129,7 +129,17 @@ private fun ChannelList(
                         enabled = !state.bulkInFlight && state.enabledCount > 0,
                     ) { Text(stringResource(R.string.push_channels_disable_all)) }
                 }
-                if (state.bulkInFlight) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                if (state.bulkInFlight) {
+                    LinearProgressIndicator(
+                        progress = { state.bulkDone / state.bulkTotal.coerceAtLeast(1).toFloat() },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Text(
+                        text = stringResource(R.string.push_channels_progress, state.bulkDone, state.bulkTotal),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 if (state.showError) {
                     Text(
                         text = stringResource(R.string.push_channels_update_failed),

@@ -1273,6 +1273,7 @@
     </plurals>
     <string name="push_channels_enable_all">Turn all on</string>
     <string name="push_channels_disable_all">Turn all off</string>
+    <string name="push_channels_progress">Updating %1$d / %2$d</string>
     <string name="push_channels_update_failed">Some channels could not be updated</string>
     <string name="push_channels_load_failed">Your channels could not be loaded</string>
     <string name="push_channels_empty">Subscribe to channels to get new video alerts</string>
