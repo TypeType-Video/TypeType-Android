@@ -4,7 +4,9 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import dev.typetype.android.data.recommendations.RemoteRecommenderFeedbackRepository
 import dev.typetype.android.data.recommendations.RemoteRecommenderSettingsRepository
+import dev.typetype.android.domain.recommendations.RecommenderFeedbackRepository
 import dev.typetype.android.domain.recommendations.RecommenderSettingsRepository
 import javax.inject.Singleton
 
@@ -16,4 +18,10 @@ abstract class RecommenderRepositoryModule {
     abstract fun bindRecommenderSettingsRepository(
         implementation: RemoteRecommenderSettingsRepository,
     ): RecommenderSettingsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindRecommenderFeedbackRepository(
+        implementation: RemoteRecommenderFeedbackRepository,
+    ): RecommenderFeedbackRepository
 }

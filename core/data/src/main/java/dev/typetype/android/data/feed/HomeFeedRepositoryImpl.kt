@@ -1,5 +1,8 @@
 package dev.typetype.android.data.feed
 
+import java.util.Locale
+import java.util.TimeZone
+import dev.typetype.android.domain.feed.HomeRecommendationRow
 import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.account.AccountScope
 import dev.typetype.android.data.network.TypeTypeApiHolder
@@ -54,6 +57,7 @@ class HomeFeedRepositoryImpl @Inject constructor(
     override suspend fun loadHomeRecommendations(
         cursor: String?,
         limit: Int,
+        service: Int,
     ): Result<HomeRecommendationsPage> = feedResult {
         val scope = activeAccountScope.require()
         val server = if (scope.accountId.startsWith(GUEST_ACCOUNT_PREFIX)) {
@@ -67,7 +71,14 @@ class HomeFeedRepositoryImpl @Inject constructor(
         }
         val api = apiHolder.require(scope)
         val response = withContext(Dispatchers.IO) {
-            api.homeRecommendations(intent = "auto", cursor = cursor, limit = limit)
+            api.homeRecommendations(
+                service = service,
+                intent = "auto",
+                cursor = cursor,
+                limit = limit,
+                locale = Locale.getDefault().toLanguageTag(),
+                timezone = TimeZone.getDefault().id,
+            )
         }
         response.requireSuccessfulResponse()
         val body = response.body() ?: error("Empty recommendations body")
@@ -75,6 +86,11 @@ class HomeFeedRepositoryImpl @Inject constructor(
         HomeRecommendationsPage(
             videos = body.items.map { it.toDomainVideo() },
             nextCursor = body.nextCursor?.takeIf { body.hasMore && it.isNotBlank() },
+            rows = body.rows.orEmpty().map { row ->
+                HomeRecommendationRow(row.id, row.title, row.reason, row.reasonRef, row.videoUrls)
+            },
+            algorithm = body.algorithm,
+            preparing = body.preparing == true,
         )
     }
 

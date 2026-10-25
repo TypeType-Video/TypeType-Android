@@ -14,6 +14,17 @@ data class SubscriptionsPage(
 data class HomeRecommendationsPage(
     val videos: List<Video>,
     val nextCursor: String?,
+    val rows: List<HomeRecommendationRow> = emptyList(),
+    val algorithm: String? = null,
+    val preparing: Boolean = false,
+)
+
+data class HomeRecommendationRow(
+    val id: String,
+    val title: String,
+    val reason: String,
+    val reasonRef: String?,
+    val videoUrls: List<String>,
 )
 
 sealed interface ShortsContinuation {
@@ -35,6 +46,7 @@ interface HomeFeedRepository {
     suspend fun loadHomeRecommendations(
         cursor: String? = null,
         limit: Int = 20,
+        service: Int = 0,
     ): Result<HomeRecommendationsPage>
     suspend fun loadTrending(): Result<List<Video>>
     suspend fun loadSubscriptionsFeed(

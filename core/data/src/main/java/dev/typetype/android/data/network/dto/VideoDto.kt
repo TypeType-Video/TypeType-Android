@@ -31,6 +31,18 @@ data class HomeRecommendationsResponse(
     val items: List<VideoItem> = emptyList(),
     val nextCursor: String? = null,
     val hasMore: Boolean = false,
+    val algorithm: String? = null,
+    val preparing: Boolean? = null,
+    val rows: List<HomeRecommendationRowDto>? = null,
+)
+
+@Serializable
+data class HomeRecommendationRowDto(
+    val id: String,
+    val title: String,
+    val reason: String = "",
+    val reasonRef: String? = null,
+    val videoUrls: List<String> = emptyList(),
 )
 
 @Serializable
