@@ -44,7 +44,7 @@ import dev.typetype.android.feature.player.components.LocalMediaController
 import dev.typetype.android.feature.player.components.PlaybackKeepScreenOnEffect
 import dev.typetype.android.feature.player.components.PlaybackOptionsSheet
 import dev.typetype.android.feature.player.components.PlayerSubtitleOverlay
-import dev.typetype.android.feature.player.components.ResilientPlayerSurface
+import dev.typetype.android.feature.player.components.ShortsVideoSurface
 import dev.typetype.android.feature.player.components.SponsorBlockPlaybackFeedback
 import dev.typetype.android.feature.player.components.rememberCurrentMediaId
 import dev.typetype.android.feature.player.components.rememberPlayerPlaybackStatus
@@ -199,12 +199,9 @@ private fun ShortsPlayerSurface(
                 if (controller.isPlaying) controller.pause() else controller.play()
             },
     ) {
-        ResilientPlayerSurface(
+        ShortsVideoSurface(
             player = controller,
-            surfaceKey = stream.id,
             resizeMode = resizeMode,
-            showNativeSubtitles = false,
-            captionStyles = state.userSettings.captionStyles,
             modifier = Modifier.fillMaxSize(),
         )
         PlayerSubtitleOverlay(
