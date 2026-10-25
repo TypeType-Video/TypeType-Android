@@ -43,6 +43,7 @@ fun HomeRoute(
         onOpenChannel = onOpenChannel,
         onRetry = { viewModel.onAction(HomeAction.OnRefresh) },
         onLoadMore = { viewModel.onAction(HomeAction.OnLoadMore) },
+        onAction = viewModel::onAction,
     )
 }
 
@@ -53,6 +54,7 @@ fun HomeScreen(
     onOpenChannel: (channelUrl: String) -> Unit,
     onRetry: () -> Unit,
     onLoadMore: () -> Unit,
+    onAction: (HomeAction) -> Unit = {},
 ) {
     val menuScope = rememberVideoMenuScope(onOpenChannel = onOpenChannel)
     HomeContent(
@@ -62,6 +64,7 @@ fun HomeScreen(
         onOpenChannel = onOpenChannel,
         onRetry = onRetry,
         onLoadMore = onLoadMore,
+        onAction = onAction,
     )
 }
 
@@ -73,9 +76,15 @@ internal fun HomeContent(
     onOpenChannel: (channelUrl: String) -> Unit,
     onRetry: () -> Unit,
     onLoadMore: () -> Unit,
+    onAction: (HomeAction) -> Unit = {},
 ) {
+    val recommender = state.recommender
     val visibleVideos = state.videos.filterNot(menuScope::isHidden)
-    val continueWatching = if (state.hideContinueWatching) emptyList() else state.continueWatching
+    val continueWatching = if (state.hideContinueWatching || recommender.hasContinueRow()) {
+        emptyList()
+    } else {
+        state.continueWatching
+    }
     val showRecommendations = !state.hideHomeRecommendations
     when {
         state.isLoading && state.videos.isEmpty() && continueWatching.isEmpty() -> VideoGridSkeleton()
@@ -92,6 +101,14 @@ internal fun HomeContent(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
+            if (recommender.showWelcome) {
+                item(key = "home-welcome", span = { GridItemSpan(maxLineSpan) }) {
+                    HomeWelcomeCard(
+                        onEnable = { onAction(HomeAction.EnableRecommendations) },
+                        onLater = { onAction(HomeAction.DismissWelcome) },
+                    )
+                }
+            }
             if (continueWatching.isNotEmpty()) {
                 item(key = "continue-watching", span = { GridItemSpan(maxLineSpan) }) {
                     ContinueWatchingSection(
@@ -101,12 +118,41 @@ internal fun HomeContent(
                     )
                 }
             }
+            if (showRecommendations && recommender.preparing) {
+                item(key = "home-preparing", span = { GridItemSpan(maxLineSpan) }) { HomePreparingBanner() }
+            }
             if (state.isLoading && showRecommendations && visibleVideos.isNotEmpty()) {
                 item(key = "home-refresh", span = { GridItemSpan(maxLineSpan) }) {
                     LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 }
             }
-            if (showRecommendations) {
+            if (showRecommendations && recommender.personalized && state.feedKind == HomeFeedKind.Recommended) {
+                recommendedRows(
+                    recommender = recommender,
+                    videos = visibleVideos,
+                    menuScope = menuScope,
+                    onPlayVideo = onPlayVideo,
+                    onOpenChannel = onOpenChannel,
+                    onAction = onAction,
+                )
+                item(key = "home-page-feedback", span = { GridItemSpan(maxLineSpan) }) {
+                    HomePageFeedback(
+                        verdict = recommender.pageVerdict,
+                        reason = recommender.pageReason,
+                        onRate = { good -> onAction(HomeAction.RatePage(good)) },
+                        onReason = { reason -> onAction(HomeAction.ChoosePageReason(reason)) },
+                        onSend = { comment -> onAction(HomeAction.SendPageVerdict(comment)) },
+                    )
+                }
+                item(key = "home-pagination", span = { GridItemSpan(maxLineSpan) }) {
+                    LazyPaginationFooter(
+                        continuationKey = state.nextCursor,
+                        isLoading = state.isLoadingMore,
+                        hasError = state.loadMoreError,
+                        onLoadMore = onLoadMore,
+                    )
+                }
+            } else if (showRecommendations) {
                 item(key = "home-header", span = { GridItemSpan(maxLineSpan) }) {
                     SectionHeader(
                         text = stringResource(

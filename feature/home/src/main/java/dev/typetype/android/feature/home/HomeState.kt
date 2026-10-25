@@ -19,4 +19,6 @@ data class HomeState(
     val errorMessage: String? = null,
     val errorRequestId: String? = null,
     val loadMoreError: Boolean = false,
+    val defaultService: Int = 0,
+    val recommender: HomeRecommenderState = HomeRecommenderState(),
 )
