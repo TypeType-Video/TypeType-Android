@@ -14,4 +14,6 @@ interface PushRepository {
     suspend fun channelPreferences(): Result<List<ChannelNotificationsPreference>>
 
     suspend fun setChannelPreference(channelUrl: String, enabled: Boolean): Result<Unit>
+
+    suspend fun setChannelPreferences(channelUrls: List<String>, enabled: Boolean): Result<Unit>
 }

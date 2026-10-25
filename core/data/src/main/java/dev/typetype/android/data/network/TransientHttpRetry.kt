@@ -13,9 +13,9 @@ fun transientHttpRetryDelayMs(
     requestedDelayMs: Long?,
 ): Long? {
     if (errorCount > maximumRetries) return null
+    requestedDelayMs?.let { return it.coerceIn(MIN_REQUESTED_RETRY_DELAY_MS, MAX_REQUESTED_RETRY_DELAY_MS) }
     val exponent = (errorCount - 1).coerceIn(0, 3)
-    val backoffMs = DEFAULT_TRANSIENT_RETRY_MS * (1L shl exponent)
-    return (requestedDelayMs ?: backoffMs).coerceIn(0L, MAX_TRANSIENT_RETRY_DELAY_MS)
+    return (DEFAULT_TRANSIENT_RETRY_MS * (1L shl exponent)).coerceAtMost(MAX_TRANSIENT_RETRY_DELAY_MS)
 }
 
 fun Map<String, List<String>>.retryAfterMillis(
@@ -41,7 +41,9 @@ fun Map<String, List<String>>.retryAfterMillis(
     }
 }
 
-private val TRANSIENT_HTTP_STATUS_CODES = setOf(502, 503, 504)
+private val TRANSIENT_HTTP_STATUS_CODES = setOf(429, 502, 503, 504)
 private const val RETRY_AFTER_HEADER = "Retry-After"
 private const val DEFAULT_TRANSIENT_RETRY_MS = 500L
 private const val MAX_TRANSIENT_RETRY_DELAY_MS = 3_000L
+private const val MIN_REQUESTED_RETRY_DELAY_MS = 250L
+private const val MAX_REQUESTED_RETRY_DELAY_MS = 30_000L

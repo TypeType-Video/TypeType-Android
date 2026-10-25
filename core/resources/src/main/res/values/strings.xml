@@ -762,6 +762,7 @@
     <string name="about_version_server">Server</string>
     <string name="about_version_token">Token</string>
     <string name="about_version_downloader">Downloader</string>
+    <string name="about_version_recommender">Recommender</string>
     <string name="about_version_loading">Loading…</string>
     <string name="about_version_unavailable">Unavailable</string>
     <string name="about_server_url">Server URL</string>

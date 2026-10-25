@@ -13,4 +13,5 @@ data class ComponentVersions(
     val server: ComponentVersion? = null,
     val token: ComponentVersion? = null,
     val downloader: ComponentVersion? = null,
+    val recommender: ComponentVersion? = null,
 )

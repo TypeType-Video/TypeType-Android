@@ -55,6 +55,7 @@ internal fun AboutVersionsSection(
             VersionRow(R.string.about_version_server, versions?.server, isLoading)
             VersionRow(R.string.about_version_token, versions?.token, isLoading)
             VersionRow(R.string.about_version_downloader, versions?.downloader, isLoading)
+            versions?.recommender?.let { VersionRow(R.string.about_version_recommender, it, isLoading) }
         }
     }
 }

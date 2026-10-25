@@ -28,7 +28,7 @@ class SabrLoadErrorHandlingPolicyTest {
 
         assertEquals(250L, body.sabrResponseRetryAfterMs())
         assertEquals(100L, sabrSegmentRetryDelayMs(1, 0L))
-        assertEquals(3_000L, transientHttpRetryDelayMs(1, 3, 30_000L))
+        assertEquals(30_000L, transientHttpRetryDelayMs(1, 3, 30_000L))
         assertNull("""{"status":"preparing"}""".toByteArray().sabrResponseRetryAfterMs())
     }
 }

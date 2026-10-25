@@ -6,6 +6,7 @@ import dev.typetype.android.data.account.AccountScope
 import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.network.TypeTypeApiHolder
 import dev.typetype.android.data.network.dto.ChannelNotificationPreferenceRequestDto
+import dev.typetype.android.data.network.dto.ChannelNotificationPreferencesBulkRequestDto
 import dev.typetype.android.data.network.dto.PushDeviceRegistrationRequestDto
 import dev.typetype.android.data.network.dto.toDomain
 import dev.typetype.android.data.network.requireSuccessfulResponse
@@ -79,6 +80,16 @@ class RemotePushRepository @Inject constructor(
         val response = withContext(Dispatchers.IO) {
             api.setChannelNotificationPreference(
                 ChannelNotificationPreferenceRequestDto(channelUrl = channelUrl, enabled = enabled),
+            )
+        }
+        response.requireSuccessfulResponse()
+    }
+
+    override suspend fun setChannelPreferences(channelUrls: List<String>, enabled: Boolean): Result<Unit> = guarded {
+        val api = apiHolder.require(requireEligibleScope())
+        val response = withContext(Dispatchers.IO) {
+            api.setChannelNotificationPreferences(
+                ChannelNotificationPreferencesBulkRequestDto(enabled = enabled, channelUrls = channelUrls),
             )
         }
         response.requireSuccessfulResponse()
