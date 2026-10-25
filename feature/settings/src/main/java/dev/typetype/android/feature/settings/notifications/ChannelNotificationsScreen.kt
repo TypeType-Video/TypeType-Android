@@ -34,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
@@ -109,7 +110,12 @@ private fun ChannelList(
         item(key = "summary") {
             Column(modifier = Modifier.padding(20.dp, 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    text = stringResource(R.string.push_channels_summary, state.enabledCount, state.channels.size),
+                    text = pluralStringResource(
+                        R.plurals.push_channels_summary,
+                        state.channels.size,
+                        state.enabledCount,
+                        state.channels.size,
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

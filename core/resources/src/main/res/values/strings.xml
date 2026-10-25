@@ -1267,7 +1267,10 @@
     <string name="push_local_fallback">The app also checks for new videos every 15 minutes</string>
     <string name="push_channels_title">Channels</string>
     <string name="push_channels_subtitle">Choose which channels alert you about new videos</string>
-    <string name="push_channels_summary">%1$d of %2$d channels send alerts</string>
+    <plurals name="push_channels_summary">
+        <item quantity="one">%1$d of %2$d channel sends alerts</item>
+        <item quantity="other">%1$d of %2$d channels send alerts</item>
+    </plurals>
     <string name="push_channels_enable_all">Turn all on</string>
     <string name="push_channels_disable_all">Turn all off</string>
     <string name="push_channels_update_failed">Some channels could not be updated</string>
