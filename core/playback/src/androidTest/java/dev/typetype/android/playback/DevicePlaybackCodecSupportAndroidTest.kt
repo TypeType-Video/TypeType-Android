@@ -44,10 +44,24 @@ class DevicePlaybackCodecSupportAndroidTest {
             .setHeight(360)
             .build()
 
-        assertTrue(support.rejectVideo(activeFormat))
+        assertTrue(support.rejectVideo(activeFormat, lasting = true))
         assertEquals(DecoderSupport.Unsupported, support.video(h264()))
         val afterRestart = DevicePlaybackCodecSupport(context, RejectedVideoFormatStore(context))
         assertEquals(DecoderSupport.Unsupported, afterRestart.video(h264()))
+    }
+
+    @Test
+    fun sessionRejectionIsForgottenAfterRestart() {
+        val activeFormat = Format.Builder()
+            .setCodecs("avc1.42001e")
+            .setWidth(640)
+            .setHeight(360)
+            .build()
+
+        assertTrue(support.rejectVideo(activeFormat, lasting = false))
+        assertEquals(DecoderSupport.Unsupported, support.video(h264()))
+        val afterRestart = DevicePlaybackCodecSupport(context, RejectedVideoFormatStore(context))
+        assertFalse(afterRestart.video(h264()) == DecoderSupport.Unsupported)
     }
 
     @Test

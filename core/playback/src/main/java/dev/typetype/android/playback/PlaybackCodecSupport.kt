@@ -22,7 +22,9 @@ enum class DecoderSupport(val rank: Int) {
 interface PlaybackCodecSupport {
     fun video(source: StreamVideoSource): DecoderSupport
     fun audio(source: StreamAudioSource): DecoderSupport
-    fun rejectVideo(format: Format): Boolean = false
+
+    // lasting keeps the rejection across launches; without it the format is avoided until the app restarts.
+    fun rejectVideo(format: Format, lasting: Boolean): Boolean = false
 }
 
 // One instance for the whole app: the player, Shorts, prewarming and the queue share what each decoder can play
@@ -72,10 +74,10 @@ class DevicePlaybackCodecSupport @Inject constructor(
         return audioCache.putIfAbsent(key, support) ?: support
     }
 
-    override fun rejectVideo(format: Format): Boolean {
+    override fun rejectVideo(format: Format, lasting: Boolean): Boolean {
         val key = format.rejectedVideoCodecKey() ?: return false
         if (!rejectedVideoFormats.add(key)) return false
-        rejectedStore.add(key.stored())
+        if (lasting) rejectedStore.add(key.stored())
         return true
     }
 

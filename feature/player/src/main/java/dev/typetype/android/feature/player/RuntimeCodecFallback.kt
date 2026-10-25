@@ -30,8 +30,10 @@ internal fun RuntimeCodecFallbackEffect(
                 val messages = generateSequence<Throwable>(error) { it.cause }
                     .mapNotNull(Throwable::message)
                     .toList()
-                if (!isCodecCapabilityFailure(error.errorCode, messages)) return
-                if (activeFormat?.let(codecSupport::rejectVideo) == true) fallback.value()
+                val failure = codecFailure(error.errorCode, messages)
+                if (failure == CodecFailure.None) return
+                val format = activeFormat ?: return
+                if (codecSupport.rejectVideo(format, lasting = failure == CodecFailure.Lasting)) fallback.value()
             }
         }
         player.addListener(listener)
@@ -39,14 +41,19 @@ internal fun RuntimeCodecFallbackEffect(
     }
 }
 
-internal fun isCodecCapabilityFailure(errorCode: Int, messages: List<String>): Boolean {
+internal enum class CodecFailure { None, ThisSession, Lasting }
+
+internal fun codecFailure(errorCode: Int, messages: List<String>): CodecFailure {
     val mentionsSurface = messages.any { it.contains("surface", ignoreCase = true) }
     return when (errorCode) {
         PlaybackException.ERROR_CODE_DECODING_FORMAT_EXCEEDS_CAPABILITIES,
         PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED,
-        -> true
-        PlaybackException.ERROR_CODE_DECODER_INIT_FAILED -> !mentionsSurface
-        else -> false
+        -> CodecFailure.Lasting
+        // Init also fails when the output surface died with its screen, often with no message saying so. That
+        // says nothing about the codec, so the rejection ends when the app restarts.
+        PlaybackException.ERROR_CODE_DECODER_INIT_FAILED ->
+            if (mentionsSurface) CodecFailure.None else CodecFailure.ThisSession
+        else -> CodecFailure.None
     }
 }
 
