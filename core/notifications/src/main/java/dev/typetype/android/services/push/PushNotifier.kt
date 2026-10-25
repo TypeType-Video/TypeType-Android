@@ -6,11 +6,11 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.typetype.android.R
 import dev.typetype.android.domain.navigation.toPublicWatchParameter
@@ -88,7 +88,7 @@ class PushNotifier @Inject constructor(
     ): Notification {
         val deepLink = Intent(
             Intent.ACTION_VIEW,
-            Uri.parse("typetype://watch?v=${toPublicWatchParameter(videoUrl)}"),
+            "typetype://watch?v=${toPublicWatchParameter(videoUrl)}".toUri(),
         )
         val contentIntent = PendingIntent.getActivity(
             context,

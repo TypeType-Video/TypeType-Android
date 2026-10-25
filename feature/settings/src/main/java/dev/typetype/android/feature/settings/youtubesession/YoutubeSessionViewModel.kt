@@ -166,7 +166,6 @@ class YoutubeSessionViewModel @Inject constructor(
 
     override fun onCleared() {
         leave()
-        super.onCleared()
     }
 
     private suspend fun useContext(context: YoutubeSessionContext) {

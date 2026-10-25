@@ -2,7 +2,7 @@ package dev.typetype.android.data.imports
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
+import androidx.core.net.toUri
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
@@ -80,7 +80,7 @@ class YoutubeTakeoutImportWorker @AssistedInject constructor(
         update("UPLOADING", "uploading", null)
         val body = ContentUriRequestBody(
             contentResolver = applicationContext.contentResolver,
-            uri = Uri.parse(entry.documentUri),
+            uri = entry.documentUri.toUri(),
             mediaType = "application/zip".toMediaType(),
             knownSize = entry.sizeBytes,
             maxBytes = MAX_ARCHIVE_BYTES,
@@ -211,7 +211,7 @@ class YoutubeTakeoutImportWorker @AssistedInject constructor(
         val entry = importDao.getByWorkId(id.toString()) ?: return
         suspendRunCatching {
             applicationContext.contentResolver.releasePersistableUriPermission(
-                Uri.parse(entry.documentUri),
+                entry.documentUri.toUri(),
                 Intent.FLAG_GRANT_READ_URI_PERMISSION,
             )
         }

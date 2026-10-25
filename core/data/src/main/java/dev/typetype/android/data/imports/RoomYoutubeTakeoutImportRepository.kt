@@ -2,7 +2,7 @@ package dev.typetype.android.data.imports
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
+import androidx.core.net.toUri
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
@@ -30,8 +30,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 
 @Singleton
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -173,7 +173,7 @@ class RoomYoutubeTakeoutImportRepository @Inject constructor(
     private fun retainPermission(uri: String) {
         try {
             context.contentResolver.takePersistableUriPermission(
-                Uri.parse(uri),
+                uri.toUri(),
                 Intent.FLAG_GRANT_READ_URI_PERMISSION,
             )
         } catch (failure: SecurityException) {
@@ -184,7 +184,7 @@ class RoomYoutubeTakeoutImportRepository @Inject constructor(
     private fun releasePermission(uri: String) {
         runCatching {
             context.contentResolver.releasePersistableUriPermission(
-                Uri.parse(uri),
+                uri.toUri(),
                 Intent.FLAG_GRANT_READ_URI_PERMISSION,
             )
         }

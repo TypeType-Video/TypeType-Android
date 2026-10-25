@@ -2,6 +2,7 @@ package dev.typetype.android.playback
 
 import android.content.Context
 import android.os.Build
+import androidx.core.content.edit
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -14,14 +15,18 @@ class RejectedVideoFormatStore @Inject constructor(@ApplicationContext context: 
 
     fun load(): Set<String> {
         if (preferences.getString(FINGERPRINT, null) != Build.FINGERPRINT) {
-            preferences.edit().clear().putString(FINGERPRINT, Build.FINGERPRINT).apply()
+            preferences.edit {
+                clear()
+                putString(FINGERPRINT, Build.FINGERPRINT)
+            }
             return emptySet()
         }
         return preferences.getStringSet(KEYS, emptySet()).orEmpty().toSet()
     }
 
     fun add(key: String) {
-        preferences.edit().putStringSet(KEYS, load() + key).apply()
+        val keys = load() + key
+        preferences.edit { putStringSet(KEYS, keys) }
     }
 
     private companion object {

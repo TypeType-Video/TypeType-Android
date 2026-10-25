@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.get
 import coil3.BitmapImage
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
@@ -179,10 +180,10 @@ private fun Bitmap.audioOnlyPalette(): AudioOnlyPalette {
     var count = 0
     repeat(SAMPLE_GRID) { row ->
         repeat(SAMPLE_GRID) { column ->
-            val pixel = getPixel(
+            val pixel = this[
                 ((column + 0.5f) * width / SAMPLE_GRID).toInt().coerceIn(0, width - 1),
                 ((row + 0.5f) * height / SAMPLE_GRID).toInt().coerceIn(0, height - 1),
-            )
+            ]
             red += android.graphics.Color.red(pixel)
             green += android.graphics.Color.green(pixel)
             blue += android.graphics.Color.blue(pixel)
