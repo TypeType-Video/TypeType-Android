@@ -5,6 +5,8 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.RectF
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -40,4 +42,20 @@ internal fun NotificationPlatform.badge(context: Context): Bitmap? {
     glyph.setBounds(inset, inset, size - inset, size - inset)
     glyph.draw(canvas)
     return bitmap
+}
+
+internal fun Bitmap.withPlatformBadge(context: Context, platform: NotificationPlatform?): Bitmap {
+    val size = context.resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width)
+    val side = minOf(width, height)
+    val icon = createBitmap(size, size)
+    val canvas = Canvas(icon)
+    val crop = Rect((width - side) / 2, (height - side) / 2, (width + side) / 2, (height + side) / 2)
+    canvas.drawBitmap(this, crop, Rect(0, 0, size, size), Paint(Paint.FILTER_BITMAP_FLAG))
+    val badge = platform?.badge(context) ?: return icon
+    val badgeSize = size * 2 / 5
+    val start = (size - badgeSize).toFloat()
+    val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
+    canvas.drawCircle(start + badgeSize / 2f, start + badgeSize / 2f, badgeSize / 2f + size / 48f, ring)
+    canvas.drawBitmap(badge, null, RectF(start, start, size.toFloat(), size.toFloat()), Paint(Paint.FILTER_BITMAP_FLAG))
+    return icon
 }

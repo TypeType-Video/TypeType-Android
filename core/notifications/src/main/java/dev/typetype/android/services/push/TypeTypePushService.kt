@@ -67,7 +67,7 @@ class TypeTypePushService : PushService() {
         pushDiagnostics.record(scope, PushDiagnosticEvent.MessageReceived)
         val traceId = pushDiagnostics.traceId(payload.eventId)
         val result = try {
-            notifier.notify(payload)
+            notifier.notify(scope, payload)
         } catch (_: Exception) {
             NotificationPostResult.Failed
         }

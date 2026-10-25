@@ -19,6 +19,7 @@ data class PushPayload(
     val accountId: String,
     val publishedAt: Long,
     val title: String,
+    val thumbnailUrl: String = "",
 )
 
 fun parsePushPayload(content: ByteArray): PushPayload? = runCatching {

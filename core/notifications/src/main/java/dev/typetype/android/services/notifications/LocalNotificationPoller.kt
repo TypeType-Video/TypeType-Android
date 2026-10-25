@@ -12,6 +12,8 @@ import dev.typetype.android.services.push.PushNotifier
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 
 @Singleton
 class LocalNotificationPoller @Inject constructor(
@@ -48,23 +50,26 @@ class LocalNotificationPoller @Inject constructor(
             if (!state.seeded) seenStore.record(scope, emptyList(), seeded = true)
             return 0
         }
-        val outcomes = if (decision.notified.size > MAX_SEPARATE_ALERTS) {
-            val result = notifier.notifySummary(decision.notified)
-            decision.notified.map { item -> item to result }
+        val prepared = if (decision.notified.size > MAX_SEPARATE_ALERTS) {
+            null
         } else {
-            decision.notified.map { item -> item to notifier.notifySubscription(item) }
+            decision.notified.map { item -> notifier.prepareSubscription(scope, item) }
         }
-        val unpostedKeys = outcomes
-            .filter { (_, result) -> result != NotificationPostResult.Posted }
-            .map { (item, _) -> item.localNotificationKey() }
-            .toSet()
-        outcomes.forEach { (_, result) -> recordOutcome(scope, result) }
-        seenStore.record(
-            scope,
-            decision.keysToPersist(unpostedKeys),
-            seeded = true,
-        )
-        return outcomes.count { (_, result) -> result == NotificationPostResult.Posted }
+        return withContext(NonCancellable) {
+            val outcomes = if (prepared == null) {
+                val result = notifier.notifySummary(decision.notified)
+                decision.notified.map { item -> item to result }
+            } else {
+                prepared.map { alert -> alert.item to notifier.postSubscription(alert) }
+            }
+            val unpostedKeys = outcomes
+                .filter { (_, result) -> result != NotificationPostResult.Posted }
+                .map { (item, _) -> item.localNotificationKey() }
+                .toSet()
+            seenStore.record(scope, decision.keysToPersist(unpostedKeys), seeded = true)
+            outcomes.forEach { (_, result) -> recordOutcome(scope, result) }
+            outcomes.count { (_, result) -> result == NotificationPostResult.Posted }
+        }
     }
 
     private suspend fun recordOutcome(scope: AccountScope, result: NotificationPostResult) {

@@ -12,6 +12,7 @@ dependencies {
     implementation(project(":core:resources"))
 
     implementation(libs.androidx.core.ktx)
+    implementation(libs.coil)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.hilt.work)
     ksp(libs.androidx.hilt.compiler)
