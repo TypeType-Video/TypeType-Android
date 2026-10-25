@@ -32,10 +32,10 @@ import androidx.media3.common.VideoSize
 import androidx.media3.ui.PlayerView
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import dev.typetype.android.core.ui.player.PlayerHostTarget
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import dev.typetype.android.feature.player.PlayerContentLayout
 import dev.typetype.android.feature.player.host.PlayerHostMotionLayout
-import dev.typetype.android.feature.player.host.PlayerHostTarget
 
 class PlayerHostBenchmarkActivity : ComponentActivity() {
     private val player by lazy { BenchmarkSurfacePlayer(Looper.getMainLooper()) }

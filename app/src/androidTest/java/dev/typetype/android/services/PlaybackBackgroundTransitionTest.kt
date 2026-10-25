@@ -13,6 +13,7 @@ import androidx.media3.session.SessionToken
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.typetype.android.MainActivity
+import dev.typetype.android.testing.createSyntheticH264Video
 import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertTrue
 import org.junit.Test

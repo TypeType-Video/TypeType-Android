@@ -19,7 +19,7 @@
     </queries>
 
     <application
-        android:name=".TypeTypeApp"
+        android:name="dev.typetype.android.TypeTypeApp"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:enableOnBackInvokedCallback="true"
@@ -55,7 +55,7 @@
         </provider>
 
         <activity
-            android:name=".MainActivity"
+            android:name="dev.typetype.android.MainActivity"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden"
             android:exported="true"
             android:launchMode="singleTask"
@@ -180,19 +180,11 @@
         </activity>
 
         <receiver
-            android:name=".feature.player.components.PictureInPictureActionReceiver"
+            android:name="dev.typetype.android.feature.player.components.PictureInPictureActionReceiver"
             android:exported="false" />
 
         <service
-            android:name=".services.push.TypeTypePushService"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="org.unifiedpush.android.connector.PUSH_EVENT" />
-            </intent-filter>
-        </service>
-
-        <service
-            android:name=".services.PlaybackService"
+            android:name="dev.typetype.android.services.PlaybackService"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback"
             tools:ignore="ExportedService">

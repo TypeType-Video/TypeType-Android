@@ -2,13 +2,12 @@ import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    alias(libs.plugins.androidApplication)
+    id("typetype.android.application")
     alias(libs.plugins.baselineprofile)
     alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.hilt)
-    alias(libs.plugins.ksp)
+    id("typetype.android.hilt")
     alias(libs.plugins.aboutlibraries)
 }
 
@@ -19,21 +18,12 @@ if (keystoreFileExists) {
 }
 
 android {
-    compileSdk = 37
-    namespace = "dev.typetype.android"
+    namespace = "dev.typetype.android.app"
 
     defaultConfig {
         applicationId = "dev.typetype.android"
-        minSdk = 23
-        targetSdk = 37
-        versionCode = 11103
-        versionName = "1.11.0-beta.3"
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        resValue("string", "app_name", "TypeType")
-    }
-
-    ksp {
-        arg("room.schemaLocation", "$projectDir/schemas")
+        versionCode = 11104
+        versionName = "1.11.0-beta.4"
     }
 
     signingConfigs {
@@ -65,22 +55,11 @@ android {
         }
     }
 
-    compileOptions {
-        isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
     kotlin {
         compilerOptions {
             jvmTarget = JvmTarget.JVM_17
             javaParameters = true
         }
-    }
-
-    lint {
-        abortOnError = true
-        checkReleaseBuilds = false
     }
 
     buildFeatures {
@@ -97,11 +76,13 @@ android {
     androidResources {
         generateLocaleConfig = true
     }
-
-    sourceSets["androidTest"].assets.directories.add("$projectDir/schemas")
 }
 
 androidComponents.onVariants { variant ->
+    // Benchmarks and profile generation install their own package, so they never replace the user's app.
+    if (variant.name == "benchmarkRelease" || variant.name == "nonMinifiedRelease") {
+        variant.applicationId.set("dev.typetype.android.benchmark")
+    }
     if (variant.name == "benchmarkRelease") {
         variant.sources.manifests.addStaticManifestFile(
             "src/benchmarkRelease/AndroidManifest.xml",
@@ -110,18 +91,36 @@ androidComponents.onVariants { variant ->
 }
 
 dependencies {
+    implementation(project(":core:data"))
+    implementation(project(":core:model"))
+    implementation(project(":core:notifications"))
+    implementation(project(":core:playback"))
+    implementation(project(":core:resources"))
+    implementation(project(":core:ui"))
+    implementation(project(":feature:menu"))
+    implementation(project(":feature:home"))
+    implementation(project(":feature:search"))
+    implementation(project(":feature:podcast"))
+    implementation(project(":feature:publicplaylist"))
+    implementation(project(":feature:notifications"))
+    implementation(project(":feature:setup"))
+    implementation(project(":feature:channel"))
+    implementation(project(":feature:library"))
+    implementation(project(":feature:subscriptions"))
+    implementation(project(":feature:settings"))
+    implementation(project(":feature:player"))
+    implementation(project(":feature:shorts"))
     implementation(project(":player"))
     baselineProfile(project(":baseline-profile"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.lifecycle.runtime)
+    androidTestImplementation(project(":core:testing"))
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.test.espressoCore)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.uiautomator)
-    androidTestImplementation(libs.room.testing)
     androidTestImplementation(libs.okhttp.mockwebserver)
-    coreLibraryDesugaring(libs.desugaring)
 
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core)
@@ -148,8 +147,6 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
     implementation(libs.androidx.hilt.work)
@@ -157,7 +154,6 @@ dependencies {
     implementation(libs.androidx.work.runtime)
 
     implementation(libs.androidx.datastore.preferences)
-    implementation(libs.google.tink.android)
 
     implementation(libs.coil)
     implementation(libs.coil.compose)
@@ -165,12 +161,6 @@ dependencies {
     implementation(libs.coil.svg)
     implementation(libs.coil.network.okhttp)
 
-    implementation(libs.room)
-    implementation(libs.room.paging)
-    ksp(libs.room.compiler)
-
-    implementation(libs.square.retrofit)
-    implementation(libs.converter.kotlinx.serialization)
     implementation(libs.okhttp)
     implementation(libs.kotlinx.serialization)
 

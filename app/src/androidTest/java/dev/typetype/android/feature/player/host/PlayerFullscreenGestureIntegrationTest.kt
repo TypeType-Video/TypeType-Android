@@ -25,8 +25,9 @@ import androidx.media3.common.Player
 import androidx.media3.common.SimpleBasePlayer
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
-import dev.typetype.android.feature.player.PLAYER_VIEWPORT_TAG
+import dev.typetype.android.core.ui.player.PlayerHostTarget
 import dev.typetype.android.feature.player.FullscreenTestActivity
+import dev.typetype.android.feature.player.PLAYER_VIEWPORT_TAG
 import dev.typetype.android.feature.player.PlayerContentLayout
 import dev.typetype.android.feature.player.PlayerFullscreenEffect
 import dev.typetype.android.feature.player.components.PlayerGestureLayer

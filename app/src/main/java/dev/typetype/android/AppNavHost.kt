@@ -3,143 +3,99 @@ package dev.typetype.android
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.typetype.android.core.ui.branding.DeArrowBrandingEnvironment
 import dev.typetype.android.core.ui.branding.DeArrowBrandingViewModel
 import dev.typetype.android.core.ui.branding.LocalDeArrowBranding
-import dev.typetype.android.core.ui.components.resolveProfileAvatarUrl
 import dev.typetype.android.core.ui.navigation.AboutRoute
-import dev.typetype.android.core.ui.navigation.LicensesRoute
 import dev.typetype.android.core.ui.navigation.AccountsRoute
 import dev.typetype.android.core.ui.navigation.AddServerRoute
-import dev.typetype.android.core.ui.navigation.BlockedSettingsRoute
-import dev.typetype.android.core.ui.navigation.DiagnosticsRoute
-import dev.typetype.android.core.ui.navigation.PrivacySettingsRoute
-import dev.typetype.android.core.ui.navigation.PublicPlaylistRoute
-import dev.typetype.android.core.ui.navigation.ProfileSettingsRoute
-import dev.typetype.android.core.ui.share.LocalServerBaseUrl
-import dev.typetype.android.feature.player.LocalPlaybackPrewarm
-import dev.typetype.android.feature.player.PlaybackPrewarm
 import dev.typetype.android.core.ui.navigation.AppearanceRoute
+import dev.typetype.android.core.ui.navigation.BlockedSettingsRoute
 import dev.typetype.android.core.ui.navigation.ContentSettingsRoute
+import dev.typetype.android.core.ui.navigation.DiagnosticsRoute
 import dev.typetype.android.core.ui.navigation.HomeRoute
+import dev.typetype.android.core.ui.navigation.LicensesRoute
 import dev.typetype.android.core.ui.navigation.LoginRoute
 import dev.typetype.android.core.ui.navigation.NotificationsRoute
 import dev.typetype.android.core.ui.navigation.PlayerSettingsRoute
 import dev.typetype.android.core.ui.navigation.PlaylistRoute
+import dev.typetype.android.core.ui.navigation.PrivacySettingsRoute
+import dev.typetype.android.core.ui.navigation.ProfileSettingsRoute
+import dev.typetype.android.core.ui.navigation.PublicPlaylistRoute
 import dev.typetype.android.core.ui.navigation.SearchRoute
-import dev.typetype.android.core.ui.navigation.ShortsRoute
 import dev.typetype.android.core.ui.navigation.SettingsRoute
+import dev.typetype.android.core.ui.navigation.ShortsRoute
 import dev.typetype.android.core.ui.navigation.StorageSettingsRoute
 import dev.typetype.android.core.ui.navigation.SubscriptionsRoute
-import dev.typetype.android.core.ui.navigation.WelcomeRoute
-import dev.typetype.android.domain.branding.DeArrowPreferences
+import dev.typetype.android.core.ui.prewarm.LocalPlaybackPrewarm
+import dev.typetype.android.core.ui.prewarm.PlaybackPrewarm
+import dev.typetype.android.core.ui.share.LocalServerBaseUrl
+import dev.typetype.android.domain.playback.toPlaybackQueueEntry
 import dev.typetype.android.feature.home.HomeRoute as HomeRouteScreen
 import dev.typetype.android.feature.home.HomeViewModel
 import dev.typetype.android.feature.library.playlist.PlaylistRoute as PlaylistRouteScreen
 import dev.typetype.android.feature.notifications.rememberNotificationBadge
 import dev.typetype.android.feature.player.PlayerViewModel
+import dev.typetype.android.feature.player.components.LocalPlaybackRecovery
 import dev.typetype.android.feature.search.SearchRoute as SearchRouteScreen
-import dev.typetype.android.feature.shorts.ShortsRoute as ShortsRouteScreen
-import dev.typetype.android.feature.settings.accounts.AccountSettingsRoute as AccountSettingsRouteScreen
 import dev.typetype.android.feature.settings.about.AboutScreen
+import dev.typetype.android.feature.settings.accounts.AccountSettingsRoute as AccountSettingsRouteScreen
 import dev.typetype.android.feature.settings.appearance.AppearanceRoute as AppearanceRouteScreen
 import dev.typetype.android.feature.settings.blocked.BlockedSettingsRoute as BlockedSettingsRouteScreen
+import dev.typetype.android.feature.settings.content.ContentSettingsRoute as ContentSettingsRouteScreen
 import dev.typetype.android.feature.settings.diagnostics.DiagnosticsRoute as DiagnosticsRouteScreen
 import dev.typetype.android.feature.settings.player.PlayerSettingsRoute as PlayerSettingsRouteScreen
-import dev.typetype.android.feature.settings.content.ContentSettingsRoute as ContentSettingsRouteScreen
 import dev.typetype.android.feature.settings.privacy.PrivacySettingsRoute as PrivacySettingsRouteScreen
 import dev.typetype.android.feature.settings.storage.StorageSettingsRoute as StorageSettingsRouteScreen
+import dev.typetype.android.feature.shorts.ShortsRoute as ShortsRouteScreen
 import dev.typetype.android.feature.subscriptions.SubscriptionsRoute as SubscriptionsRouteScreen
-import kotlinx.coroutines.flow.collectLatest
+import dev.typetype.android.services.PlaybackRecoveryState
+import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun AppNavHost(
     startRoute: Any,
     mainViewModel: MainViewModel,
     playbackPrewarm: PlaybackPrewarm? = null,
+    playbackRecovery: StateFlow<PlaybackRecoveryState>? = null,
 ) {
     val navController: NavHostController = rememberNavController()
     val playerHostController = remember { mainViewModel.playerHostController }
     val currentServer by mainViewModel.currentServer.collectAsStateWithLifecycle()
     val currentProfile by mainViewModel.currentProfile.collectAsStateWithLifecycle()
     val appPreferences by mainViewModel.preferences.collectAsStateWithLifecycle()
-    val navigationTransitionMillis = when (appPreferences.appearanceMotion) {
-        dev.typetype.android.domain.preferences.AppearanceMotion.Full -> 280
-        dev.typetype.android.domain.preferences.AppearanceMotion.Subtle -> 140
-        dev.typetype.android.domain.preferences.AppearanceMotion.Off -> 0
-    }
+    val navigationTransitionMillis = appPreferences.appearanceMotion.navigationTransitionMillis()
     val notificationBadge by rememberNotificationBadge()
     val deArrowViewModel = hiltViewModel<DeArrowBrandingViewModel>()
     val playerViewModel = hiltViewModel<PlayerViewModel>()
     val deArrowSettings by deArrowViewModel.settings.collectAsStateWithLifecycle()
-    val deArrowEnvironment = remember(deArrowSettings, deArrowViewModel) {
-        DeArrowBrandingEnvironment(
-            enabled = deArrowSettings.deArrowEnabled,
-            preferences = DeArrowPreferences(
-                titleMode = deArrowSettings.deArrowTitleMode,
-                thumbnailMode = deArrowSettings.deArrowThumbnailMode,
-                trustMode = deArrowSettings.deArrowTrustMode,
-            ),
-            loader = deArrowViewModel::load,
-        )
-    }
+    val deArrowEnvironment = rememberDeArrowEnvironment(deArrowViewModel, deArrowSettings)
     val onPlayVideo: (String) -> Unit = { videoUrl ->
         playerHostController.openVideo(videoUrl)
     }
 
-    LaunchedEffect(mainViewModel) {
-        mainViewModel.events.collectLatest { event ->
-            when (event) {
-                MainEvent.NavigateToWelcome -> {
-                    playerHostController.hide()
-                    navController.navigate(WelcomeRoute) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
-                is MainEvent.NavigateToLogin -> {
-                    playerHostController.hide()
-                    navController.navigate(
-                        LoginRoute(
-                            serverId = event.serverId,
-                        ),
-                    ) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
-            }
-        }
-    }
+    MainNavigationEffect(mainViewModel, navController, playerHostController)
 
     val onOpenChannel: (String) -> Unit = { channelUrl ->
         navController.navigateToChannel(channelUrl)
     }
 
-    val avatarUrl = remember(currentProfile, currentServer) {
-        val p = currentProfile ?: return@remember null
-        resolveProfileAvatarUrl(
-            serverBaseUrl = currentServer?.baseUrl,
-            avatarUrl = p.avatarUrl,
-            avatarType = p.avatarType,
-            avatarCode = p.avatarCode,
-            fallbackSeed = "${p.id}:${p.publicUsername}",
-        )
-    }
+    val avatarUrl = rememberProfileAvatarUrl(currentProfile, currentServer)
     val avatarFallback = currentProfile?.publicUsername?.firstOrNull()?.toString()
 
     CompositionLocalProvider(
         LocalServerBaseUrl provides currentServer?.baseUrl,
         LocalDeArrowBranding provides deArrowEnvironment,
         LocalPlaybackPrewarm provides playbackPrewarm,
+        LocalPlaybackRecovery provides (playbackRecovery ?: LocalPlaybackRecovery.current),
     ) {
     AppShell(
         navController = navController,

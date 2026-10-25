@@ -17,6 +17,7 @@ import androidx.media3.session.SessionToken
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
+import dev.typetype.android.testing.createSyntheticH264Video
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStream

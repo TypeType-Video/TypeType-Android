@@ -1,0 +1,223 @@
+package dev.typetype.android.feature.player
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.composed
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.dp
+
+internal const val PLAYER_SINGLE_COLUMN_LAYOUT_TAG = "player_single_column_layout"
+internal const val PLAYER_TWO_PANE_LAYOUT_TAG = "player_two_pane_layout"
+
+internal enum class PlayerContentLayoutMode {
+    Fullscreen,
+    SingleColumn,
+    TwoPane,
+}
+
+internal fun playerContentLayoutMode(
+    widthDp: Float,
+    heightDp: Float,
+    isFullscreen: Boolean,
+    isInPip: Boolean = false,
+): PlayerContentLayoutMode = when {
+    isFullscreen || isInPip -> PlayerContentLayoutMode.Fullscreen
+    widthDp > heightDp &&
+        widthDp >= TWO_PANE_MIN_WIDTH_DP &&
+        heightDp >= TWO_PANE_MIN_HEIGHT_DP ->
+        PlayerContentLayoutMode.TwoPane
+    else -> PlayerContentLayoutMode.SingleColumn
+}
+
+@Composable
+fun PlayerContentLayout(
+    isFullscreen: Boolean,
+    modifier: Modifier = Modifier,
+    isInPip: Boolean = false,
+    hostTransitionProgress: () -> Float = { 0f },
+    viewport: @Composable (Modifier) -> Unit,
+    details: @Composable (Modifier) -> Unit,
+    recommendations: @Composable (Modifier) -> Unit = {},
+) {
+    val currentViewport by rememberUpdatedState(viewport)
+    val retainedViewport = remember {
+        movableContentOf<Modifier> { viewportModifier ->
+            currentViewport(viewportModifier)
+        }
+    }
+    val density = LocalDensity.current
+    val miniWidthPx = with(density) { MINI_VIDEO_WIDTH.toPx() }
+    val miniHeightPx = with(density) { MINI_VIDEO_HEIGHT.toPx() }
+    val miniStartPx = with(density) { MINI_VIDEO_START.toPx() }
+    val miniTopPx = with(density) { MINI_VIDEO_TOP.toPx() }
+    val detailsHidden by remember(hostTransitionProgress) {
+        derivedStateOf { hostTransitionProgress() >= 0.99f }
+    }
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val availableWidthPx = with(density) { maxWidth.toPx() }
+        val singleColumnDetailsTravelPx = miniTopPx + miniHeightPx -
+            availableWidthPx / VIDEO_ASPECT_RATIO
+        val twoPaneVideoWidthPx = availableWidthPx * PLAYER_PANE_WEIGHT /
+            (PLAYER_PANE_WEIGHT + DETAILS_PANE_WEIGHT)
+        val twoPaneDetailsTravelPx = miniTopPx + miniHeightPx -
+            twoPaneVideoWidthPx / VIDEO_ASPECT_RATIO
+        when (playerContentLayoutMode(maxWidth.value, maxHeight.value, isFullscreen, isInPip)) {
+            PlayerContentLayoutMode.Fullscreen -> retainedViewport(
+                Modifier
+                    .playerViewportTransition(
+                        progress = hostTransitionProgress,
+                        miniWidthPx = miniWidthPx,
+                        miniHeightPx = miniHeightPx,
+                        miniStartPx = miniStartPx,
+                        miniTopPx = miniTopPx,
+                    )
+                    .fillMaxSize(),
+            )
+            PlayerContentLayoutMode.SingleColumn -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag(PLAYER_SINGLE_COLUMN_LAYOUT_TAG)
+                        .verticalScroll(rememberScrollState()),
+                ) {
+                    retainedViewport(
+                        Modifier
+                            .playerViewportTransition(
+                                progress = hostTransitionProgress,
+                                miniWidthPx = miniWidthPx,
+                                miniHeightPx = miniHeightPx,
+                                miniStartPx = miniStartPx,
+                                miniTopPx = miniTopPx,
+                            )
+                            .fillMaxWidth()
+                            .aspectRatio(VIDEO_ASPECT_RATIO)
+                            .testTag(PLAYER_VIEWPORT_TAG),
+                    )
+                    details(
+                        Modifier
+                            .fillMaxWidth()
+                            .playerDetailsTransition(
+                                progress = hostTransitionProgress,
+                                verticalTravelPx = singleColumnDetailsTravelPx,
+                            )
+                            .then(if (detailsHidden) Modifier.clearAndSetSemantics { } else Modifier),
+                    )
+                    recommendations(
+                        Modifier.fillMaxWidth()
+                            .playerDetailsTransition(
+                                progress = hostTransitionProgress,
+                                verticalTravelPx = singleColumnDetailsTravelPx,
+                            )
+                            .then(if (detailsHidden) Modifier.clearAndSetSemantics { } else Modifier),
+                    )
+                }
+            }
+            PlayerContentLayoutMode.TwoPane -> {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag(PLAYER_TWO_PANE_LAYOUT_TAG),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .weight(PLAYER_PANE_WEIGHT)
+                            .fillMaxHeight()
+                            .verticalScroll(rememberScrollState()),
+                    ) {
+                        retainedViewport(
+                            Modifier
+                                .playerViewportTransition(
+                                    progress = hostTransitionProgress,
+                                    miniWidthPx = miniWidthPx,
+                                    miniHeightPx = miniHeightPx,
+                                    miniStartPx = miniStartPx,
+                                    miniTopPx = miniTopPx,
+                                )
+                                .fillMaxWidth()
+                                .aspectRatio(VIDEO_ASPECT_RATIO)
+                                .testTag(PLAYER_VIEWPORT_TAG),
+                        )
+                        details(
+                            Modifier.fillMaxWidth()
+                                .playerDetailsTransition(
+                                    progress = hostTransitionProgress,
+                                    verticalTravelPx = twoPaneDetailsTravelPx,
+                                )
+                                .then(if (detailsHidden) Modifier.clearAndSetSemantics { } else Modifier),
+                        )
+                    }
+                    recommendations(
+                        Modifier
+                            .weight(DETAILS_PANE_WEIGHT)
+                            .fillMaxHeight()
+                            .verticalScroll(rememberScrollState())
+                            .playerDetailsTransition(hostTransitionProgress)
+                            .then(if (detailsHidden) Modifier.clearAndSetSemantics { } else Modifier),
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun Modifier.playerViewportTransition(
+    progress: () -> Float,
+    miniWidthPx: Float,
+    miniHeightPx: Float,
+    miniStartPx: Float,
+    miniTopPx: Float,
+): Modifier = graphicsLayer {
+    val fraction = progress().coerceIn(0f, 1f)
+    val targetScaleX = miniWidthPx / size.width.coerceAtLeast(1f)
+    val targetScaleY = miniHeightPx / size.height.coerceAtLeast(1f)
+    scaleX = 1f + (targetScaleX - 1f) * fraction
+    scaleY = 1f + (targetScaleY - 1f) * fraction
+    translationX = miniStartPx * fraction
+    translationY = miniTopPx * fraction
+    transformOrigin = TransformOrigin(0f, 0f)
+    this.shape = RoundedCornerShape(MINI_VIDEO_CORNER * fraction)
+    clip = fraction > 0f
+}
+
+private fun Modifier.playerDetailsTransition(
+    progress: () -> Float,
+    verticalTravelPx: Float = 0f,
+): Modifier = graphicsLayer {
+    val fraction = progress().coerceIn(0f, 1f)
+    translationY = verticalTravelPx * fraction
+    alpha = 1f - fraction
+}
+
+private const val VIDEO_ASPECT_RATIO = 16f / 9f
+private const val TWO_PANE_MIN_WIDTH_DP = 840f
+private const val TWO_PANE_MIN_HEIGHT_DP = 480f
+private const val PLAYER_PANE_WEIGHT = 1.45f
+private const val DETAILS_PANE_WEIGHT = 1f
+private val MINI_VIDEO_WIDTH = 80.dp
+private val MINI_VIDEO_HEIGHT = 45.dp
+private val MINI_VIDEO_START = 8.dp
+private val MINI_VIDEO_TOP = 9.dp
+private val MINI_VIDEO_CORNER = 6.dp
+const val PLAYER_VIEWPORT_TAG = "player_viewport"

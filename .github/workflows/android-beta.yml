@@ -6,6 +6,9 @@ on:
       - beta
     paths:
       - 'app/**'
+      - 'build-logic/**'
+      - 'core/**'
+      - 'feature/**'
       - 'player/**'
       - 'baseline-profile/**'
       - 'gradle/**'
@@ -17,6 +20,9 @@ on:
       - beta
     paths:
       - 'app/**'
+      - 'build-logic/**'
+      - 'core/**'
+      - 'feature/**'
       - 'player/**'
       - 'baseline-profile/**'
       - 'gradle/**'
@@ -36,36 +42,31 @@ env:
   CI: true
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
-  GRADLE_OPTS: -Dorg.gradle.workers.max=8 -Dorg.gradle.daemon.idletimeout=900000
-  ANDROID_HOME: /opt/android-sdk
-  ANDROID_SDK_ROOT: /opt/android-sdk
-  JAVA_HOME: /usr/lib/jvm/java-26-openjdk
-  GRADLE_USER_HOME: /var/tmp/typetype-android-gradle-user-home
   GITHUB_REPO: TypeType-Video/TypeType-Android
 
 jobs:
   release:
-    runs-on: [self-hosted, Linux, X64, ci-stack, android]
-    timeout-minutes: 35
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
     permissions:
       contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
 
+      - name: Set up Java
+        uses: actions/setup-java@v6.0.1
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6.4.0
+
       - name: Install Android SDK platform
         run: |
-          platform="$ANDROID_HOME/platforms/android-37.0"
-          (
-            flock 9
-            if [ ! -f "$platform/android.jar" ]; then
-              rm -rf "$platform"
-              "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
-                --sdk_root="$ANDROID_HOME" \
-                "platforms;android-37.0"
-            fi
-            test -f "$platform/android.jar"
-          ) 9>"$ANDROID_HOME/.platform-install.lock"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install \
+            "platforms;android-37.0" "build-tools;36.0.0" > /dev/null
 
       - name: Validate beta release version
         env:
@@ -123,14 +124,12 @@ jobs:
           } > keystore.properties
 
       - name: Verify and build beta release
-        timeout-minutes: 25
+        timeout-minutes: 40
         run: |
-          ./gradlew --build-cache --stacktrace \
+          ./gradlew --stacktrace \
             :baseline-profile:assemble \
-            :player:testDebugUnitTest \
-            :app:testDebugUnitTest \
-            :player:lintDebug \
-            :app:lintDebug \
+            testDebugUnitTest \
+            lintDebug \
             :app:assembleDebug \
             :app:assembleRelease
 
@@ -140,8 +139,7 @@ jobs:
         with:
           name: typetype-beta-lint-report
           path: |
-            app/build/reports/lint-results-debug.html
-            player/build/reports/lint-results-debug.html
+            **/build/reports/lint-results-debug.html
           if-no-files-found: ignore
           retention-days: 14
 

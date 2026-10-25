@@ -26,7 +26,7 @@ import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.feature.player.components.ResilientPlayerSurface
 import dev.typetype.android.feature.player.state.ResizeMode
 import dev.typetype.android.services.PlaybackService
-import dev.typetype.android.services.createSyntheticH264Video
+import dev.typetype.android.testing.createSyntheticH264Video
 import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -74,6 +74,9 @@ class ShortsPlaybackContinuityAndroidTest {
             instrumentation.runOnMainSync {
                 controller.stop()
                 controller.clearMediaItems()
+                // The surface dies with this activity; a released controller could no longer detach it from the
+                // shared service player, and the next test would decode into it.
+                controller.clearVideoSurface()
                 controller.release()
             }
             video.delete()

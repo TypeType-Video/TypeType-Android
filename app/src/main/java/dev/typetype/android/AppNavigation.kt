@@ -148,8 +148,8 @@ internal fun AppTopBar(
 internal fun AppBottomBar(
     selectedTabRouteQualifiedName: String?,
     onTabClick: (TopLevelTab) -> Unit,
-    tabs: List<TopLevelTab> = topLevelTabs,
     modifier: Modifier = Modifier,
+    tabs: List<TopLevelTab> = topLevelTabs,
     expanded: Boolean = false,
 ) {
     androidx.compose.foundation.layout.Column(modifier = modifier) {
@@ -180,8 +180,8 @@ internal fun AppBottomBar(
 internal fun AppNavigationRail(
     selectedTabRouteQualifiedName: String?,
     onTabClick: (TopLevelTab) -> Unit,
-    tabs: List<TopLevelTab> = topLevelTabs,
     modifier: Modifier = Modifier,
+    tabs: List<TopLevelTab> = topLevelTabs,
 ) {
     NavigationRail(
         modifier = modifier
