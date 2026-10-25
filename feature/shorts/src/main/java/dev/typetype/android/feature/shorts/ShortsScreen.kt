@@ -221,5 +221,5 @@ private fun ShortsMessage(messageRes: Int) {
     }
 }
 
-internal const val SHORTS_PAGER_TAG = "shorts-pager"
+const val SHORTS_PAGER_TAG = "shorts-pager"
 private const val SHORTS_PREFETCH_COUNT = 2

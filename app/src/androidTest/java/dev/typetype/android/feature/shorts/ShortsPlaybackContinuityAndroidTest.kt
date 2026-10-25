@@ -74,6 +74,9 @@ class ShortsPlaybackContinuityAndroidTest {
             instrumentation.runOnMainSync {
                 controller.stop()
                 controller.clearMediaItems()
+                // The surface dies with this activity; a released controller could no longer detach it from the
+                // shared service player, and the next test would decode into it.
+                controller.clearVideoSurface()
                 controller.release()
             }
             video.delete()

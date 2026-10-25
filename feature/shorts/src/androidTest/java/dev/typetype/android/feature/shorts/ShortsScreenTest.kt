@@ -269,8 +269,9 @@ class ShortsScreenTest {
             statsForVideo = { ShortsVideoStats(viewCount = 1_500, likeCount = 42) },
         )
 
-        composeRule.onNodeWithContentDescription("1.5K views").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("42 likes").assertIsDisplayed()
+        // The counts follow the device locale, so the expected labels use the same formatter.
+        composeRule.onNodeWithContentDescription("${formatShortsCount(1_500L)} views").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("${formatShortsCount(42L)} likes").assertIsDisplayed()
     }
 
     @Test
