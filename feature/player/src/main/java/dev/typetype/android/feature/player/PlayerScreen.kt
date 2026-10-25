@@ -20,6 +20,7 @@ import androidx.paging.PagingData
 import dev.typetype.android.R
 import dev.typetype.android.domain.comments.Comment
 import dev.typetype.android.feature.player.components.LocalMediaController
+import dev.typetype.android.playback.PlaybackCodecSupport
 import dev.typetype.android.playback.PrepareSabrPlayback
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -56,6 +57,7 @@ fun PlayerRoute(
         eventsFlow = playerEvents,
         commentsRepository = viewModel.commentsRepository,
         prepareSabrPlayback = viewModel.sabrPlayback::prepare,
+        codecSupport = viewModel.codecSupport,
         loadSubtitleCues = viewModel.subtitleCueLoader::load,
         isFullscreen = isFullscreen,
         hostTransitionProgress = hostTransitionProgress,
@@ -84,6 +86,7 @@ fun PlayerScreen(
     eventsFlow: Flow<PlayerEvent> = emptyFlow(),
     commentsRepository: dev.typetype.android.domain.comments.CommentsRepository? = null,
     prepareSabrPlayback: PrepareSabrPlayback = { _, _, _ -> null },
+    codecSupport: PlaybackCodecSupport,
     loadSubtitleCues: LoadSubtitleCues = { Result.success(emptyList()) },
     isFullscreen: Boolean = false,
     hostTransitionProgress: () -> Float = { 0f },
@@ -196,6 +199,7 @@ fun PlayerScreen(
                     commentsFlow = commentsFlow,
                     commentsRepository = commentsRepository,
                     prepareSabrPlayback = prepareSabrPlayback,
+                    codecSupport = codecSupport,
                     loadSubtitleCues = loadSubtitleCues,
                     isFullscreen = isFullscreen,
                     hostTransitionProgress = hostTransitionProgress,

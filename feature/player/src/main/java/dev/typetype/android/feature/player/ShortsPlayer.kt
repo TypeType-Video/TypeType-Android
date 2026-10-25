@@ -49,7 +49,7 @@ import dev.typetype.android.feature.player.components.SponsorBlockPlaybackFeedba
 import dev.typetype.android.feature.player.components.rememberCurrentMediaId
 import dev.typetype.android.feature.player.components.rememberPlayerPlaybackStatus
 import dev.typetype.android.feature.player.state.ResizeMode
-import dev.typetype.android.playback.DevicePlaybackCodecSupport
+import dev.typetype.android.playback.PlaybackCodecSupport
 import dev.typetype.android.playback.PrepareSabrPlayback
 import dev.typetype.android.playback.key
 
@@ -75,6 +75,7 @@ fun ShortsPlayerRoute(
             else -> ShortsPlayerSurface(
                 state = state,
                 prepareSabrPlayback = viewModel.sabrPlayback::prepare,
+                codecSupport = viewModel.codecSupport,
                 loadSubtitleCues = viewModel.subtitleCueLoader::load,
                 onAdvance = onAdvance,
                 onRetry = { viewModel.onAction(PlayerAction.OnRetry) },
@@ -93,6 +94,7 @@ fun ShortsPlayerRoute(
 private fun ShortsPlayerSurface(
     state: PlayerState,
     prepareSabrPlayback: PrepareSabrPlayback,
+    codecSupport: PlaybackCodecSupport,
     loadSubtitleCues: LoadSubtitleCues,
     onAdvance: () -> Unit,
     onRetry: () -> Unit,
@@ -103,9 +105,6 @@ private fun ShortsPlayerSurface(
     val controller = LocalMediaController.current
     val context = LocalContext.current
     val activity = LocalActivity.current
-    val codecSupport = remember(context.applicationContext) {
-        DevicePlaybackCodecSupport(context.applicationContext)
-    }
     val selections = rememberPlayerPlaybackSelectionState(
         stream = stream,
         defaultQuality = state.userSettings.defaultQuality,

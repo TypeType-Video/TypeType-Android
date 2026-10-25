@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -23,9 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.boundsInWindow
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.paging.PagingData
 import dev.typetype.android.domain.comments.Comment
@@ -43,7 +40,7 @@ import dev.typetype.android.feature.player.components.PlayerSurfaceBox
 import dev.typetype.android.feature.player.components.rememberAudioOnlyPlaybackState
 import dev.typetype.android.feature.player.components.rememberIsInPipMode
 import dev.typetype.android.feature.player.components.rememberPlaybackChapters
-import dev.typetype.android.playback.DevicePlaybackCodecSupport
+import dev.typetype.android.playback.PlaybackCodecSupport
 import dev.typetype.android.playback.PrepareSabrPlayback
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.Flow
@@ -72,6 +69,7 @@ internal fun LoadedPlayer(
     commentsFlow: Flow<PagingData<Comment>>,
     commentsRepository: CommentsRepository?,
     prepareSabrPlayback: PrepareSabrPlayback,
+    codecSupport: PlaybackCodecSupport,
     loadSubtitleCues: LoadSubtitleCues,
     isFullscreen: Boolean,
     hostTransitionProgress: () -> Float = { 0f },
@@ -90,10 +88,6 @@ internal fun LoadedPlayer(
 ) {
     val controller = LocalMediaController.current
     val isInPip by rememberIsInPipMode()
-    val context = LocalContext.current
-    val codecSupport = remember(context.applicationContext) {
-        DevicePlaybackCodecSupport(context.applicationContext)
-    }
     var commentsVisible by remember { mutableStateOf(false) }
     var downloadPickerVisible by remember { mutableStateOf(false) }
     var codecFallbackGeneration by remember(stream.id) { mutableLongStateOf(0L) }

@@ -6,9 +6,12 @@ import androidx.media3.common.Format
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.mediacodec.MediaCodecUtil
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.typetype.android.domain.stream.StreamAudioSource
 import dev.typetype.android.domain.stream.StreamVideoSource
 import java.util.concurrent.ConcurrentHashMap
+import javax.inject.Inject
+import javax.inject.Singleton
 
 enum class DecoderSupport(val rank: Int) {
     Unsupported(0),
@@ -22,14 +25,20 @@ interface PlaybackCodecSupport {
     fun rejectVideo(format: Format): Boolean = false
 }
 
+// One instance for the whole app: the player, Shorts, prewarming and the queue share what each decoder can play
+// and which formats already failed.
 @OptIn(markerClass = [UnstableApi::class])
-class DevicePlaybackCodecSupport(
-    context: Context,
+@Singleton
+class DevicePlaybackCodecSupport @Inject constructor(
+    @ApplicationContext context: Context,
+    private val rejectedStore: RejectedVideoFormatStore,
 ) : PlaybackCodecSupport {
     private val applicationContext = context.applicationContext
     private val videoCache = ConcurrentHashMap<VideoCodecKey, DecoderSupport>()
     private val audioCache = ConcurrentHashMap<AudioCodecKey, DecoderSupport>()
-    private val rejectedVideoFormats = ConcurrentHashMap.newKeySet<RejectedVideoCodecKey>()
+    private val rejectedVideoFormats = ConcurrentHashMap.newKeySet<RejectedVideoCodecKey>().apply {
+        for (stored in rejectedStore.load()) parseRejectedVideoCodecKey(stored)?.let { add(it) }
+    }
 
     override fun video(source: StreamVideoSource): DecoderSupport {
         val key = source.videoCodecKey()
@@ -65,7 +74,9 @@ class DevicePlaybackCodecSupport(
 
     override fun rejectVideo(format: Format): Boolean {
         val key = format.rejectedVideoCodecKey() ?: return false
-        return rejectedVideoFormats.add(key)
+        if (!rejectedVideoFormats.add(key)) return false
+        rejectedStore.add(key.stored())
+        return true
     }
 
     private fun decoderSupport(format: Format): DecoderSupport = try {
@@ -95,7 +106,17 @@ private data class RejectedVideoCodecKey(
     val codec: String,
     val width: Int,
     val height: Int,
-)
+) {
+    fun stored(): String = "$codec|$width|$height"
+}
+
+private fun parseRejectedVideoCodecKey(stored: String): RejectedVideoCodecKey? {
+    val parts = stored.split('|')
+    if (parts.size != 3) return null
+    val width = parts[1].toIntOrNull() ?: return null
+    val height = parts[2].toIntOrNull() ?: return null
+    return RejectedVideoCodecKey(parts[0], width, height)
+}
 
 private fun StreamVideoSource.videoCodecKey() = VideoCodecKey(
     codec = codec.orEmpty().trim().lowercase(),

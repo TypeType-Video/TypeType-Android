@@ -1,8 +1,6 @@
 package dev.typetype.android.services
 
-import android.content.Context
 import androidx.media3.common.MediaItem
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.typetype.android.data.network.PlaybackNetworkMonitor
 import dev.typetype.android.domain.preferences.PreferencesRepository
 import dev.typetype.android.domain.preferences.effectivePlaybackQualityCap
@@ -22,14 +20,13 @@ import kotlinx.coroutines.flow.first
 
 @Singleton
 class PlaybackQueueItemResolver @Inject constructor(
-    @ApplicationContext context: Context,
     private val streamRepository: StreamRepository,
     private val userSettingsRepository: UserSettingsRepository,
     private val preferencesRepository: PreferencesRepository,
     private val networkMonitor: PlaybackNetworkMonitor,
     private val sabrPlaybackRepository: SabrPlaybackRepository,
+    private val codecSupport: DevicePlaybackCodecSupport,
 ) {
-    private val codecSupport = DevicePlaybackCodecSupport(context)
 
     suspend fun resolve(videoUrl: String): Result<MediaItem> = captureQueueResult {
         val settings = userSettingsRepository.current().getOrThrow()

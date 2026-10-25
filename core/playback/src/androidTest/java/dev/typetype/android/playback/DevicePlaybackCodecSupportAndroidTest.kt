@@ -1,5 +1,6 @@
 package dev.typetype.android.playback
 
+import android.content.Context
 import android.media.MediaCodec
 import android.media.MediaCodecInfo
 import android.media.MediaFormat
@@ -18,9 +19,11 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class DevicePlaybackCodecSupportAndroidTest {
-    private val support = DevicePlaybackCodecSupport(
-        ApplicationProvider.getApplicationContext(),
-    )
+    private val context = ApplicationProvider.getApplicationContext<Context>()
+    private val support = run {
+        context.getSharedPreferences("rejected_video_formats", Context.MODE_PRIVATE).edit().clear().commit()
+        DevicePlaybackCodecSupport(context, RejectedVideoFormatStore(context))
+    }
 
     @Test
     fun baselineH264AndAacRemainPlayable() {
@@ -43,6 +46,8 @@ class DevicePlaybackCodecSupportAndroidTest {
 
         assertTrue(support.rejectVideo(activeFormat))
         assertEquals(DecoderSupport.Unsupported, support.video(h264()))
+        val afterRestart = DevicePlaybackCodecSupport(context, RejectedVideoFormatStore(context))
+        assertEquals(DecoderSupport.Unsupported, afterRestart.video(h264()))
     }
 
     @Test

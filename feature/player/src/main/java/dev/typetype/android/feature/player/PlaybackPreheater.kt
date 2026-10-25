@@ -1,7 +1,5 @@
 package dev.typetype.android.feature.player
 
-import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.typetype.android.domain.preferences.RECOMMENDED_CODEC_KEY
 import dev.typetype.android.domain.stream.SabrPlaybackRepository
 import dev.typetype.android.domain.stream.Stream
@@ -20,13 +18,12 @@ import javax.inject.Singleton
 
 @Singleton
 class PlaybackPreheater @Inject constructor(
-    @ApplicationContext context: Context,
     private val streams: StreamRepository,
     private val sabr: SabrPlaybackRepository,
     private val preloads: SabrPlaybackPreloadStore,
     private val userSettingsRepository: UserSettingsRepository,
+    private val codecSupport: DevicePlaybackCodecSupport,
 ) {
-    private val codecSupport: PlaybackCodecSupport = DevicePlaybackCodecSupport(context)
 
     suspend fun preheat(videoUrl: String, knownLive: Boolean = false) {
         if (knownLive) return

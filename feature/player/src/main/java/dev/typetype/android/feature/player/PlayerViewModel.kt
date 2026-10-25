@@ -12,9 +12,9 @@ import dev.typetype.android.domain.download.DownloadRepository
 import dev.typetype.android.domain.download.DownloadSelection
 import dev.typetype.android.domain.library.LibraryRepository
 import dev.typetype.android.domain.preferences.PreferencesRepository
-import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import dev.typetype.android.feature.player.error.classifyStreamError
+import dev.typetype.android.playback.DevicePlaybackCodecSupport
 import dev.typetype.android.services.PlaybackQueueCoordinator
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -44,6 +44,7 @@ class PlayerViewModel @Inject constructor(
     private val playbackQueueCoordinator: PlaybackQueueCoordinator,
     val commentsRepository: CommentsRepository,
     val subtitleCueLoader: PlayerSubtitleCueLoader,
+    val codecSupport: DevicePlaybackCodecSupport,
     networkMonitor: PlaybackNetworkMonitor,
 ) : ViewModel() {
     private val videoUrlFlow = combine(

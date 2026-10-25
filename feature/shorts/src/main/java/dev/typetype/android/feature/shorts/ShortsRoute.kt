@@ -29,7 +29,6 @@ import dev.typetype.android.feature.player.components.CommentsSheet
 import dev.typetype.android.feature.player.components.LocalMediaController
 import dev.typetype.android.feature.player.components.rememberCurrentMediaId
 import dev.typetype.android.feature.player.components.rememberPlayerPlaybackStatus
-import dev.typetype.android.playback.DevicePlaybackCodecSupport
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -54,9 +53,7 @@ fun ShortsRoute(
     val visibleState = state.copy(videos = state.videos.filterNot(menuScope::isHidden))
     val snackbarHost = LocalAppSnackbarHost.current
     val context = LocalContext.current
-    val codecSupport = remember(context.applicationContext) {
-        DevicePlaybackCodecSupport(context.applicationContext)
-    }
+    val codecSupport = playerViewModel.codecSupport
     val activity = LocalActivity.current
     val actionFailed = stringResource(R.string.snackbar_action_failed)
     val titleCopied = stringResource(R.string.shorts_title_copied)
