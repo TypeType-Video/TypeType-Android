@@ -64,28 +64,6 @@ private val SERVICES = listOf(
     ServiceOption(5, R.string.settings_default_service_bilibili, R.drawable.ic_service_bilibili, androidx.compose.ui.graphics.Color(0xFF00A1D6)),
 )
 
-private data class LanguageOption(val code: String, val display: String)
-
-private val LANGUAGE_OPTIONS = listOf(
-    LanguageOption("", "Auto"),
-    LanguageOption("en", "English"),
-    LanguageOption("fr", "Français"),
-    LanguageOption("es", "Español"),
-    LanguageOption("de", "Deutsch"),
-    LanguageOption("it", "Italiano"),
-    LanguageOption("pt", "Português"),
-    LanguageOption("ru", "Русский"),
-    LanguageOption("ja", "日本語"),
-    LanguageOption("ko", "한국어"),
-    LanguageOption("zh", "中文"),
-    LanguageOption("ar", "العربية"),
-    LanguageOption("hi", "हिन्दी"),
-    LanguageOption("nl", "Nederlands"),
-    LanguageOption("pl", "Polski"),
-    LanguageOption("sv", "Svenska"),
-    LanguageOption("tr", "Türkçe"),
-)
-
 @Composable
 fun PlayerSettingsRoute(
     onNavigateBack: () -> Unit,
@@ -240,47 +218,7 @@ fun PlayerSettingsScreen(
                 }
                 if (state.defaultService == 0) {
                     item { Spacer(Modifier.size(4.dp)) }
-                    item { SettingsSectionHeader(stringResource(R.string.settings_player_section_subtitles)) }
-                    item {
-                        SwitchRow(
-                            title = stringResource(R.string.settings_player_subtitles_enabled),
-                            subtitle = stringResource(R.string.settings_player_subtitles_enabled_subtitle),
-                            checked = state.subtitlesEnabled,
-                            onCheckedChange = { onAction(PlayerSettingsAction.SetSubtitlesEnabled(it)) },
-                        )
-                    }
-                    item {
-                        DropdownRow(
-                            title = stringResource(R.string.settings_player_subtitle_language),
-                            subtitle = stringResource(R.string.settings_player_subtitle_language_subtitle),
-                            options = LANGUAGE_OPTIONS.map { it.code to it.display },
-                            selectedKey = state.defaultSubtitleLanguage,
-                            onSelect = { onAction(PlayerSettingsAction.SetSubtitleLanguage(it)) },
-                            enabled = state.subtitlesEnabled,
-                        )
-                    }
-                    item {
-                        DropdownRow(
-                            title = stringResource(R.string.settings_player_audio_language),
-                            subtitle = if (state.preferOriginalLanguage) {
-                                stringResource(R.string.settings_player_prefer_original_active)
-                            } else {
-                                stringResource(R.string.settings_player_audio_language_subtitle)
-                            },
-                            options = LANGUAGE_OPTIONS.map { it.code to it.display },
-                            selectedKey = state.defaultAudioLanguage,
-                            onSelect = { onAction(PlayerSettingsAction.SetAudioLanguage(it)) },
-                            enabled = !state.preferOriginalLanguage,
-                        )
-                    }
-                    item {
-                        SwitchRow(
-                            title = stringResource(R.string.settings_player_prefer_original),
-                            subtitle = stringResource(R.string.settings_player_prefer_original_subtitle),
-                            checked = state.preferOriginalLanguage,
-                            onCheckedChange = { onAction(PlayerSettingsAction.SetPreferOriginalLanguage(it)) },
-                        )
-                    }
+                    subtitleAndLanguageSettingsItems(state = state, onAction = onAction)
                     if (advancedExpanded) {
                         captionStyleSettingsItems(state = state, onAction = onAction)
                     }
