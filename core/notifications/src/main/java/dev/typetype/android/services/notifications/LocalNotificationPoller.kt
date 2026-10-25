@@ -42,59 +42,60 @@ class LocalNotificationPoller @Inject constructor(
             knownKeys = state.keys.toHashSet(),
             seeded = state.seeded,
             enabledChannels = enabledChannels,
+            nowMillis = System.currentTimeMillis(),
         )
         if (decision.keysToRecord.isEmpty() && decision.notified.isEmpty()) {
             if (!state.seeded) seenStore.record(scope, emptyList(), seeded = true)
             return 0
         }
-        val unpostedKeys = mutableSetOf<String>()
-        var postedCount = 0
-        decision.notified.forEach { item ->
-            when (notifier.notifySubscription(item)) {
-                NotificationPostResult.Posted -> {
-                    postedCount += 1
-                    pushDiagnostics.record(scope, PushDiagnosticEvent.LocalNotificationPosted)
-                }
-                NotificationPostResult.NotificationsDisabled -> {
-                    unpostedKeys += item.localNotificationKey()
-                    pushDiagnostics.record(
-                        scope,
-                        PushDiagnosticEvent.LocalNotificationSuppressed,
-                        failureCode = "notifications_disabled",
-                    )
-                }
-                NotificationPostResult.ChannelBlocked -> {
-                    unpostedKeys += item.localNotificationKey()
-                    pushDiagnostics.record(
-                        scope,
-                        PushDiagnosticEvent.LocalNotificationSuppressed,
-                        failureCode = "channel_blocked",
-                    )
-                }
-                NotificationPostResult.PermissionDenied -> {
-                    unpostedKeys += item.localNotificationKey()
-                    pushDiagnostics.record(
-                        scope,
-                        PushDiagnosticEvent.LocalNotificationSuppressed,
-                        failureCode = "permission_denied",
-                    )
-                }
-                NotificationPostResult.Failed -> {
-                    unpostedKeys += item.localNotificationKey()
-                    pushDiagnostics.record(
-                        scope,
-                        PushDiagnosticEvent.LocalNotificationFailed,
-                        failureCode = "notification_manager_unavailable",
-                    )
-                }
-            }
+        val outcomes = if (decision.notified.size > MAX_SEPARATE_ALERTS) {
+            val result = notifier.notifySummary(decision.notified)
+            decision.notified.map { item -> item to result }
+        } else {
+            decision.notified.map { item -> item to notifier.notifySubscription(item) }
         }
+        val unpostedKeys = outcomes
+            .filter { (_, result) -> result != NotificationPostResult.Posted }
+            .map { (item, _) -> item.localNotificationKey() }
+            .toSet()
+        outcomes.forEach { (_, result) -> recordOutcome(scope, result) }
         seenStore.record(
             scope,
             decision.keysToPersist(unpostedKeys),
             seeded = true,
         )
-        return postedCount
+        return outcomes.count { (_, result) -> result == NotificationPostResult.Posted }
+    }
+
+    private suspend fun recordOutcome(scope: AccountScope, result: NotificationPostResult) {
+        when (result) {
+            NotificationPostResult.Posted ->
+                pushDiagnostics.record(scope, PushDiagnosticEvent.LocalNotificationPosted)
+            NotificationPostResult.NotificationsDisabled ->
+                pushDiagnostics.record(
+                    scope,
+                    PushDiagnosticEvent.LocalNotificationSuppressed,
+                    failureCode = "notifications_disabled",
+                )
+            NotificationPostResult.ChannelBlocked ->
+                pushDiagnostics.record(
+                    scope,
+                    PushDiagnosticEvent.LocalNotificationSuppressed,
+                    failureCode = "channel_blocked",
+                )
+            NotificationPostResult.PermissionDenied ->
+                pushDiagnostics.record(
+                    scope,
+                    PushDiagnosticEvent.LocalNotificationSuppressed,
+                    failureCode = "permission_denied",
+                )
+            NotificationPostResult.Failed ->
+                pushDiagnostics.record(
+                    scope,
+                    PushDiagnosticEvent.LocalNotificationFailed,
+                    failureCode = "notification_manager_unavailable",
+                )
+        }
     }
 
     private suspend fun eligibleScope(): AccountScope {
@@ -104,5 +105,9 @@ class LocalNotificationPoller @Inject constructor(
             "Local notifications are unavailable for guest accounts"
         }
         return scope
+    }
+
+    private companion object {
+        const val MAX_SEPARATE_ALERTS = 3
     }
 }
