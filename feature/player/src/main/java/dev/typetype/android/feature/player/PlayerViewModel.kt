@@ -52,6 +52,7 @@ class PlayerViewModel @Inject constructor(
         .distinctUntilChanged()
     private val _state = MutableStateFlow(PlayerState())
     val state = _state.asStateFlow()
+    val playRequests: Flow<String> = playerHostController.playRequests
     internal val sabrPlayback = sabrPlaybackFactory.create(
         onFailure = { stream, failure ->
             val current = _state.value.stream

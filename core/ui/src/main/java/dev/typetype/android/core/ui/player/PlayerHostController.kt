@@ -5,7 +5,9 @@ import javax.inject.Singleton
 import dev.typetype.android.domain.playback.PlaybackQueueEntry
 import dev.typetype.android.domain.playback.PlaybackQueueController
 import dev.typetype.android.domain.playback.PlaybackQueueSnapshot
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -39,6 +41,10 @@ class PlayerHostController @Inject constructor(
     private val _state = MutableStateFlow(PlayerHostStateSnapshot())
     val state: StateFlow<PlayerHostStateSnapshot> = _state.asStateFlow()
 
+    // Opening a video the player already holds, such as one restored paused at launch, must still start it.
+    private val _playRequests = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val playRequests: SharedFlow<String> = _playRequests
+
     fun openVideo(url: String) {
         _state.update {
             it.copy(
@@ -57,6 +63,7 @@ class PlayerHostController @Inject constructor(
             )
         }
         playbackQueueCoordinator.clear()
+        _playRequests.tryEmit(url)
     }
 
     fun continueWithVideo(url: String) {

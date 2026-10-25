@@ -5,8 +5,12 @@ import dev.typetype.android.domain.playback.PlaybackQueueEntry
 import dev.typetype.android.domain.playback.PlaybackQueueMutationResult
 import dev.typetype.android.domain.playback.PlaybackQueueSnapshot
 import dev.typetype.android.domain.playback.PlaybackQueueState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -202,6 +206,23 @@ class PlayerHostControllerTest {
         assertTrue(controller.goToPreviousVideo())
         assertEquals("first", controller.state.value.videoUrl)
         assertFalse(controller.goToPreviousVideo())
+    }
+
+    @Test
+    fun openingAVideoAsksThePlayerToStartItButRestoringDoesNot() {
+        val controller = PlayerHostController(FakePlaybackQueueController())
+        val requests = mutableListOf<String>()
+        val collector = CoroutineScope(Dispatchers.Unconfined).launch {
+            controller.playRequests.collect { requests += it }
+        }
+
+        controller.restoreVideo("restored", positionMillis = 30_000)
+        controller.minimize()
+        controller.expand()
+        controller.openVideo("restored")
+
+        assertEquals(listOf("restored"), requests)
+        collector.cancel()
     }
 }
 

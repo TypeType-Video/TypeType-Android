@@ -19,6 +19,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.PagingData
 import dev.typetype.android.R
 import dev.typetype.android.domain.comments.Comment
+import dev.typetype.android.feature.player.components.LocalMediaController
 import dev.typetype.android.playback.PrepareSabrPlayback
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -48,6 +49,7 @@ fun PlayerRoute(
         merge(viewModel.events, channelActionsViewModel.events)
     }
     val channelUrl = state.stream?.uploaderUrl.orEmpty()
+    PlayRequestEffect(LocalMediaController.current, state.videoUrl, viewModel.playRequests)
     PlayerScreen(
         state = state,
         commentsFlow = viewModel.comments,
