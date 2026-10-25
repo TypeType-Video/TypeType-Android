@@ -43,7 +43,10 @@ class LocalNotificationPoller @Inject constructor(
             seeded = state.seeded,
             enabledChannels = enabledChannels,
         )
-        if (decision.keysToRecord.isEmpty() && decision.notified.isEmpty()) return 0
+        if (decision.keysToRecord.isEmpty() && decision.notified.isEmpty()) {
+            if (!state.seeded) seenStore.record(scope, emptyList(), seeded = true)
+            return 0
+        }
         val unpostedKeys = mutableSetOf<String>()
         var postedCount = 0
         decision.notified.forEach { item ->

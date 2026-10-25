@@ -25,7 +25,11 @@ internal fun decideLocalNotifications(
     if (fresh.isEmpty()) return LocalNotificationDecision(emptyList(), emptyList())
     val deliverableChannels = enabledChannels.filter { it.enabled }
     val deliverable = fresh
-        .filter { item -> deliverableChannels.any { it.matchesChannel(item.channelUrl) } }
+        .filter { item ->
+            deliverableChannels.any { bell ->
+                bell.matchesChannel(item.channelUrl) && item.publishedAtMillis >= bell.updatedAtMillis
+            }
+        }
         .asReversed()
     return LocalNotificationDecision(
         keysToRecord = fresh.map { item -> item.localNotificationKey() },
