@@ -1261,7 +1261,8 @@
     <string name="push_status_action_required">Open your push distributor and complete its pending action</string>
     <string name="push_status_failed">Registration failed</string>
     <string name="push_devices_count" tools:ignore="PluralsCandidate">%1$d of %2$d devices registered</string>
-    <string name="push_install_hint">Install a UnifiedPush distributor such as ntfy to receive notifications.</string>
+    <string name="push_install_hint">Install a UnifiedPush distributor to get alerts as soon as a video is out. We recommend Sunup.</string>
+    <string name="push_get_sunup">Get Sunup</string>
     <string name="push_choose_distributor">Choose distributor</string>
     <string name="push_error_generic">Couldn\'t update push notifications</string>
     <string name="push_local_fallback">The app also checks for new videos every 15 minutes</string>
