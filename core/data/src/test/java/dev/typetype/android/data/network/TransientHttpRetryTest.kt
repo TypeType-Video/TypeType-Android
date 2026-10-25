@@ -44,6 +44,7 @@ class TransientHttpRetryTest {
             "Retry-After" to listOf(Long.MAX_VALUE.toString()),
         ).retryAfterMillis()
 
-        assertEquals(3_000L, transientHttpRetryDelayMs(1, 3, delay))
+        assertEquals(30_000L, transientHttpRetryDelayMs(1, 3, delay))
+        assertEquals(250L, transientHttpRetryDelayMs(1, 3, 0L))
     }
 }

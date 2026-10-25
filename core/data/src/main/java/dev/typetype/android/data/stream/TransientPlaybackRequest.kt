@@ -14,6 +14,7 @@ internal suspend fun <T> transientPlaybackRequest(
     request: suspend () -> Response<T>,
 ): Response<T> {
     var httpErrorCount = 0
+    var serverWaitMs = 0L
     var transportErrorCount = 0
     var transportGeneration = network.snapshot().generation
     while (true) {
@@ -51,6 +52,8 @@ internal suspend fun <T> transientPlaybackRequest(
             maximumRetries = MAX_SERVER_RESPONSE_RETRIES,
             requestedDelayMs = response.headers().toMultimap().retryAfterMillis(),
         ) ?: return response
+        if (serverWaitMs + retryDelayMs > MAX_SERVER_WAIT_MS) return response
+        serverWaitMs += retryDelayMs
         response.errorBody()?.close()
         pause(retryDelayMs)
     }
@@ -59,3 +62,4 @@ internal suspend fun <T> transientPlaybackRequest(
 private const val MAX_SERVER_RESPONSE_RETRIES = 6
 private const val MAX_CONNECTED_TRANSPORT_RETRIES = 8
 private const val MAX_OFFLINE_WAIT_MS = 10_000L
+private const val MAX_SERVER_WAIT_MS = 60_000L
