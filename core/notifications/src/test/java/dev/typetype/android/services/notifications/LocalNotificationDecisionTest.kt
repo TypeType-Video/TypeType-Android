@@ -15,6 +15,7 @@ class LocalNotificationDecisionTest {
             knownKeys = emptySet(),
             seeded = false,
             enabledChannels = listOf(ChannelNotificationsPreference(CHANNEL, enabled = true)),
+            nowMillis = NOW,
         )
 
         assertEquals(listOf("a", "b"), decision.keysToRecord)
@@ -32,6 +33,7 @@ class LocalNotificationDecisionTest {
             knownKeys = setOf("seen"),
             seeded = true,
             enabledChannels = listOf(ChannelNotificationsPreference(CHANNEL, enabled = true)),
+            nowMillis = NOW,
         )
 
         assertEquals(listOf("new-enabled", "new-silent"), decision.keysToRecord)
@@ -45,6 +47,7 @@ class LocalNotificationDecisionTest {
             knownKeys = emptySet(),
             seeded = true,
             enabledChannels = listOf(ChannelNotificationsPreference(CHANNEL, enabled = false)),
+            nowMillis = NOW,
         )
 
         assertEquals(listOf("a"), decision.keysToRecord)
@@ -58,12 +61,14 @@ class LocalNotificationDecisionTest {
             knownKeys = emptySet(),
             seeded = true,
             enabledChannels = listOf(ChannelNotificationsPreference(CHANNEL, enabled = true)),
+            nowMillis = NOW,
         )
         val trailingOnPreference = decideLocalNotifications(
             items = listOf(item(videoId = "a", channelUrl = CHANNEL)),
             knownKeys = emptySet(),
             seeded = true,
             enabledChannels = listOf(ChannelNotificationsPreference("$CHANNEL/videos", enabled = true)),
+            nowMillis = NOW,
         )
 
         assertEquals(listOf("a"), trailingOnItem.notified.map { it.video.id })
@@ -77,6 +82,7 @@ class LocalNotificationDecisionTest {
             knownKeys = emptySet(),
             seeded = true,
             enabledChannels = listOf(ChannelNotificationsPreference(CHANNEL, enabled = true)),
+            nowMillis = NOW,
         )
 
         assertTrue(decision.notified.isEmpty())
@@ -92,6 +98,7 @@ class LocalNotificationDecisionTest {
             knownKeys = emptySet(),
             seeded = true,
             enabledChannels = listOf(ChannelNotificationsPreference(CHANNEL, enabled = true)),
+            nowMillis = NOW,
         )
 
         assertEquals(listOf("older", "newest"), decision.notified.map { it.video.id })
@@ -108,6 +115,7 @@ class LocalNotificationDecisionTest {
             knownKeys = emptySet(),
             seeded = true,
             enabledChannels = listOf(ChannelNotificationsPreference(CHANNEL, enabled = true)),
+            nowMillis = NOW,
         )
 
         assertEquals(listOf("posted", "silent"), decision.keysToPersist(setOf("failed")))
@@ -140,6 +148,7 @@ class LocalNotificationDecisionTest {
     )
 
     private companion object {
+        const val NOW = 1_000L
         const val CHANNEL = "https://www.youtube.com/channel/UCaaaaaaaaaaaaaaaaaaaaaa"
         const val OTHER_CHANNEL = "https://www.youtube.com/channel/UCbbbbbbbbbbbbbbbbbbbbbb"
     }

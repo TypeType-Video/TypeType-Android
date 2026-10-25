@@ -2,6 +2,7 @@ package dev.typetype.android.data.network.dto
 
 import dev.typetype.android.domain.notifications.NotificationItem
 import dev.typetype.android.domain.notifications.NotificationsPage
+import dev.typetype.android.domain.notifications.UNKNOWN_SERVICE_ID
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -14,6 +15,7 @@ data class NotificationItemDto(
     val channelName: String,
     val channelAvatarUrl: String,
     val video: VideoItem,
+    val serviceId: Int = UNKNOWN_SERVICE_ID,
 )
 
 @Serializable
@@ -53,4 +55,5 @@ private fun NotificationItemDto.toDomain(): NotificationItem = NotificationItem(
     channelName = channelName,
     channelAvatarUrl = channelAvatarUrl,
     video = video.toDomainVideo(),
+    serviceId = serviceId,
 )

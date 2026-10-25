@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Self-hosted instances often run over plain HTTP on a home network or behind a private certificate authority. -->
 <network-security-config xmlns:tools="http://schemas.android.com/tools">
     <base-config
         cleartextTrafficPermitted="true"

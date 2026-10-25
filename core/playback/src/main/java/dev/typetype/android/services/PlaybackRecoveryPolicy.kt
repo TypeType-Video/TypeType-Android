@@ -1,7 +1,5 @@
 package dev.typetype.android.services
 
-// How long playback keeps trying on its own before the user sees an error, and how far apart the attempts are.
-// Matches the TV client: two minutes, starting at one second and doubling up to eight.
 internal class PlaybackRecoveryPolicy(
     val windowMs: Long = 120_000L,
     private val baseDelayMs: Long = 1_000L,

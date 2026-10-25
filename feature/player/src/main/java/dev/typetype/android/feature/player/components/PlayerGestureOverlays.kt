@@ -1,14 +1,8 @@
 package dev.typetype.android.feature.player.components
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -19,44 +13,14 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.dp
-import dev.typetype.android.feature.player.state.GestureSide
 import dev.typetype.android.feature.player.state.PlayerGestureState
-import kotlin.math.abs
-import kotlin.math.sin
 
 private const val SEEK_HINT_VISIBLE_MS = 650
-
-@Composable
-internal fun SeekHintOverlay(state: PlayerGestureState) {
-    val side = state.seekHintSide.value
-    val pulse = state.seekHintPulse.longValue
-    val animation = remember { Animatable(0f) }
-    LaunchedEffect(side, pulse) {
-        if (side != null) {
-            animation.snapTo(0f)
-            animation.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(SEEK_HINT_VISIBLE_MS, easing = LinearEasing),
-            )
-            state.seekHintSide.value = null
-        }
-    }
-    if (side != null) {
-        SeekTapWave(
-            side = side,
-            progress = animation.value,
-            seconds = state.seekHintSeconds.floatValue.toInt(),
-        )
-    }
-}
 
 @Composable
 internal fun PlaybackHintOverlay(state: PlayerGestureState) {
@@ -83,50 +47,6 @@ internal fun PlaybackHintOverlay(state: PlayerGestureState) {
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun SeekTapWave(
-    side: GestureSide,
-    progress: Float,
-    seconds: Int,
-) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        Canvas(
-            modifier = Modifier
-                .fillMaxHeight()
-                .fillMaxWidth(0.48f)
-                .align(if (side == GestureSide.Left) Alignment.CenterStart else Alignment.CenterEnd),
-        ) {
-            val originX = if (side == GestureSide.Left) size.width * 0.7f else size.width * 0.3f
-            val origin = Offset(originX, size.height / 2f)
-            repeat(3) { index ->
-                val phase = (progress - index * 0.18f).coerceIn(0f, 1f)
-                if (phase <= 0f || phase >= 1f) return@repeat
-                val radius = size.minDimension * (0.08f + phase * 0.5f)
-                drawArc(
-                    color = Color.White.copy(alpha = (1f - phase) * 0.9f),
-                    startAngle = if (side == GestureSide.Left) 125f else -55f,
-                    sweepAngle = 110f,
-                    useCenter = false,
-                    topLeft = Offset(origin.x - radius, origin.y - radius),
-                    size = androidx.compose.ui.geometry.Size(radius * 2f, radius * 2f),
-                    style = androidx.compose.ui.graphics.drawscope.Stroke(
-                        width = 3.dp.toPx(),
-                        cap = StrokeCap.Round,
-                    ),
-                )
-            }
-        }
-        Text(
-            text = if (side == GestureSide.Left) "-${seconds}s" else "+${seconds}s",
-            modifier = Modifier
-                .align(if (side == GestureSide.Left) Alignment.CenterStart else Alignment.CenterEnd)
-                .padding(horizontal = 56.dp),
-            color = Color.White,
-            style = MaterialTheme.typography.headlineSmall,
-        )
     }
 }
 

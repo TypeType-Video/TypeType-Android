@@ -11,33 +11,40 @@ image=typetype-fdroidserver:beta-patched
 exec 8>"$state_dir/sync.lock"
 flock 8
 
-release_json="$(
-  curl -fsSL --retry 5 \
-    "https://api.github.com/repos/${github_repo}/releases?per_page=100" |
-    jq -c '[.[] | select(.draft == false and .prerelease == true)] | first // empty'
-)"
+for attempt in $(seq 1 30); do
+  release_json="$(
+    curl -fsSL --retry 5 \
+      "https://api.github.com/repos/${github_repo}/releases?per_page=100" |
+      jq -c '[.[] | select(.draft == false and .prerelease == true)] | first // empty'
+  )"
 
-if [ -z "$release_json" ]; then
-  echo "No published TypeType Android prerelease was found." >&2
-  exit 1
-fi
+  if [ -z "$release_json" ]; then
+    echo "No published TypeType Android prerelease was found." >&2
+    exit 1
+  fi
 
-release_id="$(jq -er '.id' <<<"$release_json")"
-release_tag="$(jq -er '.tag_name' <<<"$release_json")"
-release_notes="$(jq -er '.body // ""' <<<"$release_json")"
+  release_id="$(jq -er '.id' <<<"$release_json")"
+  release_tag="$(jq -er '.tag_name' <<<"$release_json")"
+  release_notes="$(jq -er '.body // ""' <<<"$release_json")"
 
-if [ -f "${state_dir}/published-beta-release-id" ] && [ "$(<"${state_dir}/published-beta-release-id")" = "$release_id" ]; then
-  exit 0
-fi
+  if [ -f "${state_dir}/published-beta-release-id" ] && [ "$(<"${state_dir}/published-beta-release-id")" = "$release_id" ]; then
+    exit 0
+  fi
 
-mapfile -t apk_assets < <(
-  jq -er '.assets[] | select(.name | endswith(".apk")) | "\(.id)\t\(.name)"' <<<"$release_json"
-)
+  mapfile -t apk_assets < <(
+    jq -r '.assets[] | select(.state == "uploaded" and (.name | endswith(".apk"))) | "\(.id)\t\(.name)"' <<<"$release_json"
+  )
+  checksum_count="$(jq '[.assets[] | select(.state == "uploaded" and (.name | endswith(".apk.sha256")))] | length' <<<"$release_json")"
 
-if [ "${#apk_assets[@]}" -ne 1 ]; then
-  echo "Expected exactly one APK asset in prerelease ${release_tag}." >&2
-  exit 1
-fi
+  if [ "${#apk_assets[@]}" -eq 1 ] && [ "$checksum_count" -eq 1 ]; then
+    break
+  fi
+  if [ "$attempt" -eq 30 ]; then
+    echo "Expected exactly one uploaded APK and checksum in prerelease ${release_tag}." >&2
+    exit 1
+  fi
+  sleep 30
+done
 
 IFS=$'\t' read -r apk_id apk_name <<<"${apk_assets[0]}"
 checksum_name="${apk_name}.sha256"

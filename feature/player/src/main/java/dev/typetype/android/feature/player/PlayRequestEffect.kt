@@ -6,7 +6,6 @@ import androidx.media3.common.Player
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 
-// A request to open the video the player already holds starts it, even if it was restored or left paused.
 @Composable
 internal fun PlayRequestEffect(player: Player?, videoUrl: String, playRequests: Flow<String>) {
     LaunchedEffect(player, videoUrl, playRequests) {

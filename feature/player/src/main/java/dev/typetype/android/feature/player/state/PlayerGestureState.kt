@@ -4,6 +4,7 @@ import androidx.compose.runtime.MutableLongState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 
@@ -19,8 +20,9 @@ fun ResizeMode.next(): ResizeMode = when (this) {
 
 @Stable
 class PlayerGestureState {
-    val seekHintSide: MutableState<GestureSide?> = mutableStateOf(null)
-    val seekHintSeconds = mutableFloatStateOf(0f)
+    val seekHintSide: MutableState<GestureSide> = mutableStateOf(GestureSide.Right)
+    val seekHintVisible: MutableState<Boolean> = mutableStateOf(false)
+    val seekHintSeconds = mutableIntStateOf(0)
     val seekHintPulse: MutableLongState = mutableLongStateOf(0L)
     val playbackHintPlaying: MutableState<Boolean?> = mutableStateOf(null)
     val playbackHintPulse: MutableLongState = mutableLongStateOf(0L)
@@ -37,9 +39,15 @@ class PlayerGestureState {
     val longPressBoostActive: MutableState<Boolean> = mutableStateOf(false)
 
     fun showSeekHint(side: GestureSide, seconds: Int) {
+        val continuing = seekHintVisible.value && seekHintSide.value == side
+        seekHintSeconds.intValue = if (continuing) seekHintSeconds.intValue + seconds else seconds
         seekHintSide.value = side
-        seekHintSeconds.floatValue = seconds.toFloat()
+        seekHintVisible.value = true
         seekHintPulse.longValue += 1L
+    }
+
+    fun hideSeekHint() {
+        seekHintVisible.value = false
     }
 
     fun showPlaybackHint(isPlaying: Boolean) {

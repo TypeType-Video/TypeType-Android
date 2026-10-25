@@ -49,8 +49,6 @@ internal fun codecFailure(errorCode: Int, messages: List<String>): CodecFailure 
         PlaybackException.ERROR_CODE_DECODING_FORMAT_EXCEEDS_CAPABILITIES,
         PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED,
         -> CodecFailure.Lasting
-        // Init also fails when the output surface died with its screen, often with no message saying so. That
-        // says nothing about the codec, so the rejection ends when the app restarts.
         PlaybackException.ERROR_CODE_DECODER_INIT_FAILED ->
             if (mentionsSurface) CodecFailure.None else CodecFailure.ThisSession
         else -> CodecFailure.None

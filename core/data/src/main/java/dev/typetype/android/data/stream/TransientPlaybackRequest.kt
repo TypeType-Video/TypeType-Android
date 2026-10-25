@@ -56,8 +56,6 @@ internal suspend fun <T> transientPlaybackRequest(
     }
 }
 
-// Covers a gateway blip of about ten seconds. Longer outages during playback are retried by SabrWindowRecovery, so
-// a video that cannot open fails within seconds instead of a minute of skeleton.
 private const val MAX_SERVER_RESPONSE_RETRIES = 6
 private const val MAX_CONNECTED_TRANSPORT_RETRIES = 8
 private const val MAX_OFFLINE_WAIT_MS = 10_000L

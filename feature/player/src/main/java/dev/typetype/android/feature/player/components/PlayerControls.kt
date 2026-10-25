@@ -187,7 +187,6 @@ private fun BottomBar(
     onToggleFullscreen: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // I SPEND 2 HOURS FIGURING OUT HOW TO ALIGN THIS FREAKING SEEKBAR WITH THE BUTTON FULLSCREEN IM SUCH A FAILURE
     Row(
         modifier = modifier
             .height(

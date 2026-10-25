@@ -39,8 +39,6 @@ internal class SabrPlaybackWindowLoader(
     private val scope = CoroutineScope(SupervisorJob() + context)
     private var currentWindow = initialWindow
 
-    // The service matches recovery requests against the media item, which keeps the session it was built with. A
-    // stuck session replaced in place only moves the transport binding, so requests name the original session.
     private val sourceSessionId = transportState.currentBinding().sessionId
 
     override fun load(

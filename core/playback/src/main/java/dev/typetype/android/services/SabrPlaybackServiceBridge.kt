@@ -124,8 +124,6 @@ internal class SabrPlaybackServiceBridge(
         interruption.failed(error)
     }
 
-    // The server switched or lowered the video quality: the media item is rebuilt around the new session or itag.
-    // Returns false when that is not possible, so the failure goes through the ordinary retries instead.
     private fun rebuild(error: PlaybackException): Boolean {
         val state = player.currentMediaItem?.sabrPlaybackSeekState() ?: return false
         val replacement = error.sabrSessionReplacementFailure()

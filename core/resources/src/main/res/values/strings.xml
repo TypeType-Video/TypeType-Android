@@ -65,6 +65,16 @@
     <string name="shorts_title_clipboard_label">Short title</string>
     <string name="shorts_title_copied">Title copied</string>
     <string name="player_rewind">Rewind</string>
+    <string name="player_seek_forward_hint">+%1$d s</string>
+    <string name="player_seek_rewind_hint">−%1$d s</string>
+    <plurals name="player_seek_forward_announcement">
+        <item quantity="one">Forward %1$d second</item>
+        <item quantity="other">Forward %1$d seconds</item>
+    </plurals>
+    <plurals name="player_seek_rewind_announcement">
+        <item quantity="one">Back %1$d second</item>
+        <item quantity="other">Back %1$d seconds</item>
+    </plurals>
     <string name="player_previous_video">Previous video</string>
     <string name="player_play_pause">Play / pause</string>
     <string name="player_play">Play</string>
@@ -1251,11 +1261,33 @@
     <string name="push_status_action_required">Open your push distributor and complete its pending action</string>
     <string name="push_status_failed">Registration failed</string>
     <string name="push_devices_count" tools:ignore="PluralsCandidate">%1$d of %2$d devices registered</string>
-    <string name="push_install_hint">Install a UnifiedPush distributor such as ntfy to receive notifications.</string>
+    <string name="push_install_hint">Install a UnifiedPush distributor to get alerts as soon as a video is out. We recommend Sunup.</string>
+    <string name="push_get_sunup">Get Sunup</string>
     <string name="push_choose_distributor">Choose distributor</string>
     <string name="push_error_generic">Couldn\'t update push notifications</string>
     <string name="push_local_fallback">The app also checks for new videos every 15 minutes</string>
-    <string name="push_channel_bell_hint">Push alerts are sent only for channels where you turned on the bell.</string>
+    <string name="push_channels_title">Channels</string>
+    <string name="push_channels_subtitle">Choose which channels alert you about new videos</string>
+    <plurals name="push_channels_summary">
+        <item quantity="one">%1$d of %2$d channel sends alerts</item>
+        <item quantity="other">%1$d of %2$d channels send alerts</item>
+    </plurals>
+    <string name="push_channels_enable_all">Turn all on</string>
+    <string name="push_channels_disable_all">Turn all off</string>
+    <plurals name="push_summary_title">
+        <item quantity="one">%1$d new video</item>
+        <item quantity="other">%1$d new videos</item>
+    </plurals>
+    <plurals name="push_summary_more">
+        <item quantity="one">+%1$d more video</item>
+        <item quantity="other">+%1$d more videos</item>
+    </plurals>
+    <string name="push_channels_progress">Updating %1$d / %2$d</string>
+    <string name="push_channels_update_failed">Some channels could not be updated</string>
+    <string name="push_channels_load_failed">Your channels could not be loaded</string>
+    <string name="push_channels_empty">Subscribe to channels to get new video alerts</string>
+    <string name="push_notifications_blocked">Notifications are turned off for TypeType</string>
+    <string name="push_notifications_allow">Allow</string>
     <string name="channel_notifications_enable">Turn on new video notifications</string>
     <string name="channel_notifications_disable">Turn off new video notifications</string>
     <string name="push_battery_hint">Disable battery optimization for reliable notification delivery.</string>

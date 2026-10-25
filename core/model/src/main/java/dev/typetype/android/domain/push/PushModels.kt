@@ -8,6 +8,7 @@ data class PushDevice(
 data class ChannelNotificationsPreference(
     val channelUrl: String,
     val enabled: Boolean,
+    val updatedAtMillis: Long = 0L,
 )
 
 fun ChannelNotificationsPreference.matchesChannel(channelUrl: String): Boolean =

@@ -22,8 +22,8 @@ android {
 
     defaultConfig {
         applicationId = "dev.typetype.android"
-        versionCode = 11104
-        versionName = "1.11.0-beta.4"
+        versionCode = 11105
+        versionName = "1.11.0-beta.5"
     }
 
     signingConfigs {
@@ -79,7 +79,6 @@ android {
 }
 
 androidComponents.onVariants { variant ->
-    // Benchmarks and profile generation install their own package, so they never replace the user's app.
     if (variant.name == "benchmarkRelease" || variant.name == "nonMinifiedRelease") {
         variant.applicationId.set("dev.typetype.android.benchmark")
     }

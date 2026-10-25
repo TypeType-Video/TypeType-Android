@@ -10,9 +10,6 @@ internal sealed interface PlaybackRecoveryDecision {
     data object GiveUp : PlaybackRecoveryDecision
 }
 
-// Decides, for the current media item, whether a failed playback is restarted and when. The recovery window opens
-// at the first failure and only closes after a stretch of clean playback, so a stream that keeps failing between
-// short successes still ends on an error instead of retrying forever.
 internal class PlaybackRecoveryTracker(
     private val policy: PlaybackRecoveryPolicy = PlaybackRecoveryPolicy(),
     private val clock: () -> Long,
@@ -41,7 +38,6 @@ internal class PlaybackRecoveryTracker(
         return PlaybackRecoveryDecision.RetryAfter(policy.delayMs(attempt))
     }
 
-    // A new route ends the wait at once; the attempt counts toward the same window.
     fun networkReturned(): Boolean {
         if (!waitingForNetwork) return false
         waitingForNetwork = false

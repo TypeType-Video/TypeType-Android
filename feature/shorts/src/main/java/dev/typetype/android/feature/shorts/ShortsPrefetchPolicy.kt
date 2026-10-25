@@ -15,7 +15,6 @@ internal fun Context.allowsShortsPlaybackPrefetch(): Boolean {
     )
 }
 
-// The status constant is inlined; sdkInt keeps it from being read below API 24.
 @SuppressLint("InlinedApi")
 internal fun allowsShortsPlaybackPrefetch(
     sdkInt: Int,

@@ -53,4 +53,5 @@ internal fun ChannelNotificationPreferenceDto.toDomain(): ChannelNotificationsPr
     ChannelNotificationsPreference(
         channelUrl = channelUrl,
         enabled = enabled,
+        updatedAtMillis = updatedAt,
     )

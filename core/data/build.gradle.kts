@@ -8,7 +8,6 @@ android {
     namespace = "dev.typetype.android.core.data"
 }
 
-// Migration tests read the exported schemas from the test APK assets.
 androidComponents.onVariants { variant ->
     variant.androidTest?.sources?.assets?.addStaticSourceDirectory("$projectDir/schemas")
 }

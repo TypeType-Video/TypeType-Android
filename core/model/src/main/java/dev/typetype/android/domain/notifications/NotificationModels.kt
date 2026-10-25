@@ -11,7 +11,10 @@ data class NotificationItem(
     val channelName: String,
     val channelAvatarUrl: String,
     val video: Video,
+    val serviceId: Int = UNKNOWN_SERVICE_ID,
 )
+
+const val UNKNOWN_SERVICE_ID = -1
 
 data class NotificationsPage(
     val items: List<NotificationItem>,

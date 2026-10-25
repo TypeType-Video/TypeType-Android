@@ -14,8 +14,6 @@ sealed interface PlaybackRecoveryState {
     data class GaveUp(val mediaId: String) : PlaybackRecoveryState
 }
 
-// What the playback service is doing about a failed item. The player shows buffering while the service retries,
-// and the error only once it gave up or the failure cannot be retried, instead of guessing from the exception.
 @Singleton
 class PlaybackRecoveryStatus @Inject constructor() {
     private val mutableState = MutableStateFlow<PlaybackRecoveryState>(PlaybackRecoveryState.Idle)

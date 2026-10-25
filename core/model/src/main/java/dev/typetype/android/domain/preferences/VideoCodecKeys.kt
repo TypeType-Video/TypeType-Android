@@ -1,6 +1,5 @@
 package dev.typetype.android.domain.preferences
 
-// Stored values of the preferred video codec setting.
 const val RECOMMENDED_CODEC_KEY = "recommended"
 const val H264_CODEC_KEY = "h264"
 const val HEVC_CODEC_KEY = "hevc"
