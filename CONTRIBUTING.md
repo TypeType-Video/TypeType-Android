@@ -57,16 +57,25 @@ the contract advertised by the selected TypeType instance.
 
 ## Source layout
 
-| Path | Responsibility |
+| Module | Responsibility |
 | --- | --- |
-| `app/src/main/java/dev/typetype/android/core` | Shared UI and platform utilities |
-| `app/src/main/java/dev/typetype/android/data` | Network, database, cache, and repository implementations |
-| `app/src/main/java/dev/typetype/android/domain` | Models and application contracts |
-| `app/src/main/java/dev/typetype/android/feature` | Compose screens and feature state |
-| `app/src/main/java/dev/typetype/android/services` | Long-lived playback and Android services |
+| `app` | Activity, navigation, dependency wiring, app theme, and manifest |
+| `core:model` | Models, repository contracts, and small pure helpers |
+| `core:data` | Network, Room database, DataStore, and repository implementations |
+| `core:playback` | Playback service, SABR sessions, source and codec selection, recovery |
+| `core:notifications` | Push and local notifications |
+| `core:ui` | Shared Compose components, theme helpers, and navigation routes |
+| `core:resources` | Strings, drawables, and other shared resources |
+| `core:testing` | Helpers shared by device tests |
+| `feature:*` | One module per screen family: home, search, channel, library, subscriptions, player, Shorts, settings, setup, and more |
 | `player` | TypeType playback integration for Media3 |
-| `app/src/test` | JVM unit and repository tests |
-| `app/src/androidTest` | Room, Compose, platform, and device tests |
+| `baseline-profile` | Baseline profile generation and macrobenchmarks |
+| `build-logic` | Convention plugins that hold the shared Android setup |
+
+Each module keeps its JVM tests in `src/test` and its device tests in
+`src/androidTest`. Features depend on `core` modules, not on each other, except
+where a screen embeds another one, such as Shorts using the player. Device tests
+that need the real playback service or the Hilt graph live in `app`.
 
 Most changes only touch one or two of these areas. As a rule of thumb,
 composables render state, repositories decide how data is loaded and cached,
@@ -113,13 +122,16 @@ Before opening a pull request, run the same core checks as CI:
 
 ```sh
 ./gradlew --no-daemon \
-  :player:testDebugUnitTest \
-  :app:testDebugUnitTest \
-  :player:lintDebug \
-  :app:lintDebug \
+  :baseline-profile:assemble \
+  testDebugUnitTest \
+  lintDebug \
   :app:assembleDebug \
   :app:assembleRelease
 ```
+
+Lint warnings fail the build, and CI rejects a Kotlin file over the length
+limit. To run one module's device tests on a connected device or emulator, use
+for example `./gradlew :feature:home:connectedDebugAndroidTest`.
 
 Add the checks that make sense for your change. You are not expected to own
 every Android version or device; if something could not be tested, mention it
