@@ -984,6 +984,10 @@
         <item quantity="other">%1$s items</item>
     </plurals>
     <string name="algo_adjust">Adjust</string>
+    <plurals name="algo_ago_days">
+        <item quantity="one">%1$d day ago</item>
+        <item quantity="other">%1$d days ago</item>
+    </plurals>
     <string name="algo_ago_hours">%1$d h ago</string>
     <string name="algo_ago_now">just now</string>
     <string name="algo_all_settings">All settings</string>
@@ -1003,6 +1007,38 @@
     <string name="algo_computed_by">By %1$s.</string>
     <string name="algo_count_again">Take into account</string>
     <string name="algo_default">Default: %1$s</string>
+    <plurals name="algo_drop_blocked">
+        <item quantity="one">%1$d blocked</item>
+        <item quantity="other">%1$d blocked</item>
+    </plurals>
+    <plurals name="algo_drop_channel_cap">
+        <item quantity="one">%1$d too many from one channel</item>
+        <item quantity="other">%1$d too many from one channel</item>
+    </plurals>
+    <plurals name="algo_drop_excluded">
+        <item quantity="one">%1$d from excluded data</item>
+        <item quantity="other">%1$d from excluded data</item>
+    </plurals>
+    <plurals name="algo_drop_muted">
+        <item quantity="one">%1$d hidden interest</item>
+        <item quantity="other">%1$d hidden interests</item>
+    </plurals>
+    <plurals name="algo_drop_not_interested">
+        <item quantity="one">%1$d not for you</item>
+        <item quantity="other">%1$d not for you</item>
+    </plurals>
+    <plurals name="algo_drop_obscure">
+        <item quantity="one">%1$d almost nobody watched</item>
+        <item quantity="other">%1$d almost nobody watched</item>
+    </plurals>
+    <plurals name="algo_drop_seen">
+        <item quantity="one">%1$d already watched</item>
+        <item quantity="other">%1$d already watched</item>
+    </plurals>
+    <plurals name="algo_drop_short">
+        <item quantity="one">%1$d Short</item>
+        <item quantity="other">%1$d Shorts</item>
+    </plurals>
     <string name="algo_empty">No items.</string>
     <string name="algo_exclude">Exclude</string>
     <string name="algo_excluded">excluded from the home page</string>
@@ -1042,6 +1078,10 @@
     <string name="algo_ignore">Don\'t take into account</string>
     <string name="algo_ignored">not taken into account</string>
     <string name="algo_include">Include</string>
+    <plurals name="algo_interests_more">
+        <item quantity="one">Show the other one</item>
+        <item quantity="other">Show the %1$d others</item>
+    </plurals>
     <string name="algo_interest_yours">added by you</string>
     <string name="algo_items_label">Latest %1$d of %2$s</string>
     <string name="algo_keep_for">Read back</string>
@@ -1072,6 +1112,10 @@
     <string name="algo_restore">Restore</string>
     <string name="algo_retention_days_short">%1$d d</string>
     <string name="algo_retention_forever">No limit</string>
+    <plurals name="algo_retention_months">
+        <item quantity="one">%1$d month</item>
+        <item quantity="other">%1$d months</item>
+    </plurals>
     <string name="algo_retention_year">1 year</string>
     <string name="algo_rows_description">Why each row is on the home page.</string>
     <string name="algo_rows_label">Home page rows</string>
@@ -1092,6 +1136,10 @@
     <string name="algo_section_profile_description">Review and correct what the algorithm infers from your data.</string>
     <string name="algo_share_center">interests</string>
     <string name="algo_share_label">Share of interests</string>
+    <plurals name="algo_share_others">
+        <item quantity="one">%1$d other</item>
+        <item quantity="other">%1$d others</item>
+    </plurals>
     <string name="algo_show">Show</string>
     <string name="algo_source_subscriptions">subscriptions feed</string>
     <string name="algo_source_trending">trending</string>
@@ -1114,6 +1162,70 @@
     <string name="algo_experimental_on_with">On. %1$s builds your home page.</string>
     <string name="algo_sign_in">Sign in to an account on this instance to choose how your home page is built.</string>
     <string name="algo_not_offered">This instance has the recommender, but its admin has not offered the home page by algorithm yet. An admin can turn it on in the web admin console, under Recommender.</string>
+    <plurals name="algo_all_settings_description">
+        <item quantity="one">%1$d setting, with its default value.</item>
+        <item quantity="other">%1$d settings, with their default values.</item>
+    </plurals>
+    <plurals name="algo_based_on">
+        <item quantity="one">based on %1$d item</item>
+        <item quantity="other">based on %1$d items</item>
+    </plurals>
+    <plurals name="algo_changed_count">
+        <item quantity="one">%1$d changed</item>
+        <item quantity="other">%1$d changed</item>
+    </plurals>
+    <plurals name="algo_counts_for">
+        <item quantity="one">counts for %1$d more min</item>
+        <item quantity="other">counts for %1$d more min</item>
+    </plurals>
+    <plurals name="algo_dropped">
+        <item quantity="one">%1$d video set aside</item>
+        <item quantity="other">%1$d videos set aside</item>
+    </plurals>
+    <plurals name="algo_found">
+        <item quantity="one">%1$d video found</item>
+        <item quantity="other">%1$d videos found</item>
+    </plurals>
+    <plurals name="algo_rows_count">
+        <item quantity="one">%1$d row</item>
+        <item quantity="other">%1$d rows</item>
+    </plurals>
+    <plurals name="algo_scores_label">
+        <item quantity="one">%1$d best score</item>
+        <item quantity="other">%1$d best scores</item>
+    </plurals>
+    <plurals name="algo_settings_count">
+        <item quantity="one">%1$d setting</item>
+        <item quantity="other">%1$d settings</item>
+    </plurals>
+    <plurals name="algo_shown">
+        <item quantity="one">%1$d video shown</item>
+        <item quantity="other">%1$d videos shown</item>
+    </plurals>
+    <plurals name="algo_shown_rows">
+        <item quantity="one">In %1$d row.</item>
+        <item quantity="other">In %1$d rows.</item>
+    </plurals>
+    <plurals name="algo_source_channels">
+        <item quantity="one">catalogue of %1$d channel</item>
+        <item quantity="other">catalogue of %1$d channels</item>
+    </plurals>
+    <plurals name="algo_source_related">
+        <item quantity="one">videos related to %1$d watched video</item>
+        <item quantity="other">videos related to %1$d watched videos</item>
+    </plurals>
+    <plurals name="algo_source_search">
+        <item quantity="one">%1$d search</item>
+        <item quantity="other">%1$d searches</item>
+    </plurals>
+    <plurals name="algo_videos">
+        <item quantity="one">%1$d video</item>
+        <item quantity="other">%1$d videos</item>
+    </plurals>
+    <plurals name="algo_viewings">
+        <item quantity="one">watched %1$d time</item>
+        <item quantity="other">watched %1$d times</item>
+    </plurals>
     <string name="algo_interest_actions">Actions for %1$s</string>
     <string name="algo_interest_remove_named">Remove %1$s</string>
     <string name="home_algo_welcome_title">Your home page can learn what you like</string>
