@@ -40,6 +40,12 @@ interface TypeTypeRecommenderApi {
     @GET("recommendations/data")
     suspend fun recommenderData(): Response<JsonArray>
 
+    @GET("recommendations/last-home")
+    suspend fun recommenderLastHome(): Response<JsonObject>
+
+    @GET("recommendations/feedback")
+    suspend fun recommenderFeedback(): Response<JsonArray>
+
     @DELETE("recommendations/feedback/{id}")
     suspend fun deleteRecommenderFeedback(@Path("id") id: String): Response<Unit>
 }

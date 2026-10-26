@@ -38,7 +38,6 @@ import dev.typetype.android.feature.settings.SettingsDetailTopBar
 @Composable
 fun ContentSettingsRoute(
     onNavigateBack: () -> Unit,
-    onOpenRecommender: () -> Unit = {},
     viewModel: ContentSettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -46,7 +45,6 @@ fun ContentSettingsRoute(
         state = state,
         onAction = viewModel::onAction,
         onNavigateBack = onNavigateBack,
-        onOpenRecommender = onOpenRecommender,
     )
 }
 
@@ -55,7 +53,6 @@ fun ContentSettingsScreen(
     state: ContentSettingsState,
     onAction: (ContentSettingsAction) -> Unit,
     onNavigateBack: () -> Unit,
-    onOpenRecommender: () -> Unit = {},
 ) {
     val controlsEnabled = !state.isLoading && !state.isUpdating
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -171,45 +168,6 @@ fun ContentSettingsScreen(
                             action = ContentSettingsAction::SetHideSubscriptionLiveStreams,
                             onAction = onAction,
                         )
-                    }
-                }
-                if (state.recommenderAvailable) {
-                    item {
-                        SettingsSectionHeader(
-                            stringResource(R.string.settings_content_recommender),
-                        )
-                    }
-                    item {
-                        SwitchRow(
-                            title = stringResource(R.string.settings_content_recommender_enabled),
-                            subtitle = stringResource(
-                                if (state.recommenderExperimental) {
-                                    R.string.settings_content_recommender_experimental
-                                } else {
-                                    R.string.settings_content_recommender_subtitle
-                                },
-                            ),
-                            checked = state.recommenderEnabled,
-                            onCheckedChange = {
-                                onAction(ContentSettingsAction.SetRecommenderEnabled(it))
-                            },
-                            enabled = !state.isRecommenderLoading && !state.isRecommenderUpdating,
-                        )
-                    }
-                    item {
-                        RecommenderEntryRow(onClick = onOpenRecommender)
-                    }
-                    state.recommenderErrorMessage?.let { message ->
-                        item {
-                            ContentSettingsFailureCard(
-                                message = message,
-                                requestId = state.recommenderErrorRequestId,
-                                onRetry = { onAction(ContentSettingsAction.RetryRecommender) },
-                                onDismiss = {
-                                    onAction(ContentSettingsAction.DismissRecommenderFailure)
-                                },
-                            )
-                        }
                     }
                 }
             }

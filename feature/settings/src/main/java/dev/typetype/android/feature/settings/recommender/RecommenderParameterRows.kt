@@ -1,5 +1,6 @@
 package dev.typetype.android.feature.settings.recommender
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,82 +14,78 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import dev.typetype.android.R
-import dev.typetype.android.core.ui.components.SwitchRow
+import dev.typetype.android.core.ui.components.TypeTypeSwitch
 import dev.typetype.android.domain.recommendations.AlgorithmParameter
 import kotlin.math.roundToInt
 
 @Composable
-internal fun ParameterGroupHeader(group: String) {
-    val (title, help) = groupLabels(group)
-    Column(modifier = Modifier.padding(top = 8.dp)) {
-        Text(stringResource(title), style = MaterialTheme.typography.titleSmall)
-        Text(stringResource(help), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-}
-
-@Composable
-internal fun ParameterRow(parameter: AlgorithmParameter, value: Any?, onChange: (Any) -> Unit) {
-    when (parameter) {
-        is AlgorithmParameter.Toggle -> SwitchRow(
-            title = parameter.label,
-            subtitle = parameter.help,
-            checked = value as? Boolean ?: parameter.default,
-            onCheckedChange = { onChange(it) },
-        )
-        is AlgorithmParameter.Number -> NumberParameter(parameter, (value as? Number)?.toDouble() ?: parameter.default, onChange)
-    }
-}
-
-@Composable
-private fun NumberParameter(parameter: AlgorithmParameter.Number, current: Double, onChange: (Any) -> Unit) {
-    var position by remember(parameter.id, current) { mutableFloatStateOf(current.toFloat()) }
-    val intervals = ((parameter.max - parameter.min) / parameter.step).roundToInt()
-    val steps = if (intervals in 1..MAX_VISIBLE_STEPS) intervals - 1 else 0
-    val shown = formatValue(position.toDouble(), parameter)
-    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(parameter.label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-            Text(shown, style = MaterialTheme.typography.labelLarge)
+internal fun ParameterRow(
+    parameter: AlgorithmParameter,
+    value: Any,
+    showDefault: Boolean = false,
+    onRestore: (() -> Unit)? = null,
+    onChange: (Any) -> Unit,
+) {
+    val changed = !parameter.isDefault(value)
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        when (parameter) {
+            is AlgorithmParameter.Toggle -> Row(verticalAlignment = Alignment.CenterVertically) {
+                ParameterTitle(parameter, showDefault, Modifier.weight(1f))
+                TypeTypeSwitch(checked = value as? Boolean ?: parameter.default, onCheckedChange = { onChange(it) })
+            }
+            is AlgorithmParameter.Number -> NumberParameter(parameter, (value as? Number)?.toDouble() ?: parameter.default, showDefault, onChange)
         }
+        AnimatedVisibility(visible = changed && onRestore != null) {
+            TextAction(stringResource(R.string.algo_restore), { onRestore?.invoke() })
+        }
+    }
+}
+
+@Composable
+private fun ParameterTitle(parameter: AlgorithmParameter, showDefault: Boolean, modifier: Modifier = Modifier) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(parameter.label, style = MaterialTheme.typography.bodyLarge)
         parameter.help?.let {
             Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Slider(
-            value = position,
-            onValueChange = { position = snap(it.toDouble(), parameter).toFloat() },
-            onValueChangeFinished = { onChange(snap(position.toDouble(), parameter)) },
-            valueRange = parameter.min.toFloat()..parameter.max.toFloat(),
-            steps = steps,
-            modifier = Modifier.semantics { stateDescription = shown },
-        )
+        if (showDefault) {
+            Text(
+                stringResource(R.string.algo_default, formatParameter(parameter, parameter.defaultValue)),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
+}
+
+@Composable
+private fun NumberParameter(parameter: AlgorithmParameter.Number, current: Double, showDefault: Boolean, onChange: (Any) -> Unit) {
+    var position by remember(parameter.id, current) { mutableFloatStateOf(current.toFloat()) }
+    val shown = formatParameter(parameter, position.toDouble())
+    Row(verticalAlignment = Alignment.Top) {
+        ParameterTitle(parameter, showDefault, Modifier.weight(1f))
+        Text(shown, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(start = 12.dp))
+    }
+    Slider(
+        value = position,
+        onValueChange = { position = snap(it.toDouble(), parameter).toFloat() },
+        onValueChangeFinished = { onChange(snap(position.toDouble(), parameter)) },
+        valueRange = parameter.min.toFloat()..parameter.max.toFloat(),
+        modifier = Modifier.semantics { stateDescription = shown },
+    )
 }
 
 private fun snap(value: Double, parameter: AlgorithmParameter.Number): Double {
     val steps = ((value - parameter.min) / parameter.step).roundToInt()
-    return (parameter.min + steps * parameter.step).coerceIn(parameter.min, parameter.max)
+    val snapped = (parameter.min + steps * parameter.step).coerceIn(parameter.min, parameter.max)
+    return (snapped * PRECISION).roundToInt() / PRECISION
 }
 
-private fun formatValue(value: Double, parameter: AlgorithmParameter.Number): String {
-    if (parameter.unit == "%" && parameter.max <= 1.0) return "${(value * 100).roundToInt()} %"
-    val number = if (parameter.step >= 1.0) value.roundToInt().toString() else "%.2f".format(value)
-    return parameter.unit?.let { "$number $it" } ?: number
-}
-
-private fun groupLabels(group: String): Pair<Int, Int> = when (group) {
-    "rows" -> R.string.algo_group_rows to R.string.algo_group_rows_help
-    "sources" -> R.string.algo_group_sources to R.string.algo_group_sources_help
-    "exploration" -> R.string.algo_group_exploration to R.string.algo_group_exploration_help
-    "randomness" -> R.string.algo_group_randomness to R.string.algo_group_randomness_help
-    "decay" -> R.string.algo_group_decay to R.string.algo_group_decay_help
-    "weights" -> R.string.algo_group_weights to R.string.algo_group_weights_help
-    else -> R.string.algo_group_other to R.string.algo_group_other_help
-}
-
-private const val MAX_VISIBLE_STEPS = 12
+private const val PRECISION = 10_000.0
