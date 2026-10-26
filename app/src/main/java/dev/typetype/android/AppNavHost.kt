@@ -239,9 +239,6 @@ fun AppNavHost(
             composable<ContentSettingsRoute> {
                 ContentSettingsRouteScreen(
                     onNavigateBack = { navController.popBackStack() },
-                    onOpenRecommender = {
-                        navController.navigate(dev.typetype.android.core.ui.navigation.RecommenderSettingsRoute)
-                    },
                 )
             }
             composable<dev.typetype.android.core.ui.navigation.RecommenderSettingsRoute> {
