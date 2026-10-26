@@ -41,6 +41,9 @@ data class AlgorithmInfo(
     val goodToKnow: String,
     val traits: AlgorithmTraits,
     val parameters: List<AlgorithmParameter>,
+    val uses: List<String> = emptyList(),
+    val sources: List<String> = emptyList(),
+    val sourceUrl: String? = null,
 )
 
 data class AlgorithmCatalog(val defaultId: String?, val algorithms: List<AlgorithmInfo>)
@@ -51,24 +54,20 @@ data class RecommenderPreferences(
     val parameters: Map<String, Any> = emptyMap(),
     val pinnedGroups: List<String> = emptyList(),
     val mutedGroups: List<String> = emptyList(),
+    val ignoredSignals: List<String> = emptyList(),
+    val sessionResetAt: Long? = null,
     val customInterests: List<String> = emptyList(),
     val unusedData: List<String> = emptyList(),
+    val excludedItems: List<String> = emptyList(),
+    val retentionDays: Map<String, Int> = emptyMap(),
 )
-
-data class InterestGroup(
-    val id: String,
-    val label: String,
-    val weight: Double,
-    val pinned: Boolean,
-    val muted: Boolean,
-)
-
-data class DataFamily(val id: String, val count: Int, val used: Boolean)
 
 interface RecommenderRepository {
     suspend fun catalog(locale: String): Result<AlgorithmCatalog>
     suspend fun preferences(): Result<RecommenderPreferences>
     suspend fun save(preferences: RecommenderPreferences): Result<RecommenderPreferences>
-    suspend fun interests(locale: String): Result<List<InterestGroup>>
-    suspend fun dataFamilies(): Result<List<DataFamily>>
+    suspend fun profile(locale: String): Result<RecommenderProfile>
+    suspend fun data(): Result<List<DataCategory>>
+    suspend fun lastHome(): Result<PageTrace?>
+    suspend fun feedback(): Result<List<FeedbackEntry>>
 }
