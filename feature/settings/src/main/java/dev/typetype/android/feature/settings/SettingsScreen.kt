@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.UploadFile
@@ -60,6 +61,8 @@ fun SettingsScreen(
     onOpenAccounts: () -> Unit = {},
     onOpenAppearance: () -> Unit,
     onOpenContent: () -> Unit = {},
+    onOpenRecommendations: () -> Unit = {},
+    recommendationsAvailable: Boolean = false,
     onOpenPlayer: () -> Unit = {},
     onOpenPushNotifications: () -> Unit = {},
     onOpenStorage: () -> Unit = {},
@@ -88,6 +91,9 @@ fun SettingsScreen(
         }
         add(SettingsEntry(R.string.settings_appearance_title, R.string.settings_appearance_subtitle, Icons.Filled.Palette, onOpenAppearance))
         add(SettingsEntry(R.string.settings_content_title, R.string.settings_content_subtitle, Icons.Filled.Tune, onOpenContent))
+        if (recommendationsAvailable) {
+            add(SettingsEntry(R.string.algo_title, R.string.algo_entry_subtitle, Icons.Filled.AutoAwesome, onOpenRecommendations))
+        }
         add(SettingsEntry(R.string.settings_player_title, R.string.settings_player_subtitle, Icons.Filled.PlayCircle, onOpenPlayer))
         add(SettingsEntry(R.string.settings_push_title, R.string.settings_push_subtitle, Icons.Filled.Notifications, onOpenPushNotifications))
         add(SettingsEntry(R.string.settings_storage_title, R.string.settings_storage_subtitle, Icons.Filled.Storage, onOpenStorage))

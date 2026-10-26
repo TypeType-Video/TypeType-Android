@@ -29,6 +29,7 @@ import dev.typetype.android.core.ui.navigation.PrivacySettingsRoute
 import dev.typetype.android.core.ui.navigation.ProfileSettingsRoute
 import dev.typetype.android.core.ui.navigation.RssFeedsRoute
 import dev.typetype.android.core.ui.navigation.PushNotificationsRoute
+import dev.typetype.android.core.ui.navigation.RecommenderSettingsRoute
 import dev.typetype.android.core.ui.navigation.SettingsRoute
 import dev.typetype.android.core.ui.navigation.StorageSettingsRoute
 import dev.typetype.android.feature.settings.SettingsRoute as SettingsMenu
@@ -67,6 +68,7 @@ internal fun AdaptiveSettingsHost(
                             onOpenRssFeeds = { navController.selectSettings(RssFeedsRoute) },
                             onOpenAppearance = { navController.selectSettings(AppearanceRoute) },
                             onOpenContent = { navController.selectSettings(ContentSettingsRoute) },
+                            onOpenRecommendations = { navController.selectSettings(RecommenderSettingsRoute) },
                             onOpenPlayer = { navController.selectSettings(PlayerSettingsRoute) },
                             onOpenPushNotifications = { navController.selectSettings(PushNotificationsRoute) },
                             onOpenStorage = { navController.selectSettings(StorageSettingsRoute) },
@@ -105,6 +107,7 @@ private fun NavDestination.settingsTitle(): Int? = when {
     hasRoute<ImportDataRoute>() -> R.string.settings_import_title
     hasRoute<RssFeedsRoute>() -> R.string.rss_settings_title
     hasRoute<ContentSettingsRoute>() -> R.string.settings_content_title
+    hasRoute<RecommenderSettingsRoute>() -> R.string.algo_title
     hasRoute<PlayerSettingsRoute>() -> R.string.settings_player_title
     hasRoute<StorageSettingsRoute>() -> R.string.settings_storage_title
     hasRoute<PrivacySettingsRoute>() -> R.string.settings_privacy_title

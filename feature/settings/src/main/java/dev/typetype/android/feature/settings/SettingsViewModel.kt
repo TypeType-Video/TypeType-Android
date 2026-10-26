@@ -20,6 +20,7 @@ import kotlinx.coroutines.launch
 data class SettingsState(
     val accountFeaturesAvailable: Boolean = false,
     val rssAvailable: Boolean = false,
+    val recommenderInstalled: Boolean = false,
 )
 
 @HiltViewModel
@@ -43,6 +44,7 @@ class SettingsViewModel @Inject constructor(
                     mutableState.update {
                         it.copy(
                             rssAvailable = server?.rss?.enabled == true,
+                            recommenderInstalled = server?.recommender?.installed == true,
                         )
                     }
                 }
