@@ -4,6 +4,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import dev.typetype.android.core.ui.navigation.AboutRoute
+import dev.typetype.android.core.ui.navigation.AppUpdatesRoute
 import dev.typetype.android.core.ui.navigation.AccountsRoute
 import dev.typetype.android.core.ui.navigation.AppearanceRoute
 import dev.typetype.android.core.ui.navigation.BlockedSettingsRoute
@@ -49,6 +50,7 @@ internal fun NavGraphBuilder.settingsDestinations(
             onOpenPrivacy = { navController.navigate(PrivacySettingsRoute) },
             onOpenDiagnostics = { navController.navigate(DiagnosticsRoute) },
             onOpenBlocked = { navController.navigate(BlockedSettingsRoute) },
+            onOpenUpdates = { navController.navigate(AppUpdatesRoute) },
             onOpenAbout = { navController.navigate(AboutRoute) },
             onSignOut = onSignOut,
         )

@@ -81,6 +81,9 @@ data object DiagnosticsRoute
 data object BlockedSettingsRoute
 
 @Serializable
+data object AppUpdatesRoute
+
+@Serializable
 data object AboutRoute
 
 @Serializable

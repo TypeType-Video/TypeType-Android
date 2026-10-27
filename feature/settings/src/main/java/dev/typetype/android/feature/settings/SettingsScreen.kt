@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.RssFeed
 import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -69,6 +70,7 @@ fun SettingsScreen(
     onOpenPrivacy: () -> Unit = {},
     onOpenDiagnostics: () -> Unit = {},
     onOpenBlocked: () -> Unit = {},
+    onOpenUpdates: () -> Unit = {},
     onOpenAbout: () -> Unit = {},
     onSignOut: () -> Unit,
     selectedTitleRes: Int? = null,
@@ -100,6 +102,7 @@ fun SettingsScreen(
         add(SettingsEntry(R.string.settings_privacy_title, R.string.settings_privacy_subtitle, Icons.Filled.Lock, onOpenPrivacy))
         add(SettingsEntry(R.string.diagnostics_title, R.string.diagnostics_subtitle, Icons.Filled.BugReport, onOpenDiagnostics))
         add(SettingsEntry(R.string.settings_blocked_title, R.string.settings_blocked_subtitle, Icons.Filled.Block, onOpenBlocked))
+        add(SettingsEntry(R.string.updates_title, R.string.updates_entry_subtitle, Icons.Filled.SystemUpdate, onOpenUpdates))
         add(SettingsEntry(R.string.settings_about_title, R.string.settings_about_subtitle, Icons.Filled.Info, onOpenAbout))
     }
     Surface(
