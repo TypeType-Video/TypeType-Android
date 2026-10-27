@@ -1,4 +1,4 @@
-package dev.typetype.android.feature.settings.about
+package dev.typetype.android.feature.settings.updates
 
 import dev.typetype.android.domain.appupdate.AppUpdateChannel
 import dev.typetype.android.domain.appupdate.AppUpdateFailureReason

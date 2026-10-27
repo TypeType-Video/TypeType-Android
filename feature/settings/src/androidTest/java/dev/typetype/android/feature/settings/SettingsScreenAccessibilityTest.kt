@@ -127,6 +127,7 @@ class SettingsScreenAccessibilityTest {
                         onOpenPrivacy = {},
                         onOpenDiagnostics = {},
                         onOpenBlocked = {},
+                        onOpenUpdates = {},
                         onOpenAbout = {},
                         onSignOut = {},
                     )
@@ -147,6 +148,7 @@ class SettingsScreenAccessibilityTest {
         R.string.settings_privacy_title,
         R.string.diagnostics_title,
         R.string.settings_blocked_title,
+        R.string.updates_title,
         R.string.settings_about_title,
         R.string.settings_sign_out,
     ).map(::resource)

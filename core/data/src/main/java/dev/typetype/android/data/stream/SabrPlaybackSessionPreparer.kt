@@ -80,7 +80,7 @@ internal class SabrPlaybackSessionPreparer(
             listOf("sabr", "playback", binding.sessionId, "seek"),
             "SABR seek left its server session endpoint",
         )
-        if (!response.isSuccessful) throw serverResponseException(response)
+        if (!response.isSuccessful) throw sabrSessionResponseException(response)
         val control = response.body()
             ?.requireControlResponse(target, binding.sessionId, binding.generation)
             ?: sabrContractMismatch("SABR returned an empty seek response")

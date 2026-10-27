@@ -4,6 +4,7 @@ import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.HttpDataSource
 import dev.typetype.android.core.error.CodedFailure
+import dev.typetype.android.data.stream.SABR_PLAYBACK_NOT_FOUND
 import dev.typetype.android.data.stream.SABR_PREPARATION_TIMEOUT
 import dev.typetype.android.data.stream.SabrPlaybackRecoveryException
 import java.io.InterruptedIOException
@@ -81,7 +82,7 @@ private fun Int.recoveryCause(sabrMedia: Boolean = true): PlaybackRecoveryCause 
 private val SESSION_FAILURE_CODES = setOf(
     SABR_PREPARATION_TIMEOUT,
     SABR_CONTRACT_FAILURE_CODE,
-    "sabr_playback_not_found",
+    SABR_PLAYBACK_NOT_FOUND,
 )
 private val GONE_STATUS_CODES = setOf(404, 409, 410)
 private const val MAX_CAUSE_DEPTH = 8

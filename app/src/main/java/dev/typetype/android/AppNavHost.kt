@@ -15,6 +15,7 @@ import androidx.navigation.compose.rememberNavController
 import dev.typetype.android.core.ui.branding.DeArrowBrandingViewModel
 import dev.typetype.android.core.ui.branding.LocalDeArrowBranding
 import dev.typetype.android.core.ui.navigation.AboutRoute
+import dev.typetype.android.core.ui.navigation.AppUpdatesRoute
 import dev.typetype.android.core.ui.navigation.AccountsRoute
 import dev.typetype.android.core.ui.navigation.AddServerRoute
 import dev.typetype.android.core.ui.navigation.AppearanceRoute
@@ -47,6 +48,7 @@ import dev.typetype.android.feature.player.PlayerViewModel
 import dev.typetype.android.feature.player.components.LocalPlaybackRecovery
 import dev.typetype.android.feature.search.SearchRoute as SearchRouteScreen
 import dev.typetype.android.feature.settings.about.AboutScreen
+import dev.typetype.android.feature.settings.updates.AppUpdatesScreen
 import dev.typetype.android.feature.settings.accounts.AccountSettingsRoute as AccountSettingsRouteScreen
 import dev.typetype.android.feature.settings.appearance.AppearanceRoute as AppearanceRouteScreen
 import dev.typetype.android.feature.settings.blocked.BlockedSettingsRoute as BlockedSettingsRouteScreen
@@ -268,6 +270,9 @@ fun AppNavHost(
                 BlockedSettingsRouteScreen(
                     onNavigateBack = { navController.popBackStack() },
                 )
+            }
+            composable<AppUpdatesRoute> {
+                AppUpdatesScreen(onNavigateBack = { navController.popBackStack() })
             }
             composable<AboutRoute> {
                 AboutScreen(

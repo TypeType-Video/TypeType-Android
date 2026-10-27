@@ -21,6 +21,7 @@ fun SettingsRoute(
     onOpenPrivacy: () -> Unit,
     onOpenDiagnostics: () -> Unit,
     onOpenBlocked: () -> Unit,
+    onOpenUpdates: () -> Unit,
     onOpenAbout: () -> Unit,
     onSignOut: () -> Unit,
     selectedTitleRes: Int? = null,
@@ -46,6 +47,7 @@ fun SettingsRoute(
         onOpenPrivacy = onOpenPrivacy,
         onOpenDiagnostics = onOpenDiagnostics,
         onOpenBlocked = onOpenBlocked,
+        onOpenUpdates = onOpenUpdates,
         onOpenAbout = onOpenAbout,
         onSignOut = onSignOut,
     )
