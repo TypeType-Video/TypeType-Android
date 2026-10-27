@@ -81,15 +81,6 @@ fun AboutScreen(
                     }
                 }
                 item {
-                    AboutAppUpdatesSection(
-                        state = state.appUpdate,
-                        onChannelChanged = viewModel::setAppUpdateChannel,
-                        onCheck = viewModel::checkAppUpdate,
-                        onDownload = viewModel::downloadAppUpdate,
-                        onInstall = viewModel::installAppUpdate,
-                    )
-                }
-                item {
                     AboutVersionsSection(
                         versions = state.componentVersions,
                         isLoading = state.isLoadingVersions,
