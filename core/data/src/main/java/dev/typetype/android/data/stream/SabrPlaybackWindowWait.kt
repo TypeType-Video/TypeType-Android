@@ -5,7 +5,6 @@ import dev.typetype.android.data.network.TypeTypeMediaApi
 import dev.typetype.android.data.network.dto.SabrPlaybackPositionRequestDto
 import dev.typetype.android.data.network.dto.SabrPlaybackResponse
 import dev.typetype.android.data.network.dto.SabrPlaybackWindowRequestDto
-import dev.typetype.android.data.network.serverResponseException
 import dev.typetype.android.domain.stream.SabrPlaybackBufferedRange
 import dev.typetype.android.domain.stream.SabrPlaybackSession
 import dev.typetype.android.domain.stream.SabrPlaybackTarget
@@ -45,7 +44,7 @@ internal class SabrPlaybackWindowWait(
                 api.prefetchSabrPlayback(control.sessionId, request())
             }
             prefetch.requireWindowEndpoint(baseUrl, control.sessionId, "prefetch")
-            if (!prefetch.isSuccessful) throw serverResponseException(prefetch)
+            if (!prefetch.isSuccessful) throw sabrSessionResponseException(prefetch)
             val pending = prefetch.body()
                 ?.requireWindowIdentity(control)
                 ?: sabrContractMismatch("SABR returned an empty prefetch response")
@@ -55,7 +54,7 @@ internal class SabrPlaybackWindowWait(
                     api.sabrPlaybackSegments(control.sessionId, request())
                 }
                 segments.requireWindowEndpoint(baseUrl, control.sessionId, "segments")
-                if (!segments.isSuccessful) throw serverResponseException(segments)
+                if (!segments.isSuccessful) throw sabrSessionResponseException(segments)
                 val window = segments.body()
                     ?.requireWindowIdentity(control)
                     ?: sabrContractMismatch("SABR returned an empty segment window")
@@ -108,7 +107,7 @@ internal class SabrPlaybackWindowWait(
             listOf("sabr", "playback", control.sessionId, "position"),
             "SABR position update left its server session endpoint",
         )
-        if (!response.isSuccessful) throw serverResponseException(response)
+        if (!response.isSuccessful) throw sabrSessionResponseException(response)
         val body = response.body()
             ?: sabrContractMismatch("SABR returned an empty position response")
         if (body.sessionId != control.sessionId || body.generation != control.generation) {
