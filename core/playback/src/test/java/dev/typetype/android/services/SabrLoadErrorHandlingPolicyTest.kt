@@ -1,0 +1,34 @@
+package dev.typetype.android.services
+
+import androidx.media3.common.C
+import dev.typetype.android.data.network.transientHttpRetryDelayMs
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Test
+
+class SabrLoadErrorHandlingPolicyTest {
+    @Test
+    fun `segment readiness polling is bounded to nine requests`() {
+        assertEquals(250L, sabrSegmentRetryDelayMs(1, 250L))
+        assertEquals(250L, sabrSegmentRetryDelayMs(8, 250L))
+        assertEquals(C.TIME_UNSET, sabrSegmentRetryDelayMs(9, 250L))
+    }
+
+    @Test
+    fun `transient media load backoff is bounded to three retries`() {
+        assertEquals(500L, transientHttpRetryDelayMs(1, 3, null))
+        assertEquals(1_000L, transientHttpRetryDelayMs(2, 3, null))
+        assertEquals(2_000L, transientHttpRetryDelayMs(3, 3, null))
+        assertNull(transientHttpRetryDelayMs(4, 3, null))
+    }
+
+    @Test
+    fun `server retry delay is parsed and clamped`() {
+        val body = """{"status":"preparing","retryAfterMs":250}""".toByteArray()
+
+        assertEquals(250L, body.sabrResponseRetryAfterMs())
+        assertEquals(100L, sabrSegmentRetryDelayMs(1, 0L))
+        assertEquals(30_000L, transientHttpRetryDelayMs(1, 3, 30_000L))
+        assertNull("""{"status":"preparing"}""".toByteArray().sabrResponseRetryAfterMs())
+    }
+}

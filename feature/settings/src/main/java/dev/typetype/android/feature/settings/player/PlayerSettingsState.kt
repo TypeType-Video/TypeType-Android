@@ -1,0 +1,42 @@
+package dev.typetype.android.feature.settings.player
+
+import dev.typetype.android.domain.usersettings.DEFAULT_SPONSOR_BLOCK_CATEGORY_ACTIONS
+import dev.typetype.android.domain.usersettings.CaptionStyles
+import dev.typetype.android.domain.usersettings.SponsorBlockMode
+
+data class PlayerSettingsState(
+    val doubleTapSeekEnabled: Boolean = true,
+    val doubleTapSeekSeconds: Int = 10,
+    val preferredCodec: String = "recommended",
+    val swipeSeekEnabled: Boolean = true,
+    val swipeBrightnessVolumeEnabled: Boolean = true,
+    val longPressSpeedEnabled: Boolean = true,
+    val accessibleControlsEnabled: Boolean = false,
+    val autoplayEnabled: Boolean = true,
+    val autoplayCountdownSeconds: Int = 10,
+    val skipPlaylistAutoplayScreen: Boolean = false,
+    val audioOnlyPlayback: Boolean = false,
+    val pauseInBackgroundEnabled: Boolean = false,
+    val danmakuEnabled: Boolean = false,
+    val danmakuSpeed: Float = 1f,
+    val danmakuSize: Float = 1f,
+    val defaultQuality: String = "1080p",
+    val mobileDataQuality: String = "1080p",
+    val defaultPlaybackSpeed: Double = 1.0,
+    val defaultService: Int = 0,
+    val subtitlesEnabled: Boolean = false,
+    val defaultSubtitleLanguage: String = "",
+    val defaultAudioLanguage: String = "",
+    val preferOriginalLanguage: Boolean = false,
+    val captionStyles: CaptionStyles = CaptionStyles(),
+    val sponsorBlockMode: SponsorBlockMode = SponsorBlockMode.AutoSkip,
+    val sponsorBlockCategoryActions: Map<String, SponsorBlockMode> =
+        DEFAULT_SPONSOR_BLOCK_CATEGORY_ACTIONS,
+    val sponsorBlockMinimumDuration: Int = 0,
+    val sponsorBlockShowCurrentSegment: Boolean = true,
+    val sponsorBlockShowChapters: Boolean = false,
+    val sponsorBlockShowFullVideoLabels: Boolean = true,
+    val sponsorBlockManualSkipOnFullVideo: Boolean = true,
+    val sponsorBlockSkipNonMusicOnlyOnMusicVideos: Boolean = false,
+    val sponsorBlockMuteInsteadOfSkip: Boolean = false,
+)

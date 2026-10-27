@@ -1,0 +1,54 @@
+package dev.typetype.android.feature.settings
+
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
+@Composable
+fun SettingsRoute(
+    onNavigateBack: () -> Unit,
+    onOpenProfile: () -> Unit,
+    onOpenImport: () -> Unit,
+    onOpenRssFeeds: () -> Unit,
+    onOpenAccounts: () -> Unit,
+    onOpenAppearance: () -> Unit,
+    onOpenContent: () -> Unit,
+    onOpenRecommendations: () -> Unit,
+    onOpenPlayer: () -> Unit,
+    onOpenPushNotifications: () -> Unit,
+    onOpenStorage: () -> Unit,
+    onOpenPrivacy: () -> Unit,
+    onOpenDiagnostics: () -> Unit,
+    onOpenBlocked: () -> Unit,
+    onOpenUpdates: () -> Unit,
+    onOpenAbout: () -> Unit,
+    onSignOut: () -> Unit,
+    selectedTitleRes: Int? = null,
+    viewModel: SettingsViewModel = hiltViewModel(),
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    SettingsScreen(
+        selectedTitleRes = selectedTitleRes,
+        onNavigateBack = onNavigateBack,
+        onOpenAccounts = onOpenAccounts,
+        onOpenProfile = onOpenProfile,
+        onOpenImport = onOpenImport,
+        importsAvailable = state.accountFeaturesAvailable,
+        onOpenRssFeeds = onOpenRssFeeds,
+        rssAvailable = state.accountFeaturesAvailable && state.rssAvailable,
+        onOpenAppearance = onOpenAppearance,
+        onOpenContent = onOpenContent,
+        onOpenRecommendations = onOpenRecommendations,
+        recommendationsAvailable = state.accountFeaturesAvailable && state.recommenderInstalled,
+        onOpenPlayer = onOpenPlayer,
+        onOpenPushNotifications = onOpenPushNotifications,
+        onOpenStorage = onOpenStorage,
+        onOpenPrivacy = onOpenPrivacy,
+        onOpenDiagnostics = onOpenDiagnostics,
+        onOpenBlocked = onOpenBlocked,
+        onOpenUpdates = onOpenUpdates,
+        onOpenAbout = onOpenAbout,
+        onSignOut = onSignOut,
+    )
+}

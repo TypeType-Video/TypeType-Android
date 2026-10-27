@@ -1,0 +1,76 @@
+package dev.typetype.android.feature.settings.diagnostics
+
+import dev.typetype.android.domain.diagnostics.DiagnosticEntry
+import dev.typetype.android.domain.diagnostics.SabrDiagnosticDetail
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class DiagnosticReportTest {
+    @Test
+    fun reportIncludesStableFailureCode() {
+        val entry = DiagnosticEntry(
+            timestampEpochMillis = 1_700_000_000_000,
+            method = "LOCAL",
+            route = "/subscriptions/feed/server",
+            statusCode = 503,
+            durationMillis = 0,
+            requestId = "safe-request-id",
+            failureCode = "subscription_feed_upstream_unavailable",
+        )
+
+        val report = buildDiagnosticReport(listOf(entry))
+
+        assertTrue(report.contains("code subscription_feed_upstream_unavailable"))
+        assertTrue(report.contains("request safe-request-id"))
+    }
+
+    @Test
+    fun reportIncludesRedactedPushTraceId() {
+        val entry = DiagnosticEntry(
+            timestampEpochMillis = 1_700_000_000_000,
+            method = "LOCAL",
+            route = "/push/notification/posted",
+            statusCode = null,
+            durationMillis = 0,
+            requestId = null,
+            traceId = "abcdef0123456789",
+        )
+
+        val report = buildDiagnosticReport(listOf(entry))
+
+        assertTrue(report.contains("LOCAL /push/notification/posted"))
+        assertTrue(report.contains("trace abcdef0123456789"))
+        assertFalse(report.contains("notifications disabled"))
+    }
+
+    @Test
+    fun reportContainsOnlyRedactedSabrMetadata() {
+        val entry = DiagnosticEntry(
+            timestampEpochMillis = 1_700_000_000_000,
+            method = "POST",
+            route = "/sabr/playback/prefetch",
+            statusCode = 202,
+            durationMillis = 24,
+            requestId = "safe-request-id",
+            sabr = SabrDiagnosticDetail(
+                sessionFingerprint = "s-0123456789ab",
+                generation = 2,
+                state = SabrDiagnosticDetail.State.Preparing,
+                track = SabrDiagnosticDetail.Track.Video,
+                blocker = SabrDiagnosticDetail.Blocker.SegmentPending,
+                terminal = null,
+                recovery = null,
+                bufferProgress = SabrDiagnosticDetail.BufferProgress.Stalled,
+            ),
+        )
+
+        val report = buildDiagnosticReport(listOf(entry))
+
+        assertTrue(report.contains("SABR session=s-0123456789ab"))
+        assertTrue(report.contains("blocker=segment-pending"))
+        assertTrue(report.contains("buffer=stalled"))
+        assertFalse(report.contains("video:137:123"))
+        assertFalse(report.contains("private-session"))
+    }
+}

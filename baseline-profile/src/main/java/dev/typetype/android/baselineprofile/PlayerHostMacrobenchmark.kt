@@ -1,6 +1,5 @@
 package dev.typetype.android.baselineprofile
 
-import android.content.Intent
 import androidx.benchmark.macro.CompilationMode
 import androidx.benchmark.macro.ExperimentalMetricApi
 import androidx.benchmark.macro.FrameTimingMetric
@@ -20,7 +19,7 @@ class PlayerHostMacrobenchmark {
     @OptIn(ExperimentalMetricApi::class)
     @Test
     fun playerMorph() = benchmarkRule.measureRepeated(
-        packageName = PACKAGE_NAME,
+        packageName = TARGET_PACKAGE,
         metrics = listOf(
             FrameTimingMetric(),
             MemoryUsageMetric(
@@ -35,7 +34,7 @@ class PlayerHostMacrobenchmark {
         iterations = 5,
         setupBlock = {
             killProcess()
-            startActivityAndWait(benchmarkIntent())
+            startActivityAndWait(benchmarkActivity("PlayerHostBenchmarkActivity"))
         },
     ) {
         repeat(3) {
@@ -66,12 +65,5 @@ class PlayerHostMacrobenchmark {
             steps,
         )
         device.waitForIdle((durationMs + 800).toLong())
-    }
-
-    private fun benchmarkIntent() = Intent().setClassName(PACKAGE_NAME, ACTIVITY_NAME)
-
-    private companion object {
-        const val PACKAGE_NAME = "dev.typetype.android"
-        const val ACTIVITY_NAME = "dev.typetype.android.benchmark.PlayerHostBenchmarkActivity"
     }
 }

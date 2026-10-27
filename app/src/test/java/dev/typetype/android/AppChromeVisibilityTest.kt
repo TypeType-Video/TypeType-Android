@@ -1,6 +1,6 @@
 package dev.typetype.android
 
-import dev.typetype.android.feature.player.host.PlayerHostTarget
+import dev.typetype.android.core.ui.player.PlayerHostTarget
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

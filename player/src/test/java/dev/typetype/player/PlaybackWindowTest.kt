@@ -48,10 +48,85 @@ class PlaybackWindowTest {
 
     @Test
     fun playbackWindowRefreshWaitsUntilBufferAndAvailableMediaAreLow() {
-        assertFalse(shouldRefreshPlaybackWindow(10_000_000, 30_000_000, 30_000_000, false))
-        assertFalse(shouldRefreshPlaybackWindow(10_000_000, 29_999_999, 40_000_000, false))
-        assertTrue(shouldRefreshPlaybackWindow(10_000_000, 29_999_999, 29_999_999, false))
+        assertFalse(
+            shouldRefreshPlaybackWindow(
+                playbackPositionUs = 10_000_000,
+                bufferedEndUs = 17_000_000,
+                availableEndUs = 17_000_000,
+                endOfStream = false,
+                bufferGoalUs = 10_000_000,
+            ),
+        )
+        assertFalse(
+            shouldRefreshPlaybackWindow(
+                playbackPositionUs = 10_000_000,
+                bufferedEndUs = 16_000_000,
+                availableEndUs = 20_000_000,
+                endOfStream = false,
+                bufferGoalUs = 10_000_000,
+            ),
+        )
+        assertTrue(
+            shouldRefreshPlaybackWindow(
+                playbackPositionUs = 10_000_000,
+                bufferedEndUs = 16_000_000,
+                availableEndUs = 16_000_000,
+                endOfStream = false,
+                bufferGoalUs = 10_000_000,
+            ),
+        )
         assertFalse(shouldRefreshPlaybackWindow(30_000_000, 30_000_000, 30_000_000, true))
+    }
+
+    @Test
+    fun satisfiedBufferGoalDoesNotTriggerRefreshOnEveryPoll() {
+        val windowEndUs = 10_000_000L
+
+        assertFalse(shouldRefreshPlaybackWindow(0L, windowEndUs, windowEndUs, false, 10_000_000L))
+        assertFalse(shouldRefreshPlaybackWindow(3_333_333L, windowEndUs, windowEndUs, false, 10_000_000L))
+        assertTrue(shouldRefreshPlaybackWindow(3_333_335L, windowEndUs, windowEndUs, false, 10_000_000L))
+    }
+
+    @Test
+    fun initialBufferGoalUsesItsOwnRefreshWatermark() {
+        assertFalse(shouldRefreshPlaybackWindow(0L, 2_500_000L, 2_500_000L, false, 2_500_000L))
+        assertTrue(shouldRefreshPlaybackWindow(0L, 1_249_999L, 1_249_999L, false, 2_500_000L))
+    }
+
+    @Test
+    fun stagnantWindowsBackOffRefreshPollingAndRecoverWhenProgressResumes() {
+        val cadence = PlaybackWindowRefreshCadence()
+
+        assertEquals(1_000L, cadence.onWindowAvailable(1_000_000L, 1_000_000L, 5_000_000L))
+        assertEquals(2_000L, cadence.onWindowAvailable(1_000_000L, 1_000_000L, 5_000_000L))
+        assertEquals(2_000L, cadence.onWindowAvailable(1_000_000L, 1_000_000L, 5_000_000L))
+        assertEquals(500L, cadence.onWindowAvailable(1_000_000L, 2_000_000L, 5_000_000L))
+        assertEquals(500L, cadence.onWindowAvailable(2_000_000L, 5_000_000L, 5_000_000L))
+    }
+
+    @Test
+    fun availableWindowAheadIsMeasuredFromTheCurrentPlaybackPosition() {
+        val window = PlaybackWindow(
+            generation = 0L,
+            durationUs = 60_000_000L,
+            startPositionUs = 10_000_000L,
+            endOfStream = false,
+            audio = track(PlaybackTrackKind.Audio, "140", 30_000_000L),
+            video = track(PlaybackTrackKind.Video, "137", 30_000_000L),
+        )
+
+        assertEquals(20_000_000L, window.availableWindowAheadUs(20_000_000L))
+    }
+
+    @Test
+    fun seekResetsTheRefreshPollingBackoff() {
+        val cadence = PlaybackWindowRefreshCadence()
+        cadence.onWindowAvailable(1_000_000L, 1_000_000L, 5_000_000L)
+        cadence.onWindowAvailable(1_000_000L, 1_000_000L, 5_000_000L)
+
+        cadence.reset()
+
+        assertEquals(500L, cadence.pollIntervalMs)
     }
 
     @Test

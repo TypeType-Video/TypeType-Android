@@ -17,6 +17,7 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import dev.typetype.android.core.ui.navigation.AboutRoute
+import dev.typetype.android.core.ui.navigation.AppUpdatesRoute
 import dev.typetype.android.core.ui.navigation.AccountsRoute
 import dev.typetype.android.core.ui.navigation.AppearanceRoute
 import dev.typetype.android.core.ui.navigation.BlockedSettingsRoute
@@ -29,6 +30,7 @@ import dev.typetype.android.core.ui.navigation.PrivacySettingsRoute
 import dev.typetype.android.core.ui.navigation.ProfileSettingsRoute
 import dev.typetype.android.core.ui.navigation.RssFeedsRoute
 import dev.typetype.android.core.ui.navigation.PushNotificationsRoute
+import dev.typetype.android.core.ui.navigation.RecommenderSettingsRoute
 import dev.typetype.android.core.ui.navigation.SettingsRoute
 import dev.typetype.android.core.ui.navigation.StorageSettingsRoute
 import dev.typetype.android.feature.settings.SettingsRoute as SettingsMenu
@@ -67,12 +69,14 @@ internal fun AdaptiveSettingsHost(
                             onOpenRssFeeds = { navController.selectSettings(RssFeedsRoute) },
                             onOpenAppearance = { navController.selectSettings(AppearanceRoute) },
                             onOpenContent = { navController.selectSettings(ContentSettingsRoute) },
+                            onOpenRecommendations = { navController.selectSettings(RecommenderSettingsRoute) },
                             onOpenPlayer = { navController.selectSettings(PlayerSettingsRoute) },
                             onOpenPushNotifications = { navController.selectSettings(PushNotificationsRoute) },
                             onOpenStorage = { navController.selectSettings(StorageSettingsRoute) },
                             onOpenPrivacy = { navController.selectSettings(PrivacySettingsRoute) },
                             onOpenDiagnostics = { navController.selectSettings(DiagnosticsRoute) },
                             onOpenBlocked = { navController.selectSettings(BlockedSettingsRoute) },
+                            onOpenUpdates = { navController.selectSettings(AppUpdatesRoute) },
                             onOpenAbout = { navController.selectSettings(AboutRoute) },
                             onSignOut = onSignOut,
                         )
@@ -105,11 +109,13 @@ private fun NavDestination.settingsTitle(): Int? = when {
     hasRoute<ImportDataRoute>() -> R.string.settings_import_title
     hasRoute<RssFeedsRoute>() -> R.string.rss_settings_title
     hasRoute<ContentSettingsRoute>() -> R.string.settings_content_title
+    hasRoute<RecommenderSettingsRoute>() -> R.string.algo_title
     hasRoute<PlayerSettingsRoute>() -> R.string.settings_player_title
     hasRoute<StorageSettingsRoute>() -> R.string.settings_storage_title
     hasRoute<PrivacySettingsRoute>() -> R.string.settings_privacy_title
     hasRoute<DiagnosticsRoute>() -> R.string.diagnostics_title
     hasRoute<BlockedSettingsRoute>() -> R.string.settings_blocked_title
+    hasRoute<AppUpdatesRoute>() -> R.string.updates_title
     hasRoute<AboutRoute>() || hasRoute<LicensesRoute>() -> R.string.settings_about_title
     else -> null
 }

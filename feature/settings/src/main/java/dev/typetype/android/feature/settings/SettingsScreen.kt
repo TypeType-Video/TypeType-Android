@@ -1,0 +1,234 @@
+package dev.typetype.android.feature.settings
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.UploadFile
+import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.ManageAccounts
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.RssFeed
+import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.SystemUpdate
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import dev.typetype.android.R
+
+@Composable
+fun SettingsScreen(
+    onNavigateBack: () -> Unit,
+    onOpenProfile: () -> Unit = {},
+    onOpenImport: () -> Unit = {},
+    importsAvailable: Boolean = false,
+    onOpenRssFeeds: () -> Unit = {},
+    rssAvailable: Boolean = false,
+    onOpenAccounts: () -> Unit = {},
+    onOpenAppearance: () -> Unit,
+    onOpenContent: () -> Unit = {},
+    onOpenRecommendations: () -> Unit = {},
+    recommendationsAvailable: Boolean = false,
+    onOpenPlayer: () -> Unit = {},
+    onOpenPushNotifications: () -> Unit = {},
+    onOpenStorage: () -> Unit = {},
+    onOpenPrivacy: () -> Unit = {},
+    onOpenDiagnostics: () -> Unit = {},
+    onOpenBlocked: () -> Unit = {},
+    onOpenUpdates: () -> Unit = {},
+    onOpenAbout: () -> Unit = {},
+    onSignOut: () -> Unit,
+    selectedTitleRes: Int? = null,
+) {
+    val entries = buildList {
+        add(SettingsEntry(R.string.accounts_title, R.string.accounts_subtitle, Icons.Filled.ManageAccounts, onOpenAccounts))
+        add(SettingsEntry(R.string.settings_profile_title, R.string.settings_profile_subtitle, Icons.Filled.Person, onOpenProfile))
+        if (importsAvailable) {
+            add(SettingsEntry(R.string.settings_import_title, R.string.settings_import_subtitle, Icons.Filled.UploadFile, onOpenImport))
+        }
+        if (rssAvailable) {
+            add(
+                SettingsEntry(
+                    R.string.rss_settings_title,
+                    R.string.rss_settings_subtitle,
+                    Icons.Filled.RssFeed,
+                    onOpenRssFeeds,
+                ),
+            )
+        }
+        add(SettingsEntry(R.string.settings_appearance_title, R.string.settings_appearance_subtitle, Icons.Filled.Palette, onOpenAppearance))
+        add(SettingsEntry(R.string.settings_content_title, R.string.settings_content_subtitle, Icons.Filled.Tune, onOpenContent))
+        if (recommendationsAvailable) {
+            add(SettingsEntry(R.string.algo_title, R.string.algo_entry_subtitle, Icons.Filled.AutoAwesome, onOpenRecommendations))
+        }
+        add(SettingsEntry(R.string.settings_player_title, R.string.settings_player_subtitle, Icons.Filled.PlayCircle, onOpenPlayer))
+        add(SettingsEntry(R.string.settings_push_title, R.string.settings_push_subtitle, Icons.Filled.Notifications, onOpenPushNotifications))
+        add(SettingsEntry(R.string.settings_storage_title, R.string.settings_storage_subtitle, Icons.Filled.Storage, onOpenStorage))
+        add(SettingsEntry(R.string.settings_privacy_title, R.string.settings_privacy_subtitle, Icons.Filled.Lock, onOpenPrivacy))
+        add(SettingsEntry(R.string.diagnostics_title, R.string.diagnostics_subtitle, Icons.Filled.BugReport, onOpenDiagnostics))
+        add(SettingsEntry(R.string.settings_blocked_title, R.string.settings_blocked_subtitle, Icons.Filled.Block, onOpenBlocked))
+        add(SettingsEntry(R.string.updates_title, R.string.updates_entry_subtitle, Icons.Filled.SystemUpdate, onOpenUpdates))
+        add(SettingsEntry(R.string.settings_about_title, R.string.settings_about_subtitle, Icons.Filled.Info, onOpenAbout))
+    }
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background,
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            SettingsTopBar(onNavigateBack = onNavigateBack)
+            LazyColumn(
+                contentPadding = PaddingValues(vertical = 4.dp),
+                modifier = Modifier.weight(1f),
+            ) {
+                items(entries, contentType = { "settings-entry" }) { entry ->
+                    SettingsCategoryRow(entry = entry, selected = selectedTitleRes?.let { it == entry.titleRes })
+                    HorizontalDivider(
+                        modifier = Modifier.padding(start = 64.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.48f),
+                    )
+                }
+                item {
+                    Spacer(Modifier.size(12.dp))
+                    SignOutRow(onClick = onSignOut)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsTopBar(onNavigateBack: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconButton(onClick = onNavigateBack) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(R.string.settings_back),
+                tint = MaterialTheme.colorScheme.onBackground,
+            )
+        }
+        Text(
+            text = stringResource(R.string.settings_title),
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = (-0.3).sp,
+            ),
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.padding(start = 4.dp),
+        )
+    }
+}
+
+@Composable
+private fun SettingsCategoryRow(entry: SettingsEntry, selected: Boolean?) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                if (selected == true) MaterialTheme.colorScheme.secondaryContainer
+                else MaterialTheme.colorScheme.background,
+            )
+            .then(
+                if (selected == null) Modifier.clickable(onClick = entry.onClick)
+                else Modifier.selectable(selected = selected, role = Role.Tab, onClick = entry.onClick),
+            )
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = entry.icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(24.dp),
+        )
+        Spacer(Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                text = stringResource(entry.titleRes),
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = stringResource(entry.subtitleRes),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun SignOutRow(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.Logout,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.error,
+        )
+        Spacer(Modifier.width(14.dp))
+        Text(
+            text = stringResource(R.string.settings_sign_out),
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = MaterialTheme.colorScheme.error,
+        )
+    }
+}
+
+private data class SettingsEntry(
+    val titleRes: Int,
+    val subtitleRes: Int,
+    val icon: ImageVector,
+    val onClick: () -> Unit,
+)

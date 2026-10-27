@@ -1,0 +1,324 @@
+package dev.typetype.android.feature.player.components
+
+import android.graphics.Rect
+import android.media.AudioManager
+import androidx.activity.compose.LocalActivity
+import androidx.annotation.OptIn
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.session.MediaController
+import androidx.media3.ui.compose.state.rememberPresentationState
+import dev.typetype.android.domain.stream.Chapter
+import dev.typetype.android.domain.stream.Stream
+import dev.typetype.android.domain.stream.StreamPlaybackContract
+import dev.typetype.android.domain.usersettings.CaptionStyles
+import dev.typetype.android.feature.player.LoadSubtitleCues
+import dev.typetype.android.feature.player.PlayerDanmakuAction
+import dev.typetype.android.feature.player.PlayerDanmakuState
+import dev.typetype.android.feature.player.PlayerNavigationControls
+import dev.typetype.android.feature.player.SponsorBlockPlaybackPolicy
+import dev.typetype.android.feature.player.state.DragMode
+import dev.typetype.android.feature.player.state.PlayerGestureState
+import dev.typetype.android.feature.player.state.next
+import dev.typetype.android.playback.PlaybackCodecSupport
+import dev.typetype.android.playback.key
+import kotlinx.coroutines.delay
+
+private const val AUTO_HIDE_DELAY_MS = 3_500L
+
+@OptIn(markerClass = [UnstableApi::class])
+@Composable
+internal fun PlayerSurfaceBox(
+    player: MediaController,
+    stream: Stream,
+    audioOnlyState: AudioOnlyPlaybackState,
+    selectedCodec: String,
+    selectedQuality: String,
+    selectedAudioKey: String?,
+    selectedSubtitleKey: String?,
+    selectedSpeed: Float,
+    codecSupport: PlaybackCodecSupport,
+    onSelectCodec: (String) -> Unit,
+    onSelectQuality: (String) -> Unit,
+    onSelectAudio: (String?) -> Unit,
+    onSelectSubtitle: (String?) -> Unit,
+    onSelectSpeed: (Float) -> Unit,
+    onNavigateBack: () -> Unit,
+    onRetryPlayback: () -> Unit,
+    onOpenAccounts: () -> Unit,
+    modifier: Modifier = Modifier,
+    pipSourceRect: Rect? = null,
+    isFullscreen: Boolean = false,
+    onToggleFullscreen: () -> Unit = {},
+    sponsorBlockPolicy: SponsorBlockPlaybackPolicy = SponsorBlockPlaybackPolicy(),
+    chapters: List<Chapter> = emptyList(),
+    gestureConfig: PlayerGestureConfig = PlayerGestureConfig(),
+    playbackBrightnessPercent: Int?,
+    onPlaybackBrightnessChange: (Int) -> Unit,
+    loadSubtitleCues: LoadSubtitleCues,
+    captionStyles: CaptionStyles = CaptionStyles(),
+    danmakuState: PlayerDanmakuState = PlayerDanmakuState(),
+    onDanmakuAction: (PlayerDanmakuAction) -> Unit = {},
+    hostTransitionProgress: () -> Float = { 0f },
+    navigation: PlayerNavigationControls,
+) {
+    val activity = LocalActivity.current
+    val context = LocalContext.current
+    val hapticFeedback = LocalHapticFeedback.current
+    val audioManager = remember(context) {
+        context.getSystemService(AudioManager::class.java)
+    }
+    val gestureState = remember { PlayerGestureState() }
+    var appliedBrightnessPercent by remember { mutableIntStateOf(-1) }
+    var appliedVolumeLevel by remember { mutableIntStateOf(-1) }
+    var controlsVisible by remember { mutableStateOf(true) }
+    var optionsVisible by remember { mutableStateOf(false) }
+    var chaptersVisible by remember { mutableStateOf(false) }
+    var timelineScrubbing by remember { mutableStateOf(false) }
+    val accessibleControls = rememberAccessiblePlayerControls(
+        gestureConfig.accessibleControlsEnabled,
+    )
+    val audioOnlySnackbar = remember { SnackbarHostState() }
+    val playbackStatus = rememberPlayerPlaybackStatus(player)
+    val isInPip by rememberIsInPipMode()
+    val isPipAvailable = remember(activity) { supportsPictureInPicture(activity) }
+    val externalSubtitle = stream.subtitles.firstOrNull {
+        stream.playbackContract == StreamPlaybackContract.ServerSabr &&
+            it.key == selectedSubtitleKey
+    }
+    PlayerGestureInitializationEffect(
+        state = gestureState,
+        audioManager = audioManager,
+        selectedBrightnessPercent = playbackBrightnessPercent,
+        windowBrightness = activity?.window?.attributes?.screenBrightness,
+        onVolumeInitialized = { appliedVolumeLevel = it },
+    )
+
+    PlaybackBrightnessEffect(
+        window = activity?.window,
+        isFullscreen = isFullscreen,
+        selectedPercent = playbackBrightnessPercent,
+    )
+    PlaybackKeepScreenOnEffect(
+        window = activity?.window,
+        videoIsPlaying = playbackStatus.isPlaying && !audioOnlyState.active,
+    )
+    LaunchedEffect(accessibleControls) {
+        if (accessibleControls) controlsVisible = true
+    }
+    val isSeekDragging = gestureState.dragMode.value == DragMode.Seek
+    LaunchedEffect(
+        controlsVisible,
+        playbackStatus.isPlaying,
+        accessibleControls,
+        isSeekDragging,
+        timelineScrubbing,
+    ) {
+        if (controlsVisible && playbackStatus.isPlaying && !accessibleControls) {
+            if (isSeekDragging || timelineScrubbing) return@LaunchedEffect
+            delay(AUTO_HIDE_DELAY_MS)
+            controlsVisible = false
+        }
+    }
+
+    PlayerAudioOnlyFailureEffect(audioOnlyState, audioOnlySnackbar)
+    val presentationState = rememberPresentationState(player, keepContentOnReset = true)
+    val surfaceKey = rememberPlayerSurfaceKey(stream.id)
+    val chromeModifier = Modifier.graphicsLayer {
+        alpha = 1f - hostTransitionProgress().coerceIn(0f, 1f)
+    }
+    val gesturesVisible by remember(hostTransitionProgress) {
+        derivedStateOf { hostTransitionProgress() < 0.01f }
+    }
+    val controlsAllowedByProgress by remember(hostTransitionProgress) {
+        derivedStateOf { hostTransitionProgress() < 0.99f }
+    }
+    PlayerFullscreenExitGestureBox(
+        enabled = isFullscreen && playbackStatus.acceptsInput && !isInPip,
+        onGestureFeedback = {
+            controlsVisible = false
+            hapticFeedback.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
+        },
+        onExitFullscreen = onToggleFullscreen,
+        modifier = modifier,
+    ) {
+        if (audioOnlyState.active) {
+            DeArrowAudioOnlyPoster(
+                stream = stream,
+                isPlaying = playbackStatus.isPlaying,
+                modifier = Modifier.fillMaxSize(),
+            )
+        } else {
+            ResilientPlayerSurface(
+                player = player,
+                surfaceKey = surfaceKey,
+                resizeMode = gestureState.resizeMode.value,
+                showNativeSubtitles = isInPip && externalSubtitle == null &&
+                    selectedSubtitleKey != null,
+                captionStyles = captionStyles,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        if (!audioOnlyState.active && (!isInPip || externalSubtitle != null)) {
+            Box(modifier = chromeModifier.fillMaxSize()) {
+                DanmakuOverlay(
+                    player = player,
+                    state = danmakuState,
+                    visible = !isInPip,
+                    modifier = Modifier.fillMaxSize(),
+                )
+                PlayerSubtitleOverlay(
+                    player = player,
+                    controlsVisible = controlsVisible && !isInPip,
+                    subtitlesVisible = selectedSubtitleKey != null,
+                    externalSource = externalSubtitle,
+                    loadExternalCues = loadSubtitleCues,
+                    captionStyles = captionStyles,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+
+        if (presentationState.coverSurface && !audioOnlyState.active) {
+            PlayerLoadingPoster(stream = stream, modifier = Modifier.fillMaxSize())
+        }
+
+        PlayerBufferingIndicator(
+            visible = playbackStatus.isBuffering && !presentationState.coverSurface && !isInPip,
+            modifier = chromeModifier.align(Alignment.Center),
+        )
+
+        PlayerSurfaceGestureLayer(
+            player = player,
+            state = gestureState,
+            activity = activity,
+            audioManager = audioManager,
+            hapticFeedback = hapticFeedback,
+            playbackStatus = playbackStatus,
+            isInPip = isInPip,
+            isFullscreen = isFullscreen,
+            accessibleControls = accessibleControls,
+            gesturesVisible = gesturesVisible,
+            controlsVisible = controlsVisible,
+            config = gestureConfig,
+            appliedBrightnessPercent = appliedBrightnessPercent,
+            onAppliedBrightnessChange = { appliedBrightnessPercent = it },
+            onPlaybackBrightnessChange = onPlaybackBrightnessChange,
+            appliedVolumeLevel = appliedVolumeLevel,
+            onAppliedVolumeChange = { appliedVolumeLevel = it },
+            onControlsVisibleChange = { controlsVisible = it },
+            onToggleFullscreen = onToggleFullscreen,
+            modifier = Modifier.fillMaxSize(),
+        )
+
+        PlayerSurfaceChrome(
+            player = player,
+            stream = stream,
+            title = stream.title,
+            sponsorBlockSegments = sponsorBlockPolicy.visibleSegments,
+            seekPreviewPositionMs = gestureState.seekDragTargetMs.longValue
+                .takeIf { gestureState.seekDragOverlayActive.value },
+            seekDragOverlayVisible = gestureState.seekDragOverlayActive.value,
+            seekDragPositionMs = gestureState.seekDragTargetMs.longValue,
+            fineSeeking = gestureState.fineSeeking.value,
+            isFullscreen = isFullscreen,
+            isInPip = isInPip,
+            controlsAllowedByProgress = controlsAllowedByProgress,
+            controlsVisible = controlsVisible,
+            accessibleControls = accessibleControls,
+            acceptsInput = playbackStatus.acceptsInput,
+            timelineScrubbing = timelineScrubbing,
+            onTimelineScrubbingChange = { timelineScrubbing = it },
+            onNavigateBack = onNavigateBack,
+            onOpenOptions = { optionsVisible = true },
+            onOpenChapters = { chaptersVisible = true },
+            onEnterPip = {
+                controlsVisible = false
+                enterPictureInPicture(
+                    activity,
+                    isPlaying = playbackStatus.isPlaying,
+                    audioOnlyAvailable = audioOnlyState.available,
+                    sourceRect = pipSourceRect,
+                )
+            },
+            onToggleFullscreen = onToggleFullscreen,
+            onCycleResizeMode = {
+                gestureState.resizeMode.value = gestureState.resizeMode.value.next()
+            },
+            resizeMode = gestureState.resizeMode.value,
+            isPipAvailable = isPipAvailable,
+            chaptersAvailable = chapters.isNotEmpty(),
+            navigation = navigation,
+            modifier = chromeModifier,
+        )
+
+        PlayerSurfaceFeedback(
+            player = player,
+            isPlaying = playbackStatus.isPlaying,
+            isInPip = isInPip,
+            sponsorBlockPolicy = sponsorBlockPolicy,
+        )
+
+        PlayerSurfaceSheets(
+            player = player,
+            stream = stream,
+            codecSupport = codecSupport,
+            optionsVisible = optionsVisible,
+            chaptersVisible = chaptersVisible,
+            isInPip = isInPip,
+            chapters = chapters,
+            options = PlayerOptionsState(
+                selectedCodec,
+                selectedQuality,
+                selectedAudioKey,
+                selectedSubtitleKey,
+                selectedSpeed,
+                gestureState.resizeMode.value,
+                audioOnlyState.active,
+                audioOnlyState.changing,
+                audioOnlyState.available,
+                danmakuState,
+            ),
+            actions = PlayerOptionsActions(
+                onSelectCodec,
+                onSelectQuality,
+                onSelectAudio,
+                onSelectSubtitle,
+                onSelectSpeed,
+                { gestureState.resizeMode.value = it },
+                audioOnlyState::setEnabled,
+                onDanmakuAction,
+            ),
+            onDismissOptions = { optionsVisible = false },
+            onDismissChapters = { chaptersVisible = false },
+        )
+
+        playbackStatus.error?.takeIf { !isInPip }?.let { error ->
+            PlaybackFailureOverlay(
+                error = error,
+                onRetry = onRetryPlayback,
+                onOpenAccounts = onOpenAccounts,
+                onBack = onNavigateBack,
+            )
+        }
+
+        PlayerSurfaceSnackbar(audioOnlySnackbar)
+    }
+}

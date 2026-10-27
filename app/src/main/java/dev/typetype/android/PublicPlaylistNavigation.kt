@@ -4,8 +4,9 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import dev.typetype.android.core.ui.navigation.PublicPlaylistRoute
+import dev.typetype.android.core.ui.player.PlayerHostController
+import dev.typetype.android.domain.playback.toPlaybackQueueEntry
 import dev.typetype.android.feature.publicplaylist.PublicPlaylistRoute as PublicPlaylistRouteScreen
-import dev.typetype.android.feature.player.host.PlayerHostController
 
 internal fun NavGraphBuilder.publicPlaylistDestination(
     navController: NavHostController,

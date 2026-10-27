@@ -24,7 +24,7 @@ import androidx.test.uiautomator.Until
 import dev.typetype.android.MainActivity
 import dev.typetype.android.R
 import dev.typetype.android.services.PlaybackService
-import dev.typetype.android.services.createSyntheticH264Video
+import dev.typetype.android.testing.createSyntheticH264Video
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import org.junit.Assert.assertEquals

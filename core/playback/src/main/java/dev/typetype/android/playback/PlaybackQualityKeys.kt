@@ -1,0 +1,72 @@
+package dev.typetype.android.playback
+
+import dev.typetype.android.domain.preferences.AV1_CODEC_KEY
+import dev.typetype.android.domain.preferences.H264_CODEC_KEY
+import dev.typetype.android.domain.preferences.HEVC_CODEC_KEY
+import dev.typetype.android.domain.preferences.OTHER_CODEC_KEY
+import dev.typetype.android.domain.preferences.VP9_CODEC_KEY
+import dev.typetype.android.domain.stream.StreamVideoSource
+
+const val AUTO_QUALITY_KEY = "auto"
+const val RECOMMENDED_QUALITY_KEY = "recommended"
+private const val VIDEO_ITAG_PREFIX = "itag:"
+private const val VIDEO_FORMAT_PREFIX = "format:"
+
+internal fun videoItagKey(itag: Int): String = "$VIDEO_ITAG_PREFIX$itag"
+
+internal fun String.selectedVideoItag(): Int? =
+    takeIf { it.startsWith(VIDEO_ITAG_PREFIX) }
+        ?.removePrefix(VIDEO_ITAG_PREFIX)
+        ?.toIntOrNull()
+
+internal fun StreamVideoSource.videoSelectionKey(): String = if (itag > 0) {
+    videoItagKey(itag)
+} else {
+    listOf(
+        mimeType.substringBefore(';').trim().lowercase(),
+        codec.orEmpty().lowercase(),
+        width,
+        height,
+        fps,
+        bitrate ?: 0,
+        isVideoOnly,
+    ).joinToString(prefix = VIDEO_FORMAT_PREFIX, separator = ":")
+}
+
+internal fun String.isExplicitVideoSelection(): Boolean =
+    startsWith(VIDEO_ITAG_PREFIX) || startsWith(VIDEO_FORMAT_PREFIX)
+
+internal fun String.selectedQualityHeight(): Int? =
+    takeUnless { it.isExplicitVideoSelection() }
+        ?.filter { it.isDigit() }
+        ?.toIntOrNull()
+
+fun String.effectiveQuality(automaticQualityCap: String): String =
+    if (this == AUTO_QUALITY_KEY || this == RECOMMENDED_QUALITY_KEY) {
+        automaticQualityCap
+    } else {
+        this
+    }
+
+fun StreamVideoSource.codecSelectionKey(): String {
+    return codec.orEmpty().codecSelectionKey()
+}
+
+fun String.codecSelectionKey(): String {
+    val normalized = trim().lowercase()
+    return when {
+        normalized.startsWith("avc1") || normalized.startsWith("avc3") -> H264_CODEC_KEY
+        normalized.startsWith("hvc1") || normalized.startsWith("hev1") -> HEVC_CODEC_KEY
+        normalized.startsWith("vp9") || normalized.startsWith("vp09") -> VP9_CODEC_KEY
+        normalized.startsWith("av01") -> AV1_CODEC_KEY
+        else -> OTHER_CODEC_KEY
+    }
+}
+
+fun String.codecDisplayName(): String = when (this) {
+    H264_CODEC_KEY -> "H.264"
+    HEVC_CODEC_KEY -> "HEVC"
+    VP9_CODEC_KEY -> "VP9"
+    AV1_CODEC_KEY -> "AV1"
+    else -> "Other"
+}

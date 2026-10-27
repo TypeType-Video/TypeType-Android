@@ -1,0 +1,62 @@
+package dev.typetype.android.domain.feed
+
+data class SubscriptionsPage(
+    val videos: List<Video>,
+    val nextCursor: String?,
+    val generation: Long,
+    val generatedAtMillis: Long,
+    val refreshing: Boolean,
+) {
+    val hasMore: Boolean
+        get() = nextCursor != null
+}
+
+data class HomeRecommendationsPage(
+    val videos: List<Video>,
+    val nextCursor: String?,
+    val rows: List<HomeRecommendationRow> = emptyList(),
+    val algorithm: String? = null,
+    val preparing: Boolean = false,
+)
+
+data class HomeRecommendationRow(
+    val id: String,
+    val title: String,
+    val reason: String,
+    val reasonRef: String?,
+    val videoUrls: List<String>,
+)
+
+sealed interface ShortsContinuation {
+    data class Recommendations(val cursor: String) : ShortsContinuation
+    data class Subscriptions(val page: Int) : ShortsContinuation
+    data class Discovery(val nextPage: String) : ShortsContinuation
+}
+
+data class ShortsPage(
+    val videos: List<Video>,
+    val continuation: ShortsContinuation?,
+)
+
+interface HomeFeedRepository {
+    suspend fun loadCachedHomeFeed(): List<Video>
+    suspend fun loadCachedSubscriptionsFeed(): List<Video>
+    suspend fun cacheHomeFeed(videos: List<Video>, append: Boolean)
+    suspend fun cacheSubscriptionsFeed(videos: List<Video>, append: Boolean)
+    suspend fun loadHomeRecommendations(
+        cursor: String? = null,
+        limit: Int = 20,
+        service: Int = 0,
+    ): Result<HomeRecommendationsPage>
+    suspend fun loadTrending(): Result<List<Video>>
+    suspend fun loadSubscriptionsFeed(
+        cursor: String? = null,
+        limit: Int = 30,
+        expectedGeneration: Long? = null,
+    ): Result<SubscriptionsPage>
+    suspend fun loadShorts(
+        continuation: ShortsContinuation? = null,
+        service: Int = 0,
+        limit: Int = 30,
+    ): Result<ShortsPage>
+}

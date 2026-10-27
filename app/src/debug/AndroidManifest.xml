@@ -3,7 +3,7 @@
 
     <application>
         <activity
-            android:name=".feature.player.FullscreenTestActivity"
+            android:name="dev.typetype.android.feature.player.FullscreenTestActivity"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden"
             android:exported="false"
             android:theme="@style/Theme.TypeType" />

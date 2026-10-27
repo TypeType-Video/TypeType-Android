@@ -1,4 +1,5 @@
 pluginManagement {
+    includeBuild("build-logic")
     repositories {
         gradlePluginPortal()
         google()
@@ -24,23 +25,24 @@ rootProject.name = "TypeType-Android"
 
 include(":app")
 include(":baseline-profile")
+include(":core:data")
+include(":core:model")
+include(":core:notifications")
+include(":core:playback")
+include(":core:resources")
+include(":core:testing")
+include(":core:ui")
+include(":feature:channel")
+include(":feature:home")
+include(":feature:library")
+include(":feature:menu")
+include(":feature:notifications")
+include(":feature:player")
+include(":feature:podcast")
+include(":feature:publicplaylist")
+include(":feature:search")
+include(":feature:settings")
+include(":feature:setup")
+include(":feature:shorts")
+include(":feature:subscriptions")
 include(":player")
-include(":tv")
-
-val typeTypeSdkPath = providers.gradleProperty("typeTypeSdkPath")
-    .orElse(providers.environmentVariable("TYPETYPE_SDK_PATH"))
-    .orElse("../TypeType-SDK")
-    .get()
-val typeTypeSdkDirectory = file(typeTypeSdkPath)
-if (typeTypeSdkDirectory.resolve("settings.gradle.kts").isFile) {
-    includeBuild(typeTypeSdkDirectory) {
-        dependencySubstitution {
-            substitute(module("video.typetype:sdk-core"))
-                .using(project(":sdk-core"))
-            substitute(module("video.typetype:sdk-android"))
-                .using(project(":sdk-android"))
-            substitute(module("video.typetype:sdk-media3"))
-                .using(project(":sdk-media3"))
-        }
-    }
-}

@@ -14,13 +14,13 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.SideEffect
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.luminance
-import androidx.core.view.WindowCompat
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.content.ContextCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.session.MediaController
@@ -29,6 +29,7 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.AndroidEntryPoint
 import dev.typetype.android.core.ui.components.FullScreenLoader
+import dev.typetype.android.core.ui.prewarm.PlaybackPrewarm
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import dev.typetype.android.domain.auth.OidcCallbackRelay
 import dev.typetype.android.domain.auth.OidcRedirect
@@ -36,12 +37,12 @@ import dev.typetype.android.domain.navigation.resolveIncomingVideoUrl
 import dev.typetype.android.domain.navigation.resolveSharedVideoUrl
 import dev.typetype.android.domain.session.ActiveSessionRepository
 import dev.typetype.android.feature.player.components.PIP_ACTION_AUDIO_ONLY
-import dev.typetype.android.feature.player.PlaybackPrewarm
 import dev.typetype.android.feature.player.components.PIP_ACTION_PLAY_PAUSE
 import dev.typetype.android.feature.player.components.PictureInPictureActionStateOwner
 import dev.typetype.android.feature.player.components.updatePictureInPicturePlaybackAction
 import dev.typetype.android.feature.settings.diagnostics.CrashReportRoute
 import dev.typetype.android.services.PlaybackAudioOnlyCommand
+import dev.typetype.android.services.PlaybackRecoveryStatus
 import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -58,7 +59,13 @@ class MainActivity : ComponentActivity(), PictureInPictureActionStateOwner {
     lateinit var oidcCallbackRelay: OidcCallbackRelay
 
     @Inject
+    lateinit var oidcRedirect: OidcRedirect
+
+    @Inject
     lateinit var playbackPrewarm: PlaybackPrewarm
+
+    @Inject
+    lateinit var playbackRecoveryStatus: PlaybackRecoveryStatus
 
     private val viewModel: MainViewModel by viewModels()
     private var activityReportingJob: Job? = null
@@ -113,6 +120,7 @@ class MainActivity : ComponentActivity(), PictureInPictureActionStateOwner {
                         startRoute = startRoute,
                         mainViewModel = viewModel,
                         playbackPrewarm = playbackPrewarm,
+                        playbackRecovery = playbackRecoveryStatus.state,
                     )
                     else -> FullScreenLoader()
                 }
@@ -168,7 +176,7 @@ class MainActivity : ComponentActivity(), PictureInPictureActionStateOwner {
 
     private fun receiveOidcCallback(intent: Intent) {
         val callbackUrl = intent.dataString ?: return
-        if (OidcRedirect.matches(callbackUrl)) {
+        if (oidcRedirect.matches(callbackUrl)) {
             oidcCallbackRelay.submit(callbackUrl)
         }
     }

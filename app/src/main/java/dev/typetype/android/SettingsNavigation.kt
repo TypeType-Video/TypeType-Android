@@ -4,6 +4,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import dev.typetype.android.core.ui.navigation.AboutRoute
+import dev.typetype.android.core.ui.navigation.AppUpdatesRoute
 import dev.typetype.android.core.ui.navigation.AccountsRoute
 import dev.typetype.android.core.ui.navigation.AppearanceRoute
 import dev.typetype.android.core.ui.navigation.BlockedSettingsRoute
@@ -14,6 +15,7 @@ import dev.typetype.android.core.ui.navigation.LicensesRoute
 import dev.typetype.android.core.ui.navigation.PlayerSettingsRoute
 import dev.typetype.android.core.ui.navigation.PrivacySettingsRoute
 import dev.typetype.android.core.ui.navigation.ProfileSettingsRoute
+import dev.typetype.android.core.ui.navigation.RecommenderSettingsRoute
 import dev.typetype.android.core.ui.navigation.RssFeedsRoute
 import dev.typetype.android.core.ui.navigation.SettingsRoute
 import dev.typetype.android.core.ui.navigation.StorageSettingsRoute
@@ -21,6 +23,7 @@ import dev.typetype.android.feature.settings.SettingsRoute as SettingsRouteScree
 import dev.typetype.android.feature.settings.about.LicensesScreen
 import dev.typetype.android.feature.settings.appearance.AppearanceRoute as AppearanceScreen
 import dev.typetype.android.feature.settings.imports.PortabilityRoute as ImportDataRouteScreen
+import dev.typetype.android.feature.settings.notifications.ChannelNotificationsRoute as ChannelNotificationsRouteScreen
 import dev.typetype.android.feature.settings.notifications.PushNotificationsRoute as PushNotificationsRouteScreen
 import dev.typetype.android.feature.settings.rss.RssFeedsRoute as RssFeedsRouteScreen
 
@@ -40,12 +43,14 @@ internal fun NavGraphBuilder.settingsDestinations(
             onOpenRssFeeds = { navController.navigate(RssFeedsRoute) },
             onOpenAppearance = { navController.navigate(AppearanceRoute) },
             onOpenContent = { navController.navigate(ContentSettingsRoute) },
+            onOpenRecommendations = { navController.navigate(RecommenderSettingsRoute) },
             onOpenPlayer = { navController.navigate(PlayerSettingsRoute) },
             onOpenPushNotifications = { navController.navigate(dev.typetype.android.core.ui.navigation.PushNotificationsRoute) },
             onOpenStorage = { navController.navigate(StorageSettingsRoute) },
             onOpenPrivacy = { navController.navigate(PrivacySettingsRoute) },
             onOpenDiagnostics = { navController.navigate(DiagnosticsRoute) },
             onOpenBlocked = { navController.navigate(BlockedSettingsRoute) },
+            onOpenUpdates = { navController.navigate(AppUpdatesRoute) },
             onOpenAbout = { navController.navigate(AboutRoute) },
             onSignOut = onSignOut,
         )
@@ -63,6 +68,12 @@ internal fun NavGraphBuilder.settingsDestinations(
     }
     composable<dev.typetype.android.core.ui.navigation.PushNotificationsRoute> {
         PushNotificationsRouteScreen(
+            onNavigateBack = { navController.popBackStack() },
+            onOpenChannels = { navController.navigate(dev.typetype.android.core.ui.navigation.ChannelNotificationsRoute) },
+        )
+    }
+    composable<dev.typetype.android.core.ui.navigation.ChannelNotificationsRoute> {
+        ChannelNotificationsRouteScreen(
             onNavigateBack = { navController.popBackStack() },
         )
     }
