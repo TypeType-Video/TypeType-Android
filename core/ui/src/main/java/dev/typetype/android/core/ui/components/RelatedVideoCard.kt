@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,15 +33,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.branding.rememberVideoBranding
-import dev.typetype.android.core.ui.prewarm.CARD_PREWARM_DELAY_MILLIS
-import dev.typetype.android.core.ui.prewarm.LocalPlaybackPrewarm
+import dev.typetype.android.core.ui.prewarm.cardPlaybackPrewarm
+import dev.typetype.android.core.ui.prewarm.rememberCardPlaybackPrewarm
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.feed.VideoAvailability
 import dev.typetype.android.domain.feed.VideoBadgeStatus
 import dev.typetype.android.domain.feed.availabilityAt
 import dev.typetype.android.domain.feed.badgeStatusAt
 import dev.typetype.android.domain.feed.releaseTimeMillis
-import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -56,13 +54,7 @@ fun RelatedVideoCard(
 ) {
     var menuVisible by remember { mutableStateOf(false) }
     var availabilityVisible by remember { mutableStateOf(false) }
-    val playbackPrewarm = LocalPlaybackPrewarm.current
-
-    LaunchedEffect(video.url, playbackPrewarm) {
-        if (playbackPrewarm == null) return@LaunchedEffect
-        delay(CARD_PREWARM_DELAY_MILLIS)
-        playbackPrewarm.prewarm(video.url, video.isLive)
-    }
+    val playbackPrewarm = rememberCardPlaybackPrewarm(video.url, video.isLive)
 
     val availability = video.availabilityAt(System.currentTimeMillis())
     val branding = rememberVideoBranding(
@@ -73,6 +65,7 @@ fun RelatedVideoCard(
     )
     Row(
         modifier = modifier
+            .cardPlaybackPrewarm(playbackPrewarm)
             .fillMaxWidth()
             .combinedClickable(
                 onClick = {
