@@ -11,7 +11,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 internal class ActivePlaybackReporter(
@@ -21,16 +20,11 @@ internal class ActivePlaybackReporter(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var startedIdentity: PlaybackIdentity? = null
     private var startJob: Job? = null
-    private val progressJob: Job
+    private val heartbeat = PlaybackProgressHeartbeat(scope, PROGRESS_INTERVAL_MILLIS, report = ::reportProgress)
 
     init {
         player.addListener(this)
-        progressJob = scope.launch {
-            while (true) {
-                delay(PROGRESS_INTERVAL_MILLIS)
-                reportProgress()
-            }
-        }
+        heartbeat.onPlayingChanged(player.isPlaying)
     }
 
     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
@@ -47,6 +41,7 @@ internal class ActivePlaybackReporter(
     }
 
     override fun onIsPlayingChanged(isPlaying: Boolean) {
+        heartbeat.onPlayingChanged(isPlaying)
         if (isPlaying) startIfNeeded() else reportProgress()
     }
 
@@ -70,7 +65,7 @@ internal class ActivePlaybackReporter(
 
     override fun close() {
         player.removeListener(this)
-        progressJob.cancel()
+        heartbeat.stop()
         startJob?.cancel()
         val identity = startedIdentity
         startedIdentity = null

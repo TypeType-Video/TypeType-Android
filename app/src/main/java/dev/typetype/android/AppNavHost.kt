@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -37,7 +38,9 @@ import dev.typetype.android.core.ui.navigation.ShortsRoute
 import dev.typetype.android.core.ui.navigation.StorageSettingsRoute
 import dev.typetype.android.core.ui.navigation.SubscriptionsRoute
 import dev.typetype.android.core.ui.prewarm.LocalPlaybackPrewarm
+import dev.typetype.android.core.ui.prewarm.LocalSettledCardPrefetch
 import dev.typetype.android.core.ui.prewarm.PlaybackPrewarm
+import dev.typetype.android.core.ui.prewarm.SettledCardPrefetch
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
 import dev.typetype.android.domain.playback.toPlaybackQueueEntry
 import dev.typetype.android.feature.home.HomeRoute as HomeRouteScreen
@@ -72,6 +75,10 @@ fun AppNavHost(
 ) {
     val navController: NavHostController = rememberNavController()
     val playerHostController = remember { mainViewModel.playerHostController }
+    val prefetchScope = rememberCoroutineScope()
+    val settledCardPrefetch = remember(playbackPrewarm, prefetchScope) {
+        playbackPrewarm?.let { SettledCardPrefetch(prefetchScope, it) }
+    }
     val currentServer by mainViewModel.currentServer.collectAsStateWithLifecycle()
     val currentProfile by mainViewModel.currentProfile.collectAsStateWithLifecycle()
     val appPreferences by mainViewModel.preferences.collectAsStateWithLifecycle()
@@ -98,6 +105,7 @@ fun AppNavHost(
         LocalServerBaseUrl provides currentServer?.baseUrl,
         LocalDeArrowBranding provides deArrowEnvironment,
         LocalPlaybackPrewarm provides playbackPrewarm,
+        LocalSettledCardPrefetch provides settledCardPrefetch,
         LocalPlaybackRecovery provides (playbackRecovery ?: LocalPlaybackRecovery.current),
     ) {
     AppShell(

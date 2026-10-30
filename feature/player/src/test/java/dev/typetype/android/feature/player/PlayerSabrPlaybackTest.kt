@@ -14,6 +14,7 @@ import dev.typetype.android.domain.stream.StreamVideoSource
 import dev.typetype.android.domain.stream.sabrPlaybackTarget
 import dev.typetype.android.playback.PlayableSource
 import dev.typetype.android.playback.playbackSubtitles
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -65,6 +66,27 @@ class PlayerSabrPlaybackTest {
 
         assertEquals(repository.session, result)
         assertEquals(0, repository.prepareCount)
+    }
+
+    @Test
+    fun `cancelled press preload falls back to a new session`() = runBlocking {
+        val repository = RecordingRepository()
+        val stream = stream()
+        val selection = selection()
+        val preloads = SabrPlaybackPreloadStore { 0L }
+        preloads.reserve(stream.sabrPlaybackTarget(selection)).result.complete(
+            Result.failure(CancellationException("press became a scroll")),
+        )
+        val playback = PlayerSabrPlayback(
+            repository = repository,
+            preloads = preloads,
+            onFailure = { _, _ -> },
+        )
+
+        val result = playback.prepare(stream, selection, 0L)
+
+        assertEquals(repository.session, result)
+        assertEquals(1, repository.prepareCount)
     }
 
     @Test
