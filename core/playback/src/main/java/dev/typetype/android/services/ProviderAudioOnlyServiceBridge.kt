@@ -30,6 +30,7 @@ internal class ProviderAudioOnlyServiceBridge(
     private var pendingJob: Job? = null
     private var pendingCompletion: ((Result<Unit>) -> Unit)? = null
     private var operationGeneration = 0L
+    private var shownMediaId: String? = player.currentMediaItem?.mediaId
 
     init {
         player.addListener(this)
@@ -39,6 +40,12 @@ internal class ProviderAudioOnlyServiceBridge(
         val current = player.currentMediaItem
         if (current == null) {
             complete(Result.failure(AudioOnlyInactivePlaybackFailure()))
+            return
+        }
+        if (current.canSwitchAudioOnlyInPlace() && !current.isProviderAudioOnly()) {
+            cancelPending()
+            player.setVideoTrackDisabled(enabled)
+            complete(Result.success(Unit))
             return
         }
         if (enabled == current.isProviderAudioOnly()) {
@@ -118,6 +125,8 @@ internal class ProviderAudioOnlyServiceBridge(
     }
 
     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+        if (mediaItem?.mediaId != shownMediaId) player.setVideoTrackDisabled(false)
+        shownMediaId = mediaItem?.mediaId
         val identity = mediaItem?.providerAudioOnlyIdentity()
         if (pendingIdentity != null && pendingIdentity != identity) cancelPending()
         val providerMediaId = mediaItem?.takeIf { it.isProviderAudioOnly() }?.mediaId
