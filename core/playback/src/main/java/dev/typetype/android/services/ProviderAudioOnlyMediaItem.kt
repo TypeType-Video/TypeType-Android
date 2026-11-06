@@ -2,7 +2,9 @@ package dev.typetype.android.services
 
 import android.os.Bundle
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
 import dev.typetype.android.domain.stream.AudioOnlyStream
+import dev.typetype.android.domain.stream.AudioOnlyStreamKind
 import dev.typetype.android.domain.stream.StreamRequestScope
 
 internal data class ProviderAudioOnlyRequest(
@@ -47,8 +49,16 @@ internal fun MediaItem.withProviderAudioOnly(stream: AudioOnlyStream): MediaItem
     }
     return buildUpon()
         .setUri(stream.url)
-        .setMimeType(stream.mimeType)
+        .setMimeType(stream.playerMimeType())
         .setSubtitleConfigurations(emptyList())
         .setRequestMetadata(requestMetadata.buildUpon().setExtras(extras).build())
         .build()
+}
+
+// Media3 recognizes HLS and DASH by its own MIME types or by the URL extension, and the Server's audio
+// manifests have neither.
+internal fun AudioOnlyStream.playerMimeType(): String = when (kind) {
+    AudioOnlyStreamKind.Hls -> MimeTypes.APPLICATION_M3U8
+    AudioOnlyStreamKind.Dash -> MimeTypes.APPLICATION_MPD
+    AudioOnlyStreamKind.Progressive -> mimeType
 }
