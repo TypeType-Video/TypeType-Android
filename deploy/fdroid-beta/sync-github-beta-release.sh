@@ -7,9 +7,33 @@ state_dir=$repo_dir/state
 public_dir=/srv/fdroid-beta/public
 github_repo=TypeType-Video/TypeType-Android
 image=typetype-fdroidserver:beta-patched
+image_context=$repo_dir/image
+image_archive=$state_dir/fdroidserver-beta-patched.tar
 
 exec 8>"$state_dir/sync.lock"
 flock 8
+
+# The patched image exists only on this host: a Docker cleanup that removed it stopped every beta sync.
+# Reload it from its archive, or rebuild it from its pinned context, before each sync.
+ensure_beta_image() {
+  local archive_tmp
+
+  if ! docker image inspect "$image" >/dev/null 2>&1 && [[ -s "$image_archive" ]]; then
+    docker load --input "$image_archive" >/dev/null
+  fi
+
+  if ! docker image inspect "$image" >/dev/null 2>&1; then
+    docker build --quiet -t "$image" "$image_context" >/dev/null
+    rm -f "$image_archive"
+  fi
+
+  if [[ ! -s "$image_archive" ]]; then
+    archive_tmp=$(mktemp "$state_dir/fdroidserver-beta-patched.XXXXXX.tar")
+    docker save --output "$archive_tmp" "$image"
+    chmod 600 "$archive_tmp"
+    mv "$archive_tmp" "$image_archive"
+  fi
+}
 
 for attempt in $(seq 1 30); do
   release_json="$(
@@ -148,6 +172,8 @@ install -d -m 0755 "${repo_dir}/repo/icons"
 if [ ! -s "${repo_dir}/icon.png" ] && [ -f "${repo_dir}/metadata/dev.typetype.android/en-US/images/icon.png" ]; then
   install -m 0644 "${repo_dir}/metadata/dev.typetype.android/en-US/images/icon.png" "${repo_dir}/icon.png"
 fi
+
+ensure_beta_image
 
 docker run --rm --entrypoint python3 --user "$(id -u):$(id -g)" \
   -e PYTHONPATH=/home/vagrant/fdroidserver \

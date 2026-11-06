@@ -25,6 +25,10 @@ install -o debian -g debian -m 0600 \
   /srv/fdroid-beta/signing/state/trusted-apk-cert-sha256
 ```
 
+The installer also copies the build context of the patched `typetype-fdroidserver:beta-patched` image to
+`/srv/fdroid-beta/signing/image`. That image exists only on this host, so each sync keeps an archive of it in
+`/srv/fdroid-beta/signing/state` and reloads it, or rebuilds it from that context, when Docker no longer has it.
+
 The beta repository signing key is intentionally separate from the stable repository key. The APK signing certificate remains identical, so users can move between stable and beta without reinstalling.
 
 ## Caddy

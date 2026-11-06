@@ -42,6 +42,12 @@ class SabrPlaybackPreloadStore(
         }
     }
 
+    fun discard(target: SabrPlaybackTarget, result: CompletableDeferred<Result<SabrPlaybackSession>>) {
+        synchronized(lock) {
+            if (entries[target]?.result === result) entries.remove(target)
+        }
+    }
+
     private fun removeExpired(now: Long) {
         entries.entries.removeAll { it.value.expiresAtNanos <= now }
     }

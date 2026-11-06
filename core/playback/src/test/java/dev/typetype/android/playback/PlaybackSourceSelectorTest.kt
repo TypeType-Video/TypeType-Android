@@ -206,7 +206,7 @@ class PlaybackSourceSelectorTest {
     }
 
     @Test
-    fun `provider video with separate audio merges without an explicit audio key`() = runBlocking {
+    fun `provider HLS video with separate audio plays from one master playlist`() = runBlocking {
         val video = video("video", height = 360, codec = "avc1.64001E")
             .copy(playbackMimeType = "application/vnd.apple.mpegurl")
         val audio = audio("audio", locale = "ja")
@@ -227,9 +227,11 @@ class PlaybackSourceSelectorTest {
         )
 
         requireNotNull(source)
-        assertEquals("video", source.url)
-        assertEquals("audio", source.audioUrl)
-        assertEquals("application/vnd.apple.mpegurl", source.mimeType)
-        assertEquals("audio/mp4", source.audioMimeType)
+        val master = String(java.util.Base64.getDecoder().decode(source.url.substringAfter("base64,")))
+        assertEquals(true, source.url.startsWith("data:application/vnd.apple.mpegurl;base64,"))
+        assertEquals("application/x-mpegURL", source.mimeType)
+        assertEquals(null, source.audioUrl)
+        assertEquals(true, master.contains("URI=\"audio\""))
+        assertEquals(true, master.lines().contains("video"))
     }
 }

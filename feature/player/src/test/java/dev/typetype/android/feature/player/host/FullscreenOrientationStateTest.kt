@@ -129,6 +129,27 @@ class FullscreenOrientationStateTest {
     }
 
     @Test
+    fun rotationFullscreenFollowsTheDeviceClass() {
+        assertTrue(allowsRotationFullscreen(smallestScreenWidthDp = 411))
+        assertTrue(allowsRotationFullscreen(smallestScreenWidthDp = 599))
+        assertFalse(allowsRotationFullscreen(smallestScreenWidthDp = 600))
+        assertFalse(allowsRotationFullscreen(smallestScreenWidthDp = 704))
+    }
+
+    @Test
+    fun largeFoldableInLandscapeStaysOutOfFullscreenOnceItsBarsHide() {
+        val allowed = allowsRotationFullscreen(smallestScreenWidthDp = 704)
+        val normal = FullscreenOrientationState().onEnvironmentChanged(
+            orientation = DeviceOrientation.Landscape,
+            hasFullscreenMedia = true,
+            allowsRotationFullscreen = allowed,
+            isFullscreen = false,
+        )
+
+        assertNull(normal.fullscreenRequest)
+    }
+
+    @Test
     fun savedStateRestoresManualLockAndLandscapeSuppression() {
         val restored = FullscreenOrientationState.Saver.restore(listOf(true, true))
 

@@ -7,6 +7,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.SimpleBasePlayer
+import androidx.media3.common.TrackSelectionParameters
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.HttpDataSource
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -26,6 +27,43 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class ProviderAudioOnlyServiceBridgeTest {
+    @Test
+    fun itemWithSeparateAudioSwitchesByTurningTheVideoTrackOffAndOn() {
+        val repository = RecordingAudioOnlyRepository(audioStream("first"))
+        val original = providerMediaItem(audioUrl = "https://instance.example/api/audio/track")
+        lateinit var player: AudioOnlyTestPlayer
+        lateinit var bridge: ProviderAudioOnlyServiceBridge
+        onMain {
+            player = AudioOnlyTestPlayer(original, positionMs = 42_000L, playWhenReady = true)
+            bridge = ProviderAudioOnlyServiceBridge(player, repository)
+        }
+
+        try {
+            val enabled = AtomicReference<Result<Unit>>()
+            onMain { bridge.setAudioOnly(true, enabled::set) }
+            waitForMain()
+
+            assertTrue(requireNotNull(enabled.get()).isSuccess)
+            assertTrue(onMain { player.isVideoTrackDisabled() })
+            assertEquals(original, onMain { player.currentMediaItem })
+            assertEquals(0, onMain { player.prepareCount })
+            assertEquals(emptyList<Any>(), repository.requests)
+
+            val disabled = AtomicReference<Result<Unit>>()
+            onMain { bridge.setAudioOnly(false, disabled::set) }
+            waitForMain()
+
+            assertTrue(requireNotNull(disabled.get()).isSuccess)
+            assertFalse(onMain { player.isVideoTrackDisabled() })
+            assertEquals(0, onMain { player.prepareCount })
+        } finally {
+            onMain {
+                bridge.close()
+                player.release()
+            }
+        }
+    }
+
     @Test
     fun switchingToAudioOnlyPreservesPlaybackAndRestoresTheOriginalItem() {
         val repository = RecordingAudioOnlyRepository(audioStream("first"))
@@ -178,6 +216,7 @@ private class AudioOnlyTestPlayer(
     private var mediaItem = initialItem
     private var positionMs = positionMs
     private var playWhenReady = playWhenReady
+    private var parameters = TrackSelectionParameters.DEFAULT
     var prepareCount = 0
         private set
 
@@ -196,7 +235,16 @@ private class AudioOnlyTestPlayer(
             ),
         )
         .setContentPositionMs(positionMs)
+        .setTrackSelectionParameters(parameters)
         .build()
+
+    override fun handleSetTrackSelectionParameters(
+        trackSelectionParameters: TrackSelectionParameters,
+    ): ListenableFuture<*> {
+        parameters = trackSelectionParameters
+        invalidateState()
+        return Futures.immediateVoidFuture()
+    }
 
     override fun handleSetMediaItems(
         mediaItems: List<MediaItem>,
@@ -223,8 +271,9 @@ private class AudioOnlyTestPlayer(
     override fun handleRelease(): ListenableFuture<*> = Futures.immediateVoidFuture()
 }
 
-private fun providerMediaItem(isLiveContent: Boolean = false): MediaItem {
+private fun providerMediaItem(isLiveContent: Boolean = false, audioUrl: String? = null): MediaItem {
     val extras = Bundle().apply {
+        audioUrl?.let { putString(MergedStreamMediaKeys.EXTRA_AUDIO_URL, it) }
         putString(MergedStreamMediaKeys.EXTRA_SERVER_ID, TEST_SCOPE.serverId)
         putString(MergedStreamMediaKeys.EXTRA_ACCOUNT_ID, TEST_SCOPE.accountId)
         putString(MergedStreamMediaKeys.EXTRA_SERVER_BASE_URL, TEST_SCOPE.baseUrl)

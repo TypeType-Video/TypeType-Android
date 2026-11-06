@@ -6,6 +6,7 @@ import dev.typetype.android.domain.stream.SabrPlaybackSession
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.stream.binding
 import dev.typetype.android.domain.stream.sabrPlaybackTarget
+import kotlinx.coroutines.CancellationException
 
 internal class PlayerSabrPlayback(
     private val repository: SabrPlaybackRepository,
@@ -19,7 +20,8 @@ internal class PlayerSabrPlayback(
         startTimeMs: Long,
     ): SabrPlaybackSession? {
         val target = stream.sabrPlaybackTarget(selection)
-        preloads.take(target)?.await()?.let { preloaded ->
+        val preload = preloads.take(target)?.await()?.takeUnless { it.exceptionOrNull() is CancellationException }
+        preload?.let { preloaded ->
             val positioned = preloaded.resolveFor(stream)?.let { session ->
                 if (startTimeMs > 0L) {
                     repository.seek(target, session.binding, startTimeMs).resolveFor(stream)

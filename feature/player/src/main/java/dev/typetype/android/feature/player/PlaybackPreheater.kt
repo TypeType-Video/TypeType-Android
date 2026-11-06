@@ -15,6 +15,7 @@ import dev.typetype.android.playback.initialQuality
 import dev.typetype.android.playback.sabrSelection
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 
 @Singleton
 class PlaybackPreheater @Inject constructor(
@@ -25,16 +26,20 @@ class PlaybackPreheater @Inject constructor(
     private val codecSupport: DevicePlaybackCodecSupport,
 ) {
 
-    suspend fun preheat(videoUrl: String, knownLive: Boolean = false) {
-        if (knownLive) return
+    suspend fun prefetchStream(videoUrl: String) {
+        streams.prefetchPlaybackStream(videoUrl)
+    }
+
+    suspend fun preheat(videoUrl: String, beforeCreate: suspend () -> Unit) {
         val settings = userSettingsRepository.current().getOrNull() ?: return
-        preheat(videoUrl, settings, codecSupport, { true })
+        preheat(videoUrl, settings, codecSupport, beforeCreate) { true }
     }
 
     suspend fun preheat(
         videoUrl: String,
         settings: UserSettings,
         codecSupport: PlaybackCodecSupport,
+        beforeCreate: suspend () -> Unit = {},
         canPrepare: () -> Boolean,
     ) {
         val stream = streams.prefetchPlaybackStream(videoUrl).getOrNull() ?: return
@@ -53,7 +58,15 @@ class PlaybackPreheater @Inject constructor(
         ) ?: return
         val target = stream.sabrPlaybackTarget(selection)
         val reservation = preloads.reserve(target)
-        if (reservation.owner) reservation.result.complete(sabr.prewarm(target, 0L))
+        if (!reservation.owner) return
+        try {
+            beforeCreate()
+            reservation.result.complete(sabr.prewarm(target, 0L))
+        } catch (cancelled: CancellationException) {
+            preloads.discard(target, reservation.result)
+            reservation.result.complete(Result.failure(cancelled))
+            throw cancelled
+        }
     }
 }
 

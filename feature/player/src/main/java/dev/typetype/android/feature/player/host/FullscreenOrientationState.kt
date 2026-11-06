@@ -5,6 +5,13 @@ import androidx.compose.runtime.saveable.listSaver
 
 internal enum class DeviceOrientation { Portrait, Landscape, Other }
 
+// The device class, not the space left by the system bars: on a large foldable that space crossed
+// 600 dp each time fullscreen hid the bars, and the player looped in and out of fullscreen.
+internal fun allowsRotationFullscreen(smallestScreenWidthDp: Int): Boolean =
+    smallestScreenWidthDp < TABLET_SMALLEST_WIDTH_DP
+
+private const val TABLET_SMALLEST_WIDTH_DP = 600
+
 internal data class FullscreenOrientationState(
     val locksLandscape: Boolean = false,
     val suppressesLandscapeEntry: Boolean = false,
