@@ -20,7 +20,10 @@ install -d -o debian -g debian -m 0755 "$signing_dir/metadata/dev.typetype.andro
 install -d -o debian -g debian -m 0755 "$signing_dir/repo"
 install -d -o debian -g debian -m 0755 "$signing_dir/repo/icons"
 
-docker build -t "$image" "$source_dir"
+install -d -o debian -g debian -m 0755 "$signing_dir/image"
+install -o debian -g debian -m 0644 "$source_dir/Dockerfile" "$source_dir/patch_androguard.py" "$signing_dir/image/"
+docker build -t "$image" "$signing_dir/image"
+rm -f "$signing_dir/state/fdroidserver-beta-patched.tar"
 
 install -o debian -g debian -m 0755 "$source_dir/sync-github-beta-release.sh" "$signing_dir/sync-github-beta-release.sh"
 install -o debian -g debian -m 0755 "$source_dir/webhook.py" "$signing_dir/typetype-fdroid-beta-webhook.py"
