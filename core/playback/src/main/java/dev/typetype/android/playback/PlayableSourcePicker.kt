@@ -35,6 +35,14 @@ suspend fun pickPlayableSource(
             selectedCodec = selectedCodec,
         )
     }
+    stream.pickHlsProviderSource(
+        selectedQuality = effectiveQuality,
+        selectedAudioKey = selectedAudioKey,
+        defaultAudioLanguage = defaultAudioLanguage,
+        preferOriginalLanguage = preferOriginalLanguage,
+        codecSupport = codecSupport,
+        selectedCodec = selectedCodec,
+    )?.let { return it }
     stream.pickExplicitProviderSource(
         selectedQuality = effectiveQuality,
         selectedAudioKey = selectedAudioKey,
