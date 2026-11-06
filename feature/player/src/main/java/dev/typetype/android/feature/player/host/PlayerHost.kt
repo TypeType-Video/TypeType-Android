@@ -80,7 +80,8 @@ fun PlayerHost(
         val hasFullscreenMedia = state.videoUrl != null &&
             state.target == PlayerHostTarget.Expanded &&
             !isInPip
-        val allowsRotationFullscreen = hasFullscreenMedia && minOf(maxWidth, maxHeight) < 600.dp
+        val allowsRotationFullscreen = hasFullscreenMedia &&
+            allowsRotationFullscreen(configuration.smallestScreenWidthDp)
         val requestFullscreen: (Boolean) -> Unit = { requested ->
             val transition = fullscreenOrientationState.onUserRequest(requested, orientation)
             fullscreenOrientationState = transition.state
