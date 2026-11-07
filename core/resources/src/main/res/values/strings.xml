@@ -305,6 +305,18 @@
     <string name="settings_player_long_press_speed">Long-press to speed up</string>
     <string name="settings_player_long_press_speed_subtitle">Hold to play at 2x, release to resume</string>
     <string name="settings_player_section_playback">Playback</string>
+    <string name="settings_seekbar_icon_title">Progress bar icon</string>
+    <string name="settings_seekbar_icon_subtitle">Rides along the progress bar, on every device you sign in to</string>
+    <string name="settings_seekbar_icon_typetype" translatable="false">TypeType</string>
+    <string name="settings_seekbar_icon_custom">Mine</string>
+    <string name="settings_seekbar_icon_none">None</string>
+    <string name="settings_seekbar_icon_upload">Upload an image</string>
+    <string name="settings_seekbar_icon_replace">Change image</string>
+    <string name="settings_seekbar_icon_remove">Remove my image</string>
+    <string name="settings_seekbar_icon_hint">PNG, JPEG, GIF or WebP, up to 2 MB. GIFs stay animated.</string>
+    <string name="settings_seekbar_icon_error_format">Use a PNG, JPEG, GIF or WebP image.</string>
+    <string name="settings_seekbar_icon_error_size">This image is larger than 2 MB.</string>
+    <string name="settings_seekbar_icon_error_upload">The image could not be saved. Try again.</string>
     <string name="settings_player_advanced_show">Show advanced player settings</string>
     <string name="settings_player_advanced_hide">Hide advanced player settings</string>
     <string name="settings_player_default_quality">Default quality</string>

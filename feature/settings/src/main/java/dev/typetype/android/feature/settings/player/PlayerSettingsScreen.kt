@@ -103,6 +103,7 @@ fun PlayerSettingsScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
                 verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
+                item { SeekbarIconSettingsSection() }
                 item { SettingsSectionHeader(stringResource(R.string.settings_player_section_playback)) }
                 item {
                     SwitchRow(

@@ -3,8 +3,10 @@ package dev.typetype.android.feature.player.components
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -19,7 +21,9 @@ import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import kotlin.math.roundToInt
 import dev.typetype.android.domain.stream.SponsorBlockSegment
 
 private val TRACK_HEIGHT = 3.dp
@@ -28,6 +32,9 @@ private val THUMB_WIDTH = 14.dp
 private val COMPACT_THUMB_WIDTH = 10.dp
 private val SCRUBBING_TRACK_HEIGHT = 6.dp
 private val SCRUBBING_THUMB_SIZE = 22.dp
+private val ICON_SIZE = 24.dp
+private val COMPACT_ICON_SIZE = 18.dp
+private val SCRUBBING_ICON_SIZE = 30.dp
 
 @Composable
 internal fun TimelineTrack(
@@ -88,7 +95,8 @@ internal fun TimelineTrack(
     } else {
         modifier
     }
-    Box(
+    val thumbIcon = LocalSeekbarThumbIcon.current
+    BoxWithConstraints(
         modifier = timelineModifier,
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -135,7 +143,7 @@ internal fun TimelineTrack(
                     cornerRadius = CornerRadius(trackRadius, trackRadius),
                 )
             }
-            drawRoundRect(
+            if (thumbIcon == SeekbarThumbIcon.Plain) drawRoundRect(
                 color = Color.White,
                 topLeft = Offset(
                     x = playerTimeBarThumbStartX(
@@ -147,6 +155,32 @@ internal fun TimelineTrack(
                 ),
                 size = Size(thumbWidth, thumbHeight),
                 cornerRadius = CornerRadius(thumbWidth / 2f, thumbWidth / 2f),
+            )
+        }
+        if (thumbIcon != SeekbarThumbIcon.Plain) {
+            val iconSize = when {
+                expanded -> if (emphasized) 40.dp else 32.dp
+                emphasized -> SCRUBBING_ICON_SIZE
+                compact -> COMPACT_ICON_SIZE
+                else -> ICON_SIZE
+            }
+            val progress = if (durationMs > 0) positionMs.toFloat() / durationMs.toFloat() else 0f
+            SeekbarThumbImage(
+                icon = thumbIcon,
+                modifier = Modifier
+                    .offset {
+                        val iconPx = iconSize.toPx()
+                        val widthPx = constraints.maxWidth.toFloat()
+                        IntOffset(
+                            x = playerTimeBarThumbStartX(
+                                progressX = progress.coerceIn(0f, 1f) * widthPx,
+                                trackWidth = widthPx,
+                                thumbWidth = iconPx,
+                            ).roundToInt(),
+                            y = ((constraints.maxHeight - iconPx) / 2f).roundToInt(),
+                        )
+                    }
+                    .size(iconSize),
             )
         }
     }

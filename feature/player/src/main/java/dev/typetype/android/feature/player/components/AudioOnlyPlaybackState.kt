@@ -10,8 +10,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.TrackSelectionParameters
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionError
@@ -137,6 +139,10 @@ internal fun rememberAudioOnlyPlaybackState(
             override fun onPlaybackStateChanged(playbackState: Int) {
                 state.synchronize()
             }
+
+            override fun onTrackSelectionParametersChanged(parameters: TrackSelectionParameters) {
+                state.synchronize()
+            }
         }
         controller.addListener(listener)
         state.synchronize()
@@ -152,10 +158,11 @@ internal fun rememberAudioOnlyPlaybackState(
 }
 
 private fun MediaController.currentAudioOnlyMode(): Boolean =
-    currentMediaItem?.requestMetadata?.extras?.let {
-        it.getBoolean(MergedStreamMediaKeys.EXTRA_AUDIO_ONLY_ACTIVE) ||
-            it.getBoolean(MergedStreamMediaKeys.EXTRA_SABR_AUDIO_ONLY)
-    } == true
+    trackSelectionParameters.disabledTrackTypes.contains(C.TRACK_TYPE_VIDEO) ||
+        currentMediaItem?.requestMetadata?.extras?.let {
+            it.getBoolean(MergedStreamMediaKeys.EXTRA_AUDIO_ONLY_ACTIVE) ||
+                it.getBoolean(MergedStreamMediaKeys.EXTRA_SABR_AUDIO_ONLY)
+        } == true
 
 private const val DEFAULT_SYNCHRONIZATION_ATTEMPTS = 50
 private const val DEFAULT_SYNCHRONIZATION_INTERVAL_MS = 100L

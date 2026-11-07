@@ -4,10 +4,12 @@ import dev.typetype.android.data.account.AccountScope
 import dev.typetype.android.data.network.TypeTypeApiHolder
 import dev.typetype.android.data.network.dto.UserSettingsDto
 import dev.typetype.android.data.network.requireSuccessfulResponse
+import dev.typetype.android.data.stream.resolveServerUrl
 import dev.typetype.android.domain.usersettings.CaptionStyles
 import dev.typetype.android.domain.usersettings.DEFAULT_SPONSOR_BLOCK_CATEGORY_ACTIONS
 import dev.typetype.android.domain.usersettings.SponsorBlockMode
 import dev.typetype.android.domain.usersettings.UserSettings
+import dev.typetype.android.domain.server.ServerRepository
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
@@ -17,22 +19,26 @@ import kotlinx.serialization.json.JsonObject
 @Singleton
 class UserSettingsNetworkSource @Inject constructor(
     private val apiHolder: TypeTypeApiHolder,
+    private val serverRepository: ServerRepository,
 ) {
     suspend fun fetch(scope: AccountScope): UserSettings = withContext(Dispatchers.IO) {
         val response = apiHolder.require(scope).settings()
         response.requireSuccessfulResponse()
-        response.body()?.toDomain() ?: error("Empty settings response")
+        response.body()?.toDomain(baseUrl(scope)) ?: error("Empty settings response")
     }
 
     suspend fun update(scope: AccountScope, patch: JsonObject): UserSettings =
         withContext(Dispatchers.IO) {
             val response = apiHolder.require(scope).updateSettings(patch)
             response.requireSuccessfulResponse()
-            response.body()?.toDomain() ?: error("Empty settings response")
+            response.body()?.toDomain(baseUrl(scope)) ?: error("Empty settings response")
         }
+
+    private suspend fun baseUrl(scope: AccountScope): String? =
+        serverRepository.getServer(scope.serverId)?.baseUrl
 }
 
-internal fun UserSettingsDto.toDomain(): UserSettings = UserSettings(
+internal fun UserSettingsDto.toDomain(serverBaseUrl: String? = null): UserSettings = UserSettings(
     defaultService = defaultService,
     defaultQuality = defaultQuality,
     defaultPlaybackSpeed = defaultPlaybackSpeed,
@@ -80,4 +86,6 @@ internal fun UserSettingsDto.toDomain(): UserSettings = UserSettings(
     deArrowThumbnailMode = deArrowThumbnailMode,
     deArrowTrustMode = deArrowTrustMode,
     accessMode = accessMode,
+    seekbarIcon = seekbarIcon,
+    seekbarIconUrl = serverBaseUrl?.let { resolveServerUrl(it, seekbarIconUrl) },
 )
