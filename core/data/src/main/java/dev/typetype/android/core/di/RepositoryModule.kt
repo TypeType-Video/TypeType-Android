@@ -51,6 +51,7 @@ import dev.typetype.android.data.stream.RemoteAudioOnlyStreamRepository
 import dev.typetype.android.data.stream.RemoteSubtitleRepository
 import dev.typetype.android.data.subscriptions.RemoteSubscriptionsRepository
 import dev.typetype.android.data.support.RemoteSupportRepository
+import dev.typetype.android.data.usersettings.RemoteSeekbarIconRepository
 import dev.typetype.android.data.usersettings.RemoteUserSettingsRepository
 import dev.typetype.android.data.version.RemoteComponentVersionsRepository
 import dev.typetype.android.data.youtubesession.RemoteYoutubeSessionRepository
@@ -93,6 +94,7 @@ import dev.typetype.android.domain.stream.AudioOnlyStreamRepository
 import dev.typetype.android.domain.stream.SubtitleRepository
 import dev.typetype.android.domain.subscriptions.SubscriptionsRepository
 import dev.typetype.android.domain.support.SupportRepository
+import dev.typetype.android.domain.usersettings.SeekbarIconRepository
 import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import dev.typetype.android.domain.version.ComponentVersionsRepository
 import dev.typetype.android.domain.youtubesession.YoutubeSessionRepository
@@ -244,6 +246,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindUserSettingsRepository(impl: RemoteUserSettingsRepository): UserSettingsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSeekbarIconRepository(impl: RemoteSeekbarIconRepository): SeekbarIconRepository
 
     @Binds
     @Singleton

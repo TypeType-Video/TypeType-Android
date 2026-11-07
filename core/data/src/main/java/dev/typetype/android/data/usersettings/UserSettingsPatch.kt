@@ -114,4 +114,5 @@ internal fun UserSettings.patchFrom(previous: UserSettings): JsonObject = buildJ
         put("deArrowTrustMode", deArrowTrustMode)
     }
     if (accessMode != previous.accessMode) put("accessMode", accessMode)
+    if (seekbarIcon != previous.seekbarIcon) put("seekbarIcon", seekbarIcon)
 }

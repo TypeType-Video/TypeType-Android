@@ -38,4 +38,10 @@ data class UserSettings(
     val deArrowThumbnailMode: String = "dearrow_or_random",
     val deArrowTrustMode: String = "accepted",
     val accessMode: String = "unrestricted",
+    val seekbarIcon: String = SEEKBAR_ICON_TYPETYPE,
+    val seekbarIconUrl: String? = null,
 )
+
+const val SEEKBAR_ICON_TYPETYPE = "typetype"
+const val SEEKBAR_ICON_CUSTOM = "custom"
+const val SEEKBAR_ICON_NONE = "none"
