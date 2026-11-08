@@ -97,7 +97,7 @@ fun AppShell(
             currentDestination?.hasRoute<NotificationsRoute>() == true
     )
     var selectedTabRoute by rememberSaveable { mutableStateOf<String?>(null) }
-    var isPlayerFullscreen by remember { mutableStateOf(false) }
+    var isPlayerFullscreen by rememberSaveable { mutableStateOf(false) }
     var bottomNavigationHeight by remember { mutableStateOf(0.dp) }
     val density = LocalDensity.current
     val imeVisible = WindowInsets.ime.getBottom(density) > 0
