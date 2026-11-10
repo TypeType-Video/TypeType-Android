@@ -38,6 +38,7 @@ data class StreamResponse(
     val subtitles: List<SubtitleItem> = emptyList(),
     val previewFrames: List<PreviewFrameItem> = emptyList(),
     val sponsorBlockSegments: List<SponsorBlockSegmentItem> = emptyList(),
+    val endScreenElements: List<EndScreenItem> = emptyList(),
     val relatedStreams: List<VideoItem> = emptyList(),
     val publishedAt: Long? = null,
     val isLive: Boolean = false,
