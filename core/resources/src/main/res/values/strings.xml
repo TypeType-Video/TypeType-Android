@@ -940,6 +940,10 @@
     <string name="external_link_title">Leaving TypeType</string>
     <string name="external_link_message">This link opens outside the app.</string>
     <string name="external_link_open">Open</string>
+    <string name="end_screen_play_video">Play video</string>
+    <string name="end_screen_open_playlist">Open playlist</string>
+    <string name="end_screen_open_channel">Open channel</string>
+    <string name="end_screen_open_link">Open link</string>
     <string name="playlist_picker_title">Add to playlist</string>
     <string name="playlist_picker_create_new">Create new playlist</string>
     <string name="playlist_picker_empty">No playlists yet</string>
