@@ -25,6 +25,7 @@
     <string name="home_feed_failed">Couldn\'t refresh the feed</string>
     <string name="channel_load_failed">Couldn\'t load this channel</string>
     <string name="channel_playlists_load_failed">Couldn\'t load this channel\'s playlists</string>
+    <string name="channel_courses_load_failed">Couldn\'t load this channel\'s courses</string>
     <string name="channel_action_failed">Couldn\'t update this subscription</string>
     <string name="search_failed">Couldn\'t complete this search</string>
     <string name="subscriptions_failed">Couldn\'t load subscriptions</string>
@@ -1464,6 +1465,7 @@
     <string name="channel_tab_videos">Videos</string>
     <string name="channel_tab_live">Live</string>
     <string name="channel_tab_playlists">Playlists</string>
+    <string name="channel_tab_courses">Courses</string>
     <string name="channel_sort_newest">Newest</string>
     <string name="channel_sort_popular">Popular</string>
     <string name="channel_sort_oldest">Oldest</string>
@@ -1478,6 +1480,8 @@
     <string name="channel_no_live">No live streams available</string>
     <string name="channel_playlists_section">Playlists</string>
     <string name="channel_no_playlists">No playlists on this channel</string>
+    <string name="channel_courses_section">Courses</string>
+    <string name="channel_no_courses">No courses on this channel</string>
     <string name="library_filter_placeholder">Filter videos…</string>
     <string name="library_filter_clear">Clear filter</string>
     <string name="library_filter_no_match">No matches for \"%1$s\"</string>
