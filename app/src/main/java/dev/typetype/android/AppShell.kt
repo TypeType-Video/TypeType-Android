@@ -80,6 +80,7 @@ fun AppShell(
     onPlayVideo: (videoUrl: String) -> Unit,
     onOpenChannel: (channelUrl: String) -> Unit,
     onClosePlayback: () -> Unit,
+    onOpenPlaylist: (playlistUrl: String) -> Unit = {},
     content: @Composable (Modifier) -> Unit,
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -223,6 +224,7 @@ fun AppShell(
                         mediaController = mediaController,
                         accessibleControlsEnabled = accessiblePlayerControls,
                         onOpenChannel = onOpenChannel,
+                        onOpenPlaylist = onOpenPlaylist,
                         onOpenAccounts = onOpenAccounts,
                         onClosePlayback = onClosePlayback,
                         onTransitionProgressChange = { progress ->

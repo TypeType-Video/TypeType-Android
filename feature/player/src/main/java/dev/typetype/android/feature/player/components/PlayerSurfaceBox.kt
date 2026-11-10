@@ -4,7 +4,6 @@ import android.graphics.Rect
 import android.media.AudioManager
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.OptIn
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -28,6 +27,7 @@ import dev.typetype.android.domain.stream.Chapter
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.stream.StreamPlaybackContract
 import dev.typetype.android.domain.usersettings.CaptionStyles
+import dev.typetype.android.feature.player.EndScreenActions
 import dev.typetype.android.feature.player.LoadSubtitleCues
 import dev.typetype.android.feature.player.PlayerDanmakuAction
 import dev.typetype.android.feature.player.PlayerDanmakuState
@@ -38,9 +38,6 @@ import dev.typetype.android.feature.player.state.PlayerGestureState
 import dev.typetype.android.feature.player.state.next
 import dev.typetype.android.playback.PlaybackCodecSupport
 import dev.typetype.android.playback.key
-import kotlinx.coroutines.delay
-
-private const val AUTO_HIDE_DELAY_MS = 3_500L
 
 @OptIn(markerClass = [UnstableApi::class])
 @Composable
@@ -77,6 +74,7 @@ internal fun PlayerSurfaceBox(
     onDanmakuAction: (PlayerDanmakuAction) -> Unit = {},
     hostTransitionProgress: () -> Float = { 0f },
     navigation: PlayerNavigationControls,
+    endScreen: EndScreenActions,
 ) {
     val activity = LocalActivity.current
     val context = LocalContext.current
@@ -122,20 +120,13 @@ internal fun PlayerSurfaceBox(
     LaunchedEffect(accessibleControls) {
         if (accessibleControls) controlsVisible = true
     }
-    val isSeekDragging = gestureState.dragMode.value == DragMode.Seek
-    LaunchedEffect(
-        controlsVisible,
-        playbackStatus.isPlaying,
-        accessibleControls,
-        isSeekDragging,
-        timelineScrubbing,
-    ) {
-        if (controlsVisible && playbackStatus.isPlaying && !accessibleControls) {
-            if (isSeekDragging || timelineScrubbing) return@LaunchedEffect
-            delay(AUTO_HIDE_DELAY_MS)
-            controlsVisible = false
-        }
-    }
+    PlayerControlsAutoHideEffect(
+        controlsVisible = controlsVisible,
+        isPlaying = playbackStatus.isPlaying,
+        accessibleControls = accessibleControls,
+        holding = gestureState.dragMode.value == DragMode.Seek || timelineScrubbing,
+        onHide = { controlsVisible = false },
+    )
 
     PlayerAudioOnlyFailureEffect(audioOnlyState, audioOnlySnackbar)
     val presentationState = rememberPresentationState(player, keepContentOnReset = true)
@@ -177,23 +168,17 @@ internal fun PlayerSurfaceBox(
         }
 
         if (!audioOnlyState.active && (!isInPip || externalSubtitle != null)) {
-            Box(modifier = chromeModifier.fillMaxSize()) {
-                DanmakuOverlay(
-                    player = player,
-                    state = danmakuState,
-                    visible = !isInPip,
-                    modifier = Modifier.fillMaxSize(),
-                )
-                PlayerSubtitleOverlay(
-                    player = player,
-                    controlsVisible = controlsVisible && !isInPip,
-                    subtitlesVisible = selectedSubtitleKey != null,
-                    externalSource = externalSubtitle,
-                    loadExternalCues = loadSubtitleCues,
-                    captionStyles = captionStyles,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
+            PlayerContentOverlays(
+                player = player,
+                danmakuState = danmakuState,
+                isInPip = isInPip,
+                controlsVisible = controlsVisible,
+                subtitlesVisible = selectedSubtitleKey != null,
+                externalSubtitle = externalSubtitle,
+                loadSubtitleCues = loadSubtitleCues,
+                captionStyles = captionStyles,
+                modifier = chromeModifier.fillMaxSize(),
+            )
         }
 
         if (presentationState.coverSurface && !audioOnlyState.active) {
@@ -226,6 +211,15 @@ internal fun PlayerSurfaceBox(
             onControlsVisibleChange = { controlsVisible = it },
             onToggleFullscreen = onToggleFullscreen,
             modifier = Modifier.fillMaxSize(),
+        )
+
+        EndScreenOverlay(
+            player = player,
+            elements = stream.endScreenElements,
+            resizeMode = gestureState.resizeMode.value,
+            enabled = gesturesVisible && !isInPip && !audioOnlyState.active,
+            actions = endScreen,
+            modifier = chromeModifier.fillMaxSize(),
         )
 
         PlayerSurfaceChrome(
