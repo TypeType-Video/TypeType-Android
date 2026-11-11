@@ -2,6 +2,7 @@ package dev.typetype.android.feature.channel
 
 import dev.typetype.android.domain.channel.Channel
 import dev.typetype.android.domain.channel.ChannelPage
+import dev.typetype.android.domain.channel.ChannelPlaylistKind
 import dev.typetype.android.domain.channel.ChannelPlaylistsPage
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.search.SearchPlaylist
@@ -108,6 +109,46 @@ class ChannelPagingTest {
         assertEquals(true, loaded.playlistsLoaded)
         assertEquals(false, loaded.playlistsLoading)
         assertNull(loaded.playlistsNextPage)
+    }
+
+    @Test
+    fun switchingToCoursesDropsTheLoadedPlaylists() {
+        val state = ChannelState(
+            channel = channel(),
+            playlists = listOf(playlist("one")),
+            playlistsLoaded = true,
+            playlistsNextPage = "next",
+        )
+
+        val loading = state.startPlaylistsLoad(ChannelPlaylistKind.Courses)
+
+        assertEquals(ChannelPlaylistKind.Courses, loading.playlistsKind)
+        assertEquals(emptyList<SearchPlaylist>(), loading.playlists)
+        assertEquals(false, loading.playlistsLoaded)
+        assertEquals(true, loading.playlistsLoading)
+        assertNull(loading.playlistsNextPage)
+    }
+
+    @Test
+    fun reloadingTheSameKindKeepsTheListWhileItLoads() {
+        val state = ChannelState(channel = channel(), playlists = listOf(playlist("one")), playlistsLoaded = true)
+
+        val loading = state.startPlaylistsLoad(ChannelPlaylistKind.Playlists)
+
+        assertEquals(listOf("one"), loading.playlists.map { it.id })
+        assertEquals(true, loading.playlistsLoaded)
+        assertEquals(true, loading.playlistsLoading)
+    }
+
+    @Test
+    fun coursesTabIsOfferedOnlyWhenTheChannelHasCourses() {
+        val without = ChannelState(channel = channel())
+        val with = ChannelState(channel = channel().copy(hasCourses = true))
+
+        assertEquals(listOf(ChannelTab.Videos, ChannelTab.Live, ChannelTab.Playlists), without.availableTabs())
+        assertEquals(ChannelTab.entries, with.availableTabs())
+        assertEquals(ChannelPlaylistKind.Courses, ChannelTab.Courses.playlistKind)
+        assertNull(ChannelTab.Live.playlistKind)
     }
 
     private fun channel(vararg videos: Video) = Channel(

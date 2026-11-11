@@ -140,6 +140,16 @@ fun ContentSettingsScreen(
                 }
                 item {
                     ContentVisibilitySwitch(
+                        title = R.string.settings_content_hide_end_screens,
+                        subtitle = R.string.settings_content_hide_end_screens_subtitle,
+                        checked = state.hideEndScreens,
+                        enabled = controlsEnabled,
+                        action = ContentSettingsAction::SetHideEndScreens,
+                        onAction = onAction,
+                    )
+                }
+                item {
+                    ContentVisibilitySwitch(
                         title = R.string.settings_content_hide_comments,
                         subtitle = R.string.settings_content_hide_comments_subtitle,
                         checked = state.hideComments,

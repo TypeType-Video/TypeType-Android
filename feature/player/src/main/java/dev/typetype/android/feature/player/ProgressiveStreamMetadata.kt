@@ -19,6 +19,7 @@ internal fun Stream.withMetadataFrom(details: Stream): Stream = copy(
     subtitles = subtitles.preferNonEmpty(details.subtitles),
     sponsorBlockSegments = details.sponsorBlockSegments.preferNonEmpty(sponsorBlockSegments),
     chapters = details.chapters.preferNonEmpty(chapters),
+    endScreenElements = details.endScreenElements.preferNonEmpty(endScreenElements),
     relatedStreams = details.relatedStreams.preferNonEmpty(relatedStreams),
 )
 
