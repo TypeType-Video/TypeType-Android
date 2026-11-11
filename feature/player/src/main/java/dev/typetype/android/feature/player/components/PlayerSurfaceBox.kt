@@ -75,6 +75,7 @@ internal fun PlayerSurfaceBox(
     hostTransitionProgress: () -> Float = { 0f },
     navigation: PlayerNavigationControls,
     endScreen: EndScreenActions,
+    showEndScreens: Boolean,
 ) {
     val activity = LocalActivity.current
     val context = LocalContext.current
@@ -217,7 +218,7 @@ internal fun PlayerSurfaceBox(
             player = player,
             elements = stream.endScreenElements,
             resizeMode = gestureState.resizeMode.value,
-            enabled = gesturesVisible && !isInPip && !audioOnlyState.active,
+            enabled = showEndScreens && gesturesVisible && !isInPip && !audioOnlyState.active,
             actions = endScreen,
             modifier = chromeModifier.fillMaxSize(),
         )

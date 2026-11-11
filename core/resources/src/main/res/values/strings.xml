@@ -239,6 +239,8 @@
     <string name="settings_content_hide_recommendations_subtitle">Remove personalized recommendations from the home page</string>
     <string name="settings_content_hide_related">Hide related videos</string>
     <string name="settings_content_hide_related_subtitle">Remove suggestions from watch pages</string>
+    <string name="settings_content_hide_end_screens">Hide end screens</string>
+    <string name="settings_content_hide_end_screens_subtitle">Remove the creator cards shown at the end of YouTube videos</string>
     <string name="settings_content_hide_comments">Hide comments and danmaku</string>
     <string name="settings_content_hide_comments_subtitle">Stop loading comments and bullet comments</string>
     <string name="settings_content_hide_shorts">Hide Shorts</string>

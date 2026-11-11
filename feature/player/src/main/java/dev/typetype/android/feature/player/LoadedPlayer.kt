@@ -268,6 +268,7 @@ internal fun LoadedPlayer(
                             hostTransitionProgress = hostTransitionProgress,
                             navigation = navigation,
                             endScreen = endScreen,
+                            showEndScreens = !userSettings.hideEndScreens,
                             modifier = Modifier.fillMaxSize(),
                         )
                     } else {
