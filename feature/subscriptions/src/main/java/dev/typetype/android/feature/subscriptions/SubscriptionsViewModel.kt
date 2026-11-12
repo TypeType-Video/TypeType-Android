@@ -12,6 +12,7 @@ import dev.typetype.android.domain.feed.SubscriptionsPage
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.library.VideoMetaRepository
 import dev.typetype.android.domain.library.cacheVideos
+import dev.typetype.android.domain.subscriptions.SubscriptionFeedSelection
 import dev.typetype.android.domain.subscriptions.SubscriptionsRepository
 import javax.inject.Inject
 import kotlinx.coroutines.Job
@@ -44,6 +45,7 @@ class SubscriptionsViewModel @Inject constructor(
     private var persistCurrentGeneration = true
     private var continuationVideos: List<Video> = emptyList()
     private val networkRecovery = SubscriptionsRecovery()
+    private val feedSelection: SubscriptionFeedSelection get() = _state.value.feedSelection
 
     init {
         observeSyncState()
@@ -59,7 +61,14 @@ class SubscriptionsViewModel @Inject constructor(
             SubscriptionsAction.OnLoadMore -> loadMore()
             SubscriptionsAction.OnRetrySync -> retrySync()
             is SubscriptionsAction.OnTabSelect -> _state.update { it.copy(selectedTab = action.tab) }
+            is SubscriptionsAction.OnSelectFeed -> selectFeed(action.selection)
         }
+    }
+
+    private fun selectFeed(selection: SubscriptionFeedSelection) {
+        if (selection == _state.value.feedSelection) return
+        _state.update { it.copy(feedSelection = selection, videos = emptyList(), hasMore = false) }
+        refresh()
     }
 
     private fun observeChannels() {
@@ -71,22 +80,7 @@ class SubscriptionsViewModel @Inject constructor(
     private fun observeSyncState() {
         viewModelScope.launch {
             subscriptionsRepository.observeSyncState().collect { sync ->
-                val failure = sync?.takeIf { it.failedWriteCount > 0 }?.let {
-                    errorMapper.message(
-                        failureCode = it.writeFailureCode,
-                        statusCode = it.writeFailureStatusCode,
-                        fallbackRes = R.string.library_changes_sync_failed,
-                    )
-                }
-                _state.update {
-                    it.copy(
-                        syncErrorMessage = failure,
-                        syncRequestId = sync?.writeRequestId,
-                        lastSuccessfulSyncAtMillis = sync?.lastSuccessAtMillis,
-                        pendingWriteCount = sync?.pendingWriteCount ?: 0,
-                        failedWriteCount = sync?.failedWriteCount ?: 0,
-                    )
-                }
+                _state.update { it.withSyncState(sync, errorMapper) }
             }
         }
     }
@@ -130,7 +124,7 @@ class SubscriptionsViewModel @Inject constructor(
     private suspend fun loadFirstPage() {
         nextCursor = null
         generation = null
-        if (_state.value.videos.isEmpty()) {
+        if (_state.value.videos.isEmpty() && feedSelection == SubscriptionFeedSelection.All) {
             val cached = feedRepository.loadCachedSubscriptionsFeedOrEmpty()
             if (cached.isNotEmpty()) _state.update { it.copy(videos = cached) }
         }
@@ -145,7 +139,7 @@ class SubscriptionsViewModel @Inject constructor(
                 loadMoreError = false,
             )
         }
-        feedRepository.loadSubscriptionsFeed(cursor = null, limit = SUBSCRIPTIONS_PAGE_SIZE).fold(
+        feedRepository.loadSubscriptionsFeed(null, SUBSCRIPTIONS_PAGE_SIZE, selection = feedSelection).fold(
             onSuccess = { page -> acceptFirstPage(page, hadCachedContent) },
             onFailure = ::showRefreshFailure,
         )
@@ -155,7 +149,8 @@ class SubscriptionsViewModel @Inject constructor(
         generation = page.generation
         networkRecovery.clear()
         nextCursor = page.nextCursor
-        persistCurrentGeneration = !page.refreshing || !hadCachedContent
+        persistCurrentGeneration = feedSelection == SubscriptionFeedSelection.All &&
+            (!page.refreshing || !hadCachedContent)
         val isPersisting = persistCurrentGeneration
         val preservesContinuation = continuationVideos.isNotEmpty()
         val videos = if (preservesContinuation) {
@@ -201,6 +196,7 @@ class SubscriptionsViewModel @Inject constructor(
                 cursor = cursor,
                 limit = SUBSCRIPTIONS_PAGE_SIZE,
                 expectedGeneration = expectedGeneration,
+                selection = feedSelection,
             ).fold(
                 onSuccess = { page -> acceptContinuation(page) },
                 onFailure = { failure ->
@@ -255,6 +251,7 @@ class SubscriptionsViewModel @Inject constructor(
                 val result = feedRepository.loadSubscriptionsFeed(
                     cursor = null,
                     limit = SUBSCRIPTIONS_PAGE_SIZE,
+                    selection = feedSelection,
                 )
                 val page = result.getOrElse { failure ->
                     showRefreshFailure(failure)
