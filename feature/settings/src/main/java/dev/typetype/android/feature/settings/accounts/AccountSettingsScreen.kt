@@ -42,6 +42,8 @@ fun AccountSettingsRoute(
     viewModel: AccountSettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val profiles: AccountProfilesViewModel = hiltViewModel()
+    val profileState by profiles.state.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) {
         viewModel.events.collectLatest { event ->
             when (event) {
@@ -58,6 +60,9 @@ fun AccountSettingsRoute(
         onForget = viewModel::forget,
         onSignIn = viewModel::signIn,
         onAddInstance = viewModel::addInstance,
+        onProfileSwitched = onAccountActivated,
+        profiles = profiles,
+        profileNames = profileState.profiles.associate { it.id to it.name },
     )
 }
 
@@ -69,6 +74,9 @@ private fun AccountSettingsScreen(
     onForget: (String, String) -> Unit,
     onSignIn: (String, String?) -> Unit,
     onAddInstance: () -> Unit,
+    onProfileSwitched: () -> Unit,
+    profiles: AccountProfilesViewModel,
+    profileNames: Map<String, String>,
 ) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -84,6 +92,7 @@ private fun AccountSettingsScreen(
                 state.errorMessage?.let { message ->
                     item { AccountSettingsError(message, state.errorRequestId) }
                 }
+                item(key = "account-profiles") { AccountProfilesSection(onProfileSwitched, profiles) }
                 state.servers.forEach { server ->
                     val accounts = state.accounts.filter { it.serverId == server.id }
                     item(key = server.id) {
@@ -95,6 +104,7 @@ private fun AccountSettingsScreen(
                             onSelect = onSelect,
                             onForget = onForget,
                             onSignIn = { accountId -> onSignIn(server.id, accountId) },
+                            profileNames = profileNames,
                         )
                     }
                 }

@@ -46,6 +46,7 @@ fun InstanceAccountsCard(
     onSelect: (String, String) -> Unit,
     onForget: (String, String) -> Unit,
     onSignIn: (String?) -> Unit,
+    profileNames: Map<String, String> = emptyMap(),
 ) {
     Column(
         modifier = Modifier
@@ -77,6 +78,7 @@ fun InstanceAccountsCard(
                 val selected = activeScope == AccountScope(server.id, account.id)
                 AccountRow(
                     account = account,
+                    profileName = profileNames[account.id],
                     avatarUrl = resolveProfileAvatarUrl(
                         serverBaseUrl = server.baseUrl,
                         avatarUrl = account.avatarUrl,
@@ -103,6 +105,7 @@ fun InstanceAccountsCard(
 @Composable
 private fun AccountRow(
     account: Account,
+    profileName: String?,
     avatarUrl: String?,
     selected: Boolean,
     busy: Boolean,
@@ -111,6 +114,7 @@ private fun AccountRow(
     onSignIn: () -> Unit,
 ) {
     val displayName = account.publicUsername?.takeIf { it.isNotBlank() }
+        ?: profileName
         ?: if (account.isGuest) stringResource(R.string.accounts_guest) else account.id
     Row(
         modifier = Modifier
