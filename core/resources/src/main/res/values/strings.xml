@@ -537,6 +537,13 @@
     <string name="accounts_forget">Forget account</string>
     <string name="accounts_switch_failed">Couldn\'t switch account</string>
     <string name="accounts_forget_failed">Couldn\'t forget account</string>
+    <string name="live_chat_title">Live chat</string>
+    <string name="live_chat_empty">No messages yet</string>
+    <string name="live_chat_connecting">Connecting…</string>
+    <string name="live_chat_live">Live</string>
+    <string name="live_chat_reconnecting">Reconnecting…</string>
+    <string name="live_chat_ended">The live chat has ended</string>
+    <string name="live_chat_failed">The live chat is unavailable</string>
     <string name="comments_title">Comments</string>
     <string name="comments_empty">No comments</string>
     <string name="comments_read_more">Read more</string>

@@ -6,18 +6,24 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import dev.typetype.android.core.ui.branding.rememberVideoBranding
+import dev.typetype.android.domain.navigation.isYouTubeVideoUrl
 import dev.typetype.android.domain.playback.PlaybackQueueState
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.usersettings.UserSettings
 import dev.typetype.android.feature.menu.rememberVideoMenuScope
-import dev.typetype.android.feature.player.components.DescriptionSection
 import dev.typetype.android.feature.player.components.AudioOnlyPlaybackState
+import dev.typetype.android.feature.player.components.DescriptionSection
 import dev.typetype.android.feature.player.components.RelatedStreamsSection
 import dev.typetype.android.feature.player.components.UploaderCard
+import dev.typetype.android.feature.player.livechat.LiveChatSheet
 import dev.typetype.android.feature.player.queue.PlaybackQueueControls
 import dev.typetype.android.feature.player.sleep.PlaybackSleepTimerControls
 
@@ -47,6 +53,8 @@ internal fun PlayerDetails(
         thumbnailUrl = stream.thumbnailUrl,
         durationSeconds = stream.durationSeconds,
     )
+    var liveChatVisible by remember(videoUrl) { mutableStateOf(false) }
+    val liveChatAvailable = stream.isLive && isYouTubeVideoUrl(videoUrl)
     Column(
         modifier = modifier.padding(horizontal = 16.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -71,6 +79,7 @@ internal fun PlayerDetails(
             onToggleWatchLater = { onAction(PlayerAction.OnToggleWatchLater) },
             onAddToPlaylist = { onAction(PlayerAction.OnOpenPlaylistPicker) },
             onShowComments = onShowComments.takeUnless { userSettings.hideComments },
+            onShowLiveChat = { liveChatVisible = true }.takeIf { liveChatAvailable },
             onDownload = onShowDownloads,
             downloadInFlight = downloadInFlight,
             audioOnlyEnabled = audioOnlyState?.active == true,
@@ -91,6 +100,9 @@ internal fun PlayerDetails(
             onSubscribeClick = onToggleSubscription,
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+    }
+    if (liveChatVisible && liveChatAvailable) {
+        LiveChatSheet(videoUrl = videoUrl, onDismiss = { liveChatVisible = false })
     }
 }
 
