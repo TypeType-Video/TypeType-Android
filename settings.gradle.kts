@@ -21,6 +21,17 @@ dependencyResolutionManagement {
     }
 }
 
+val remoteBuildCacheUrl = providers.environmentVariable("GRADLE_REMOTE_BUILD_CACHE_URL").orNull
+if (remoteBuildCacheUrl != null) {
+    buildCache {
+        remote<HttpBuildCache> {
+            url = uri(remoteBuildCacheUrl)
+            isAllowInsecureProtocol = true
+            isPush = true
+        }
+    }
+}
+
 rootProject.name = "TypeType-Android"
 
 include(":app")
