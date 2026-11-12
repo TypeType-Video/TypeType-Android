@@ -24,6 +24,7 @@ import dev.typetype.android.data.imports.RemoteImportRepository
 import dev.typetype.android.data.imports.RemotePortabilityRepository
 import dev.typetype.android.data.imports.RoomYoutubeTakeoutImportRepository
 import dev.typetype.android.data.library.RoomVideoMetaRepository
+import dev.typetype.android.data.linkedsessions.RemoteLinkedSessionsRepository
 import dev.typetype.android.data.livechat.RemoteLiveChatRepository
 import dev.typetype.android.data.notifications.RemoteNotificationsRepository
 import dev.typetype.android.data.network.NetworkAvailabilityObserver
@@ -75,6 +76,8 @@ import dev.typetype.android.domain.imports.ImportRepository
 import dev.typetype.android.domain.imports.PortabilityRepository
 import dev.typetype.android.domain.imports.YoutubeTakeoutImportRepository
 import dev.typetype.android.domain.library.VideoMetaRepository
+import dev.typetype.android.domain.linkedsessions.BiliBiliSessionRepository
+import dev.typetype.android.domain.linkedsessions.YoutubeDeviceLoginRepository
 import dev.typetype.android.domain.livechat.LiveChatRepository
 import dev.typetype.android.domain.notifications.NotificationsRepository
 import dev.typetype.android.domain.preferences.PreferencesRepository
@@ -248,6 +251,14 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindAccountProfilesRepository(impl: RemoteAccountProfilesRepository): AccountProfilesRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindYoutubeDeviceLoginRepository(impl: RemoteLinkedSessionsRepository): YoutubeDeviceLoginRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindBiliBiliSessionRepository(impl: RemoteLinkedSessionsRepository): BiliBiliSessionRepository
 
     @Binds
     @Singleton
