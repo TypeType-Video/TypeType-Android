@@ -51,6 +51,7 @@ import dev.typetype.android.data.stream.StreamRemoteSource
 import dev.typetype.android.data.stream.SabrPlaybackRepositoryImpl
 import dev.typetype.android.data.stream.RemoteAudioOnlyStreamRepository
 import dev.typetype.android.data.stream.RemoteSubtitleRepository
+import dev.typetype.android.data.subscriptions.RemoteSubscriptionGroupsRepository
 import dev.typetype.android.data.subscriptions.RemoteSubscriptionsRepository
 import dev.typetype.android.data.support.RemoteSupportRepository
 import dev.typetype.android.data.version.RemoteComponentVersionsRepository
@@ -94,6 +95,7 @@ import dev.typetype.android.domain.stream.StreamRepository
 import dev.typetype.android.domain.stream.SabrPlaybackRepository
 import dev.typetype.android.domain.stream.AudioOnlyStreamRepository
 import dev.typetype.android.domain.stream.SubtitleRepository
+import dev.typetype.android.domain.subscriptions.SubscriptionGroupsRepository
 import dev.typetype.android.domain.subscriptions.SubscriptionsRepository
 import dev.typetype.android.domain.support.SupportRepository
 import dev.typetype.android.domain.version.ComponentVersionsRepository
@@ -234,6 +236,12 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindChannelRepository(impl: ChannelRepositoryImpl): ChannelRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSubscriptionGroupsRepository(
+        impl: RemoteSubscriptionGroupsRepository,
+    ): SubscriptionGroupsRepository
 
     @Binds
     @Singleton

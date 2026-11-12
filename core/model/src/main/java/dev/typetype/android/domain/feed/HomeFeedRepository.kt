@@ -1,5 +1,7 @@
 package dev.typetype.android.domain.feed
 
+import dev.typetype.android.domain.subscriptions.SubscriptionFeedSelection
+
 data class SubscriptionsPage(
     val videos: List<Video>,
     val nextCursor: String?,
@@ -53,6 +55,7 @@ interface HomeFeedRepository {
         cursor: String? = null,
         limit: Int = 30,
         expectedGeneration: Long? = null,
+        selection: SubscriptionFeedSelection = SubscriptionFeedSelection.All,
     ): Result<SubscriptionsPage>
     suspend fun loadShorts(
         continuation: ShortsContinuation? = null,

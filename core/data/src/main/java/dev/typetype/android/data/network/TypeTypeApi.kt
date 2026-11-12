@@ -15,4 +15,5 @@ interface TypeTypeApi :
     TypeTypeYoutubeSessionApi,
     TypeTypeLibraryApi,
     TypeTypeMediaApi,
-    TypeTypeRecommenderApi
+    TypeTypeRecommenderApi,
+    TypeTypeSubscriptionGroupsApi

@@ -6,6 +6,7 @@ import dev.typetype.android.data.network.dto.SubscriptionFeedResponse
 import dev.typetype.android.data.network.serverResponseException
 import dev.typetype.android.data.network.dto.toDomainVideo
 import dev.typetype.android.domain.feed.SubscriptionsPage
+import dev.typetype.android.domain.subscriptions.SubscriptionFeedSelection
 import kotlinx.coroutines.delay
 import retrofit2.Response
 
@@ -18,6 +19,7 @@ internal class SubscriptionFeedClient(
         cursor: String?,
         limit: Int,
         expectedGeneration: Long?,
+        selection: SubscriptionFeedSelection = SubscriptionFeedSelection.All,
         verifyOwner: suspend () -> Unit,
     ): SubscriptionsPage {
         require(limit in 1..100) { "Subscription feed page size is outside the server contract" }
@@ -25,7 +27,12 @@ internal class SubscriptionFeedClient(
         var preparationResponses = 0
         while (true) {
             verifyOwner()
-            val response = api.subscriptionsFeed(limit = limit, cursor = cursor)
+            val response = api.subscriptionsFeed(
+                limit = limit,
+                cursor = cursor,
+                groupId = (selection as? SubscriptionFeedSelection.Group)?.id,
+                ungrouped = (selection == SubscriptionFeedSelection.Ungrouped).takeIf { it },
+            )
             verifyOwner()
             when (response.code()) {
                 200 -> return response.readyPage(expectedGeneration)
