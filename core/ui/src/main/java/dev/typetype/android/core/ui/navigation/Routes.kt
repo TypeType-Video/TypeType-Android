@@ -60,6 +60,9 @@ data object ChannelNotificationsRoute
 data object RecommenderSettingsRoute
 
 @Serializable
+data object LinkedAccountsRoute
+
+@Serializable
 data object StorageSettingsRoute
 
 @Serializable
