@@ -8,6 +8,7 @@ import dev.typetype.android.data.actions.VideoActionsRepositoryImpl
 import dev.typetype.android.data.account.RoomAccountRepository
 import dev.typetype.android.data.account.AccountScopeProvider
 import dev.typetype.android.data.account.ActiveAccountScope
+import dev.typetype.android.data.allowlist.RemoteAllowedChannelsRepository
 import dev.typetype.android.data.auth.AuthRepositoryImpl
 import dev.typetype.android.data.auth.RemoteAccountProfilesRepository
 import dev.typetype.android.data.branding.RemoteDeArrowRepository
@@ -61,6 +62,7 @@ import dev.typetype.android.data.youtubesession.RemoteYoutubeSessionRepository
 import dev.typetype.android.data.youtubesession.OkHttpYoutubeRemoteBrowserConnector
 import dev.typetype.android.domain.actions.VideoActionsRepository
 import dev.typetype.android.domain.account.AccountRepository
+import dev.typetype.android.domain.allowlist.AllowedChannelsRepository
 import dev.typetype.android.domain.auth.AuthRepository
 import dev.typetype.android.domain.branding.DeArrowRepository
 import dev.typetype.android.domain.channel.ChannelPostsRepository
@@ -259,6 +261,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindBiliBiliSessionRepository(impl: RemoteLinkedSessionsRepository): BiliBiliSessionRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAllowedChannelsRepository(impl: RemoteAllowedChannelsRepository): AllowedChannelsRepository
 
     @Binds
     @Singleton

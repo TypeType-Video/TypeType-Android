@@ -18,4 +18,5 @@ interface TypeTypeApi :
     TypeTypeRecommenderApi,
     TypeTypeSubscriptionGroupsApi,
     TypeTypeAccountProfilesApi,
-    TypeTypeLinkedSessionsApi
+    TypeTypeLinkedSessionsApi,
+    TypeTypeAllowedChannelsApi
