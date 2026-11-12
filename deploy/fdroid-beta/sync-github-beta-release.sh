@@ -39,7 +39,7 @@ for attempt in $(seq 1 30); do
   release_json="$(
     curl -fsSL --retry 5 \
       "https://api.github.com/repos/${github_repo}/releases?per_page=100" |
-      jq -c '[.[] | select(.draft == false and .prerelease == true)] | first // empty'
+      jq -c '[.[] | select(.draft == false and .prerelease == true)] | sort_by(.published_at) | last // empty'
   )"
 
   if [ -z "$release_json" ]; then
