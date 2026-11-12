@@ -19,4 +19,5 @@ interface TypeTypeApi :
     TypeTypeSubscriptionGroupsApi,
     TypeTypeAccountProfilesApi,
     TypeTypeLinkedSessionsApi,
-    TypeTypeAllowedChannelsApi
+    TypeTypeAllowedChannelsApi,
+    TypeTypeDeviceLinkApi

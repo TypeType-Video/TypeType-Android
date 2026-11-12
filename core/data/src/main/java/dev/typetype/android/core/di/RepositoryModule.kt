@@ -16,6 +16,7 @@ import dev.typetype.android.data.channel.ChannelPostsRepositoryImpl
 import dev.typetype.android.data.channel.ChannelRepositoryImpl
 import dev.typetype.android.data.comments.CommentsRepositoryImpl
 import dev.typetype.android.data.comments.RemoteBulletCommentsRepository
+import dev.typetype.android.data.devicelink.RemoteDeviceLinkRepository
 import dev.typetype.android.data.download.AndroidDownloadRepository
 import dev.typetype.android.data.diagnostics.LocalDiagnosticsRepository
 import dev.typetype.android.data.diagnostics.LocalCrashReportRepository
@@ -70,6 +71,7 @@ import dev.typetype.android.domain.channel.ChannelPostsRepository
 import dev.typetype.android.domain.channel.ChannelRepository
 import dev.typetype.android.domain.comments.BulletCommentsRepository
 import dev.typetype.android.domain.comments.CommentsRepository
+import dev.typetype.android.domain.devicelink.DeviceLinkRepository
 import dev.typetype.android.domain.download.DownloadRepository
 import dev.typetype.android.domain.diagnostics.DiagnosticsRepository
 import dev.typetype.android.domain.diagnostics.CrashReportRepository
@@ -271,6 +273,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindWatchProgressSource(impl: WatchProgressCache): WatchProgressSource
+
+    @Binds
+    @Singleton
+    abstract fun bindDeviceLinkRepository(impl: RemoteDeviceLinkRepository): DeviceLinkRepository
 
     @Binds
     @Singleton
