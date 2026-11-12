@@ -14,6 +14,22 @@ data class Comment(
     val replyCount: Int,
     val publishedAtMillis: Long? = null,
     val repliesPage: String? = null,
+    val image: CommentImage? = null,
+    val voiceReply: CommentVoiceReply? = null,
+)
+
+data class CommentImage(
+    val url: String?,
+    val animated: Boolean,
+    val unavailableText: String?,
+)
+
+data class CommentVoiceReply(
+    val url: String,
+    val durationMs: Long,
+    val transcript: String,
+    val playable: Boolean,
+    val unavailableText: String?,
 )
 
 data class CommentsPage(

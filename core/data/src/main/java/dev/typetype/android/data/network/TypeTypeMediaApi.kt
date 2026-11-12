@@ -11,6 +11,7 @@ import dev.typetype.android.data.network.dto.SabrPlaybackResponse
 import dev.typetype.android.data.network.dto.SabrPlaybackWindowRequestDto
 import dev.typetype.android.data.network.dto.SabrPlaybackWindowResponseDto
 import dev.typetype.android.data.network.dto.StreamResponse
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -92,6 +93,9 @@ interface TypeTypeMediaApi {
         @Query("url") videoUrl: String,
         @Query("repliesPage") repliesPage: String,
     ): Response<CommentsPageResponse>
+
+    @GET("comments/voice")
+    suspend fun commentVoiceAudio(@Query("url") voiceReplyUrl: String): Response<ResponseBody>
 
     @GET("bullet-comments")
     suspend fun bulletComments(
