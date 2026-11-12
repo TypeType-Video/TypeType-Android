@@ -1715,4 +1715,10 @@
     <string name="channel_notifications_disable">Turn off new video notifications</string>
     <string name="push_battery_hint">Disable battery optimization for reliable notification delivery.</string>
     <string name="push_battery_open_settings">Battery settings</string>
+    <string name="settings_player_youtube_buffer">YouTube buffer</string>
+    <string name="settings_player_youtube_buffer_subtitle">Saved on this device. Applies to the next YouTube video. Live streams are unchanged. Larger buffers may use more data and memory; the target may not always be reached.</string>
+    <plurals name="settings_player_buffer_seconds">
+        <item quantity="one">%1$d second</item>
+        <item quantity="other">%1$d seconds</item>
+    </plurals>
 </resources>

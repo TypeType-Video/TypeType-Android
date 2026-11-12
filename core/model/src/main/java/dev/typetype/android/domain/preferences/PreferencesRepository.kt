@@ -23,6 +23,7 @@ interface PreferencesRepository {
     suspend fun setPlayerPreferredCodec(codec: String)
     suspend fun setPlayerDefaultQuality(quality: String)
     suspend fun setPlayerMobileDataQuality(quality: String)
+    suspend fun setPlayerYouTubeBufferSeconds(seconds: Int)
     suspend fun setPlayerSwipeSeekEnabled(enabled: Boolean)
     suspend fun setPlayerSwipeBrightnessVolumeEnabled(enabled: Boolean)
     suspend fun setPlayerPlaybackBrightnessPercent(percent: Int)

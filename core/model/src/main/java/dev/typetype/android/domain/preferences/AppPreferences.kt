@@ -20,6 +20,7 @@ data class AppPreferences(
     val playerPreferredCodec: String = "recommended",
     val playerDefaultQuality: String = "1080p",
     val playerMobileDataQuality: String = "1080p",
+    val playerYouTubeBufferSeconds: Int = DEFAULT_YOUTUBE_BUFFER_SECONDS,
     val playerSwipeSeekEnabled: Boolean = true,
     val playerSwipeBrightnessVolumeEnabled: Boolean = true,
     val playerPlaybackBrightnessPercent: Int? = null,

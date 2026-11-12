@@ -51,6 +51,7 @@ class PlayerSettingsViewModel @Inject constructor(
                     danmakuSize = prefs.danmakuSize,
                     defaultQuality = prefs.playerDefaultQuality,
                     mobileDataQuality = prefs.playerMobileDataQuality,
+                    youTubeBufferSeconds = prefs.playerYouTubeBufferSeconds,
                     defaultPlaybackSpeed = server.defaultPlaybackSpeed,
                     defaultService = server.defaultService,
                     subtitlesEnabled = server.subtitlesEnabled,
@@ -81,6 +82,8 @@ class PlayerSettingsViewModel @Inject constructor(
                     preferencesRepository.setPlayerDoubleTapSeekEnabled(action.enabled)
                 is PlayerSettingsAction.SetDoubleTapSeekSeconds ->
                     preferencesRepository.setPlayerDoubleTapSeekSeconds(action.seconds)
+                is PlayerSettingsAction.SetYouTubeBufferSeconds ->
+                    preferencesRepository.setPlayerYouTubeBufferSeconds(action.seconds)
                 is PlayerSettingsAction.SetPreferredCodec ->
                     preferencesRepository.setPlayerPreferredCodec(action.codec)
                 is PlayerSettingsAction.SetSwipeSeek ->

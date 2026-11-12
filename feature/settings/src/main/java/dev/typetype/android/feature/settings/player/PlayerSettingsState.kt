@@ -1,5 +1,6 @@
 package dev.typetype.android.feature.settings.player
 
+import dev.typetype.android.domain.preferences.DEFAULT_YOUTUBE_BUFFER_SECONDS
 import dev.typetype.android.domain.usersettings.DEFAULT_HOLD_PLAYBACK_SPEED
 import dev.typetype.android.domain.usersettings.DEFAULT_SPONSOR_BLOCK_CATEGORY_ACTIONS
 import dev.typetype.android.domain.usersettings.CaptionStyles
@@ -26,6 +27,7 @@ data class PlayerSettingsState(
     val danmakuSize: Float = 1f,
     val defaultQuality: String = "1080p",
     val mobileDataQuality: String = "1080p",
+    val youTubeBufferSeconds: Int = DEFAULT_YOUTUBE_BUFFER_SECONDS,
     val defaultPlaybackSpeed: Double = 1.0,
     val defaultService: Int = 0,
     val subtitlesEnabled: Boolean = false,

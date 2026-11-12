@@ -18,6 +18,8 @@ import dev.typetype.android.domain.preferences.MangaHeadlineMarker
 import dev.typetype.android.domain.preferences.MangaPaper
 import dev.typetype.android.domain.preferences.PreferencesRepository
 import dev.typetype.android.domain.preferences.normalizePlaybackQuality
+import dev.typetype.android.domain.preferences.DEFAULT_YOUTUBE_BUFFER_SECONDS
+import dev.typetype.android.domain.preferences.normalizeYouTubeBufferSeconds
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -56,6 +58,9 @@ class DataStorePreferencesRepository @Inject constructor(
             ),
             playerMobileDataQuality = normalizePlaybackQuality(
                 prefs[KEY_PLAYER_MOBILE_DATA_QUALITY] ?: "1080p",
+            ),
+            playerYouTubeBufferSeconds = normalizeYouTubeBufferSeconds(
+                prefs[KEY_PLAYER_YOUTUBE_BUFFER_SECONDS] ?: DEFAULT_YOUTUBE_BUFFER_SECONDS,
             ),
             playerSwipeSeekEnabled = prefs[KEY_PLAYER_SWIPE_SEEK] ?: true,
             playerSwipeBrightnessVolumeEnabled = prefs[KEY_PLAYER_SWIPE_BRIGHT_VOL] ?: true,
@@ -129,6 +134,10 @@ class DataStorePreferencesRepository @Inject constructor(
         dataStore.edit {
             it[KEY_PLAYER_MOBILE_DATA_QUALITY] = normalizePlaybackQuality(quality)
         }
+    }
+
+    override suspend fun setPlayerYouTubeBufferSeconds(seconds: Int) {
+        dataStore.edit { it[KEY_PLAYER_YOUTUBE_BUFFER_SECONDS] = normalizeYouTubeBufferSeconds(seconds) }
     }
 
     override suspend fun setPlayerSwipeSeekEnabled(enabled: Boolean) {
@@ -212,6 +221,7 @@ class DataStorePreferencesRepository @Inject constructor(
         val KEY_PLAYER_PREFERRED_CODEC = stringPreferencesKey("player_preferred_codec")
         val KEY_PLAYER_DEFAULT_QUALITY = stringPreferencesKey("player_default_quality")
         val KEY_PLAYER_MOBILE_DATA_QUALITY = stringPreferencesKey("player_mobile_data_quality")
+        val KEY_PLAYER_YOUTUBE_BUFFER_SECONDS = intPreferencesKey("player_youtube_buffer_seconds")
         val KEY_PLAYER_SWIPE_SEEK = booleanPreferencesKey("player_swipe_seek")
         val KEY_PLAYER_SWIPE_BRIGHT_VOL = booleanPreferencesKey("player_swipe_bright_vol")
         val KEY_PLAYER_PLAYBACK_BRIGHTNESS = intPreferencesKey("player_playback_brightness")
