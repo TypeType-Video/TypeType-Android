@@ -538,6 +538,12 @@
     <string name="comments_replies_failed">Couldn\'t load replies</string>
     <string name="comments_load_failed">Couldn\'t load comments</string>
     <string name="comments_load_more_replies">Load more replies</string>
+    <string name="comments_image">Image in comment</string>
+    <string name="comments_gif">GIF in comment</string>
+    <string name="comments_voice_reply">Voice reply</string>
+    <string name="comments_voice_reply_play">Play voice reply</string>
+    <string name="comments_voice_reply_pause">Pause voice reply</string>
+    <string name="comments_voice_reply_failed">Couldn\'t play this voice reply</string>
     <string name="settings_profile_username_label">Public username</string>
     <string name="settings_profile_username_helper">3–20 characters, letters, numbers, _ and -</string>
     <string name="settings_profile_bio_label">Bio</string>
