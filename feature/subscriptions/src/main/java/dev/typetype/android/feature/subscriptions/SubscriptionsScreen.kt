@@ -93,6 +93,7 @@ fun SubscriptionsScreen(
 ) {
     val menuScope = rememberVideoMenuScope(onOpenChannel = onOpenChannel)
     val visibleVideos = state.videos.filterNot(menuScope::isHidden)
+    menuScope.TrackProgress(visibleVideos)
     Column(modifier = Modifier.fillMaxSize()) {
         LibrarySyncStatusBar(
             isRefreshing = false,

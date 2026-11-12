@@ -80,6 +80,7 @@ internal fun HomeContent(
 ) {
     val recommender = state.recommender
     val visibleVideos = state.videos.filterNot(menuScope::isHidden)
+    menuScope.TrackProgress(visibleVideos)
     val continueWatching = if (state.hideContinueWatching || recommender.hasContinueRow()) {
         emptyList()
     } else {

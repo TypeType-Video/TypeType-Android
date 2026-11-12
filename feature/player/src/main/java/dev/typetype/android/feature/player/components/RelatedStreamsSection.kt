@@ -41,6 +41,7 @@ fun RelatedStreamsSection(
     modifier: Modifier = Modifier,
 ) {
     val visibleVideos = videos.filterNot { menuScope.isHidden(it) }
+    menuScope.TrackProgress(visibleVideos)
     if (visibleVideos.isEmpty()) return
     var visibleCount by remember(videos) { mutableIntStateOf(INITIAL_RELATED_VIDEO_COUNT) }
     val view = LocalView.current

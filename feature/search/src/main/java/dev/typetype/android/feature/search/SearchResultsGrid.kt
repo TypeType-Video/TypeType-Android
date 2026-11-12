@@ -57,6 +57,7 @@ internal fun SearchResultsContent(
     menuScope: VideoMenuScope,
 ) {
     val videos = state.results.filterNot(menuScope::isHidden)
+    menuScope.TrackProgress(videos)
     val channels = state.channels.filterNot { it.url in menuScope.blockedChannelUrls }
     val hasResults = videos.isNotEmpty() || channels.isNotEmpty() || state.playlists.isNotEmpty()
     if (!hasResults) {

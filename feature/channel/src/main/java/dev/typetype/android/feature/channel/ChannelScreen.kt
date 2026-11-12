@@ -146,6 +146,7 @@ internal fun ChannelContentGrid(
 ) {
     val channel = requireNotNull(state.channel)
     val visibleVideos = channel.videos.filterNot(menuScope::isHidden)
+    menuScope.TrackProgress(visibleVideos)
 
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 320.dp),
