@@ -26,6 +26,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import dev.typetype.android.domain.navigation.sameVideoTimestampMillis
@@ -68,6 +69,7 @@ fun CommentsSheet(
     var pendingUrl by remember { mutableStateOf<String?>(null) }
     val repliesByCommentId = remember { mutableStateMapOf<String, RepliesState>() }
     val coroutineScope = rememberCoroutineScope()
+    val voiceReplyPlayback = rememberVoiceReplyPlayback(commentsRepository::loadVoiceReplyAudio)
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -75,77 +77,79 @@ fun CommentsSheet(
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
         Box(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.7f)) {
-            CommentsList(
-                items = items,
-                repliesByCommentId = repliesByCommentId,
-                onUrlClick = { url ->
-                    val timestamp = sameVideoTimestampMillis(url, videoUrl)
-                    if (timestamp != null) {
-                        onTimestampClick(timestamp)
-                    } else {
-                        pendingUrl = url
-                    }
-                },
-                onTimestampClick = onTimestampClick,
-                onToggleReplies = { comment ->
-                    val current = repliesByCommentId[comment.id]
-                    when (current) {
-                        is RepliesState.Loaded -> repliesByCommentId.remove(comment.id)
-                        RepliesState.Loading -> Unit
-                        else -> {
-                            val replyCursor = comment.repliesPage ?: return@CommentsList
-                            repliesByCommentId[comment.id] = RepliesState.Loading
-                            coroutineScope.launch {
-                                commentsRepository.loadReplies(videoUrl, replyCursor)
-                                    .fold(
-                                        onSuccess = {
-                                            repliesByCommentId[comment.id] =
-                                                RepliesState.Loaded(
-                                                    replies = it.comments,
-                                                    nextPage = it.nextpage,
-                                                )
-                                        },
-                                        onFailure = {
-                                            repliesByCommentId[comment.id] =
-                                                RepliesState.Failed(repliesFailureMessage)
-                                        },
-                                    )
+            CompositionLocalProvider(LocalVoiceReplyPlayback provides voiceReplyPlayback) {
+                CommentsList(
+                    items = items,
+                    repliesByCommentId = repliesByCommentId,
+                    onUrlClick = { url ->
+                        val timestamp = sameVideoTimestampMillis(url, videoUrl)
+                        if (timestamp != null) {
+                            onTimestampClick(timestamp)
+                        } else {
+                            pendingUrl = url
+                        }
+                    },
+                    onTimestampClick = onTimestampClick,
+                    onToggleReplies = { comment ->
+                        val current = repliesByCommentId[comment.id]
+                        when (current) {
+                            is RepliesState.Loaded -> repliesByCommentId.remove(comment.id)
+                            RepliesState.Loading -> Unit
+                            else -> {
+                                val replyCursor = comment.repliesPage ?: return@CommentsList
+                                repliesByCommentId[comment.id] = RepliesState.Loading
+                                coroutineScope.launch {
+                                    commentsRepository.loadReplies(videoUrl, replyCursor)
+                                        .fold(
+                                            onSuccess = {
+                                                repliesByCommentId[comment.id] =
+                                                    RepliesState.Loaded(
+                                                        replies = it.comments,
+                                                        nextPage = it.nextpage,
+                                                    )
+                                            },
+                                            onFailure = {
+                                                repliesByCommentId[comment.id] =
+                                                    RepliesState.Failed(repliesFailureMessage)
+                                            },
+                                        )
+                                }
                             }
                         }
-                    }
-                },
-                onLoadMoreReplies = { comment ->
-                    val current = repliesByCommentId[comment.id]
-                        as? RepliesState.Loaded ?: return@CommentsList
-                    val nextPage = current.nextPage ?: return@CommentsList
-                    if (current.isLoadingMore) return@CommentsList
-                    repliesByCommentId[comment.id] = current.copy(
-                        isLoadingMore = true,
-                        loadMoreFailed = false,
-                    )
-                    coroutineScope.launch {
-                        commentsRepository.loadReplies(videoUrl, nextPage).fold(
-                            onSuccess = { page ->
-                                val latest = repliesByCommentId[comment.id]
-                                    as? RepliesState.Loaded ?: return@fold
-                                repliesByCommentId[comment.id] = latest.copy(
-                                    replies = mergeCommentReplies(latest.replies, page.comments),
-                                    nextPage = page.nextpage,
-                                    isLoadingMore = false,
-                                )
-                            },
-                            onFailure = {
-                                val latest = repliesByCommentId[comment.id]
-                                    as? RepliesState.Loaded ?: return@fold
-                                repliesByCommentId[comment.id] = latest.copy(
-                                    isLoadingMore = false,
-                                    loadMoreFailed = true,
-                                )
-                            },
+                    },
+                    onLoadMoreReplies = { comment ->
+                        val current = repliesByCommentId[comment.id]
+                            as? RepliesState.Loaded ?: return@CommentsList
+                        val nextPage = current.nextPage ?: return@CommentsList
+                        if (current.isLoadingMore) return@CommentsList
+                        repliesByCommentId[comment.id] = current.copy(
+                            isLoadingMore = true,
+                            loadMoreFailed = false,
                         )
-                    }
-                },
-            )
+                        coroutineScope.launch {
+                            commentsRepository.loadReplies(videoUrl, nextPage).fold(
+                                onSuccess = { page ->
+                                    val latest = repliesByCommentId[comment.id]
+                                        as? RepliesState.Loaded ?: return@fold
+                                    repliesByCommentId[comment.id] = latest.copy(
+                                        replies = mergeCommentReplies(latest.replies, page.comments),
+                                        nextPage = page.nextpage,
+                                        isLoadingMore = false,
+                                    )
+                                },
+                                onFailure = {
+                                    val latest = repliesByCommentId[comment.id]
+                                        as? RepliesState.Loaded ?: return@fold
+                                    repliesByCommentId[comment.id] = latest.copy(
+                                        isLoadingMore = false,
+                                        loadMoreFailed = true,
+                                    )
+                                },
+                            )
+                        }
+                    },
+                )
+            }
         }
     }
 
