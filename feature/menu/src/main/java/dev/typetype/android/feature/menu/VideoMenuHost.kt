@@ -29,6 +29,8 @@ class VideoMenuScope(
     val blockedChannelUrls: Set<String>,
     val blockedKeywords: Set<String>,
     private val visibility: ContentVisibility = ContentVisibility(),
+    private val positions: Map<String, Long> = emptyMap(),
+    private val onNeedProgress: (List<String>) -> Unit = {},
     private val favorites: Set<String>,
     private val watchLater: Set<String>,
     val onAction: (VideoMenuAction, Video) -> Unit,
@@ -37,7 +39,20 @@ class VideoMenuScope(
         isFavorite = canonicalVideoIdentity(video.url) in favorites,
         isInWatchLater = canonicalVideoIdentity(video.url) in watchLater,
         isWatched = canonicalVideoIdentity(video.url) in watchedUrls,
+        progressFraction = progressFraction(video),
     )
+
+    @Composable
+    fun TrackProgress(videos: List<Video>) {
+        val urls = videos.map(Video::url)
+        LaunchedEffect(urls) { onNeedProgress(urls) }
+    }
+
+    private fun progressFraction(video: Video): Float {
+        val position = positions[canonicalVideoIdentity(video.url)] ?: return 0f
+        val durationMs = video.durationSeconds * 1_000
+        return if (durationMs > 0) (position.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
+    }
 
     fun isHidden(video: Video): Boolean =
         canonicalVideoIdentity(video.url) in blockedVideoUrls ||
@@ -63,6 +78,8 @@ fun rememberVideoMenuScope(
     val blockedChannels by viewModel.blockedChannelUrls.collectAsStateWithLifecycle()
     val blockedKeywords by viewModel.blockedKeywords.collectAsStateWithLifecycle()
     val visibility by viewModel.contentVisibility.collectAsStateWithLifecycle()
+    val progress: WatchProgressViewModel = hiltViewModel()
+    val positions by progress.positions.collectAsStateWithLifecycle()
     val serverBaseUrl = LocalServerBaseUrl.current
 
     var pickerVideo by remember { mutableStateOf<Video?>(null) }
@@ -150,6 +167,7 @@ fun rememberVideoMenuScope(
         blockedChannels,
         blockedKeywords,
         visibility,
+        positions,
     ) {
         VideoMenuScope(
             watchedUrls = watched,
@@ -157,6 +175,8 @@ fun rememberVideoMenuScope(
             blockedChannelUrls = blockedChannels,
             blockedKeywords = blockedKeywords,
             visibility = visibility,
+            positions = positions,
+            onNeedProgress = progress::load,
             favorites = favorites,
             watchLater = watchLater,
             onAction = onAction,

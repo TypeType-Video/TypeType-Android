@@ -100,6 +100,9 @@ fun RelatedVideoCard(
                 edgePadding = 5.dp,
                 compact = true,
             )
+            if (!menuItemState.isWatched) {
+                WatchProgressBar(menuItemState.progressFraction, Modifier.align(Alignment.BottomStart))
+            }
         }
         Column(
             modifier = Modifier.weight(1f),

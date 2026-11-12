@@ -111,6 +111,9 @@ fun VideoCard(
                 video = video,
                 edgePadding = 8.dp,
             )
+            if (!menuItemState.isWatched) {
+                WatchProgressBar(menuItemState.progressFraction, Modifier.align(Alignment.BottomStart))
+            }
         }
         Spacer(Modifier.height(10.dp))
         Row(verticalAlignment = Alignment.Top) {
