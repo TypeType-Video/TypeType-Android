@@ -20,6 +20,7 @@ import androidx.core.net.toUri
 import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import dev.typetype.android.core.ui.components.ExternalLinkDialog
 import dev.typetype.android.domain.comments.Comment
 import dev.typetype.android.domain.comments.CommentsRepository
 import dev.typetype.android.domain.navigation.sameVideoTimestampMillis

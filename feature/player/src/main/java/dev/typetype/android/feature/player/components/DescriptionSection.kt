@@ -1,6 +1,5 @@
 package dev.typetype.android.feature.player.components
 
-import dev.typetype.android.core.ui.richtext.LinkedText
 import android.content.Intent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -17,9 +16,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.ThumbUp
 import androidx.compose.material.icons.outlined.Visibility
-import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -37,8 +36,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
+import dev.typetype.android.core.ui.components.ExternalLinkDialog
+import dev.typetype.android.core.ui.richtext.LinkedText
 import dev.typetype.android.core.ui.util.knownCountOrNull
 import dev.typetype.android.domain.navigation.sameVideoTimestampMillis
 import java.text.DateFormat
