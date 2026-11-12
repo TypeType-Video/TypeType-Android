@@ -15,6 +15,7 @@ on:
       - '*.gradle.kts'
       - 'gradle.properties'
       - 'settings.gradle.kts'
+      - '.github/workflows/android-beta.yml'
   pull_request:
     branches:
       - beta
@@ -29,6 +30,7 @@ on:
       - '*.gradle.kts'
       - 'gradle.properties'
       - 'settings.gradle.kts'
+      - '.github/workflows/android-beta.yml'
   workflow_dispatch:
 
 permissions:
@@ -46,7 +48,7 @@ env:
 
 jobs:
   release:
-    runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && fromJSON('["self-hosted","stack-android"]') || 'ubuntu-latest' }}
+    runs-on: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && fromJSON('["self-hosted","stack-android"]') || 'ubuntu-latest' }}
     timeout-minutes: 50
     outputs:
       version: ${{ steps.version.outputs.version }}
