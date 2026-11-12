@@ -1,6 +1,5 @@
 package dev.typetype.android.feature.settings.player
 
-import dev.typetype.android.domain.preferences.YOUTUBE_BUFFER_SECONDS
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -216,16 +215,9 @@ fun PlayerSettingsScreen(
                     )
                 }
                 item {
-                    DropdownRow(
-                        title = stringResource(R.string.settings_player_youtube_buffer),
-                        subtitle = stringResource(R.string.settings_player_youtube_buffer_subtitle),
-                        options = YOUTUBE_BUFFER_SECONDS.map {
-                            it.toString() to pluralStringResource(R.plurals.settings_player_buffer_seconds, it, it)
-                        },
-                        selectedKey = state.youTubeBufferSeconds.toString(),
-                        onSelect = {
-                            onAction(PlayerSettingsAction.SetYouTubeBufferSeconds(it.toInt()))
-                        },
+                    YouTubeBufferSettingRow(
+                        seconds = state.youTubeBufferSeconds,
+                        onSelect = { onAction(PlayerSettingsAction.SetYouTubeBufferSeconds(it)) },
                     )
                 }
                 item {

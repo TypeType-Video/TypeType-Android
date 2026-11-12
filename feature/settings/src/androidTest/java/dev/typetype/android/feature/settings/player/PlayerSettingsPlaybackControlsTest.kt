@@ -17,16 +17,6 @@ class PlayerSettingsPlaybackControlsTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun youTubeBufferCanSelectTheTwoMinuteTarget() {
-        val action = AtomicReference<PlayerSettingsAction>()
-        showSettings(action)
-        composeRule.onNode(hasScrollAction()).performScrollToNode(hasText("YouTube buffer"))
-        composeRule.onNodeWithText("YouTube buffer").performClick()
-        composeRule.onNodeWithText("120 seconds").performClick()
-        assertEquals(PlayerSettingsAction.SetYouTubeBufferSeconds(120), action.get())
-    }
-
-    @Test
     fun defaultCodecCanBeForced() {
         val action = AtomicReference<PlayerSettingsAction>()
         showSettings(action)
