@@ -3,13 +3,17 @@ package dev.typetype.android.services
 import android.os.Bundle
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.LoadControl
 import androidx.media3.exoplayer.analytics.PlayerId
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.SinglePeriodTimeline
 import androidx.media3.exoplayer.source.TrackGroupArray
 import androidx.media3.exoplayer.trackselection.ExoTrackSelection
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -18,6 +22,26 @@ import org.junit.runner.RunWith
 @androidx.media3.common.util.UnstableApi
 @RunWith(AndroidJUnit4::class)
 class YouTubeBufferLoadControlAndroidTest {
+    @Test
+    fun playerCanBeCreatedWithTheProductionLoadControl() {
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+            val activityManager = context.getSystemService(android.app.ActivityManager::class.java)
+            val player = ExoPlayer.Builder(context)
+                .setLoadControl(createPlaybackLoadControl(requireNotNull(activityManager)))
+                .build()
+            player.release()
+        }
+    }
+
+    @Test
+    fun backBufferCallbacksPreserveTheDelegatePolicy() {
+        withFixture(youtube = true) {
+            assertEquals(15_000_000L, control.getBackBufferDurationUs(playerId))
+            assertTrue(control.retainBackBufferFromKeyframe(playerId))
+        }
+    }
+
     @Test
     fun selectedTargetExtendsOnlyYouTubeVodAndKeepsFastStartup() {
         withFixture(youtube = true) {

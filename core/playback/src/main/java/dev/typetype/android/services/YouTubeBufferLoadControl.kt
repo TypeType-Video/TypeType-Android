@@ -6,6 +6,9 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.LoadControl
 import androidx.media3.exoplayer.analytics.PlayerId
+import androidx.media3.exoplayer.source.TrackGroupArray
+import androidx.media3.exoplayer.trackselection.ExoTrackSelection
+import androidx.media3.exoplayer.upstream.Allocator
 import androidx.media3.exoplayer.source.MediaSource
 import dev.typetype.android.domain.preferences.DEFAULT_YOUTUBE_BUFFER_SECONDS
 import dev.typetype.android.domain.preferences.youTubeBufferGoalMs
@@ -14,10 +17,29 @@ import dev.typetype.android.domain.preferences.youTubeBufferGoalMs
 internal class YouTubeBufferLoadControl(
     private val delegate: DefaultLoadControl,
     private val policy: PlaybackBufferPolicy,
-) : LoadControl by delegate {
+) : LoadControl {
     private val loading = mutableMapOf<PlayerId, Boolean>()
     private val period = Timeline.Period()
     private val window = Timeline.Window()
+
+    // Java interface defaults are not forwarded by Kotlin interface delegation.
+    // Explicitly forward every Media3 callback used by ExoPlayer.
+    override fun getAllocator(playerId: PlayerId): Allocator = delegate.getAllocator(playerId)
+
+    override fun getBackBufferDurationUs(playerId: PlayerId): Long =
+        delegate.getBackBufferDurationUs(playerId)
+
+    override fun retainBackBufferFromKeyframe(playerId: PlayerId): Boolean =
+        delegate.retainBackBufferFromKeyframe(playerId)
+
+    override fun onTracksSelected(
+        parameters: LoadControl.Parameters,
+        trackGroups: TrackGroupArray,
+        trackSelections: Array<out ExoTrackSelection?>,
+    ) = delegate.onTracksSelected(parameters, trackGroups, trackSelections)
+
+    override fun shouldStartPlayback(parameters: LoadControl.Parameters): Boolean =
+        delegate.shouldStartPlayback(parameters)
 
     override fun onPrepared(playerId: PlayerId) {
         loading.remove(playerId)
