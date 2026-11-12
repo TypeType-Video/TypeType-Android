@@ -9,6 +9,7 @@ import dev.typetype.android.data.account.RoomAccountRepository
 import dev.typetype.android.data.account.AccountScopeProvider
 import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.auth.AuthRepositoryImpl
+import dev.typetype.android.data.auth.RemoteAccountProfilesRepository
 import dev.typetype.android.data.branding.RemoteDeArrowRepository
 import dev.typetype.android.data.channel.ChannelPostsRepositoryImpl
 import dev.typetype.android.data.channel.ChannelRepositoryImpl
@@ -77,6 +78,7 @@ import dev.typetype.android.domain.library.VideoMetaRepository
 import dev.typetype.android.domain.livechat.LiveChatRepository
 import dev.typetype.android.domain.notifications.NotificationsRepository
 import dev.typetype.android.domain.preferences.PreferencesRepository
+import dev.typetype.android.domain.profiles.AccountProfilesRepository
 import dev.typetype.android.domain.push.PushRepository
 import dev.typetype.android.domain.podcast.PodcastRepository
 import dev.typetype.android.domain.playback.PlaybackResumeRepository
@@ -242,6 +244,10 @@ abstract class RepositoryModule {
     abstract fun bindSubscriptionGroupsRepository(
         impl: RemoteSubscriptionGroupsRepository,
     ): SubscriptionGroupsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAccountProfilesRepository(impl: RemoteAccountProfilesRepository): AccountProfilesRepository
 
     @Binds
     @Singleton
