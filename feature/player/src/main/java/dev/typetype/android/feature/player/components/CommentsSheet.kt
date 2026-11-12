@@ -4,11 +4,9 @@ import android.content.Intent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -18,14 +16,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import dev.typetype.android.R
 import dev.typetype.android.domain.comments.Comment
 import dev.typetype.android.domain.comments.CommentsRepository
 import dev.typetype.android.domain.navigation.sameVideoTimestampMillis
@@ -45,6 +39,7 @@ fun CommentsSheet(
     val context = LocalContext.current
     var pendingUrl by remember { mutableStateOf<String?>(null) }
     val replies = rememberCommentRepliesController(videoUrl, commentsRepository::loadReplies)
+    val search = rememberCommentSearchController(videoUrl, commentsRepository::searchComments)
     val voiceReplyPlayback = rememberVoiceReplyPlayback(commentsRepository::loadVoiceReplyAudio)
     val onUrlClick: (String) -> Unit = { url ->
         val timestamp = sameVideoTimestampMillis(url, videoUrl)
@@ -58,19 +53,24 @@ fun CommentsSheet(
     ) {
         CompositionLocalProvider(LocalVoiceReplyPlayback provides voiceReplyPlayback) {
             Column(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.7f)) {
-                Text(
-                    text = stringResource(R.string.comments_title),
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                )
-                CommentsList(
-                    items = items,
-                    replies = replies,
-                    onUrlClick = onUrlClick,
-                    onTimestampClick = onTimestampClick,
-                    modifier = Modifier.weight(1f),
-                )
+                CommentsHeader(search = search)
+                if (search.state.query.isEmpty()) {
+                    CommentsList(
+                        items = items,
+                        replies = replies,
+                        onUrlClick = onUrlClick,
+                        onTimestampClick = onTimestampClick,
+                        modifier = Modifier.weight(1f),
+                    )
+                } else {
+                    CommentSearchResults(
+                        search = search,
+                        replies = replies,
+                        onUrlClick = onUrlClick,
+                        onTimestampClick = onTimestampClick,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
             }
         }
     }

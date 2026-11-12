@@ -543,6 +543,13 @@
     <string name="comments_voice_reply">Voice reply</string>
     <string name="comments_voice_reply_play">Play voice reply</string>
     <string name="comments_voice_reply_pause">Pause voice reply</string>
+    <string name="comments_search_open">Search comments</string>
+    <string name="comments_search_close">Close the comment search</string>
+    <string name="comments_search_clear">Clear the comment search</string>
+    <string name="comments_search_found">Found: %1$d · Pages searched: %2$d</string>
+    <string name="comments_search_none">No comment matches yet · Pages searched: %1$d</string>
+    <string name="comments_search_more">Search further</string>
+    <string name="comments_search_failed">The comments could not be searched.</string>
     <string name="comments_voice_reply_failed">Couldn\'t play this voice reply</string>
     <string name="settings_profile_username_label">Public username</string>
     <string name="settings_profile_username_helper">3–20 characters, letters, numbers, _ and -</string>
