@@ -20,6 +20,7 @@ import dev.typetype.android.domain.playback.PlaybackQueueController
 import dev.typetype.android.domain.playback.PlaybackQueueEntry
 import dev.typetype.android.domain.playback.PlaybackQueueMutationResult
 import dev.typetype.android.domain.playback.toPlaybackQueueEntry
+import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -42,7 +43,12 @@ class VideoMenuHandlerViewModel @Inject constructor(
     private val errorMapper: UserErrorMapper,
     private val playbackQueue: PlaybackQueueController,
     private val playerHostController: PlayerHostController,
+    userSettingsRepository: UserSettingsRepository,
 ) : ViewModel() {
+    val hideMembersOnlyContent = userSettingsRepository.observe()
+        .map { it.hideMembersOnlyContent }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
 
     private val playlistState = libraryRepository.observePlaylists()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())

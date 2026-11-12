@@ -245,6 +245,8 @@
     <string name="settings_content_hide_comments_subtitle">Stop loading comments and bullet comments</string>
     <string name="settings_content_hide_shorts">Hide Shorts</string>
     <string name="settings_content_hide_shorts_subtitle">Remove the Shorts surface</string>
+    <string name="settings_content_hide_members_only">Hide members-only content</string>
+    <string name="settings_content_hide_members_only_subtitle">Hide videos that need a channel membership</string>
     <string name="settings_content_hide_subscription_lives">Hide subscription live streams</string>
     <string name="settings_content_hide_subscription_lives_subtitle">Remove live and upcoming streams from subscriptions</string>
     <string name="settings_content_update_failure_title">Content settings</string>
@@ -307,6 +309,11 @@
     <string name="settings_player_swipe_brightness_volume_subtitle">Vertical drag adjusts brightness (left) and volume (right)</string>
     <string name="settings_player_long_press_speed">Long-press to speed up</string>
     <string name="settings_player_long_press_speed_subtitle">Hold to play at 2x, release to resume</string>
+    <string name="settings_player_long_press_speed_value">Hold speed</string>
+    <string name="settings_player_autoplay_on_open">Play videos when opened</string>
+    <string name="settings_player_autoplay_on_open_subtitle">Start playback as soon as a video page opens</string>
+    <string name="settings_player_hide_upcoming_playlist">Hide upcoming playlist videos</string>
+    <string name="settings_player_hide_upcoming_playlist_subtitle">Hide the next titles and thumbnails of a playlist queue by default</string>
     <string name="settings_player_section_playback">Playback</string>
     <string name="settings_seekbar_icon_title">Progress bar icon</string>
     <string name="settings_seekbar_icon_subtitle">Rides along the progress bar, on every device you sign in to</string>
@@ -1448,6 +1455,7 @@
     <string name="playback_queue_play_next">Play next</string>
     <string name="playback_queue_remove">Remove from queue</string>
     <string name="playback_queue_shuffle_remaining">Shuffle remaining</string>
+    <string name="playback_queue_hide_upcoming">Hide upcoming</string>
     <string name="playback_queue_repeat_off">Repeat off</string>
     <string name="playback_queue_repeat_all">Repeat queue</string>
     <string name="playback_queue_repeat_one">Repeat video</string>

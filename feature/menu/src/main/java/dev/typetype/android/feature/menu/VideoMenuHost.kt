@@ -28,6 +28,7 @@ class VideoMenuScope(
     val blockedVideoUrls: Set<String>,
     val blockedChannelUrls: Set<String>,
     val blockedKeywords: Set<String>,
+    private val hideMembersOnlyContent: Boolean = false,
     private val favorites: Set<String>,
     private val watchLater: Set<String>,
     val onAction: (VideoMenuAction, Video) -> Unit,
@@ -41,7 +42,8 @@ class VideoMenuScope(
     fun isHidden(video: Video): Boolean =
         canonicalVideoIdentity(video.url) in blockedVideoUrls ||
             video.uploaderUrl in blockedChannelUrls ||
-            titleMatchesBlockedKeyword(video.title, blockedKeywords)
+            titleMatchesBlockedKeyword(video.title, blockedKeywords) ||
+            hideMembersOnlyContent && video.requiresMembership
 }
 
 @Composable
@@ -56,6 +58,7 @@ fun rememberVideoMenuScope(
     val blockedVideos by viewModel.blockedVideoUrls.collectAsStateWithLifecycle()
     val blockedChannels by viewModel.blockedChannelUrls.collectAsStateWithLifecycle()
     val blockedKeywords by viewModel.blockedKeywords.collectAsStateWithLifecycle()
+    val hideMembersOnly by viewModel.hideMembersOnlyContent.collectAsStateWithLifecycle()
     val serverBaseUrl = LocalServerBaseUrl.current
 
     var pickerVideo by remember { mutableStateOf<Video?>(null) }
@@ -135,12 +138,21 @@ fun rememberVideoMenuScope(
         }
     }
 
-    return remember(favorites, watchLater, watched, blockedVideos, blockedChannels, blockedKeywords) {
+    return remember(
+        favorites,
+        watchLater,
+        watched,
+        blockedVideos,
+        blockedChannels,
+        blockedKeywords,
+        hideMembersOnly,
+    ) {
         VideoMenuScope(
             watchedUrls = watched,
             blockedVideoUrls = blockedVideos,
             blockedChannelUrls = blockedChannels,
             blockedKeywords = blockedKeywords,
+            hideMembersOnlyContent = hideMembersOnly,
             favorites = favorites,
             watchLater = watchLater,
             onAction = onAction,
