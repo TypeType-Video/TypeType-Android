@@ -92,6 +92,11 @@ jobs:
           )
           ./gradlew --stacktrace "${tasks[@]}"
 
+      - name: Check that R8 kept every view model constructor
+        run: |
+          awk '/^dev\.typetype\..*ViewModel:$/ { c = $1; next } /^[^ ]/ { c = "" } c && /<init>\(/ { print "R8 removed the constructor of " c; bad = 1 } END { exit bad }' \
+            app/build/outputs/mapping/release/usage.txt
+
       - name: Upload debug APK
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -182,6 +187,11 @@ jobs:
             :app:assembleRelease
           )
           ./gradlew --stacktrace "${tasks[@]}"
+
+      - name: Check that R8 kept every view model constructor
+        run: |
+          awk '/^dev\.typetype\..*ViewModel:$/ { c = $1; next } /^[^ ]/ { c = "" } c && /<init>\(/ { print "R8 removed the constructor of " c; bad = 1 } END { exit bad }' \
+            app/build/outputs/mapping/release/usage.txt
 
       - name: Upload lint report
         if: ${{ always() }}
