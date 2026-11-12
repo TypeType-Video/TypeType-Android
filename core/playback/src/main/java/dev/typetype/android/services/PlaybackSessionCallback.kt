@@ -38,12 +38,13 @@ internal class PlaybackSessionCallback(
                     applicationUid,
                 )
             ) {
-                MediaSession.ConnectionResult.accept(
-                    accepted.availableSessionCommands.buildUpon()
-                        .add(PlaybackAudioOnlyCommand.command)
-                        .build(),
-                    accepted.availablePlayerCommands,
-                )
+                MediaSession.ConnectionResult.AcceptedResultBuilder(session)
+                    .setAvailableSessionCommands(
+                        accepted.availableSessionCommands.buildUpon()
+                            .add(PlaybackAudioOnlyCommand.command)
+                            .build(),
+                    )
+                    .build()
             } else {
                 accepted
             }
