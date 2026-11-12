@@ -110,6 +110,7 @@ private fun ChannelContent(
     onAction: (ChannelAction) -> Unit,
 ) {
     var searchExpanded by rememberSaveable { mutableStateOf(false) }
+    val (posts, postActions) = rememberChannelPosts(active = state.tab == ChannelTab.Posts)
     ChannelContentGrid(
         state = state,
         onNavigateBack = onNavigateBack,
@@ -120,6 +121,8 @@ private fun ChannelContent(
         searchExpanded = searchExpanded,
         onSearchExpandedChange = { searchExpanded = it },
         menuScope = rememberVideoMenuScope(onOpenChannel = {}),
+        posts = posts,
+        postActions = postActions,
     )
 }
 
@@ -135,6 +138,8 @@ internal fun ChannelContentGrid(
     onSearchExpandedChange: (Boolean) -> Unit,
     menuScope: VideoMenuScope,
     modifier: Modifier = Modifier,
+    posts: ChannelPostsState = ChannelPostsState(),
+    postActions: ChannelPostsActions = ChannelPostsActions(),
 ) {
     val channel = requireNotNull(state.channel)
     val visibleVideos = channel.videos.filterNot(menuScope::isHidden)
@@ -184,7 +189,9 @@ internal fun ChannelContentGrid(
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
         }
-        if (state.tab.playlistKind != null) {
+        if (state.tab == ChannelTab.Posts) {
+            channelPostsItems(state = posts, actions = postActions, onPlayVideo = onPlayVideo)
+        } else if (state.tab.playlistKind != null) {
             val courses = state.tab == ChannelTab.Courses
             item(span = { GridItemSpan(maxLineSpan) }) {
                 ChannelSectionTitle(

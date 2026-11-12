@@ -146,9 +146,22 @@ class ChannelPagingTest {
         val with = ChannelState(channel = channel().copy(hasCourses = true))
 
         assertEquals(listOf(ChannelTab.Videos, ChannelTab.Live, ChannelTab.Playlists), without.availableTabs())
-        assertEquals(ChannelTab.entries, with.availableTabs())
+        assertEquals(
+            listOf(ChannelTab.Videos, ChannelTab.Live, ChannelTab.Playlists, ChannelTab.Courses),
+            with.availableTabs(),
+        )
         assertEquals(ChannelPlaylistKind.Courses, ChannelTab.Courses.playlistKind)
         assertNull(ChannelTab.Live.playlistKind)
+    }
+
+    @Test
+    fun postsTabIsOfferedOnlyForYouTubeChannels() {
+        val youtube = ChannelState(channel = channel(), supportsYouTubeDiscovery = true)
+
+        assertEquals(ChannelTab.Posts, youtube.availableTabs().last())
+        assertEquals(false, ChannelTab.Posts in ChannelState(channel = channel()).availableTabs())
+        assertNull(ChannelTab.Posts.playlistKind)
+        assertEquals(false, ChannelTab.Posts.listsVideos)
     }
 
     private fun channel(vararg videos: Video) = Channel(
