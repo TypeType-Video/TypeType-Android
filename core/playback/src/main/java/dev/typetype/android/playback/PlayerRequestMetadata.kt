@@ -32,6 +32,7 @@ fun PlayableSource.toRequestMetadata(
             putString(MergedStreamMediaKeys.EXTRA_SABR_VIDEO_ID, it.videoId)
             putBoolean(MergedStreamMediaKeys.EXTRA_SABR_IS_LIVE, it.isLive)
             putBoolean(MergedStreamMediaKeys.EXTRA_SABR_AUDIO_ONLY, it.audioOnly)
+            putInt(MergedStreamMediaKeys.EXTRA_YOUTUBE_BUFFER_SECONDS, it.youTubeBufferSeconds)
             putIntArray(
                 MergedStreamMediaKeys.EXTRA_SABR_RECOVERY_VIDEO_ITAGS,
                 it.recoveryVideoItags.toIntArray(),

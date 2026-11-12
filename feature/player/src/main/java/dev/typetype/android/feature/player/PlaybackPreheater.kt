@@ -16,6 +16,8 @@ import dev.typetype.android.playback.sabrSelection
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.first
+import dev.typetype.android.domain.preferences.PreferencesRepository
 
 @Singleton
 class PlaybackPreheater @Inject constructor(
@@ -24,6 +26,7 @@ class PlaybackPreheater @Inject constructor(
     private val preloads: SabrPlaybackPreloadStore,
     private val userSettingsRepository: UserSettingsRepository,
     private val codecSupport: DevicePlaybackCodecSupport,
+    private val preferences: PreferencesRepository,
 ) {
 
     suspend fun prefetchStream(videoUrl: String) {
@@ -56,7 +59,9 @@ class PlaybackPreheater @Inject constructor(
             codecSupport = codecSupport,
             selectedCodec = RECOMMENDED_CODEC_KEY,
         ) ?: return
-        val target = stream.sabrPlaybackTarget(selection)
+        val target = stream.sabrPlaybackTarget(selection).copy(
+            youTubeBufferSeconds = preferences.observe().first().playerYouTubeBufferSeconds,
+        )
         val reservation = preloads.reserve(target)
         if (!reservation.owner) return
         try {

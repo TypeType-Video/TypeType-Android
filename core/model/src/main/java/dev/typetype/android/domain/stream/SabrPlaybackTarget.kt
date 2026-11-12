@@ -1,5 +1,7 @@
 package dev.typetype.android.domain.stream
 
+import dev.typetype.android.domain.preferences.DEFAULT_YOUTUBE_BUFFER_SECONDS
+
 data class SabrPlaybackTarget(
     val videoId: String,
     val requestScope: StreamRequestScope,
@@ -9,6 +11,7 @@ data class SabrPlaybackTarget(
     val recoveryVideoItags: Set<Int> = emptySet(),
     val isLive: Boolean = false,
     val audioOnly: Boolean = false,
+    val youTubeBufferSeconds: Int = DEFAULT_YOUTUBE_BUFFER_SECONDS,
 )
 
 fun Stream.sabrPlaybackTarget(selection: SabrPlaybackSelection): SabrPlaybackTarget =
@@ -28,6 +31,7 @@ fun SabrPlaybackTarget.accept(session: SabrPlaybackSession): SabrPlaybackTarget 
     require(session.videoItag == videoItag || session.videoItag in recoveryVideoItags)
     return copy(
         videoItag = session.videoItag,
+        youTubeBufferSeconds = session.youTubeBufferSeconds,
         recoveryVideoItags = recoveryVideoItags.filterTo(linkedSetOf()) {
             it != session.videoItag
         },

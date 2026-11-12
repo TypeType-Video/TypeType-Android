@@ -1,6 +1,8 @@
 package dev.typetype.android.services
 
 import android.os.Bundle
+import dev.typetype.android.domain.preferences.DEFAULT_YOUTUBE_BUFFER_SECONDS
+import dev.typetype.android.domain.preferences.normalizeYouTubeBufferSeconds
 import dev.typetype.android.domain.stream.SabrPlaybackBinding
 import dev.typetype.android.domain.stream.SabrPlaybackTarget
 import dev.typetype.android.domain.stream.StreamRequestScope
@@ -18,6 +20,7 @@ object MergedStreamMediaKeys {
     const val EXTRA_SABR_SESSION_CONTINUATION = "typetype.sabr_session_continuation"
     const val EXTRA_SABR_IS_LIVE = "typetype.sabr_is_live"
     const val EXTRA_SABR_AUDIO_ONLY = "typetype.sabr_audio_only"
+    const val EXTRA_YOUTUBE_BUFFER_SECONDS = "typetype.youtube_buffer_seconds"
     const val EXTRA_AUDIO_ONLY_ACTIVE = "typetype.audio_only_active"
     const val EXTRA_AUDIO_ONLY_PREFER_ORIGINAL = "typetype.audio_only_prefer_original"
     const val EXTRA_AUDIO_ONLY_PREFERRED_LOCALE = "typetype.audio_only_preferred_locale"
@@ -96,5 +99,8 @@ fun Bundle.sabrPlaybackTarget(): SabrPlaybackTarget? {
         recoveryVideoItags = recoveryVideoItags,
         isLive = getBoolean(MergedStreamMediaKeys.EXTRA_SABR_IS_LIVE),
         audioOnly = getBoolean(MergedStreamMediaKeys.EXTRA_SABR_AUDIO_ONLY),
+        youTubeBufferSeconds = normalizeYouTubeBufferSeconds(getInt(
+            MergedStreamMediaKeys.EXTRA_YOUTUBE_BUFFER_SECONDS, DEFAULT_YOUTUBE_BUFFER_SECONDS,
+        )),
     )
 }

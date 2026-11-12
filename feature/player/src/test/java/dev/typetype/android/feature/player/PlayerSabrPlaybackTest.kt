@@ -21,6 +21,39 @@ import org.junit.Test
 
 class PlayerSabrPlaybackTest {
     @Test
+    fun `buffer changes affect new preparations without changing the active session`() = runBlocking {
+        val repository = RecordingRepository()
+        var seconds = 30
+        val playback = PlayerSabrPlayback(
+            repository = repository,
+            bufferSeconds = { seconds },
+            onFailure = { _, _ -> },
+        )
+        val first = playback.prepare(stream(), selection(), 0)
+        seconds = 120
+        val second = playback.prepare(stream(), selection(), 0)
+        assertEquals(30, first?.youTubeBufferSeconds)
+        assertEquals(120, second?.youTubeBufferSeconds)
+    }
+
+    @Test
+    fun `preload with an older buffer choice is not reused`() = runBlocking {
+        val repository = RecordingRepository()
+        val preloads = SabrPlaybackPreloadStore { 0L }
+        preloads.reserve(stream().sabrPlaybackTarget(selection())).result.complete(
+            Result.success(repository.session),
+        )
+        val playback = PlayerSabrPlayback(
+            repository = repository,
+            preloads = preloads,
+            bufferSeconds = { 120 },
+            onFailure = { _, _ -> },
+        )
+        assertEquals(120, playback.prepare(stream(), selection(), 0)?.youTubeBufferSeconds)
+        assertEquals(1, repository.prepareCount)
+    }
+
+    @Test
     fun `initial position is part of shared session creation`() = runBlocking {
         val repository = RecordingRepository()
         val playback = PlayerSabrPlayback(repository) { _, _ -> }
@@ -147,7 +180,10 @@ class PlayerSabrPlaybackTest {
         ): Result<SabrPlaybackSession> {
             prepareCount++
             startPositionMs = startTimeMs
-            return Result.success(session.copy(startTimeMs = startTimeMs))
+            return Result.success(session.copy(
+                startTimeMs = startTimeMs,
+                youTubeBufferSeconds = target.youTubeBufferSeconds,
+            ))
         }
 
         override suspend fun seek(

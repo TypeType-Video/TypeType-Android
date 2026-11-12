@@ -13,7 +13,7 @@ class SabrPlaybackRateContractTest {
         val request = response().windowRequest(bufferedTracks(), playbackRate = 2.0f)
 
         assertEquals(2.0f, request.playbackRate)
-        assertEquals(20_000L, request.bufferGoalMs)
+        assertEquals(60_000L, request.bufferGoalMs)
     }
 
     @Test
@@ -21,7 +21,7 @@ class SabrPlaybackRateContractTest {
         val request = response().windowRequest(bufferedTracks(), playbackRate = 0.5f)
 
         assertEquals(0.5f, request.playbackRate)
-        assertEquals(10_000L, request.bufferGoalMs)
+        assertEquals(30_000L, request.bufferGoalMs)
     }
 
     @Test
@@ -59,7 +59,7 @@ class SabrPlaybackRateContractTest {
     @Test
     fun bothSelectedTracksMustCoverThePositionBeforeExpanding() {
         assertEquals(2_500L, response().windowRequest(bufferedTracks().take(1)).bufferGoalMs)
-        assertEquals(10_000L, response().windowRequest(bufferedTracks()).bufferGoalMs)
+        assertEquals(30_000L, response().windowRequest(bufferedTracks()).bufferGoalMs)
     }
 
     @Test
@@ -90,7 +90,7 @@ class SabrPlaybackRateContractTest {
     fun audioOnlyDoesNotRequireVideoCoverage() {
         val request = response().windowRequest(bufferedTracks().takeLast(1), audioOnly = true)
 
-        assertEquals(10_000L, request.bufferGoalMs)
+        assertEquals(30_000L, request.bufferGoalMs)
     }
 
     @Test

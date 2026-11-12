@@ -26,6 +26,7 @@ internal class SabrPlaybackWindowWait(
             ranges = bufferedRanges,
             audioOnly = target.audioOnly,
             isLive = target.isLive,
+            youTubeBufferSeconds = target.youTubeBufferSeconds,
         )
     }
 
@@ -60,6 +61,7 @@ internal class SabrPlaybackWindowWait(
                     ?: sabrContractMismatch("SABR returned an empty segment window")
                 window.throwTerminalFailure()
                 if (window.ready) return window.requireWindowResponse(baseUrl, target, control)
+                    .copy(youTubeBufferSeconds = target.youTubeBufferSeconds)
                 stagnantAttempts = window.stagnantAttempts(previousEdgeMs, stagnantAttempts)
                 previousEdgeMs = window.bufferedEdgeMs
                 pause(window.retryDelay(stagnantAttempts))

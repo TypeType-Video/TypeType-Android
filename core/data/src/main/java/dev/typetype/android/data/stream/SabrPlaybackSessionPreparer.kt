@@ -131,6 +131,7 @@ internal class SabrPlaybackSessionPreparer(
                     target.isLive,
                     current.playerTimeMs,
                     current.playbackRate,
+                    target.youTubeBufferSeconds,
                 )
             }
         }
@@ -181,6 +182,7 @@ internal class SabrPlaybackSessionPreparer(
                 audioOnly = target.audioOnly,
                 isLive = target.isLive,
                 playbackRate = playbackRate,
+                youTubeBufferSeconds = target.youTubeBufferSeconds,
             ),
         )
     }

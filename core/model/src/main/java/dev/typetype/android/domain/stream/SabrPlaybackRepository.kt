@@ -1,5 +1,7 @@
 package dev.typetype.android.domain.stream
 
+import dev.typetype.android.domain.preferences.DEFAULT_YOUTUBE_BUFFER_SECONDS
+
 data class SabrPlaybackSelection(
     val video: StreamVideoSource,
     val audio: StreamAudioSource,
@@ -21,6 +23,7 @@ data class SabrPlaybackSession(
     val videoWindow: SabrPlaybackWindowTrack? = null,
     val live: SabrLivePlaybackWindow? = null,
     val requestedBufferGoalMs: Long = 2_500L,
+    val youTubeBufferSeconds: Int = DEFAULT_YOUTUBE_BUFFER_SECONDS,
 )
 
 data class SabrPlaybackBufferedRange(

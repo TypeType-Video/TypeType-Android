@@ -51,7 +51,10 @@ class PlaybackQueueItemResolver @Inject constructor(
                 preferOriginalLanguage = settings.preferOriginalLanguage,
                 codecSupport = codecSupport,
                 prepareSabrPlayback = { loaded, selection, _ ->
-                    sabrPlaybackRepository.prewarm(loaded.sabrPlaybackTarget(selection)).getOrThrow()
+                    val target = loaded.sabrPlaybackTarget(selection).copy(
+                        youTubeBufferSeconds = preferences.playerYouTubeBufferSeconds,
+                    )
+                    sabrPlaybackRepository.prewarm(target).getOrThrow()
                 },
             ),
         ) { "No playable source for queued video" }

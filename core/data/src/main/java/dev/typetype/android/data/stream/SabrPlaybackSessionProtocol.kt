@@ -9,6 +9,8 @@ import dev.typetype.android.domain.stream.SabrPlaybackBinding
 import dev.typetype.android.domain.stream.SabrPlaybackBufferedRange
 import dev.typetype.android.domain.stream.SabrPlaybackTarget
 import retrofit2.Response
+import dev.typetype.android.domain.preferences.DEFAULT_YOUTUBE_BUFFER_SECONDS
+import dev.typetype.android.domain.preferences.youTubeBufferGoalMs
 
 internal fun SabrPlaybackBinding.controlResponse(
     target: SabrPlaybackTarget,
@@ -42,6 +44,7 @@ internal fun SabrPlaybackResponse.windowRequest(
     isLive: Boolean = false,
     playerTimeMs: Long = startTimeMs,
     playbackRate: Float = 1.0f,
+    youTubeBufferSeconds: Int = DEFAULT_YOUTUBE_BUFFER_SECONDS,
 ) = SabrPlaybackWindowRequestDto(
     generation = generation,
     playerTimeMs = playerTimeMs.coerceAtLeast(0L),
@@ -57,6 +60,7 @@ internal fun SabrPlaybackResponse.windowRequest(
         ranges = ranges,
         playerTimeMs = playerTimeMs,
         playbackRate = playbackRate,
+        youTubeBufferSeconds = youTubeBufferSeconds,
     ),
     bufferedRanges = ranges.map {
         SabrPlaybackBufferedRangeDto(it.itag, it.startMs, it.endMs)
@@ -85,6 +89,7 @@ fun SabrPlaybackTarget.requestedBufferGoalMs(
     ranges = ranges,
     playerTimeMs = playerTimeMs,
     playbackRate = playbackRate,
+    youTubeBufferSeconds = youTubeBufferSeconds,
 )
 
 private fun requestedBufferGoalMs(
@@ -95,9 +100,11 @@ private fun requestedBufferGoalMs(
     ranges: List<SabrPlaybackBufferedRange>,
     playerTimeMs: Long,
     playbackRate: Float,
+    youTubeBufferSeconds: Int,
 ): Long = playbackRate.rateAwareBufferGoalMs(
     isLive,
     hasBufferedPlayback(videoItag, audioItag, audioOnly, ranges, playerTimeMs),
+    youTubeBufferSeconds,
 )
 
 internal fun SabrPlaybackWindowResponseDto.throwTerminalFailure() {
@@ -158,7 +165,6 @@ private const val DEFAULT_RETRY_MS = 500L
 private const val MIN_RETRY_MS = 250L
 private const val MAX_RETRY_MS = 2_000L
 private const val VOD_INITIAL_BUFFER_GOAL_MS = 2_500L
-private const val VOD_BUFFER_GOAL_MS = 10_000L
 private const val LIVE_BUFFER_GOAL_MS = 8_000L
 private const val MAX_BUFFER_GOAL_MS = 60_000L
 private const val MIN_PLAYBACK_RATE = 0.25f
@@ -167,15 +173,16 @@ private const val MAX_PLAYBACK_RATE = 4.0f
 private fun Float.sanitizedPlaybackRate(): Float =
     takeIf { isFinite() && this in MIN_PLAYBACK_RATE..MAX_PLAYBACK_RATE } ?: 1.0f
 
-private fun Float.rateAwareBufferGoalMs(isLive: Boolean, hasBufferedPlayback: Boolean): Long =
-    ((when {
-        isLive -> LIVE_BUFFER_GOAL_MS
-        hasBufferedPlayback -> VOD_BUFFER_GOAL_MS
-        else -> VOD_INITIAL_BUFFER_GOAL_MS
-    }) *
-        maxOf(1.0f, sanitizedPlaybackRate()))
-        .toLong()
-        .coerceAtMost(MAX_BUFFER_GOAL_MS)
+private fun Float.rateAwareBufferGoalMs(
+    isLive: Boolean,
+    hasBufferedPlayback: Boolean,
+    youTubeBufferSeconds: Int,
+): Long {
+    if (!isLive && hasBufferedPlayback) return youTubeBufferGoalMs(youTubeBufferSeconds, this)
+    val initialGoal = if (isLive) LIVE_BUFFER_GOAL_MS else VOD_INITIAL_BUFFER_GOAL_MS
+    return (initialGoal * maxOf(1.0f, sanitizedPlaybackRate()))
+        .toLong().coerceAtMost(MAX_BUFFER_GOAL_MS)
+}
 
 private fun hasBufferedPlayback(
     videoItag: Int,

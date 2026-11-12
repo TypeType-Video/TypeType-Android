@@ -7,11 +7,14 @@ import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.stream.binding
 import dev.typetype.android.domain.stream.sabrPlaybackTarget
 import kotlinx.coroutines.CancellationException
+import dev.typetype.android.domain.preferences.DEFAULT_YOUTUBE_BUFFER_SECONDS
+import dev.typetype.android.domain.preferences.normalizeYouTubeBufferSeconds
 
 internal class PlayerSabrPlayback(
     private val repository: SabrPlaybackRepository,
     private val preloads: SabrPlaybackPreloadStore = SabrPlaybackPreloadStore(),
     private val onPrepared: (stream: Stream, session: SabrPlaybackSession) -> Unit = { _, _ -> },
+    private val bufferSeconds: suspend () -> Int = { DEFAULT_YOUTUBE_BUFFER_SECONDS },
     private val onFailure: (stream: Stream, failure: Throwable) -> Unit,
 ) {
     suspend fun prepare(
@@ -19,7 +22,9 @@ internal class PlayerSabrPlayback(
         selection: SabrPlaybackSelection,
         startTimeMs: Long,
     ): SabrPlaybackSession? {
-        val target = stream.sabrPlaybackTarget(selection)
+        val target = stream.sabrPlaybackTarget(selection).copy(
+            youTubeBufferSeconds = normalizeYouTubeBufferSeconds(bufferSeconds()),
+        )
         val preload = preloads.take(target)?.await()?.takeUnless { it.exceptionOrNull() is CancellationException }
         preload?.let { preloaded ->
             val positioned = preloaded.resolveFor(stream)?.let { session ->
