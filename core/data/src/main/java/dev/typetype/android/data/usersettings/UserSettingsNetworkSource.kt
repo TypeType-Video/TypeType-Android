@@ -9,6 +9,7 @@ import dev.typetype.android.domain.usersettings.CaptionStyles
 import dev.typetype.android.domain.usersettings.DEFAULT_SPONSOR_BLOCK_CATEGORY_ACTIONS
 import dev.typetype.android.domain.usersettings.SponsorBlockMode
 import dev.typetype.android.domain.usersettings.UserSettings
+import dev.typetype.android.domain.usersettings.normalizedHoldPlaybackSpeed
 import dev.typetype.android.domain.server.ServerRepository
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -42,9 +43,12 @@ internal fun UserSettingsDto.toDomain(serverBaseUrl: String? = null): UserSettin
     defaultService = defaultService,
     defaultQuality = defaultQuality,
     defaultPlaybackSpeed = defaultPlaybackSpeed,
+    holdPlaybackSpeed = normalizedHoldPlaybackSpeed(holdPlaybackSpeed),
     defaultLandingPage = defaultLandingPage,
     autoplay = autoplay,
     skipPlaylistAutoplayScreen = skipPlaylistAutoplayScreen,
+    autoplayOnOpen = autoplayOnOpen,
+    hideUpcomingPlaylistVideos = hideUpcomingPlaylistVideos,
     volume = volume,
     muted = muted,
     subtitlesEnabled = subtitlesEnabled,
@@ -79,6 +83,7 @@ internal fun UserSettingsDto.toDomain(serverBaseUrl: String? = null): UserSettin
     hideEndScreens = hideEndScreens,
     hideComments = hideComments,
     hideShorts = hideShorts,
+    hideMembersOnlyContent = hideMembersOnlyContent,
     hideSubscriptionLiveStreams = hideSubscriptionLiveStreams == true,
     supportsHideSubscriptionLiveStreams = hideSubscriptionLiveStreams != null,
     disableWatchHistory = disableWatchHistory,
