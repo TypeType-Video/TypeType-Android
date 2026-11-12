@@ -93,7 +93,7 @@ internal fun HomeContent(
             requestId = state.errorRequestId,
             onRetry = onRetry,
         )
-        continueWatching.isEmpty() && (!showRecommendations || visibleVideos.isEmpty()) -> HomeEmptyState()
+        continueWatching.isEmpty() && (!showRecommendations || visibleVideos.isEmpty()) -> HomeEmptyState(menuScope.familyListOnly)
         else -> LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = 280.dp),
             modifier = Modifier.fillMaxSize(),
@@ -196,13 +196,13 @@ internal fun HomeContent(
 }
 
 @Composable
-private fun HomeEmptyState() {
+private fun HomeEmptyState(familyListOnly: Boolean) {
     Box(
         modifier = Modifier.fillMaxSize().padding(24.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = stringResource(R.string.home_empty),
+            text = stringResource(if (familyListOnly) R.string.family_list_home_empty else R.string.home_empty),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

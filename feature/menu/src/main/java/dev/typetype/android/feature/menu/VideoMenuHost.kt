@@ -28,7 +28,7 @@ class VideoMenuScope(
     val blockedVideoUrls: Set<String>,
     val blockedChannelUrls: Set<String>,
     val blockedKeywords: Set<String>,
-    private val hideMembersOnlyContent: Boolean = false,
+    private val visibility: ContentVisibility = ContentVisibility(),
     private val favorites: Set<String>,
     private val watchLater: Set<String>,
     val onAction: (VideoMenuAction, Video) -> Unit,
@@ -43,8 +43,12 @@ class VideoMenuScope(
         canonicalVideoIdentity(video.url) in blockedVideoUrls ||
             video.uploaderUrl in blockedChannelUrls ||
             titleMatchesBlockedKeyword(video.title, blockedKeywords) ||
-            hideMembersOnlyContent && video.requiresMembership
+            visibility.hideMembersOnlyContent && video.requiresMembership
+
+    val familyListOnly: Boolean get() = visibility.familyListOnly
 }
+
+data class ContentVisibility(val hideMembersOnlyContent: Boolean = false, val familyListOnly: Boolean = false)
 
 @Composable
 fun rememberVideoMenuScope(
@@ -58,7 +62,7 @@ fun rememberVideoMenuScope(
     val blockedVideos by viewModel.blockedVideoUrls.collectAsStateWithLifecycle()
     val blockedChannels by viewModel.blockedChannelUrls.collectAsStateWithLifecycle()
     val blockedKeywords by viewModel.blockedKeywords.collectAsStateWithLifecycle()
-    val hideMembersOnly by viewModel.hideMembersOnlyContent.collectAsStateWithLifecycle()
+    val visibility by viewModel.contentVisibility.collectAsStateWithLifecycle()
     val serverBaseUrl = LocalServerBaseUrl.current
 
     var pickerVideo by remember { mutableStateOf<Video?>(null) }
@@ -145,14 +149,14 @@ fun rememberVideoMenuScope(
         blockedVideos,
         blockedChannels,
         blockedKeywords,
-        hideMembersOnly,
+        visibility,
     ) {
         VideoMenuScope(
             watchedUrls = watched,
             blockedVideoUrls = blockedVideos,
             blockedChannelUrls = blockedChannels,
             blockedKeywords = blockedKeywords,
-            hideMembersOnlyContent = hideMembersOnly,
+            visibility = visibility,
             favorites = favorites,
             watchLater = watchLater,
             onAction = onAction,

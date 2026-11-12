@@ -45,9 +45,9 @@ class VideoMenuHandlerViewModel @Inject constructor(
     private val playerHostController: PlayerHostController,
     userSettingsRepository: UserSettingsRepository,
 ) : ViewModel() {
-    val hideMembersOnlyContent = userSettingsRepository.observe()
-        .map { it.hideMembersOnlyContent }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+    val contentVisibility = userSettingsRepository.observe()
+        .map { ContentVisibility(it.hideMembersOnlyContent, familyListOnly = it.accessMode == "allow_list") }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ContentVisibility())
 
 
     private val playlistState = libraryRepository.observePlaylists()
