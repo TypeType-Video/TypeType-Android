@@ -1,5 +1,6 @@
 package dev.typetype.android.feature.settings.player
 
+import dev.typetype.android.domain.usersettings.DEFAULT_HOLD_PLAYBACK_SPEED
 import dev.typetype.android.domain.usersettings.DEFAULT_SPONSOR_BLOCK_CATEGORY_ACTIONS
 import dev.typetype.android.domain.usersettings.CaptionStyles
 import dev.typetype.android.domain.usersettings.SponsorBlockMode
@@ -13,6 +14,9 @@ data class PlayerSettingsState(
     val longPressSpeedEnabled: Boolean = true,
     val accessibleControlsEnabled: Boolean = false,
     val autoplayEnabled: Boolean = true,
+    val autoplayOnOpen: Boolean = true,
+    val hideUpcomingPlaylistVideos: Boolean = false,
+    val holdPlaybackSpeed: Double = DEFAULT_HOLD_PLAYBACK_SPEED,
     val autoplayCountdownSeconds: Int = 10,
     val skipPlaylistAutoplayScreen: Boolean = false,
     val audioOnlyPlayback: Boolean = false,

@@ -107,6 +107,14 @@ fun PlayerSettingsScreen(
                 item { SettingsSectionHeader(stringResource(R.string.settings_player_section_playback)) }
                 item {
                     SwitchRow(
+                        title = stringResource(R.string.settings_player_autoplay_on_open),
+                        subtitle = stringResource(R.string.settings_player_autoplay_on_open_subtitle),
+                        checked = state.autoplayOnOpen,
+                        onCheckedChange = { onAction(PlayerSettingsAction.SetAutoplayOnOpen(it)) },
+                    )
+                }
+                item {
+                    SwitchRow(
                         title = stringResource(R.string.settings_player_autoplay),
                         subtitle = null,
                         checked = state.autoplayEnabled,
@@ -148,6 +156,16 @@ fun PlayerSettingsScreen(
                         checked = state.skipPlaylistAutoplayScreen,
                         onCheckedChange = {
                             onAction(PlayerSettingsAction.SetSkipPlaylistAutoplayScreen(it))
+                        },
+                    )
+                }
+                item {
+                    SwitchRow(
+                        title = stringResource(R.string.settings_player_hide_upcoming_playlist),
+                        subtitle = stringResource(R.string.settings_player_hide_upcoming_playlist_subtitle),
+                        checked = state.hideUpcomingPlaylistVideos,
+                        onCheckedChange = {
+                            onAction(PlayerSettingsAction.SetHideUpcomingPlaylistVideos(it))
                         },
                     )
                 }

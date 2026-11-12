@@ -39,6 +39,9 @@ class PlayerSettingsViewModel @Inject constructor(
                     longPressSpeedEnabled = prefs.playerLongPressSpeedEnabled,
                     accessibleControlsEnabled = prefs.playerAccessibleControlsEnabled,
                     autoplayEnabled = server.autoplay,
+                    autoplayOnOpen = server.autoplayOnOpen,
+                    hideUpcomingPlaylistVideos = server.hideUpcomingPlaylistVideos,
+                    holdPlaybackSpeed = server.holdPlaybackSpeed,
                     autoplayCountdownSeconds = prefs.playerAutoplayCountdownSeconds,
                     skipPlaylistAutoplayScreen = server.skipPlaylistAutoplayScreen,
                     audioOnlyPlayback = prefs.playerAudioOnlyPlayback,
@@ -102,6 +105,12 @@ class PlayerSettingsViewModel @Inject constructor(
                     preferencesRepository.setPlayerAutoplayCountdownSeconds(action.seconds)
                 is PlayerSettingsAction.SetSkipPlaylistAutoplayScreen ->
                     updateServer { it.copy(skipPlaylistAutoplayScreen = action.enabled) }
+                is PlayerSettingsAction.SetAutoplayOnOpen ->
+                    updateServer { it.copy(autoplayOnOpen = action.enabled) }
+                is PlayerSettingsAction.SetHideUpcomingPlaylistVideos ->
+                    updateServer { it.copy(hideUpcomingPlaylistVideos = action.hidden) }
+                is PlayerSettingsAction.SetHoldPlaybackSpeed ->
+                    updateServer { it.copy(holdPlaybackSpeed = action.speed) }
                 is PlayerSettingsAction.SetAudioOnlyPlayback ->
                     preferencesRepository.setPlayerAudioOnlyPlayback(action.enabled)
                 is PlayerSettingsAction.SetDefaultQuality ->

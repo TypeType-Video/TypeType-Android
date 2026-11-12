@@ -19,6 +19,17 @@ import org.junit.Test
 
 class PlayerHostControllerTest {
     @Test
+    fun `opened video waits for play when the viewer turned off autoplay on open`() {
+        val controller = PlayerHostController(FakePlaybackQueueController()) { false }
+
+        controller.openVideo("opened")
+        assertFalse(controller.state.value.initialPlayWhenReady)
+
+        controller.continueWithVideo("next")
+        assertTrue(controller.state.value.initialPlayWhenReady)
+    }
+
+    @Test
     fun `restored video opens paused in the mini player`() {
         val controller = PlayerHostController(FakePlaybackQueueController())
 
