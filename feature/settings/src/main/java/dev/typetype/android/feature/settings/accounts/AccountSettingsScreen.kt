@@ -63,6 +63,7 @@ fun AccountSettingsRoute(
         onProfileSwitched = onAccountActivated,
         profiles = profiles,
         profileNames = profileState.profiles.associate { it.id to it.name },
+        signedInAccount = profileState.available,
     )
 }
 
@@ -77,6 +78,7 @@ private fun AccountSettingsScreen(
     onProfileSwitched: () -> Unit,
     profiles: AccountProfilesViewModel,
     profileNames: Map<String, String>,
+    signedInAccount: Boolean,
 ) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -93,6 +95,9 @@ private fun AccountSettingsScreen(
                     item { AccountSettingsError(message, state.errorRequestId) }
                 }
                 item(key = "account-profiles") { AccountProfilesSection(onProfileSwitched, profiles) }
+                if (signedInAccount) {
+                    item(key = "device-link") { DeviceLinkSection() }
+                }
                 state.servers.forEach { server ->
                     val accounts = state.accounts.filter { it.serverId == server.id }
                     item(key = server.id) {

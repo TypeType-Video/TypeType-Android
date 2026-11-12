@@ -565,6 +565,17 @@
     <string name="linked_accounts_bilibili_open_app">Open in the BiliBili app</string>
     <string name="linked_accounts_qr_expired">The QR code expired. Start again.</string>
     <string name="linked_accounts_failed">Couldn\'t link the account</string>
+    <string name="device_link_title">Sign in on another device</string>
+    <string name="device_link_hint">Enter the code shown on your TV or other device.</string>
+    <string name="device_link_code">Device code</string>
+    <string name="device_link_continue">Continue</string>
+    <string name="device_link_question">Sign in %1$s with this account?</string>
+    <string name="device_link_approve">Sign it in</string>
+    <string name="device_link_deny">Refuse</string>
+    <string name="device_link_approved">The device is signed in.</string>
+    <string name="device_link_denied">The sign-in was refused.</string>
+    <string name="device_link_another">Sign in another device</string>
+    <string name="device_link_failed">Couldn\'t find this device code</string>
     <string name="account_profiles_title">Profiles</string>
     <string name="account_profiles_new">New profile</string>
     <string name="account_profiles_name">Profile name</string>
