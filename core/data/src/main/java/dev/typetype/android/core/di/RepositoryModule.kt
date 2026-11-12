@@ -33,6 +33,7 @@ import dev.typetype.android.data.network.PlaybackNetworkMonitor
 import dev.typetype.android.data.network.PlaybackNetworkObserver
 import dev.typetype.android.data.preferences.DataStorePreferencesRepository
 import dev.typetype.android.data.podcast.RemotePodcastRepository
+import dev.typetype.android.data.progress.WatchProgressCache
 import dev.typetype.android.data.push.RemotePushRepository
 import dev.typetype.android.data.playback.RoomPlaybackResumeRepository
 import dev.typetype.android.data.playback.RoomPlaybackQueueRepository
@@ -84,6 +85,7 @@ import dev.typetype.android.domain.livechat.LiveChatRepository
 import dev.typetype.android.domain.notifications.NotificationsRepository
 import dev.typetype.android.domain.preferences.PreferencesRepository
 import dev.typetype.android.domain.profiles.AccountProfilesRepository
+import dev.typetype.android.domain.progress.WatchProgressSource
 import dev.typetype.android.domain.push.PushRepository
 import dev.typetype.android.domain.podcast.PodcastRepository
 import dev.typetype.android.domain.playback.PlaybackResumeRepository
@@ -265,6 +267,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindAllowedChannelsRepository(impl: RemoteAllowedChannelsRepository): AllowedChannelsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindWatchProgressSource(impl: WatchProgressCache): WatchProgressSource
 
     @Binds
     @Singleton
