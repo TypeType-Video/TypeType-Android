@@ -42,6 +42,7 @@ class AuthRepositoryImpl @Inject constructor(
     private val oidcTransactionStore: OidcTransactionStore,
     private val scopedApiFactory: ScopedApiFactory,
     private val oidcRedirect: OidcRedirect,
+    private val sessionEstablisher: AuthSessionEstablisher,
 ) : AuthRepository {
 
     override suspend fun loginWithCredentials(
@@ -58,7 +59,7 @@ class AuthRepositoryImpl @Inject constructor(
         }
         response.requireSuccessfulResponse()
         val token = response.body()?.accessToken ?: error("Empty token in response")
-        establishSession(serverId, api, token, expectedAccountId)
+        sessionEstablisher.establish(serverId, api, token, expectedAccountId)
     }.onFailure { cookieJar.cancelAuthentication(serverId) }
 
     override suspend fun loginAsGuest(serverId: String): Result<Unit> = suspendRunCatching {
@@ -68,7 +69,7 @@ class AuthRepositoryImpl @Inject constructor(
         val response = withContext(Dispatchers.IO) { api.guest() }
         response.requireSuccessfulResponse()
         val token = response.body()?.token ?: error("Empty token in response")
-        establishSession(serverId, api, token)
+        sessionEstablisher.establish(serverId, api, token)
     }.onFailure { cookieJar.cancelAuthentication(serverId) }
 
     override suspend fun registerWithCredentials(
@@ -85,7 +86,7 @@ class AuthRepositoryImpl @Inject constructor(
         }
         response.requireSuccessfulResponse()
         val token = response.body()?.accessToken ?: error("Empty token in response")
-        establishSession(serverId, api, token)
+        sessionEstablisher.establish(serverId, api, token)
     }.onFailure { cookieJar.cancelAuthentication(serverId) }
 
     override suspend fun getRegistrationStatus(serverId: String): Result<RegistrationStatus> =
@@ -233,7 +234,7 @@ class AuthRepositoryImpl @Inject constructor(
         }
         response.requireSuccessfulResponse()
         val token = response.body()?.accessToken ?: error("Empty token in OIDC response")
-        establishSession(
+        sessionEstablisher.establish(
             serverId,
             retrofitFactory.createWithoutAutomaticAuthentication(server.baseUrl),
             token,
@@ -248,24 +249,5 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override fun hasPendingOidc(serverId: String): Boolean = oidcTransactionStore.hasPending(serverId)
-
-    private suspend fun establishSession(
-        serverId: String,
-        api: TypeTypeApi,
-        token: String,
-        expectedAccountId: String? = null,
-    ) {
-        val profileResponse = withContext(Dispatchers.IO) { api.me("Bearer $token") }
-        profileResponse.requireSuccessfulResponse()
-        val profile = profileResponse.body() ?: error("The instance returned an empty account")
-        requireExpectedAccount(expectedAccountId, profile.id)
-        val previousGeneration = accountDao.get(serverId, profile.id)?.sessionGeneration ?: 0L
-        val generation = maxOf(System.currentTimeMillis(), previousGeneration + 1L)
-        accountDao.upsert(AccountEntity.fromProfile(serverId, profile, generation))
-        tokenStore.setAuthenticatedAccessToken(serverId, profile.id, token)
-        cookieJar.completeAuthentication(serverId, profile.id)
-        accountScopeStore.setCurrentAccountId(serverId, profile.id)
-        serverRepository.setCurrentServer(serverId)
-    }
 
 }
