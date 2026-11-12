@@ -1033,6 +1033,8 @@
     <string name="playlist_picker_name">Name</string>
     <string name="playlist_picker_create_and_add">Create &amp; add</string>
     <string name="home_empty">Nothing here yet</string>
+    <string name="family_list_home_empty">Nothing from the family list yet</string>
+    <string name="family_list_no_results">No family-list results. Try a channel you already trust.</string>
     <string name="home_section_trending">Trending</string>
     <string name="home_section_recommended">Recommended</string>
     <string name="algo_title">Recommendations</string>
@@ -1549,6 +1551,8 @@
     <string name="channel_tab_live">Live</string>
     <string name="channel_tab_playlists">Playlists</string>
     <string name="channel_tab_courses">Courses</string>
+    <string name="channel_allow">Add to the family list</string>
+    <string name="channel_allowed">In the family list</string>
     <string name="channel_tab_posts">Posts</string>
     <string name="channel_no_posts">No posts on this channel</string>
     <string name="channel_posts_load_failed">Couldn\'t load the posts</string>
