@@ -10,6 +10,7 @@ import dev.typetype.android.data.account.AccountScopeProvider
 import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.auth.AuthRepositoryImpl
 import dev.typetype.android.data.branding.RemoteDeArrowRepository
+import dev.typetype.android.data.channel.ChannelPostsRepositoryImpl
 import dev.typetype.android.data.channel.ChannelRepositoryImpl
 import dev.typetype.android.data.comments.CommentsRepositoryImpl
 import dev.typetype.android.data.comments.RemoteBulletCommentsRepository
@@ -58,6 +59,7 @@ import dev.typetype.android.domain.actions.VideoActionsRepository
 import dev.typetype.android.domain.account.AccountRepository
 import dev.typetype.android.domain.auth.AuthRepository
 import dev.typetype.android.domain.branding.DeArrowRepository
+import dev.typetype.android.domain.channel.ChannelPostsRepository
 import dev.typetype.android.domain.channel.ChannelRepository
 import dev.typetype.android.domain.comments.BulletCommentsRepository
 import dev.typetype.android.domain.comments.CommentsRepository
@@ -230,6 +232,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindChannelRepository(impl: ChannelRepositoryImpl): ChannelRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindChannelPostsRepository(impl: ChannelPostsRepositoryImpl): ChannelPostsRepository
 
     @Binds
     @Singleton
