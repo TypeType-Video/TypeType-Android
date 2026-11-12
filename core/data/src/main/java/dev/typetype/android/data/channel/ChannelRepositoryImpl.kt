@@ -8,6 +8,7 @@ import dev.typetype.android.data.network.dto.toDomainVideo
 import dev.typetype.android.data.network.requireSuccessfulResponse
 import dev.typetype.android.domain.channel.Channel
 import dev.typetype.android.domain.channel.ChannelPage
+import dev.typetype.android.domain.channel.ChannelPlaylistKind
 import dev.typetype.android.domain.channel.ChannelPlaylistsPage
 import dev.typetype.android.domain.channel.ChannelQuery
 import dev.typetype.android.domain.channel.ChannelRepository
@@ -57,6 +58,7 @@ class ChannelRepositoryImpl @Inject constructor(
                         }
                     }
                 },
+                hasCourses = body.hasCourses,
             ),
             nextPage = body.nextpage,
         )
@@ -64,12 +66,13 @@ class ChannelRepositoryImpl @Inject constructor(
 
     override suspend fun loadPlaylists(
         channelUrl: String,
+        kind: ChannelPlaylistKind,
         nextPage: String?,
     ): Result<ChannelPlaylistsPage> = catching {
         val scope = activeAccountScope.require()
         val api = apiHolder.require(scope)
         val response = withContext(Dispatchers.IO) {
-            api.channelPlaylists(channelUrl, nextPage)
+            api.channelPlaylists(channelUrl, nextPage, kind.apiValue())
         }
         response.requireSuccessfulResponse()
         val body = response.body() ?: error("Empty channel playlists body")
@@ -90,6 +93,11 @@ private fun ChannelSort.apiValue(): String = when (this) {
     ChannelSort.Latest -> "latest"
     ChannelSort.Popular -> "popular"
     ChannelSort.Oldest -> "oldest"
+}
+
+private fun ChannelPlaylistKind.apiValue(): String? = when (this) {
+    ChannelPlaylistKind.Playlists -> null
+    ChannelPlaylistKind.Courses -> "courses"
 }
 
 private fun SearchPlaylistDto.toDomain() = SearchPlaylist(

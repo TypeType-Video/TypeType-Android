@@ -12,6 +12,7 @@ sealed interface ContentSettingsAction {
     data class SetHideHomeRecommendations(val hidden: Boolean) : Update
     data class SetHideContinueWatching(val hidden: Boolean) : Update
     data class SetHideRelatedVideos(val hidden: Boolean) : Update
+    data class SetHideEndScreens(val hidden: Boolean) : Update
     data class SetHideComments(val hidden: Boolean) : Update
     data class SetHideShorts(val hidden: Boolean) : Update
     data class SetHideSubscriptionLiveStreams(val hidden: Boolean) : Update
@@ -29,6 +30,7 @@ internal fun UserSettings.updatedBy(action: ContentSettingsAction.Update): UserS
         is ContentSettingsAction.SetHideContinueWatching ->
             copy(hideContinueWatching = action.hidden)
         is ContentSettingsAction.SetHideRelatedVideos -> copy(hideRelatedVideos = action.hidden)
+        is ContentSettingsAction.SetHideEndScreens -> copy(hideEndScreens = action.hidden)
         is ContentSettingsAction.SetHideComments -> copy(hideComments = action.hidden)
         is ContentSettingsAction.SetHideShorts -> copy(hideShorts = action.hidden)
         is ContentSettingsAction.SetHideSubscriptionLiveStreams ->
