@@ -88,10 +88,16 @@ internal fun CommentBody(
                 )
             }
             Spacer(Modifier.height(4.dp))
-            ExpandableCommentText(
+            if (comment.text.isNotBlank()) {
+                ExpandableCommentText(
+                    comment = comment,
+                    onUrlClick = onUrlClick,
+                    onTimestampClick = onTimestampClick,
+                )
+            }
+            CommentMedia(
                 comment = comment,
-                onUrlClick = onUrlClick,
-                onTimestampClick = onTimestampClick,
+                modifier = Modifier.padding(top = if (comment.text.isNotBlank()) 8.dp else 2.dp),
             )
             Spacer(Modifier.height(6.dp))
             Row(
