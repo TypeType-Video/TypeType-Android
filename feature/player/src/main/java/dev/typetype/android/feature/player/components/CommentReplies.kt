@@ -33,7 +33,7 @@ internal sealed interface RepliesState {
     data class Failed(val message: String) : RepliesState
 }
 
-internal fun mergeCommentReplies(
+internal fun mergeCommentsById(
     current: List<Comment>,
     additions: List<Comment>,
 ): List<Comment> = buildList {
