@@ -9,6 +9,7 @@ import dev.typetype.android.data.network.dto.CommentVoiceReplyDto
 import dev.typetype.android.data.network.requireSuccessfulResponse
 import dev.typetype.android.domain.comments.Comment
 import dev.typetype.android.domain.comments.CommentImage
+import dev.typetype.android.domain.comments.CommentSearchPage
 import dev.typetype.android.domain.comments.CommentVoiceReply
 import dev.typetype.android.domain.comments.CommentsPage
 import dev.typetype.android.domain.comments.CommentsRepository
@@ -56,6 +57,27 @@ class CommentsRepositoryImpl @Inject constructor(
                 commentsDisabled = body.commentsDisabled,
             )
         }
+
+    override suspend fun searchComments(
+        videoUrl: String,
+        query: String,
+        cursor: String?,
+    ): Result<CommentSearchPage> = suspendRunCatching {
+        val scope = activeAccountScope.require()
+        val api = apiHolder.require(scope)
+        val response = withContext(Dispatchers.IO) {
+            api.searchComments(videoUrl = videoUrl, query = query, cursor = cursor)
+        }
+        response.requireSuccessfulResponse()
+        val body = response.body() ?: error("Empty comment search body")
+        activeAccountScope.verify(scope)
+        CommentSearchPage(
+            comments = body.comments.map(CommentItem::toDomainComment),
+            nextCursor = body.nextpage,
+            scannedPages = body.scannedPages,
+            commentsDisabled = body.commentsDisabled,
+        )
+    }
 
     override suspend fun loadVoiceReplyAudio(voiceReplyUrl: String): Result<ByteArray> =
         suspendRunCatching {

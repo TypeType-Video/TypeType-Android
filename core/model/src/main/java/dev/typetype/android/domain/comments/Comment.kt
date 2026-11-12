@@ -37,3 +37,10 @@ data class CommentsPage(
     val nextpage: String?,
     val commentsDisabled: Boolean,
 )
+
+data class CommentSearchPage(
+    val comments: List<Comment>,
+    val nextCursor: String?,
+    val scannedPages: Int,
+    val commentsDisabled: Boolean,
+)

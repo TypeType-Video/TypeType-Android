@@ -1,6 +1,7 @@
 package dev.typetype.android.data.network
 
 import dev.typetype.android.data.network.dto.BulletCommentsPageResponse
+import dev.typetype.android.data.network.dto.CommentSearchResponse
 import dev.typetype.android.data.network.dto.CommentsPageResponse
 import dev.typetype.android.data.network.dto.AudioOnlyStreamResponse
 import dev.typetype.android.data.network.dto.InstanceResponse
@@ -93,6 +94,13 @@ interface TypeTypeMediaApi {
         @Query("url") videoUrl: String,
         @Query("repliesPage") repliesPage: String,
     ): Response<CommentsPageResponse>
+
+    @GET("comments/search")
+    suspend fun searchComments(
+        @Query("url") videoUrl: String,
+        @Query("q") query: String,
+        @Query("cursor") cursor: String? = null,
+    ): Response<CommentSearchResponse>
 
     @GET("comments/voice")
     suspend fun commentVoiceAudio(@Query("url") voiceReplyUrl: String): Response<ResponseBody>

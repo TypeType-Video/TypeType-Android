@@ -44,3 +44,11 @@ data class CommentsPageResponse(
     val nextpage: String? = null,
     val commentsDisabled: Boolean = false,
 )
+
+@Serializable
+data class CommentSearchResponse(
+    val comments: List<CommentItem> = emptyList(),
+    val nextpage: String? = null,
+    val scannedPages: Int = 0,
+    val commentsDisabled: Boolean = false,
+)
