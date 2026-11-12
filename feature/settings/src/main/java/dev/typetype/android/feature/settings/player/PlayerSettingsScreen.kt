@@ -74,6 +74,7 @@ fun PlayerSettingsRoute(
         state = state,
         onNavigateBack = onNavigateBack,
         onAction = viewModel::onAction,
+        seekbarIconSection = { SeekbarIconSettingsSection() },
     )
 }
 
@@ -82,6 +83,7 @@ fun PlayerSettingsScreen(
     state: PlayerSettingsState,
     onNavigateBack: () -> Unit,
     onAction: (PlayerSettingsAction) -> Unit,
+    seekbarIconSection: @Composable () -> Unit = {},
 ) {
     var advancedExpanded by rememberSaveable { mutableStateOf(false) }
     val codecOptions = listOf(
@@ -103,7 +105,7 @@ fun PlayerSettingsScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
                 verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
-                item { SeekbarIconSettingsSection() }
+                item { seekbarIconSection() }
                 item { SettingsSectionHeader(stringResource(R.string.settings_player_section_playback)) }
                 item {
                     SwitchRow(
