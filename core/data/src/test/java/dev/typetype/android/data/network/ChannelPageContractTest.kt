@@ -8,6 +8,7 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -83,7 +84,25 @@ class ChannelPageContractTest {
         assertEquals("/channel/playlists", request.requestUrl?.encodedPath)
         assertEquals("https://youtube.com/@channel", request.requestUrl?.queryParameter("url"))
         assertEquals(cursor, request.requestUrl?.queryParameter("nextpage"))
+        assertNull(request.requestUrl?.queryParameter("tab"))
         assertEquals("Playlist", response.body()?.playlists?.single()?.title)
         assertEquals("more", response.body()?.nextpage)
+    }
+
+    @Test
+    fun channelCoursesAreListedThroughTheCoursesTab() = runBlocking {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody("""{"playlists":[{"id":"c","title":"Course","url":"https://youtube.com/playlist?list=c"}]}"""),
+        )
+
+        val response = api.channelPlaylists(url = "https://youtube.com/@channel", tab = "courses")
+
+        val request = server.takeRequest()
+        assertEquals("/channel/playlists", request.requestUrl?.encodedPath)
+        assertEquals("courses", request.requestUrl?.queryParameter("tab"))
+        assertEquals("Course", response.body()?.playlists?.single()?.title)
     }
 }
