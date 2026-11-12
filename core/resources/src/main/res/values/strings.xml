@@ -1493,6 +1493,12 @@
     <string name="channel_tab_live">Live</string>
     <string name="channel_tab_playlists">Playlists</string>
     <string name="channel_tab_courses">Courses</string>
+    <string name="channel_tab_posts">Posts</string>
+    <string name="channel_no_posts">No posts on this channel</string>
+    <string name="channel_posts_load_failed">Couldn\'t load the posts</string>
+    <string name="channel_post_image">Post image</string>
+    <string name="channel_post_play_video">Play the video</string>
+    <string name="channel_post_comment_count">Comments: %1$s</string>
     <string name="channel_sort_newest">Newest</string>
     <string name="channel_sort_popular">Popular</string>
     <string name="channel_sort_oldest">Oldest</string>
