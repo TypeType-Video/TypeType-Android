@@ -3,15 +3,16 @@ package dev.typetype.android.services
 import android.app.ActivityManager
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.LoadControl
 
 @UnstableApi
-internal fun createPlaybackLoadControl(activityManager: ActivityManager): DefaultLoadControl =
-    createPlaybackLoadControl(
-        playbackBufferPolicy(
-            memoryClassMb = activityManager.memoryClass,
-            isLowRamDevice = activityManager.isLowRamDevice,
-        ),
+internal fun createPlaybackLoadControl(activityManager: ActivityManager): LoadControl {
+    val policy = playbackBufferPolicy(
+        memoryClassMb = activityManager.memoryClass,
+        isLowRamDevice = activityManager.isLowRamDevice,
     )
+    return YouTubeBufferLoadControl(createPlaybackLoadControl(policy), policy)
+}
 
 @UnstableApi
 internal fun createPlaybackLoadControl(policy: PlaybackBufferPolicy): DefaultLoadControl =
