@@ -138,7 +138,7 @@ jobs:
       - name: Verify and build beta release
         timeout-minutes: 40
         run: |
-          ./gradlew --stacktrace \
+          ./gradlew --stacktrace --no-build-cache \
             :baseline-profile:assemble \
             testDebugUnitTest \
             lintDebug \
