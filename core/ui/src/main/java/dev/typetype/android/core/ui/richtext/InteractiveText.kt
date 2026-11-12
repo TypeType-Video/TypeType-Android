@@ -1,4 +1,4 @@
-package dev.typetype.android.feature.player.components
+package dev.typetype.android.core.ui.richtext
 
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -91,7 +91,7 @@ internal fun normalizeExternalUrl(url: String): String {
 }
 
 @Composable
-internal fun LinkedText(
+fun LinkedText(
     text: String,
     style: TextStyle,
     linkColor: Color,

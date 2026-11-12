@@ -38,6 +38,8 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.richtext.RichMarkupText
+import dev.typetype.android.core.ui.richtext.richMarkupPlainText
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
 import dev.typetype.android.core.url.buildImageUrl
 import dev.typetype.android.domain.comments.Comment
@@ -137,7 +139,7 @@ private fun ExpandableCommentText(
         renderedText.count { it == '\n' } >= COMMENT_COLLAPSE_LINE_LIMIT
 
     Column {
-        CommentRichText(
+        RichMarkupText(
             text = comment.text,
             style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
             linkColor = MaterialTheme.colorScheme.primary,

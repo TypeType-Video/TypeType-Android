@@ -1,4 +1,4 @@
-package dev.typetype.android.feature.player.components
+package dev.typetype.android.core.ui.richtext
 
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
@@ -6,7 +6,7 @@ import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
 import java.net.URI
 
-internal enum class RichMarkupFormat {
+enum class RichMarkupFormat {
     Strong,
     Emphasized,
     Underline,
@@ -16,7 +16,7 @@ internal enum class RichMarkupFormat {
     Highlight,
 }
 
-internal sealed interface RichMarkupNode {
+sealed interface RichMarkupNode {
     data class Text(val value: String) : RichMarkupNode
 
     data object Break : RichMarkupNode
@@ -41,7 +41,7 @@ private val escapedMarkupPattern = Regex(
     options = setOf(RegexOption.IGNORE_CASE),
 )
 
-internal fun parseRichMarkup(source: String): List<RichMarkupNode> {
+fun parseRichMarkup(source: String): List<RichMarkupNode> {
     val document = Jsoup.parseBodyFragment(source).body()
     val nodes = parseChildren(document.childNodes())
     val markupFree = nodes.all { it is RichMarkupNode.Text }
@@ -54,7 +54,7 @@ internal fun parseRichMarkup(source: String): List<RichMarkupNode> {
     return nodes
 }
 
-internal fun richMarkupPlainText(source: String): String {
+fun richMarkupPlainText(source: String): String {
     val builder = StringBuilder()
     fun visit(nodes: List<RichMarkupNode>) {
         nodes.forEach { node ->

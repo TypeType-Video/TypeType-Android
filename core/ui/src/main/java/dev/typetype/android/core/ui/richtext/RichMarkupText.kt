@@ -1,4 +1,4 @@
-package dev.typetype.android.feature.player.components
+package dev.typetype.android.core.ui.richtext
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,13 +23,13 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 
 @Composable
-internal fun CommentRichText(
+fun RichMarkupText(
     text: String,
     style: TextStyle,
     linkColor: Color,
     onUrlClick: (String) -> Unit,
-    onTimestampClick: (Long) -> Unit,
     modifier: Modifier = Modifier,
+    onTimestampClick: (Long) -> Unit = {},
     maxLines: Int = Int.MAX_VALUE,
     overflow: TextOverflow = TextOverflow.Clip,
 ) {

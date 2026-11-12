@@ -1,5 +1,6 @@
 package dev.typetype.android.feature.player.components
 
+import dev.typetype.android.core.ui.richtext.LinkedText
 import android.content.Intent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
