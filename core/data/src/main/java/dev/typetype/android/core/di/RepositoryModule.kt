@@ -23,6 +23,7 @@ import dev.typetype.android.data.imports.RemoteImportRepository
 import dev.typetype.android.data.imports.RemotePortabilityRepository
 import dev.typetype.android.data.imports.RoomYoutubeTakeoutImportRepository
 import dev.typetype.android.data.library.RoomVideoMetaRepository
+import dev.typetype.android.data.livechat.RemoteLiveChatRepository
 import dev.typetype.android.data.notifications.RemoteNotificationsRepository
 import dev.typetype.android.data.network.NetworkAvailabilityObserver
 import dev.typetype.android.data.network.PlaybackNetworkMonitor
@@ -72,6 +73,7 @@ import dev.typetype.android.domain.imports.ImportRepository
 import dev.typetype.android.domain.imports.PortabilityRepository
 import dev.typetype.android.domain.imports.YoutubeTakeoutImportRepository
 import dev.typetype.android.domain.library.VideoMetaRepository
+import dev.typetype.android.domain.livechat.LiveChatRepository
 import dev.typetype.android.domain.notifications.NotificationsRepository
 import dev.typetype.android.domain.preferences.PreferencesRepository
 import dev.typetype.android.domain.push.PushRepository
@@ -232,6 +234,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindChannelRepository(impl: ChannelRepositoryImpl): ChannelRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindLiveChatRepository(impl: RemoteLiveChatRepository): LiveChatRepository
 
     @Binds
     @Singleton

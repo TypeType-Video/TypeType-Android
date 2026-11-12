@@ -20,6 +20,9 @@ fun toPublicWatchParameter(value: String): String {
 fun canonicalVideoIdentity(value: String): String =
     resolveIncomingVideoUrl(value) ?: value.trim()
 
+fun isYouTubeVideoUrl(value: String): Boolean =
+    canonicalVideoIdentity(value).startsWith("https://www.youtube.com/watch?v=")
+
 fun sameVideoTimestampMillis(url: String, currentVideoUrl: String): Long? {
     val trimmed = url.trim()
     if (trimmed.isEmpty()) return null

@@ -32,6 +32,17 @@ class ScopedApiFactory @Inject constructor(
         return retrofitFactory.createWithClient(baseUrl, type, client)
     }
 
+    fun <T> createLiveChat(
+        baseUrl: String,
+        serverId: String,
+        accountId: String,
+        token: String,
+        type: Class<T>,
+    ): T {
+        val client = scopedHttpClientFactory.create(baseUrl, serverId, accountId, token).liveChatClient()
+        return retrofitFactory.createWithClient(baseUrl, type, client)
+    }
+
     fun <T> createYoutubeTakeoutImport(
         baseUrl: String,
         serverId: String,
@@ -56,6 +67,15 @@ internal fun okhttp3.OkHttpClient.sabrControlClient(): okhttp3.OkHttpClient = ne
 
 private const val SABR_CONTROL_READ_TIMEOUT_SECONDS = 30L
 private const val SABR_CONTROL_CALL_TIMEOUT_SECONDS = 45L
+
+// The chat is an open event stream: no total call limit, and the server keep-alives arrive well within the read limit.
+internal fun okhttp3.OkHttpClient.liveChatClient(): okhttp3.OkHttpClient = newBuilder()
+    .retryOnConnectionFailure(false)
+    .readTimeout(LIVE_CHAT_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+    .callTimeout(0, TimeUnit.SECONDS)
+    .build()
+
+private const val LIVE_CHAT_READ_TIMEOUT_SECONDS = 60L
 
 internal fun okhttp3.OkHttpClient.youtubeTakeoutImportClient(): okhttp3.OkHttpClient = newBuilder()
     .followRedirects(false)
