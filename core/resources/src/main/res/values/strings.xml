@@ -39,6 +39,24 @@
     <string name="subscriptions_tab_videos">Videos</string>
     <string name="subscriptions_tab_channels">Channels</string>
     <string name="subscriptions_channels_empty">Your subscribed channels will appear here.</string>
+    <string name="subscription_groups_all">All</string>
+    <string name="subscription_groups_ungrouped">Ungrouped</string>
+    <string name="subscription_groups_manage">Manage groups</string>
+    <string name="subscription_groups_new">New group</string>
+    <string name="subscription_groups_name">Group name</string>
+    <string name="subscription_groups_save">Save</string>
+    <string name="subscription_groups_rename">Rename %1$s</string>
+    <string name="subscription_groups_delete">Delete %1$s</string>
+    <string name="subscription_groups_delete_message">The channels stay subscribed; only the group is removed.</string>
+    <string name="subscription_groups_delete_confirm">Delete</string>
+    <string name="subscription_groups_empty">No groups yet</string>
+    <string name="subscription_groups_for_channel">Groups for %1$s</string>
+    <string name="subscription_groups_edit_channel">Edit groups</string>
+    <string name="subscription_groups_failed">Couldn\'t update the groups</string>
+    <plurals name="subscription_groups_channel_count">
+        <item quantity="one">%1$d channel</item>
+        <item quantity="other">%1$d channels</item>
+    </plurals>
     <plurals name="subscriptions_channel_count">
         <item quantity="one">%1$d channel followed</item>
         <item quantity="other">%1$d channels followed</item>
