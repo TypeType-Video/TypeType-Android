@@ -28,7 +28,6 @@ data class UserSettings(
     val hideHomeRecommendations: Boolean = false,
     val hideContinueWatching: Boolean = false,
     val hideRelatedVideos: Boolean = false,
-    val hideEndScreens: Boolean = false,
     val hideComments: Boolean = false,
     val hideShorts: Boolean = false,
     val hideSubscriptionLiveStreams: Boolean = false,

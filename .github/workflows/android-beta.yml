@@ -48,7 +48,7 @@ env:
 
 jobs:
   release:
-    runs-on: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && fromJSON('["self-hosted","stack-android"]') || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 50
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -144,6 +144,11 @@ jobs:
             lintDebug \
             :app:assembleDebug \
             :app:assembleRelease
+
+      - name: Check that R8 kept every view model constructor
+        run: |
+          awk '/^dev\.typetype\..*ViewModel:$/ { c = $1; next } /^[^ ]/ { c = "" } c && /<init>\(/ { print "R8 removed the constructor of " c; bad = 1 } END { exit bad }' \
+            app/build/outputs/mapping/release/usage.txt
 
       - name: Upload lint report
         if: ${{ always() }}

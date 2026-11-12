@@ -1,7 +1,6 @@
 package dev.typetype.android.feature.channel
 
 import dev.typetype.android.domain.channel.Channel
-import dev.typetype.android.domain.channel.ChannelPlaylistKind
 import dev.typetype.android.domain.channel.ChannelSort
 import dev.typetype.android.domain.podcast.Podcast
 import dev.typetype.android.domain.search.SearchPlaylist
@@ -10,7 +9,6 @@ enum class ChannelTab {
     Videos,
     Live,
     Playlists,
-    Courses,
 }
 
 data class ChannelState(
@@ -33,7 +31,6 @@ data class ChannelState(
     val notificationsInFlight: Boolean = false,
     val podcasts: List<Podcast> = emptyList(),
     val podcastsLoading: Boolean = false,
-    val playlistsKind: ChannelPlaylistKind = ChannelPlaylistKind.Playlists,
     val playlists: List<SearchPlaylist> = emptyList(),
     val playlistsLoaded: Boolean = false,
     val playlistsNextPage: String? = null,
@@ -43,16 +40,6 @@ data class ChannelState(
     val playlistsErrorMessage: String? = null,
     val playlistsErrorRequestId: String? = null,
 )
-
-internal val ChannelTab.playlistKind: ChannelPlaylistKind?
-    get() = when (this) {
-        ChannelTab.Playlists -> ChannelPlaylistKind.Playlists
-        ChannelTab.Courses -> ChannelPlaylistKind.Courses
-        ChannelTab.Videos, ChannelTab.Live -> null
-    }
-
-internal fun ChannelState.availableTabs(): List<ChannelTab> =
-    ChannelTab.entries.filter { it != ChannelTab.Courses || channel?.hasCourses == true }
 
 internal fun String.isYouTubeChannel(): Boolean =
     contains("youtube.com", ignoreCase = true) || startsWith("/channel/") || startsWith("/c/")

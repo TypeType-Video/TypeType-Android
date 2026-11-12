@@ -184,12 +184,9 @@ internal fun ChannelContentGrid(
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
         }
-        if (state.tab.playlistKind != null) {
-            val courses = state.tab == ChannelTab.Courses
+        if (state.tab == ChannelTab.Playlists) {
             item(span = { GridItemSpan(maxLineSpan) }) {
-                ChannelSectionTitle(
-                    if (courses) R.string.channel_courses_section else R.string.channel_playlists_section,
-                )
+                ChannelSectionTitle(R.string.channel_playlists_section)
             }
             if (state.playlistsLoading && state.playlists.isEmpty()) {
                 item(span = { GridItemSpan(maxLineSpan) }) { ChannelLoadingRow() }
@@ -215,9 +212,7 @@ internal fun ChannelContentGrid(
             }
             if (state.playlistsLoaded && state.playlists.isEmpty()) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
-                    ChannelEmptyRow(
-                        if (courses) R.string.channel_no_courses else R.string.channel_no_playlists,
-                    )
+                    ChannelEmptyRow(R.string.channel_no_playlists)
                 }
             }
             item(span = { GridItemSpan(maxLineSpan) }, key = "channel-playlists-pagination") {

@@ -14,7 +14,6 @@ class ContentSettingsActionTest {
             ContentSettingsAction.SetHideHomeRecommendations(true),
             ContentSettingsAction.SetHideContinueWatching(true),
             ContentSettingsAction.SetHideRelatedVideos(true),
-            ContentSettingsAction.SetHideEndScreens(true),
             ContentSettingsAction.SetHideComments(true),
             ContentSettingsAction.SetHideShorts(true),
         ).fold(original) { settings, action -> settings.updatedBy(action) }
@@ -22,7 +21,6 @@ class ContentSettingsActionTest {
         assertTrue(updated.hideHomeRecommendations)
         assertTrue(updated.hideContinueWatching)
         assertTrue(updated.hideRelatedVideos)
-        assertTrue(updated.hideEndScreens)
         assertTrue(updated.hideComments)
         assertTrue(updated.hideShorts)
         assertFalse(updated.deArrowEnabled)

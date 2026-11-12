@@ -2,7 +2,6 @@ package dev.typetype.android.feature.channel
 
 import dev.typetype.android.domain.channel.Channel
 import dev.typetype.android.domain.channel.ChannelPage
-import dev.typetype.android.domain.channel.ChannelPlaylistKind
 import dev.typetype.android.domain.channel.ChannelPlaylistsPage
 
 internal fun Channel.appendPage(page: Channel): Channel =
@@ -38,41 +37,6 @@ internal fun ChannelState.finishChannelLoad(page: ChannelPage): ChannelState = c
     loadMoreError = false,
     errorMessage = null,
     errorRequestId = null,
-)
-
-internal fun ChannelState.startPlaylistsLoad(kind: ChannelPlaylistKind): ChannelState {
-    val sameKind = playlistsKind == kind
-    return copy(
-        playlistsKind = kind,
-        playlists = if (sameKind) playlists else emptyList(),
-        playlistsLoaded = sameKind && playlistsLoaded,
-        playlistsNextPage = if (sameKind) playlistsNextPage else null,
-        playlistsLoading = true,
-        playlistsLoadingMore = false,
-        playlistsLoadMoreError = false,
-        playlistsErrorMessage = null,
-        playlistsErrorRequestId = null,
-    )
-}
-
-internal fun ChannelState.failPlaylistsLoad(message: String, requestId: String?): ChannelState = copy(
-    playlistsLoading = false,
-    playlistsErrorMessage = message,
-    playlistsErrorRequestId = requestId,
-)
-
-internal fun ChannelState.startPlaylistsPageLoad(): ChannelState = copy(
-    playlistsLoadingMore = true,
-    playlistsLoadMoreError = false,
-    playlistsErrorMessage = null,
-    playlistsErrorRequestId = null,
-)
-
-internal fun ChannelState.failPlaylistsPageLoad(message: String, requestId: String?): ChannelState = copy(
-    playlistsLoadingMore = false,
-    playlistsLoadMoreError = true,
-    playlistsErrorMessage = message,
-    playlistsErrorRequestId = requestId,
 )
 
 internal fun ChannelState.finishPlaylistsLoad(page: ChannelPlaylistsPage): ChannelState = copy(

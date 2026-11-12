@@ -8,7 +8,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.error.UserErrorMapper
 import dev.typetype.android.core.ui.navigation.ChannelRoute
-import dev.typetype.android.domain.channel.ChannelPlaylistKind
 import dev.typetype.android.domain.channel.ChannelRepository
 import dev.typetype.android.domain.channel.ChannelQuery
 import dev.typetype.android.domain.channel.ChannelSort
@@ -55,7 +54,7 @@ class ChannelViewModel @Inject constructor(
     fun onAction(action: ChannelAction) {
         when (action) {
             ChannelAction.OnRefresh -> {
-                if (_state.value.tab.playlistKind != null) {
+                if (_state.value.tab == ChannelTab.Playlists) {
                     loadPlaylists(force = true)
                 } else {
                     load()
@@ -157,20 +156,18 @@ class ChannelViewModel @Inject constructor(
     private fun selectTab(tab: ChannelTab) {
         val current = _state.value
         if (!current.supportsYouTubeDiscovery || current.tab == tab) return
-        if (tab !in current.availableTabs()) return
-        val listsPlaylists = tab.playlistKind != null
         _state.update {
             it.copy(
                 tab = tab,
                 searchInput = "",
                 appliedSearch = "",
-                isLoading = if (listsPlaylists) false else it.isLoading,
+                isLoading = if (tab == ChannelTab.Playlists) false else it.isLoading,
                 isLoadingMore = false,
                 errorMessage = null,
                 errorRequestId = null,
             )
         }
-        if (listsPlaylists) {
+        if (tab == ChannelTab.Playlists) {
             loadJob?.cancel()
             loadPlaylists()
         } else {
@@ -204,17 +201,28 @@ class ChannelViewModel @Inject constructor(
 
     private fun loadPlaylists(force: Boolean = false) {
         val current = _state.value
-        val kind = current.tab.playlistKind ?: return
-        val reusable = current.playlistsKind == kind && (current.playlistsLoaded || current.playlistsLoading)
-        if (!force && reusable) return
+        if (!force && (current.playlistsLoaded || current.playlistsLoading)) return
         playlistsJob?.cancel()
-        _state.update { it.startPlaylistsLoad(kind) }
         playlistsJob = viewModelScope.launch {
-            channelRepository.loadPlaylists(channelUrl, kind).fold(
+            _state.update {
+                it.copy(
+                    playlistsLoading = true,
+                    playlistsLoadMoreError = false,
+                    playlistsErrorMessage = null,
+                    playlistsErrorRequestId = null,
+                )
+            }
+            channelRepository.loadPlaylists(channelUrl).fold(
                 onSuccess = { page -> _state.update { it.finishPlaylistsLoad(page) } },
                 onFailure = { error ->
-                    val details = errorMapper.details(error, kind.loadFailedResource())
-                    _state.update { it.failPlaylistsLoad(details.message, details.requestId) }
+                    val details = errorMapper.details(error, R.string.channel_playlists_load_failed)
+                    _state.update {
+                        it.copy(
+                            playlistsLoading = false,
+                            playlistsErrorMessage = details.message,
+                            playlistsErrorRequestId = details.requestId,
+                        )
+                    }
                 },
             )
         }
@@ -224,23 +232,31 @@ class ChannelViewModel @Inject constructor(
         val current = _state.value
         val cursor = current.playlistsNextPage ?: return
         if (current.playlistsLoading || current.playlistsLoadingMore) return
-        val kind = current.playlistsKind
         playlistsJob?.cancel()
-        _state.update(ChannelState::startPlaylistsPageLoad)
         playlistsJob = viewModelScope.launch {
-            channelRepository.loadPlaylists(channelUrl, kind, cursor).fold(
+            _state.update {
+                it.copy(
+                    playlistsLoadingMore = true,
+                    playlistsLoadMoreError = false,
+                    playlistsErrorMessage = null,
+                    playlistsErrorRequestId = null,
+                )
+            }
+            channelRepository.loadPlaylists(channelUrl, cursor).fold(
                 onSuccess = { page -> _state.update { it.appendPlaylistsPage(page, cursor) } },
                 onFailure = { error ->
-                    val details = errorMapper.details(error, kind.loadFailedResource())
-                    _state.update { it.failPlaylistsPageLoad(details.message, details.requestId) }
+                    val details = errorMapper.details(error, R.string.channel_playlists_load_failed)
+                    _state.update {
+                        it.copy(
+                            playlistsLoadingMore = false,
+                            playlistsLoadMoreError = true,
+                            playlistsErrorMessage = details.message,
+                            playlistsErrorRequestId = details.requestId,
+                        )
+                    }
                 },
             )
         }
-    }
-
-    private fun ChannelPlaylistKind.loadFailedResource(): Int = when (this) {
-        ChannelPlaylistKind.Playlists -> R.string.channel_playlists_load_failed
-        ChannelPlaylistKind.Courses -> R.string.channel_courses_load_failed
     }
 
     private fun currentQuery(state: ChannelState = _state.value) = ChannelQuery(

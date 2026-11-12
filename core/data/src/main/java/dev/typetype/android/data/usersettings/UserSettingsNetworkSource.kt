@@ -76,7 +76,6 @@ internal fun UserSettingsDto.toDomain(serverBaseUrl: String? = null): UserSettin
     hideHomeRecommendations = hideHomeRecommendations,
     hideContinueWatching = hideContinueWatching,
     hideRelatedVideos = hideRelatedVideos,
-    hideEndScreens = hideEndScreens,
     hideComments = hideComments,
     hideShorts = hideShorts,
     hideSubscriptionLiveStreams = hideSubscriptionLiveStreams == true,

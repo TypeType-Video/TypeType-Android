@@ -46,7 +46,6 @@ fun PlayerHost(
     reserveNavigationBarInset: Boolean = true,
     accessibleControlsEnabled: Boolean = false,
     onTransitionProgressChange: (Float) -> Unit = {},
-    onOpenPlaylist: (playlistUrl: String) -> Unit = {},
     content: @Composable () -> Unit,
 ) {
     val state by controller.state.collectAsStateWithLifecycle()
@@ -182,10 +181,6 @@ fun PlayerHost(
                         onOpenChannel = { url ->
                             controller.minimize()
                             onOpenChannel(url)
-                        },
-                        onOpenPlaylist = { url ->
-                            controller.minimize()
-                            onOpenPlaylist(url)
                         },
                         modifier = Modifier.fillMaxSize(),
                     )

@@ -25,7 +25,6 @@
     <string name="home_feed_failed">Couldn\'t refresh the feed</string>
     <string name="channel_load_failed">Couldn\'t load this channel</string>
     <string name="channel_playlists_load_failed">Couldn\'t load this channel\'s playlists</string>
-    <string name="channel_courses_load_failed">Couldn\'t load this channel\'s courses</string>
     <string name="channel_action_failed">Couldn\'t update this subscription</string>
     <string name="search_failed">Couldn\'t complete this search</string>
     <string name="subscriptions_failed">Couldn\'t load subscriptions</string>
@@ -239,8 +238,6 @@
     <string name="settings_content_hide_recommendations_subtitle">Remove personalized recommendations from the home page</string>
     <string name="settings_content_hide_related">Hide related videos</string>
     <string name="settings_content_hide_related_subtitle">Remove suggestions from watch pages</string>
-    <string name="settings_content_hide_end_screens">Hide end screens</string>
-    <string name="settings_content_hide_end_screens_subtitle">Remove the creator cards shown at the end of YouTube videos</string>
     <string name="settings_content_hide_comments">Hide comments and danmaku</string>
     <string name="settings_content_hide_comments_subtitle">Stop loading comments and bullet comments</string>
     <string name="settings_content_hide_shorts">Hide Shorts</string>
@@ -942,10 +939,6 @@
     <string name="external_link_title">Leaving TypeType</string>
     <string name="external_link_message">This link opens outside the app.</string>
     <string name="external_link_open">Open</string>
-    <string name="end_screen_play_video">Play video</string>
-    <string name="end_screen_open_playlist">Open playlist</string>
-    <string name="end_screen_open_channel">Open channel</string>
-    <string name="end_screen_open_link">Open link</string>
     <string name="playlist_picker_title">Add to playlist</string>
     <string name="playlist_picker_create_new">Create new playlist</string>
     <string name="playlist_picker_empty">No playlists yet</string>
@@ -1471,7 +1464,6 @@
     <string name="channel_tab_videos">Videos</string>
     <string name="channel_tab_live">Live</string>
     <string name="channel_tab_playlists">Playlists</string>
-    <string name="channel_tab_courses">Courses</string>
     <string name="channel_sort_newest">Newest</string>
     <string name="channel_sort_popular">Popular</string>
     <string name="channel_sort_oldest">Oldest</string>
@@ -1486,8 +1478,6 @@
     <string name="channel_no_live">No live streams available</string>
     <string name="channel_playlists_section">Playlists</string>
     <string name="channel_no_playlists">No playlists on this channel</string>
-    <string name="channel_courses_section">Courses</string>
-    <string name="channel_no_courses">No courses on this channel</string>
     <string name="library_filter_placeholder">Filter videos…</string>
     <string name="library_filter_clear">Clear filter</string>
     <string name="library_filter_no_match">No matches for \"%1$s\"</string>

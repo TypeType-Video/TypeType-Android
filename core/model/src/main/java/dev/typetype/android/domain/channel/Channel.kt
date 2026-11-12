@@ -9,11 +9,6 @@ enum class ChannelSort {
     Oldest,
 }
 
-enum class ChannelPlaylistKind {
-    Playlists,
-    Courses,
-}
-
 data class ChannelQuery(
     val channelUrl: String,
     val sort: ChannelSort = ChannelSort.Latest,
@@ -29,7 +24,6 @@ data class Channel(
     val subscriberCount: Long,
     val verified: Boolean,
     val videos: List<Video>,
-    val hasCourses: Boolean = false,
 )
 
 data class ChannelPage(

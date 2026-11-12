@@ -110,7 +110,6 @@ private fun UserSettings.toContentSettingsState(feedback: ContentSettingsFeedbac
         hideHomeRecommendations = hideHomeRecommendations,
         hideContinueWatching = hideContinueWatching,
         hideRelatedVideos = hideRelatedVideos,
-        hideEndScreens = hideEndScreens,
         hideComments = hideComments,
         hideShorts = hideShorts,
         hideSubscriptionLiveStreams = hideSubscriptionLiveStreams,

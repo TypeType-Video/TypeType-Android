@@ -125,9 +125,6 @@ fun AppNavHost(
         onPlayVideo = onPlayVideo,
         onOpenChannel = onOpenChannel,
         onClosePlayback = mainViewModel::closePlayback,
-        onOpenPlaylist = { playlistUrl ->
-            navController.navigate(PublicPlaylistRoute(playlistUrl)) { launchSingleTop = true }
-        },
     ) { innerModifier ->
         AdaptiveSettingsHost(
             navController = navController,

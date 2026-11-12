@@ -66,7 +66,6 @@ internal fun LoadedPlayer(
     downloadInFlight: Boolean,
     playbackQueue: PlaybackQueueState,
     navigation: PlayerNavigationControls,
-    endScreen: EndScreenActions,
     commentsFlow: Flow<PagingData<Comment>>,
     commentsRepository: CommentsRepository?,
     prepareSabrPlayback: PrepareSabrPlayback,
@@ -267,8 +266,6 @@ internal fun LoadedPlayer(
                             onDanmakuAction = onDanmakuAction,
                             hostTransitionProgress = hostTransitionProgress,
                             navigation = navigation,
-                            endScreen = endScreen,
-                            showEndScreens = !userSettings.hideEndScreens,
                             modifier = Modifier.fillMaxSize(),
                         )
                     } else {

@@ -44,7 +44,6 @@ interface TypeTypeSearchApi {
     suspend fun channelPlaylists(
         @Query("url") url: String,
         @Query("nextpage") nextpage: String? = null,
-        @Query("tab") tab: String? = null,
     ): Response<ChannelPlaylistsResponse>
 
     @GET("suggestions")

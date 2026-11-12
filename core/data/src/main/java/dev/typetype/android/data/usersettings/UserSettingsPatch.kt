@@ -92,7 +92,6 @@ internal fun UserSettings.patchFrom(previous: UserSettings): JsonObject = buildJ
     if (hideRelatedVideos != previous.hideRelatedVideos) {
         put("hideRelatedVideos", hideRelatedVideos)
     }
-    if (hideEndScreens != previous.hideEndScreens) put("hideEndScreens", hideEndScreens)
     if (hideComments != previous.hideComments) put("hideComments", hideComments)
     if (hideShorts != previous.hideShorts) put("hideShorts", hideShorts)
     if (

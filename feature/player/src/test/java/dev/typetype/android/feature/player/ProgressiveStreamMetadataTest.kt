@@ -1,8 +1,6 @@
 package dev.typetype.android.feature.player
 
 import dev.typetype.android.domain.feed.Video
-import dev.typetype.android.domain.stream.EndScreenElement
-import dev.typetype.android.domain.stream.EndScreenElementType
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.stream.StreamAudioSource
 import dev.typetype.android.domain.stream.StreamPlaybackContract
@@ -77,17 +75,6 @@ class ProgressiveStreamMetadataTest {
         val merged = bootstrap.withMetadataFrom(details)
 
         assertEquals(listOf(sessionSubtitle), merged.subtitles)
-    }
-
-    @Test
-    fun endScreensFromDetailsReachTheBootstrapStream() {
-        val endScreen = EndScreenElement(
-            "id", EndScreenElementType.Video, "Next", "https://video/next", "", 1_000, 2_000, 0.6f, 0.1f, 0.3f, 1.78f,
-        )
-        val bootstrap = stream(title = "Bootstrap")
-
-        assertEquals(listOf(endScreen), bootstrap.withMetadataFrom(bootstrap.copy(endScreenElements = listOf(endScreen))).endScreenElements)
-        assertEquals(listOf(endScreen), bootstrap.copy(endScreenElements = listOf(endScreen)).withMetadataFrom(bootstrap).endScreenElements)
     }
 
     private fun stream(title: String): Stream {

@@ -12,7 +12,6 @@ data class ChannelResponse(
     val isVerified: Boolean = false,
     val videos: List<VideoItem> = emptyList(),
     val nextpage: String? = null,
-    val hasCourses: Boolean = false,
 )
 
 @Serializable
