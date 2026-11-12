@@ -90,7 +90,11 @@ jobs:
             :app:assembleDebug
             :app:assembleRelease
           )
-          ./gradlew --stacktrace "${tasks[@]}"
+          cache_args=()
+          if [ "$RUNNER_ENVIRONMENT" = self-hosted ] && [ -n "${GRADLE_USER_HOME:-}" ]; then
+            cache_args=(--project-cache-dir "$GRADLE_USER_HOME/project-cache/android")
+          fi
+          ./gradlew --stacktrace "${cache_args[@]}" "${tasks[@]}"
 
       - name: Check that R8 kept every view model constructor
         run: |

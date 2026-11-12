@@ -135,30 +135,19 @@ jobs:
             printf 'keyPassword=%s\n' "$ANDROID_KEY_PASSWORD"
           } > keystore.properties
 
-      - name: Verify and build beta release
-        timeout-minutes: 40
+      - name: Build beta release
+        timeout-minutes: 30
         run: |
-          ./gradlew --stacktrace --no-build-cache \
-            :baseline-profile:assemble \
-            testDebugUnitTest \
-            lintDebug \
-            :app:assembleDebug \
-            :app:assembleRelease
+          cache_args=()
+          if [ "$RUNNER_ENVIRONMENT" = self-hosted ] && [ -n "${GRADLE_USER_HOME:-}" ]; then
+            cache_args=(--project-cache-dir "$GRADLE_USER_HOME/project-cache/android")
+          fi
+          ./gradlew --stacktrace "${cache_args[@]}" :app:assembleRelease
 
       - name: Check that R8 kept every view model constructor
         run: |
           awk '/^dev\.typetype\..*ViewModel:$/ { c = $1; next } /^[^ ]/ { c = "" } c && /<init>\(/ { print "R8 removed the constructor of " c; bad = 1 } END { exit bad }' \
             app/build/outputs/mapping/release/usage.txt
-
-      - name: Upload lint report
-        if: ${{ always() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: typetype-beta-lint-report
-          path: |
-            **/build/reports/lint-results-debug.html
-          if-no-files-found: ignore
-          retention-days: 14
 
       - name: Verify and prepare beta APK
         run: |
@@ -218,7 +207,7 @@ jobs:
   publish:
     needs: release
     if: ${{ github.event_name != 'pull_request' }}
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, ci-stack]
     timeout-minutes: 15
     permissions:
       contents: write
