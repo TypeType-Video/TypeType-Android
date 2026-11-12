@@ -140,7 +140,7 @@ jobs:
         run: |
           cache_args=()
           if [ "$RUNNER_ENVIRONMENT" = self-hosted ] && [ -n "${GRADLE_USER_HOME:-}" ]; then
-            cache_args=(--project-cache-dir "$GRADLE_USER_HOME/project-cache/android")
+            cache_args=(--project-cache-dir "$GRADLE_USER_HOME/project-cache/android-beta")
           fi
           ./gradlew --stacktrace "${cache_args[@]}" :app:assembleRelease
 
