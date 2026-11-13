@@ -38,6 +38,7 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.error.rememberUserErrorMapper
 import dev.typetype.android.core.ui.richtext.RichMarkupText
 import dev.typetype.android.core.ui.richtext.richMarkupPlainText
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
@@ -184,8 +185,9 @@ internal fun FooterState(items: LazyPagingItems<Comment>) {
             modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            val failure = (state.refresh as? LoadState.Error ?: state.append as? LoadState.Error)?.error
             Text(
-                text = stringResource(R.string.comments_load_failed),
+                text = rememberUserErrorMapper().message(failure, R.string.comments_load_failed),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
             )

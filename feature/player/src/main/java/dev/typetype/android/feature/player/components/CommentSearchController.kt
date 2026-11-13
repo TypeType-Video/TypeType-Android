@@ -19,8 +19,10 @@ internal data class CommentSearchState(
     val scannedPages: Int = 0,
     val nextCursor: String? = null,
     val isLoading: Boolean = false,
-    val failed: Boolean = false,
-)
+    val failure: Throwable? = null,
+) {
+    val failed: Boolean get() = failure != null
+}
 
 // Each search makes the server read up to 20 comment pages from the provider, so a search only
 // starts when the viewer submits it, like the web client, never while typing.
@@ -50,14 +52,14 @@ internal class CommentSearchController(
         val current = state
         val cursor = current.nextCursor ?: return
         if (current.isLoading) return
-        state = current.copy(isLoading = true, failed = false)
+        state = current.copy(isLoading = true, failure = null)
         run(current.query, cursor)
     }
 
     fun retry() {
         val current = state
         if (current.query.isEmpty() || current.isLoading) return
-        state = current.copy(isLoading = true, failed = false)
+        state = current.copy(isLoading = true, failure = null)
         run(current.query, current.nextCursor)
     }
 
@@ -79,7 +81,7 @@ internal class CommentSearchController(
                         isLoading = false,
                     )
                 },
-                onFailure = { state.copy(isLoading = false, failed = true) },
+                onFailure = { failure -> state.copy(isLoading = false, failure = failure) },
             )
         }
     }

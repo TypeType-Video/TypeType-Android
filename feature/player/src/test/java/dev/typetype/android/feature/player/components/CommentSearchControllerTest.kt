@@ -48,12 +48,14 @@ class CommentSearchControllerTest {
     @Test
     fun retryAfterAFailureAsksForTheSamePageAgain() {
         responses += Result.success(page(listOf("a"), cursor = "next", scanned = 1))
-        responses += Result.failure(IllegalStateException("offline"))
+        val offline = java.io.IOException("offline")
+        responses += Result.failure(offline)
         responses += Result.success(page(listOf("b"), cursor = null, scanned = 1))
 
         controller.submit("cat")
         controller.searchFurther()
         assertTrue(controller.state.failed)
+        assertEquals(offline, controller.state.failure)
         controller.retry()
 
         assertEquals(listOf("cat" to null, "cat" to "next", "cat" to "next"), calls)

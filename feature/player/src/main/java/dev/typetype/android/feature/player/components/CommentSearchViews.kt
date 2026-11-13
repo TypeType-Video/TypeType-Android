@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.error.rememberUserErrorMapper
 
 @Composable
 internal fun CommentsHeader(search: CommentSearchController, modifier: Modifier = Modifier) {
@@ -141,7 +142,7 @@ private fun CommentSearchFooter(state: CommentSearchState, onSearchFurther: () -
         }
         state.failed -> Column(horizontalAlignment = Alignment.Start) {
             Text(
-                text = stringResource(R.string.comments_search_failed),
+                text = rememberUserErrorMapper().message(state.failure, R.string.comments_search_failed),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
