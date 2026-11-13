@@ -24,6 +24,8 @@
     <string name="error_login_code_expired">This code expired. Start again to get a new one</string>
     <string name="error_login_code_denied">The sign-in was refused on the other device</string>
     <string name="error_login_code_not_found">This code is wrong or no longer valid. Check it and try again</string>
+    <string name="error_profile_not_found">This profile no longer exists</string>
+    <string name="error_subscription_group_not_found">This group no longer exists</string>
     <string name="error_conflict">This changed elsewhere. Refresh and try again</string>
     <string name="error_rate_limited">Too many requests. Try again in a moment</string>
     <string name="error_server_unavailable">The instance cannot complete this request right now</string>

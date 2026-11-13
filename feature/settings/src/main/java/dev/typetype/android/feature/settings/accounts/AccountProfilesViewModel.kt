@@ -61,7 +61,10 @@ class AccountProfilesViewModel @Inject constructor(
         viewModelScope.launch {
             repository.switchTo(profileId).fold(
                 onSuccess = { switched.trySend(Unit) },
-                onFailure = ::showFailure,
+                onFailure = { failure ->
+                    showFailure(failure)
+                    reload()
+                },
             )
             _state.update { it.copy(busy = false) }
         }
@@ -84,7 +87,11 @@ class AccountProfilesViewModel @Inject constructor(
     }
 
     private fun showFailure(failure: Throwable) {
-        val message = errorMapper.details(failure, R.string.account_profiles_failed).message
+        val message = errorMapper.details(
+            failure,
+            R.string.account_profiles_failed,
+            missingRes = R.string.error_profile_not_found,
+        ).message
         _state.update { it.copy(errorMessage = message) }
     }
 }

@@ -205,7 +205,11 @@ class SubscriptionsViewModel @Inject constructor(
                         requestJob = viewModelScope.launch { loadFirstPage() }
                     } else {
                         networkRecovery.schedule(failure, SubscriptionsRecoveryRequest.Pagination)
-                        val details = errorMapper.details(failure, R.string.subscriptions_failed)
+                        val details = errorMapper.details(
+            failure,
+            R.string.subscriptions_failed,
+            missingRes = R.string.error_subscription_group_not_found,
+        )
                         _state.update {
                             it.copy(
                                 isLoadingMore = false,

@@ -13,12 +13,12 @@ import javax.inject.Singleton
 class UserErrorMapper @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
-    fun message(failure: Throwable?, fallbackRes: Int): String =
-        context.getString(resourceFor(classifyUserError(failure, isOnline()), fallbackRes))
+    fun message(failure: Throwable?, fallbackRes: Int, missingRes: Int? = null): String =
+        context.getString(resourceFor(classifyUserError(failure, isOnline()), fallbackRes, missingRes))
 
-    fun details(failure: Throwable?, fallbackRes: Int): UserErrorDetails =
+    fun details(failure: Throwable?, fallbackRes: Int, missingRes: Int? = null): UserErrorDetails =
         UserErrorDetails(
-            message = message(failure, fallbackRes),
+            message = message(failure, fallbackRes, missingRes),
             requestId = (failure as? CodedFailure)?.requestId?.takeIf(SAFE_REQUEST_ID::matches),
         )
 
@@ -53,7 +53,7 @@ class UserErrorMapper @Inject constructor(
         requestId = (failure as? CodedFailure)?.requestId?.takeIf(SAFE_REQUEST_ID::matches),
     )
 
-    private fun resourceFor(kind: UserErrorKind, fallbackRes: Int): Int =
+    private fun resourceFor(kind: UserErrorKind, fallbackRes: Int, missingRes: Int? = null): Int =
         when (kind) {
             UserErrorKind.SecureConnectionFailed -> R.string.error_secure_connection_failed
             UserErrorKind.NetworkUnavailable -> R.string.error_network_unavailable
@@ -63,7 +63,7 @@ class UserErrorMapper @Inject constructor(
             UserErrorKind.ContentBlocked -> R.string.error_content_blocked
             UserErrorKind.SignInAgain -> R.string.error_sign_in_again
             UserErrorKind.PermissionDenied -> R.string.error_permission_denied
-            UserErrorKind.ContentUnavailable -> R.string.error_content_unavailable
+            UserErrorKind.ContentUnavailable -> missingRes ?: R.string.error_content_unavailable
             UserErrorKind.LoginCodeExpired -> R.string.error_login_code_expired
             UserErrorKind.LoginCodeDenied -> R.string.error_login_code_denied
             UserErrorKind.LoginCodeNotFound -> R.string.error_login_code_not_found

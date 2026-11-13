@@ -98,7 +98,11 @@ class SubscriptionGroupsViewModel @Inject constructor(
 
     private fun showFailure(failure: Throwable) {
         if (failure is CancellationException) throw failure
-        val message = errorMapper.details(failure, R.string.subscription_groups_failed).message
+        val message = errorMapper.details(
+            failure,
+            R.string.subscription_groups_failed,
+            missingRes = R.string.error_subscription_group_not_found,
+        ).message
         _state.update { it.copy(errorMessage = message) }
     }
 }
