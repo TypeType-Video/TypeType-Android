@@ -8,12 +8,16 @@ import dev.typetype.android.data.network.transientHttpRetryDelayMs
 import java.io.IOException
 import retrofit2.Response
 
-internal enum class TransientServerWait(val maxRetries: Int, val maxRequestedDelayMs: Long) {
-    Playback(maxRetries = 6, maxRequestedDelayMs = Long.MAX_VALUE),
+internal enum class TransientServerWait(
+    val maxRetries: Int,
+    val maxRequestedDelayMs: Long,
+    val maxTransportRetries: Int,
+) {
+    Playback(maxRetries = 6, maxRequestedDelayMs = Long.MAX_VALUE, maxTransportRetries = 8),
 
     // Opening a video follows the web client: two retries at most, and a server asking to wait longer than a
     // page should (a provider block answers Retry-After: 60) fails at once so its message shows right away.
-    Discovery(maxRetries = 2, maxRequestedDelayMs = 15_000L),
+    Discovery(maxRetries = 2, maxRequestedDelayMs = 15_000L, maxTransportRetries = 2),
 }
 
 internal suspend fun <T> transientPlaybackRequest(
@@ -47,7 +51,7 @@ internal suspend fun <T> transientPlaybackRequest(
             } else {
                 val retryDelayMs = transientHttpRetryDelayMs(
                     errorCount = transportErrorCount,
-                    maximumRetries = MAX_CONNECTED_TRANSPORT_RETRIES,
+                    maximumRetries = serverWait.maxTransportRetries,
                     requestedDelayMs = null,
                 ) ?: throw failure
                 pause(retryDelayMs)
@@ -70,6 +74,5 @@ internal suspend fun <T> transientPlaybackRequest(
     }
 }
 
-private const val MAX_CONNECTED_TRANSPORT_RETRIES = 8
 private const val MAX_OFFLINE_WAIT_MS = 10_000L
 private const val MAX_SERVER_WAIT_MS = 60_000L

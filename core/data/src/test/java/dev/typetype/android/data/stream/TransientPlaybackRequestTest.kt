@@ -76,6 +76,21 @@ class TransientPlaybackRequestTest {
     }
 
     @Test
+    fun `opening a video stops after two transport retries`() {
+        var attempts = 0
+
+        assertThrows(IOException::class.java) {
+            runBlocking {
+                transientPlaybackRequest<String>({}, serverWait = TransientServerWait.Discovery) {
+                    attempts++
+                    throw IOException("timeout")
+                }
+            }
+        }
+        assertEquals(3, attempts)
+    }
+
+    @Test
     fun `transport failure recovers without creating another request chain`() = runBlocking {
         var attempt = 0
         val pauses = mutableListOf<Long>()
