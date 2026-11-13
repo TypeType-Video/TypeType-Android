@@ -35,8 +35,9 @@ class PlayerStreamLoader @Inject constructor(
     private val metadataPrefetchCache = PlayerMetadataPrefetchCache()
     private val channelMetadataCache = PlayerChannelMetadataCache()
 
-    fun load(url: String): Flow<PlayerStreamUpdate> = loadProgressiveStream(
+    fun load(url: String, retryPlayback: (Throwable) -> Boolean = { false }): Flow<PlayerStreamUpdate> = loadProgressiveStream(
         loadPlayback = { streamRepository.loadPlaybackStream(url) },
+        shouldRetryPlayback = retryPlayback,
         loadMetadata = { streamRepository.loadPlaybackMetadata(url) },
         loadChannelMetadata = { stream -> loadChannelMetadata(stream) },
         loadProgress = { libraryRepository.fetchProgressMillis(url).getOrNull() ?: 0L },
@@ -98,10 +99,18 @@ internal fun loadProgressiveStream(
     loadProgress: suspend () -> Long,
     prefetchedMetadata: Stream? = null,
     retryDelay: suspend (Long) -> Unit = { delay(it) },
+    shouldRetryPlayback: (Throwable) -> Boolean = { false },
 ): Flow<PlayerStreamUpdate> = channelFlow {
     val savedProgress = async { loadProgress() }
     val metadata = if (prefetchedMetadata == null) async { loadMetadata() } else null
-    loadPlayback().fold(
+    var playback = loadPlayback()
+    for (delayMillis in PLAYBACK_RETRY_DELAYS) {
+        val failure = playback.exceptionOrNull() ?: break
+        if (!shouldRetryPlayback(failure)) break
+        retryDelay(delayMillis)
+        playback = loadPlayback()
+    }
+    playback.fold(
         onSuccess = { stream ->
             val loaded = LoadedStreamResult(
                 stream = stream,
@@ -172,3 +181,6 @@ private fun computeResumeMillis(
 private const val RESUME_MIN_MILLIS = 5_000L
 private const val RESUME_MAX_FRACTION = 0.95
 private val RELATED_METADATA_RETRY_DELAYS = longArrayOf(350L, 1_000L)
+
+// A YouTube refusal, a slow instance or a 5xx often clears within seconds; retry before showing an error screen.
+private val PLAYBACK_RETRY_DELAYS = longArrayOf(1_500L, 4_000L)

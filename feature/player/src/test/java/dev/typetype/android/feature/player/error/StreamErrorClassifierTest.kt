@@ -133,7 +133,7 @@ class StreamErrorClassifierTest {
     }
 
     @Test
-    fun `maps typed provider failures to content unavailable`() {
+    fun `keeps a missing video apart from a YouTube block`() {
         val missing = ServerResponseException(
             ServerError("This live stream recording is not available.", "content_unavailable", 404, "request-7"),
         )
@@ -143,14 +143,15 @@ class StreamErrorClassifierTest {
 
         assertEquals(StreamErrorKind.ContentUnavailable, classifyStreamError(missing).kind)
         assertEquals("request-7", classifyStreamError(missing).requestId)
-        assertEquals(StreamErrorKind.ContentUnavailable, classifyStreamError(blocked).kind)
+        assertEquals(StreamErrorKind.ProviderBlocked, classifyStreamError(blocked).kind)
     }
 
     @Test
     fun `finds network failures wrapped by another layer`() {
         val failure = IllegalStateException("Request failed", IOException("socket closed"))
 
-        assertEquals(StreamErrorKind.NetworkUnavailable, classifyStreamError(failure).kind)
+        assertEquals(StreamErrorKind.NetworkUnavailable, classifyStreamError(failure, networkAvailable = false).kind)
+        assertEquals(StreamErrorKind.InstanceUnreachable, classifyStreamError(failure, networkAvailable = true).kind)
     }
 
     @Test

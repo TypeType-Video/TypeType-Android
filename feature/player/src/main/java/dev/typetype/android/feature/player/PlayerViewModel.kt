@@ -14,6 +14,7 @@ import dev.typetype.android.domain.library.LibraryRepository
 import dev.typetype.android.domain.preferences.PreferencesRepository
 import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import dev.typetype.android.feature.player.error.classifyStreamError
+import dev.typetype.android.feature.player.error.isRetryablePlaybackFailure
 import dev.typetype.android.playback.DevicePlaybackCodecSupport
 import dev.typetype.android.services.PlaybackQueueCoordinator
 import javax.inject.Inject
@@ -45,7 +46,7 @@ class PlayerViewModel @Inject constructor(
     val commentsRepository: CommentsRepository,
     val subtitleCueLoader: PlayerSubtitleCueLoader,
     val codecSupport: DevicePlaybackCodecSupport,
-    networkMonitor: PlaybackNetworkMonitor,
+    private val networkMonitor: PlaybackNetworkMonitor,
 ) : ViewModel() {
     private val videoUrlFlow = combine(
         playerHostController.state.map { it.videoUrl },
@@ -59,7 +60,7 @@ class PlayerViewModel @Inject constructor(
         onFailure = { stream, failure ->
             val current = _state.value.stream
             if (current?.id == stream.id && current.requestScope == stream.requestScope) {
-                _state.update { it.copy(error = classifyStreamError(failure)) }
+                _state.update { it.copy(error = classifyStreamError(failure, networkMonitor.states.value.isAvailable)) }
             }
         },
     )
@@ -272,9 +273,10 @@ class PlayerViewModel @Inject constructor(
         loadStreamJob?.cancel()
         _state.update { it.copy(isLoading = true, error = null) }
         loadStreamJob = viewModelScope.launch {
-            playerStreamLoader.load(url).collect { update ->
+            playerStreamLoader.load(url) { isRetryablePlaybackFailure(it, networkMonitor.states.value.isAvailable) }.collect { update ->
                 if (currentUrl() != url) return@collect
-                _state.update { it.applyStreamUpdate(update, playerHostController.state.value) }
+                val online = networkMonitor.states.value.isAvailable
+                _state.update { it.applyStreamUpdate(update, playerHostController.state.value, online) }
                 navigationController.setRelatedVideoCount(
                     _state.value.stream?.relatedStreams?.size ?: 0,
                 )

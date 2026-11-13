@@ -7,6 +7,7 @@ import dev.typetype.android.feature.player.error.classifyStreamError
 internal fun PlayerState.applyStreamUpdate(
     update: PlayerStreamUpdate,
     hostState: PlayerHostStateSnapshot,
+    networkAvailable: Boolean = true,
 ): PlayerState = when (update) {
     is PlayerStreamUpdate.PlaybackReady -> copy(
         isLoading = false,
@@ -19,6 +20,6 @@ internal fun PlayerState.applyStreamUpdate(
     )
     is PlayerStreamUpdate.Failed -> copy(
         isLoading = false,
-        error = classifyStreamError(update.failure),
+        error = classifyStreamError(update.failure, networkAvailable),
     )
 }
