@@ -1,6 +1,8 @@
 package dev.typetype.android.core.ui.error
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.typetype.android.R
 import dev.typetype.android.core.error.CodedFailure
@@ -12,7 +14,7 @@ class UserErrorMapper @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
     fun message(failure: Throwable?, fallbackRes: Int): String =
-        context.getString(resourceFor(classifyUserError(failure), fallbackRes))
+        context.getString(resourceFor(classifyUserError(failure, isOnline()), fallbackRes))
 
     fun details(failure: Throwable?, fallbackRes: Int): UserErrorDetails =
         UserErrorDetails(
@@ -33,7 +35,7 @@ class UserErrorMapper @Inject constructor(
         fallbackRes: Int,
         rejectedRes: Int = fallbackRes,
     ): String {
-        val kind = classifyUserError(failure)
+        val kind = classifyUserError(failure, isOnline())
         val resource = if (kind == UserErrorKind.SignInAgain || kind == UserErrorKind.PermissionDenied) {
             rejectedRes
         } else {
@@ -55,6 +57,10 @@ class UserErrorMapper @Inject constructor(
         when (kind) {
             UserErrorKind.SecureConnectionFailed -> R.string.error_secure_connection_failed
             UserErrorKind.NetworkUnavailable -> R.string.error_network_unavailable
+            UserErrorKind.InstanceUnreachable -> R.string.error_instance_unreachable
+            UserErrorKind.ServerSlow -> R.string.error_server_slow
+            UserErrorKind.ProviderBlocked -> R.string.error_provider_blocked
+            UserErrorKind.ContentBlocked -> R.string.error_content_blocked
             UserErrorKind.SignInAgain -> R.string.error_sign_in_again
             UserErrorKind.PermissionDenied -> R.string.error_permission_denied
             UserErrorKind.ContentUnavailable -> R.string.error_content_unavailable
@@ -65,6 +71,12 @@ class UserErrorMapper @Inject constructor(
             UserErrorKind.InstanceIncompatible -> R.string.error_instance_incompatible
             UserErrorKind.Fallback -> fallbackRes
         }
+
+    private fun isOnline(): Boolean {
+        val connectivity = context.getSystemService(ConnectivityManager::class.java) ?: return true
+        val capabilities = connectivity.getNetworkCapabilities(connectivity.activeNetwork) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
 }
 
 data class UserErrorDetails(

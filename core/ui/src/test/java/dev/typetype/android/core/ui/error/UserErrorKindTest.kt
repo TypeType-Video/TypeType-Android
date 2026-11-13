@@ -10,9 +10,23 @@ import org.junit.Test
 class UserErrorKindTest {
     @Test
     fun `classifies transport authentication and permission failures`() {
-        assertEquals(UserErrorKind.NetworkUnavailable, classifyUserError(IOException("offline")))
+        assertEquals(UserErrorKind.NetworkUnavailable, classifyUserError(IOException("offline"), online = false))
         assertEquals(UserErrorKind.SignInAgain, classifyUserError(serverFailure(401)))
         assertEquals(UserErrorKind.PermissionDenied, classifyUserError(serverFailure(403)))
+    }
+
+    @Test
+    fun `an online transport failure is the instance, not the connection`() {
+        assertEquals(UserErrorKind.InstanceUnreachable, classifyUserError(java.net.ConnectException("refused")))
+        assertEquals(UserErrorKind.ServerSlow, classifyUserError(java.net.SocketTimeoutException("read")))
+        assertEquals(UserErrorKind.ServerSlow, classifyUserError(null as String?, 504))
+    }
+
+    @Test
+    fun `server codes keep their meaning`() {
+        assertEquals(UserErrorKind.ProviderBlocked, classifyUserError("provider_access_blocked", 503))
+        assertEquals(UserErrorKind.ContentBlocked, classifyUserError("content_blocked", 403))
+        assertEquals(UserErrorKind.ContentUnavailable, classifyUserError("private_content", 403))
     }
 
     @Test

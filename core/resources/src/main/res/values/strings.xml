@@ -12,7 +12,11 @@
         <item quantity="one">%1$d reply</item>
         <item quantity="other">%1$d replies</item>
     </plurals>
-    <string name="error_network_unavailable">Check your connection and try again</string>
+    <string name="error_network_unavailable">You\'re offline. Check your connection and try again</string>
+    <string name="error_instance_unreachable">Couldn\'t reach this TypeType instance. It may be down right now</string>
+    <string name="error_server_slow">The instance is taking too long to answer. Try again in a moment</string>
+    <string name="error_provider_blocked">YouTube is refusing requests from this instance right now. Try again in a moment</string>
+    <string name="error_content_blocked">This is blocked for this account, or outside the family list</string>
     <string name="error_secure_connection_failed">Couldn\'t verify this instance\'s secure connection. Check its HTTPS certificate and address, then try again.</string>
     <string name="error_sign_in_again">Sign in again to continue</string>
     <string name="error_permission_denied">Your account cannot perform this action</string>
@@ -1452,7 +1456,13 @@
     <string name="state_sabr_preparation_failed">The server could not prepare this video. Retry to start a fresh playback session.</string>
     <string name="state_sabr_preparation_timed_out">The server took too long to prepare this video. Retry to start a fresh session.</string>
     <string name="state_subtitle_inventory_unavailable">The server could not prepare the subtitle catalog. Retry to start a complete playback session.</string>
-    <string name="state_stream_network_unavailable">Couldn\'t reach this TypeType instance. Check your connection and retry.</string>
+    <string name="state_stream_network_unavailable">Couldn\'t reach this TypeType instance. It may be down, or its address may have changed.</string>
+    <string name="state_stream_offline">You\'re offline. The video loads again as soon as the connection is back.</string>
+    <string name="state_stream_server_slow">The instance is taking too long to answer. Try again in a moment.</string>
+    <string name="state_stream_provider_blocked">YouTube is refusing requests from this instance right now. Try again in a moment.</string>
+    <string name="state_stream_private">This video is private.</string>
+    <string name="state_stream_age_restricted">This video is age-restricted and can\'t be played here.</string>
+    <string name="state_stream_content_blocked">This video or channel is blocked for this account, or outside the family list.</string>
     <string name="state_android_playback_incompatible">This instance does not support Android video playback yet. Update TypeType-Server or switch to a compatible instance.</string>
     <string name="state_live_playback_unsupported">This TypeType instance does not support live playback on Android yet.</string>
     <string name="video_live_badge">LIVE</string>
