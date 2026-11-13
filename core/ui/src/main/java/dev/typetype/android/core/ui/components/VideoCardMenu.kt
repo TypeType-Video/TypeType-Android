@@ -59,6 +59,7 @@ data class VideoMenuItemState(
     val isFavorite: Boolean = false,
     val isInWatchLater: Boolean = false,
     val isWatched: Boolean = false,
+    val progressFraction: Float = 0f,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)

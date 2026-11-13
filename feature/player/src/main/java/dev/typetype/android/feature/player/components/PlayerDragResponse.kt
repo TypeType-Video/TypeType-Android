@@ -3,8 +3,11 @@ package dev.typetype.android.feature.player.components
 import kotlin.math.abs
 import kotlin.math.sign
 
-internal class HoldSpeedSteps(private val stepPx: Float) {
-    var factor: Float = 2f
+internal class HoldSpeedSteps(
+    private val stepPx: Float,
+    initialFactor: Float = DEFAULT_LONG_PRESS_SPEED,
+) {
+    var factor: Float = initialFactor
         private set
     private var anchorY = 0f
 

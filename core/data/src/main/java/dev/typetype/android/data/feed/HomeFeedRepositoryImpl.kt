@@ -1,5 +1,6 @@
 package dev.typetype.android.data.feed
 
+import dev.typetype.android.domain.subscriptions.SubscriptionFeedSelection
 import java.util.Locale
 import java.util.TimeZone
 import dev.typetype.android.domain.feed.HomeRecommendationRow
@@ -108,6 +109,7 @@ class HomeFeedRepositoryImpl @Inject constructor(
         cursor: String?,
         limit: Int,
         expectedGeneration: Long?,
+        selection: SubscriptionFeedSelection,
     ): Result<SubscriptionsPage> {
         val result = feedResult {
             val scope = activeAccountScope.require()
@@ -117,6 +119,7 @@ class HomeFeedRepositoryImpl @Inject constructor(
                 cursor = cursor,
                 limit = limit,
                 expectedGeneration = expectedGeneration,
+                selection = selection,
                 verifyOwner = { activeAccountScope.verify(scope) },
             )
         }

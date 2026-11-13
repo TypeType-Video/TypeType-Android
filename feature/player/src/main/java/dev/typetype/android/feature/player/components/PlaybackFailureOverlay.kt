@@ -99,6 +99,8 @@ private fun PlaybackFailureKind.messageResource(): Int = when (this) {
     PlaybackFailureKind.SabrServerContract -> R.string.state_sabr_server_contract_failed
     PlaybackFailureKind.SabrRecoveryExhausted -> R.string.state_sabr_recovery_exhausted
     PlaybackFailureKind.ServerUnavailable -> R.string.state_playback_server_unavailable
+    PlaybackFailureKind.ProviderBlocked -> R.string.state_stream_provider_blocked
+    PlaybackFailureKind.RateLimited -> R.string.error_rate_limited
     PlaybackFailureKind.MediaDelivery -> R.string.state_media_delivery_failed
     PlaybackFailureKind.Network -> R.string.state_playback_network_failed
     PlaybackFailureKind.UnsupportedFormat -> R.string.state_playback_format_unsupported

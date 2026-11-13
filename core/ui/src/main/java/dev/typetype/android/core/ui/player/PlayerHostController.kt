@@ -5,6 +5,7 @@ import javax.inject.Singleton
 import dev.typetype.android.domain.playback.PlaybackQueueEntry
 import dev.typetype.android.domain.playback.PlaybackQueueController
 import dev.typetype.android.domain.playback.PlaybackQueueSnapshot
+import dev.typetype.android.domain.usersettings.PlaybackStartPolicy
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -32,6 +33,7 @@ data class PlayerHostStateSnapshot(
 @Singleton
 class PlayerHostController @Inject constructor(
     private val playbackQueueCoordinator: PlaybackQueueController,
+    private val startPolicy: PlaybackStartPolicy = PlaybackStartPolicy.Always,
 ) {
 
     private companion object {
@@ -51,7 +53,7 @@ class PlayerHostController @Inject constructor(
                 target = PlayerHostTarget.Expanded,
                 expandedReturnTarget = PlayerHostTarget.Mini,
                 resumePositionMillis = null,
-                initialPlayWhenReady = true,
+                initialPlayWhenReady = startPolicy.playWhenOpened(),
                 requestStamp = it.requestStamp + 1,
                 playbackClearRequestStamp = null,
                 embeddedReturnTarget = PlayerHostTarget.Hidden,
@@ -113,7 +115,7 @@ class PlayerHostController @Inject constructor(
                 target = PlayerHostTarget.Expanded,
                 expandedReturnTarget = PlayerHostTarget.Mini,
                 resumePositionMillis = null,
-                initialPlayWhenReady = true,
+                initialPlayWhenReady = startPolicy.playWhenOpened(),
                 requestStamp = it.requestStamp + 1,
                 playbackClearRequestStamp = null,
                 embeddedReturnTarget = PlayerHostTarget.Hidden,

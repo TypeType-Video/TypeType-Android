@@ -30,7 +30,6 @@ import dev.typetype.android.feature.player.state.ResizeMode
 import kotlin.math.abs
 
 private const val DIRECTION_LOCK_THRESHOLD_PX = 18f
-private const val LONG_PRESS_SPEED_FACTOR = 2f
 private val FULLSCREEN_GESTURE_DEADZONE = 48.dp
 
 @Composable
@@ -55,7 +54,7 @@ fun PlayerGestureLayer(
         FULLSCREEN_GESTURE_DEADZONE.toPx()
     }
     var savedSpeed by remember { mutableFloatStateOf(1f) }
-    var holdSpeed by remember { mutableFloatStateOf(2f) }
+    var holdSpeed by remember { mutableFloatStateOf(config.longPressSpeed) }
     fun restoreSpeed() {
         if (state.longPressBoostActive.value) {
             player.setPlaybackSpeed(savedSpeed)
@@ -82,7 +81,7 @@ fun PlayerGestureLayer(
                     var lastPosition = down.position
                     var totalDrag = Offset.Zero
                     var mode = DragMode.None
-                    val speedSteps = HoldSpeedSteps(24.dp.toPx())
+                    val speedSteps = HoldSpeedSteps(24.dp.toPx(), config.longPressSpeed)
                     var speedDragY = 0f
                     var seekGesture: TimelineSeekGesture? = null
                     state.dragMode.value = DragMode.None
@@ -241,8 +240,8 @@ fun PlayerGestureLayer(
                         ) return@detectTapGestures
                         if (!config.longPressSpeedEnabled) return@detectTapGestures
                         savedSpeed = player.playbackParameters.speed
-                        holdSpeed = LONG_PRESS_SPEED_FACTOR
-                        player.setPlaybackSpeed(LONG_PRESS_SPEED_FACTOR)
+                        holdSpeed = config.longPressSpeed
+                        player.setPlaybackSpeed(config.longPressSpeed)
                         state.longPressBoostActive.value = true
                         onGestureFeedback()
                     },

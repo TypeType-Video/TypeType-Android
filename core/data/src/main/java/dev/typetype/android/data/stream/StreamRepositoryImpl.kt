@@ -88,6 +88,7 @@ internal class StreamRepositoryImpl @Inject constructor(
             transientPlaybackRequest(
                 pause = { delay(it) },
                 network = networkMonitor,
+                serverWait = TransientServerWait.Discovery,
             ) {
                 remoteSource.load(scope, videoUrl, provider, playbackBootstrap)
             }

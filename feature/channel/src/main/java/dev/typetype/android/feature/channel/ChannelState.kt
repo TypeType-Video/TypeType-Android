@@ -11,6 +11,7 @@ enum class ChannelTab {
     Live,
     Playlists,
     Courses,
+    Posts,
 }
 
 data class ChannelState(
@@ -48,11 +49,20 @@ internal val ChannelTab.playlistKind: ChannelPlaylistKind?
     get() = when (this) {
         ChannelTab.Playlists -> ChannelPlaylistKind.Playlists
         ChannelTab.Courses -> ChannelPlaylistKind.Courses
-        ChannelTab.Videos, ChannelTab.Live -> null
+        ChannelTab.Videos, ChannelTab.Live, ChannelTab.Posts -> null
     }
 
 internal fun ChannelState.availableTabs(): List<ChannelTab> =
-    ChannelTab.entries.filter { it != ChannelTab.Courses || channel?.hasCourses == true }
+    ChannelTab.entries.filter {
+        when (it) {
+            ChannelTab.Courses -> channel?.hasCourses == true
+            ChannelTab.Posts -> supportsYouTubeDiscovery
+            ChannelTab.Videos, ChannelTab.Live, ChannelTab.Playlists -> true
+        }
+    }
+
+internal val ChannelTab.listsVideos: Boolean
+    get() = this == ChannelTab.Videos || this == ChannelTab.Live
 
 internal fun String.isYouTubeChannel(): Boolean =
     contains("youtube.com", ignoreCase = true) || startsWith("/channel/") || startsWith("/c/")

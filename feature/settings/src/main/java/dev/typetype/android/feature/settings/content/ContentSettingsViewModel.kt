@@ -113,6 +113,7 @@ private fun UserSettings.toContentSettingsState(feedback: ContentSettingsFeedbac
         hideEndScreens = hideEndScreens,
         hideComments = hideComments,
         hideShorts = hideShorts,
+        hideMembersOnlyContent = hideMembersOnlyContent,
         hideSubscriptionLiveStreams = hideSubscriptionLiveStreams,
         supportsHideSubscriptionLiveStreams = supportsHideSubscriptionLiveStreams,
         deArrowEnabled = deArrowEnabled,

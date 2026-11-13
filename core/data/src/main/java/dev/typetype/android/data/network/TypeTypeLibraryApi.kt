@@ -13,6 +13,7 @@ import dev.typetype.android.data.network.dto.FavoriteItemDto
 import dev.typetype.android.data.network.dto.HistoryItemDto
 import dev.typetype.android.data.network.dto.PlaylistDto
 import dev.typetype.android.data.network.dto.PlaylistReorderRequest
+import dev.typetype.android.data.network.dto.ProgressBatchRequest
 import dev.typetype.android.data.network.dto.ProgressItemDto
 import dev.typetype.android.data.network.dto.SaveProgressRequest
 import dev.typetype.android.data.network.dto.SavePublicPlaylistRequest
@@ -83,6 +84,9 @@ interface TypeTypeLibraryApi {
         @Query("url") videoUrl: String,
         @Body body: SaveProgressRequest,
     ): Response<Unit>
+
+    @POST("progress/batch")
+    suspend fun progressBatch(@Body body: ProgressBatchRequest): Response<List<ProgressItemDto>>
 
     @GET("progress/{videoUrl}")
     suspend fun fetchProgress(@Path("videoUrl") videoUrl: String): Response<ProgressItemDto>

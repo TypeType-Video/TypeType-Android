@@ -19,5 +19,5 @@ sealed interface PlayerAction {
     data object OnDismissPlaylistPicker : PlayerAction
     data class OnAddToPlaylist(val playlistId: String) : PlayerAction
     data class OnCreatePlaylistAndAdd(val name: String) : PlayerAction
-    data class OnSaveProgress(val positionMillis: Long) : PlayerAction
+    data class OnSaveProgress(val videoUrl: String, val positionMillis: Long) : PlayerAction
 }

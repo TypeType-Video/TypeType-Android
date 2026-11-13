@@ -3,6 +3,7 @@ package dev.typetype.android.feature.settings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -60,6 +61,7 @@ fun SettingsScreen(
     onOpenRssFeeds: () -> Unit = {},
     rssAvailable: Boolean = false,
     onOpenAccounts: () -> Unit = {},
+    onOpenLinkedAccounts: () -> Unit = {},
     onOpenAppearance: () -> Unit,
     onOpenContent: () -> Unit = {},
     onOpenRecommendations: () -> Unit = {},
@@ -78,6 +80,9 @@ fun SettingsScreen(
     val entries = buildList {
         add(SettingsEntry(R.string.accounts_title, R.string.accounts_subtitle, Icons.Filled.ManageAccounts, onOpenAccounts))
         add(SettingsEntry(R.string.settings_profile_title, R.string.settings_profile_subtitle, Icons.Filled.Person, onOpenProfile))
+        if (importsAvailable) {
+            add(SettingsEntry(R.string.linked_accounts_title, R.string.linked_accounts_subtitle, Icons.Filled.Link, onOpenLinkedAccounts))
+        }
         if (importsAvailable) {
             add(SettingsEntry(R.string.settings_import_title, R.string.settings_import_subtitle, Icons.Filled.UploadFile, onOpenImport))
         }

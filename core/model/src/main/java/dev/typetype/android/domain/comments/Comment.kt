@@ -14,10 +14,33 @@ data class Comment(
     val replyCount: Int,
     val publishedAtMillis: Long? = null,
     val repliesPage: String? = null,
+    val image: CommentImage? = null,
+    val voiceReply: CommentVoiceReply? = null,
+)
+
+data class CommentImage(
+    val url: String?,
+    val animated: Boolean,
+    val unavailableText: String?,
+)
+
+data class CommentVoiceReply(
+    val url: String,
+    val durationMs: Long,
+    val transcript: String,
+    val playable: Boolean,
+    val unavailableText: String?,
 )
 
 data class CommentsPage(
     val comments: List<Comment>,
     val nextpage: String?,
+    val commentsDisabled: Boolean,
+)
+
+data class CommentSearchPage(
+    val comments: List<Comment>,
+    val nextCursor: String?,
+    val scannedPages: Int,
     val commentsDisabled: Boolean,
 )

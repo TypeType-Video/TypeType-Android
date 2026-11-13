@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.WatchLater
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.Forum
 import androidx.compose.material.icons.outlined.WatchLater
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -54,6 +55,7 @@ fun PlayerInteractionRow(
     onToggleWatchLater: () -> Unit,
     onAddToPlaylist: () -> Unit,
     onShowComments: (() -> Unit)?,
+    onShowLiveChat: (() -> Unit)? = null,
     onDownload: () -> Unit,
     downloadInFlight: Boolean = false,
     audioOnlyEnabled: Boolean = false,
@@ -90,6 +92,14 @@ fun PlayerInteractionRow(
             contentDescription = stringResource(R.string.player_add_to_playlist),
             onClick = onAddToPlaylist,
         )
+        onShowLiveChat?.let {
+            PlayerActionButton(
+                expanded = expanded,
+                icon = Icons.Outlined.Forum,
+                contentDescription = stringResource(R.string.live_chat_title),
+                onClick = it,
+            )
+        }
         onShowComments?.let {
             PlayerActionButton(
                 expanded = expanded,

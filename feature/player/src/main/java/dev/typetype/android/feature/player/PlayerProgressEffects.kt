@@ -6,9 +6,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import dev.typetype.android.feature.player.components.applyAutoEnterPipParams
@@ -21,19 +23,23 @@ internal fun PlayerProgressEffects(
     durationMillis: Long,
     audioOnlyAvailable: Boolean,
     pipSourceRect: Rect?,
-    onSaveProgress: (Long) -> Unit,
+    onSaveProgress: (videoUrl: String, positionMillis: Long) -> Unit,
 ) {
-    val saveIfEligible: (Long) -> Unit = save@{ positionMillis ->
-        if (positionMillis < MIN_PROGRESS_MILLIS) return@save
-        if (durationMillis > 0 && positionMillis >= (durationMillis * MAX_PROGRESS_FRACTION).toLong()) return@save
-        onSaveProgress(positionMillis)
+    val latestSave by rememberUpdatedState(onSaveProgress)
+    val latestDuration by rememberUpdatedState(durationMillis)
+    // The controller outlives a video change, so the position and the video it belongs to are always read from
+    // the same player state; reading the screen's current URL here would file the old position under the new video.
+    val saveCurrent: (Player) -> Unit = { player ->
+        val playerDuration = player.duration.takeIf { it != C.TIME_UNSET && it > 0 } ?: latestDuration
+        playerProgressSample(player.currentMediaItem, player.currentPosition, playerDuration)
+            ?.let { latestSave(it.videoUrl, it.positionMillis) }
     }
 
     LaunchedEffect(controller) {
         while (true) {
             delay(PROGRESS_INTERVAL_MILLIS)
             val current = controller ?: continue
-            if (current.isPlaying) saveIfEligible(current.currentPosition)
+            if (current.isPlaying) saveCurrent(current)
         }
     }
 
@@ -51,7 +57,7 @@ internal fun PlayerProgressEffects(
                         audioOnlyAvailable = audioOnlyAvailable,
                         sourceRect = pipSourceRect,
                     )
-                    if (!isPlaying) saveIfEligible(current.currentPosition)
+                    if (!isPlaying) saveCurrent(current)
                 }
 
                 override fun onPositionDiscontinuity(
@@ -59,9 +65,8 @@ internal fun PlayerProgressEffects(
                     newPosition: Player.PositionInfo,
                     reason: Int,
                 ) {
-                    if (reason == Player.DISCONTINUITY_REASON_SEEK) {
-                        saveIfEligible(newPosition.positionMs)
-                    }
+                    discontinuityProgressSample(oldPosition, newPosition, reason, latestDuration)
+                        ?.let { latestSave(it.videoUrl, it.positionMillis) }
                 }
             }
             current.addListener(listener)
@@ -73,7 +78,7 @@ internal fun PlayerProgressEffects(
                 sourceRect = pipSourceRect,
             )
             onDispose {
-                saveIfEligible(current.currentPosition)
+                saveCurrent(current)
                 current.removeListener(listener)
                 applyAutoEnterPipParams(activity, false)
             }
@@ -84,7 +89,7 @@ internal fun PlayerProgressEffects(
     DisposableEffect(lifecycleOwner, controller) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_PAUSE) {
-                controller?.let { saveIfEligible(it.currentPosition) }
+                controller?.let(saveCurrent)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -92,6 +97,4 @@ internal fun PlayerProgressEffects(
     }
 }
 
-private const val MIN_PROGRESS_MILLIS = 5_000L
-private const val MAX_PROGRESS_FRACTION = 0.95
 private const val PROGRESS_INTERVAL_MILLIS = 10_000L

@@ -113,6 +113,21 @@ class PlaybackErrorClassifierTest {
     }
 
     @Test
+    fun `names a YouTube block and a rate limit instead of a delivery failure`() {
+        val blocked = object : IOException(), CodedFailure {
+            override val failureCode: String = "provider_access_blocked"
+            override val requestId: String? = null
+            override val statusCode: Int = 503
+        }
+
+        assertEquals(
+            PlaybackFailureKind.ProviderBlocked,
+            classifyPlaybackCause(IllegalStateException(blocked), PlaybackException.ERROR_CODE_IO_UNSPECIFIED),
+        )
+        assertEquals(PlaybackFailureKind.RateLimited, classifyHttpPlaybackFailure(responseBody = null, statusCode = 429))
+    }
+
+    @Test
     fun `classifies a rejected SABR manifest as a server contract failure`() {
         val failure = object : IOException(), CodedFailure {
             override val failureCode: String = "youtube_sabr_contract_mismatch"

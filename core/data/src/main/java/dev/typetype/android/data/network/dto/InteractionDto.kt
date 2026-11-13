@@ -30,6 +30,9 @@ data class AddHistoryRequest(
 data class SaveProgressRequest(val position: Long)
 
 @Serializable
+data class ProgressBatchRequest(val videoUrls: List<String>)
+
+@Serializable
 data class ProgressItemDto(
     val videoUrl: String = "",
     val position: Long = 0L,

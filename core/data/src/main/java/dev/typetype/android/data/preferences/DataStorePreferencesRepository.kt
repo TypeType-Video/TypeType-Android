@@ -69,6 +69,7 @@ class DataStorePreferencesRepository @Inject constructor(
             ).coerceIn(0, MAX_AUTOPLAY_COUNTDOWN_SECONDS),
             playerAudioOnlyPlayback = prefs[KEY_PLAYER_AUDIO_ONLY_PLAYBACK] ?: false,
             playerPauseInBackground = prefs[KEY_PLAYER_PAUSE_BACKGROUND] ?: false,
+            commentGifsAnimated = prefs[KEY_COMMENT_GIFS_ANIMATED] ?: false,
             danmakuEnabled = prefs[KEY_DANMAKU_ENABLED] ?: false,
             danmakuSpeed = (prefs[KEY_DANMAKU_SPEED] ?: 1f).coerceIn(0.5f, 2f),
             danmakuSize = (prefs[KEY_DANMAKU_SIZE] ?: 1f).coerceIn(0.5f, 2f),
@@ -172,6 +173,10 @@ class DataStorePreferencesRepository @Inject constructor(
         dataStore.edit { it[KEY_PLAYER_PAUSE_BACKGROUND] = enabled }
     }
 
+    override suspend fun setCommentGifsAnimated(enabled: Boolean) {
+        dataStore.edit { it[KEY_COMMENT_GIFS_ANIMATED] = enabled }
+    }
+
     override suspend fun setDanmakuEnabled(enabled: Boolean) {
         dataStore.edit { it[KEY_DANMAKU_ENABLED] = enabled }
     }
@@ -221,6 +226,7 @@ class DataStorePreferencesRepository @Inject constructor(
         val KEY_PLAYER_AUTOPLAY_COUNTDOWN = intPreferencesKey("player_autoplay_countdown_seconds")
         val KEY_PLAYER_AUDIO_ONLY_PLAYBACK = booleanPreferencesKey("player_audio_only_playback")
         val KEY_PLAYER_PAUSE_BACKGROUND = booleanPreferencesKey("player_pause_background")
+        val KEY_COMMENT_GIFS_ANIMATED = booleanPreferencesKey("comment_gifs_animated")
         val KEY_DANMAKU_ENABLED = booleanPreferencesKey("player_danmaku_enabled")
         val KEY_DANMAKU_SPEED = floatPreferencesKey("player_danmaku_speed")
         val KEY_DANMAKU_SIZE = floatPreferencesKey("player_danmaku_size")

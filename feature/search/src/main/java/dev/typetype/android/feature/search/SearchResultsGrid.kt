@@ -57,12 +57,17 @@ internal fun SearchResultsContent(
     menuScope: VideoMenuScope,
 ) {
     val videos = state.results.filterNot(menuScope::isHidden)
+    menuScope.TrackProgress(videos)
     val channels = state.channels.filterNot { it.url in menuScope.blockedChannelUrls }
     val hasResults = videos.isNotEmpty() || channels.isNotEmpty() || state.playlists.isNotEmpty()
     if (!hasResults) {
         Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
             Text(
-                text = stringResource(R.string.search_no_results, state.query),
+                text = if (menuScope.familyListOnly) {
+                    stringResource(R.string.family_list_no_results)
+                } else {
+                    stringResource(R.string.search_no_results, state.query)
+                },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

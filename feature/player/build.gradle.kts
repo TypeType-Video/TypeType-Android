@@ -16,6 +16,5 @@ dependencies {
     implementation(libs.androidx.media3.ui.compose)
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.paging.compose)
-    implementation(libs.jsoup)
     androidTestImplementation(project(":core:testing"))
 }

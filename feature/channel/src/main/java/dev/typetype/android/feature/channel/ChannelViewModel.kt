@@ -164,17 +164,19 @@ class ChannelViewModel @Inject constructor(
                 tab = tab,
                 searchInput = "",
                 appliedSearch = "",
-                isLoading = if (listsPlaylists) false else it.isLoading,
+                isLoading = if (tab.listsVideos) it.isLoading else false,
                 isLoadingMore = false,
                 errorMessage = null,
                 errorRequestId = null,
             )
         }
-        if (listsPlaylists) {
-            loadJob?.cancel()
-            loadPlaylists()
-        } else {
-            load()
+        when {
+            tab.listsVideos -> load()
+            listsPlaylists -> {
+                loadJob?.cancel()
+                loadPlaylists()
+            }
+            else -> loadJob?.cancel()
         }
     }
 

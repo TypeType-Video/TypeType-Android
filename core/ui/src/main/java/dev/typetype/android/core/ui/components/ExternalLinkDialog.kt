@@ -1,4 +1,4 @@
-package dev.typetype.android.feature.player.components
+package dev.typetype.android.core.ui.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer

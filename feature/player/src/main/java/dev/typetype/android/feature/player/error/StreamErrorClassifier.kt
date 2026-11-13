@@ -122,6 +122,14 @@ enum class StreamErrorKind {
     ServerContract,
     NetworkUnavailable,
     LiveUnsupported,
+    ProviderBlocked,
+    PrivateContent,
+    AgeRestricted,
+    ContentBlocked,
+    RateLimited,
+    ServerUnavailable,
+    ServerSlow,
+    InstanceUnreachable,
 }
 
 data class StreamErrorClass(
@@ -155,99 +163,15 @@ fun classifyStreamError(message: String?): StreamErrorClass {
     return StreamErrorClass(StreamErrorKind.Generic, countryCode = null, rawMessage = safe)
 }
 
-fun classifyStreamError(failure: Throwable): StreamErrorClass {
+fun classifyStreamError(failure: Throwable, networkAvailable: Boolean = true): StreamErrorClass {
     val failures = failure.causeChain()
     val coded = failures.filterIsInstance<CodedFailure>().firstOrNull()
-    val code = coded?.failureCode
     val requestId = coded?.requestId
-    if (coded?.statusCode == 401) {
-        return StreamErrorClass(
-            kind = StreamErrorKind.AuthenticationExpired,
-            rawMessage = null,
-            requestId = requestId,
-        )
-    }
-    if (code == "members_only") {
-        return StreamErrorClass(StreamErrorKind.MemberOnly, rawMessage = null, requestId = requestId)
-    }
-
-    if (code in CONTENT_UNAVAILABLE_CODES) {
-        return StreamErrorClass(StreamErrorKind.ContentUnavailable, rawMessage = null, requestId = requestId)
-    }
-    if (code == "paid_content") {
-        return StreamErrorClass(StreamErrorKind.PaidContent, rawMessage = null, requestId = requestId)
-    }
-    if (code == "scheduled_premiere" || code == "live_not_started") {
-        return StreamErrorClass(StreamErrorKind.ScheduledPremiere, rawMessage = null, requestId = requestId)
-    }
-    if (code == "youtube_session_needs_reconnect" || code == "youtube_session_unavailable") {
-        return StreamErrorClass(
-            kind = StreamErrorKind.YouTubeSessionRequired,
-            countryCode = null,
-            rawMessage = null,
-            requestId = requestId,
-        )
-    }
-    if (code == "android_live_playback_unsupported") {
-        return StreamErrorClass(
-            kind = StreamErrorKind.LiveUnsupported,
-            countryCode = null,
-            rawMessage = null,
-            requestId = requestId,
-        )
-    }
-    if (
-        code == "youtube_sabr_preparation_timeout" ||
-        code == "android_playback_preparation_timeout"
-    ) {
-        return StreamErrorClass(
-            kind = StreamErrorKind.SabrPreparationTimedOut,
-            rawMessage = null,
-            requestId = requestId,
-        )
-    }
-    if (code == "android_playback_preparation_failed") {
-        return StreamErrorClass(
-            kind = StreamErrorKind.SabrPreparationFailed,
-            rawMessage = null,
-            requestId = requestId,
-        )
-    }
-    if (code == "android_playback_invalid_index") {
-        return StreamErrorClass(
-            kind = StreamErrorKind.SabrInvalidIndex,
-            rawMessage = null,
-            requestId = requestId,
-        )
-    }
-    if (code == "android_subtitle_inventory_unavailable") {
-        return StreamErrorClass(
-            kind = StreamErrorKind.SubtitleInventoryUnavailable,
-            rawMessage = null,
-            requestId = requestId,
-        )
-    }
-    if (code in SABR_CONTRACT_CODES) {
-        return StreamErrorClass(
-            kind = StreamErrorKind.ServerContract,
-            rawMessage = null,
-            requestId = requestId,
-        )
-    }
-    if (code in SABR_UNAVAILABLE_CODES) {
-        return StreamErrorClass(
-            kind = StreamErrorKind.SabrUnavailable,
-            countryCode = null,
-            rawMessage = null,
-            requestId = requestId,
-        )
+    streamErrorKindFor(coded?.failureCode, coded?.statusCode)?.let { kind ->
+        return StreamErrorClass(kind = kind, rawMessage = null, requestId = requestId)
     }
     if (failures.any { it is IOException }) {
-        return StreamErrorClass(
-            kind = StreamErrorKind.NetworkUnavailable,
-            rawMessage = null,
-            requestId = requestId,
-        )
+        return StreamErrorClass(transportErrorKind(failures, networkAvailable), rawMessage = null, requestId = requestId)
     }
     failures.forEach { candidate ->
         val classified = classifyStreamError(candidate.message)
@@ -268,20 +192,7 @@ private fun Throwable.causeChain(): List<Throwable> {
     return result
 }
 
-private val SABR_UNAVAILABLE_CODES = setOf(
-    "no_playable_streams",
-    "youtube_sabr_unavailable",
-    "youtube_sabr_preparation_failed",
-)
 
-private val CONTENT_UNAVAILABLE_CODES = setOf(
-    "content_unavailable",
-    "provider_access_blocked",
-)
 
-private val SABR_CONTRACT_CODES = setOf(
-    "youtube_sabr_contract_mismatch",
-    "youtube_android_playback_incompatible",
-)
 
 private const val MAX_CAUSE_DEPTH = 12

@@ -211,6 +211,7 @@ private fun ChannelTab.labelResource(): Int = when (this) {
     ChannelTab.Live -> R.string.channel_tab_live
     ChannelTab.Playlists -> R.string.channel_tab_playlists
     ChannelTab.Courses -> R.string.channel_tab_courses
+    ChannelTab.Posts -> R.string.channel_tab_posts
 }
 
 private fun ChannelSort.labelResource(): Int = when (this) {

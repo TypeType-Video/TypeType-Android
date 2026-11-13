@@ -11,5 +11,6 @@ dependencies {
     implementation(project(":core:notifications"))
     implementation(libs.aboutlibraries.compose)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.zxing.core)
     implementation(libs.unifiedpush.connector) { exclude(group = "com.google.crypto.tink", module = "tink") }
 }

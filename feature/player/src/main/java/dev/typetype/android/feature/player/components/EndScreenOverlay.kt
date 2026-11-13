@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
+import dev.typetype.android.core.ui.components.ExternalLinkDialog
 import dev.typetype.android.domain.stream.EndScreenElement
 import dev.typetype.android.domain.stream.EndScreenElementType
 import dev.typetype.android.domain.stream.boxIn

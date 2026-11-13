@@ -74,6 +74,7 @@ fun PlayerSettingsRoute(
         state = state,
         onNavigateBack = onNavigateBack,
         onAction = viewModel::onAction,
+        seekbarIconSection = { SeekbarIconSettingsSection() },
     )
 }
 
@@ -82,6 +83,7 @@ fun PlayerSettingsScreen(
     state: PlayerSettingsState,
     onNavigateBack: () -> Unit,
     onAction: (PlayerSettingsAction) -> Unit,
+    seekbarIconSection: @Composable () -> Unit = {},
 ) {
     var advancedExpanded by rememberSaveable { mutableStateOf(false) }
     val codecOptions = listOf(
@@ -103,8 +105,16 @@ fun PlayerSettingsScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
                 verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
-                item { SeekbarIconSettingsSection() }
+                item { seekbarIconSection() }
                 item { SettingsSectionHeader(stringResource(R.string.settings_player_section_playback)) }
+                item {
+                    SwitchRow(
+                        title = stringResource(R.string.settings_player_autoplay_on_open),
+                        subtitle = stringResource(R.string.settings_player_autoplay_on_open_subtitle),
+                        checked = state.autoplayOnOpen,
+                        onCheckedChange = { onAction(PlayerSettingsAction.SetAutoplayOnOpen(it)) },
+                    )
+                }
                 item {
                     SwitchRow(
                         title = stringResource(R.string.settings_player_autoplay),
@@ -148,6 +158,16 @@ fun PlayerSettingsScreen(
                         checked = state.skipPlaylistAutoplayScreen,
                         onCheckedChange = {
                             onAction(PlayerSettingsAction.SetSkipPlaylistAutoplayScreen(it))
+                        },
+                    )
+                }
+                item {
+                    SwitchRow(
+                        title = stringResource(R.string.settings_player_hide_upcoming_playlist),
+                        subtitle = stringResource(R.string.settings_player_hide_upcoming_playlist_subtitle),
+                        checked = state.hideUpcomingPlaylistVideos,
+                        onCheckedChange = {
+                            onAction(PlayerSettingsAction.SetHideUpcomingPlaylistVideos(it))
                         },
                     )
                 }
@@ -215,6 +235,14 @@ fun PlayerSettingsScreen(
                         subtitle = null,
                         checked = state.pauseInBackgroundEnabled,
                         onCheckedChange = { onAction(PlayerSettingsAction.SetPauseInBackground(it)) },
+                    )
+                }
+                item {
+                    SwitchRow(
+                        title = stringResource(R.string.settings_player_comment_gifs_animated),
+                        subtitle = stringResource(R.string.settings_player_comment_gifs_animated_subtitle),
+                        checked = state.commentGifsAnimated,
+                        onCheckedChange = { onAction(PlayerSettingsAction.SetCommentGifsAnimated(it)) },
                     )
                 }
                 if (state.defaultService == 0) {

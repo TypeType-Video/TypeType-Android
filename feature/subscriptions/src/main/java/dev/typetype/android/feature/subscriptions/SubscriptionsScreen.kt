@@ -22,6 +22,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Subscriptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -31,9 +34,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.typetype.android.core.ui.components.AnimatedError
 import dev.typetype.android.core.ui.components.LazyPaginationFooter
 import dev.typetype.android.core.ui.components.VideoCard
+import dev.typetype.android.domain.subscriptions.SubscriptionSummary
 import dev.typetype.android.feature.menu.rememberVideoMenuScope
 import dev.typetype.android.feature.library.LibrarySyncStatusBar
 import dev.typetype.android.R
+import dev.typetype.android.feature.subscriptions.groups.ChannelGroupsSheet
+import dev.typetype.android.feature.subscriptions.groups.SubscriptionGroupFilter
+import dev.typetype.android.feature.subscriptions.groups.SubscriptionGroupsViewModel
 
 @Composable
 fun SubscriptionsRoute(
@@ -42,6 +49,8 @@ fun SubscriptionsRoute(
     viewModel: SubscriptionsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val groups: SubscriptionGroupsViewModel = hiltViewModel()
+    var editedChannel by remember { mutableStateOf<SubscriptionSummary?>(null) }
     SubscriptionsScreen(
         state = state,
         onPlayVideo = onPlayVideo,
@@ -50,7 +59,24 @@ fun SubscriptionsRoute(
         onRetrySync = { viewModel.onAction(SubscriptionsAction.OnRetrySync) },
         onLoadMore = { viewModel.onAction(SubscriptionsAction.OnLoadMore) },
         onTabSelect = { viewModel.onAction(SubscriptionsAction.OnTabSelect(it)) },
+        feedFilter = {
+            SubscriptionGroupFilter(
+                selection = state.feedSelection,
+                onSelect = { viewModel.onAction(SubscriptionsAction.OnSelectFeed(it)) },
+                viewModel = groups,
+            )
+        },
+        onEditChannelGroups = {
+            editedChannel = it
+            groups.editChannel(it.channelUrl)
+        },
     )
+    editedChannel?.let { channel ->
+        ChannelGroupsSheet(channelName = channel.name, viewModel = groups, onDismiss = {
+            editedChannel = null
+            groups.editChannel(null)
+        })
+    }
 }
 
 @Composable
@@ -62,9 +88,12 @@ fun SubscriptionsScreen(
     onRetrySync: () -> Unit,
     onLoadMore: () -> Unit,
     onTabSelect: (SubscriptionsTab) -> Unit,
+    feedFilter: @Composable () -> Unit = {},
+    onEditChannelGroups: ((SubscriptionSummary) -> Unit)? = null,
 ) {
     val menuScope = rememberVideoMenuScope(onOpenChannel = onOpenChannel)
     val visibleVideos = state.videos.filterNot(menuScope::isHidden)
+    menuScope.TrackProgress(visibleVideos)
     Column(modifier = Modifier.fillMaxSize()) {
         LibrarySyncStatusBar(
             isRefreshing = false,
@@ -88,6 +117,7 @@ fun SubscriptionsScreen(
             channelCount = state.channels.size,
             onTabSelect = onTabSelect,
         )
+        if (state.selectedTab == SubscriptionsTab.Videos) feedFilter()
         PullToRefreshBox(
             isRefreshing = state.isLoading && state.videos.isNotEmpty(),
             onRefresh = onRetry,
@@ -99,6 +129,7 @@ fun SubscriptionsScreen(
                         channels = state.channels,
                         isLoading = state.isLoading,
                         onOpenChannel = onOpenChannel,
+                        onEditGroups = onEditChannelGroups,
                     )
                 } else {
                     SubscriptionsContent(

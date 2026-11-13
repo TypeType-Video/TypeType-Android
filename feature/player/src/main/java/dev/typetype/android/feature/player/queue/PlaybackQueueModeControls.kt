@@ -11,6 +11,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.RepeatOne
 import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -28,6 +30,8 @@ import dev.typetype.android.domain.playback.PlaybackRepeatMode
 @Composable
 internal fun PlaybackQueueSheetHeader(
     state: PlaybackQueueState,
+    upcomingHidden: Boolean,
+    onToggleUpcoming: () -> Unit,
     onShuffle: () -> Unit,
     onCycleRepeat: () -> Unit,
 ) {
@@ -49,6 +53,17 @@ internal fun PlaybackQueueSheetHeader(
             modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            FilterChip(
+                selected = upcomingHidden,
+                onClick = onToggleUpcoming,
+                label = { Text(stringResource(R.string.playback_queue_hide_upcoming)) },
+                leadingIcon = {
+                    Icon(
+                        imageVector = if (upcomingHidden) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                        contentDescription = null,
+                    )
+                },
+            )
             FilterChip(
                 selected = false,
                 onClick = onShuffle,

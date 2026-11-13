@@ -38,6 +38,9 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.error.rememberUserErrorMapper
+import dev.typetype.android.core.ui.richtext.RichMarkupText
+import dev.typetype.android.core.ui.richtext.richMarkupPlainText
 import dev.typetype.android.core.ui.share.LocalServerBaseUrl
 import dev.typetype.android.core.url.buildImageUrl
 import dev.typetype.android.domain.comments.Comment
@@ -88,10 +91,16 @@ internal fun CommentBody(
                 )
             }
             Spacer(Modifier.height(4.dp))
-            ExpandableCommentText(
+            if (comment.text.isNotBlank()) {
+                ExpandableCommentText(
+                    comment = comment,
+                    onUrlClick = onUrlClick,
+                    onTimestampClick = onTimestampClick,
+                )
+            }
+            CommentMedia(
                 comment = comment,
-                onUrlClick = onUrlClick,
-                onTimestampClick = onTimestampClick,
+                modifier = Modifier.padding(top = if (comment.text.isNotBlank()) 8.dp else 2.dp),
             )
             Spacer(Modifier.height(6.dp))
             Row(
@@ -131,7 +140,7 @@ private fun ExpandableCommentText(
         renderedText.count { it == '\n' } >= COMMENT_COLLAPSE_LINE_LIMIT
 
     Column {
-        CommentRichText(
+        RichMarkupText(
             text = comment.text,
             style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
             linkColor = MaterialTheme.colorScheme.primary,
@@ -176,8 +185,9 @@ internal fun FooterState(items: LazyPagingItems<Comment>) {
             modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            val failure = (state.refresh as? LoadState.Error ?: state.append as? LoadState.Error)?.error
             Text(
-                text = stringResource(R.string.comments_load_failed),
+                text = rememberUserErrorMapper().message(failure, R.string.comments_load_failed),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
             )

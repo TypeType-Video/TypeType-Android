@@ -168,6 +168,16 @@ fun ContentSettingsScreen(
                         onAction = onAction,
                     )
                 }
+                item {
+                    ContentVisibilitySwitch(
+                        title = R.string.settings_content_hide_members_only,
+                        subtitle = R.string.settings_content_hide_members_only_subtitle,
+                        checked = state.hideMembersOnlyContent,
+                        enabled = controlsEnabled,
+                        action = ContentSettingsAction::SetHideMembersOnlyContent,
+                        onAction = onAction,
+                    )
+                }
                 if (state.supportsHideSubscriptionLiveStreams) {
                     item {
                         ContentVisibilitySwitch(

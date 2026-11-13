@@ -11,6 +11,7 @@ import dev.typetype.android.R
 import dev.typetype.android.core.ui.components.DropdownRow
 import dev.typetype.android.core.ui.components.SettingsSectionHeader
 import dev.typetype.android.core.ui.components.SwitchRow
+import dev.typetype.android.domain.usersettings.HOLD_PLAYBACK_SPEEDS
 
 private val SEEK_SECONDS = listOf(5, 10, 15, 20, 30)
 
@@ -74,6 +75,16 @@ internal fun LazyListScope.playerGestureSettingsItems(
             subtitle = stringResource(R.string.settings_player_long_press_speed_subtitle),
             checked = state.longPressSpeedEnabled,
             onCheckedChange = { onAction(PlayerSettingsAction.SetLongPressSpeed(it)) },
+        )
+    }
+    item {
+        DropdownRow(
+            title = stringResource(R.string.settings_player_long_press_speed_value),
+            subtitle = null,
+            options = HOLD_PLAYBACK_SPEEDS.map { speed -> speed.toString() to "${speed}x" },
+            selectedKey = state.holdPlaybackSpeed.toString(),
+            onSelect = { onAction(PlayerSettingsAction.SetHoldPlaybackSpeed(it.toDouble())) },
+            enabled = state.longPressSpeedEnabled,
         )
     }
 }
