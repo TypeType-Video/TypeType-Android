@@ -166,11 +166,8 @@ class PlayerViewModel @Inject constructor(
                 _state.update { it.copy(playlistPickerVisible = false) }
             is PlayerAction.OnAddToPlaylist -> addCurrentToPlaylist(action.playlistId)
             is PlayerAction.OnCreatePlaylistAndAdd -> createPlaylistAndAdd(action.name)
-            is PlayerAction.OnSaveProgress -> {
-                val url = currentUrl() ?: return
-                viewModelScope.launch {
-                    libraryRepository.saveProgress(url, action.positionMillis)
-                }
+            is PlayerAction.OnSaveProgress -> viewModelScope.launch {
+                libraryRepository.saveProgress(action.videoUrl, action.positionMillis)
             }
         }
     }
