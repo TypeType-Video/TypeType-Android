@@ -14,7 +14,6 @@ import dev.typetype.android.domain.library.LibraryRepository
 import dev.typetype.android.domain.preferences.PreferencesRepository
 import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import dev.typetype.android.feature.player.error.classifyStreamError
-import dev.typetype.android.feature.player.error.isRetryablePlaybackFailure
 import dev.typetype.android.playback.DevicePlaybackCodecSupport
 import dev.typetype.android.services.PlaybackQueueCoordinator
 import javax.inject.Inject
@@ -270,7 +269,7 @@ class PlayerViewModel @Inject constructor(
         loadStreamJob?.cancel()
         _state.update { it.copy(isLoading = true, error = null) }
         loadStreamJob = viewModelScope.launch {
-            playerStreamLoader.load(url) { isRetryablePlaybackFailure(it, networkMonitor.states.value.isAvailable) }.collect { update ->
+            playerStreamLoader.load(url).collect { update ->
                 if (currentUrl() != url) return@collect
                 val online = networkMonitor.states.value.isAvailable
                 _state.update { it.applyStreamUpdate(update, playerHostController.state.value, online) }

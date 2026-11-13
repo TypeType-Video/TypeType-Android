@@ -46,6 +46,36 @@ class TransientPlaybackRequestTest {
     }
 
     @Test
+    fun `opening a video gives up at once when the server asks for a long wait`() = runBlocking {
+        val pauses = mutableListOf<Long>()
+        var attempts = 0
+
+        val response = transientPlaybackRequest(pauses::add, serverWait = TransientServerWait.Discovery) {
+            attempts++
+            failure<String>(503, mapOf("Retry-After" to "60"))
+        }
+
+        assertEquals(503, response.code())
+        assertEquals(1, attempts)
+        assertEquals(emptyList<Long>(), pauses)
+    }
+
+    @Test
+    fun `opening a video retries a passing failure twice like the web client`() = runBlocking {
+        val pauses = mutableListOf<Long>()
+        var attempts = 0
+
+        val response = transientPlaybackRequest(pauses::add, serverWait = TransientServerWait.Discovery) {
+            attempts++
+            failure<String>(503)
+        }
+
+        assertEquals(503, response.code())
+        assertEquals(3, attempts)
+        assertEquals(listOf(500L, 1_000L), pauses)
+    }
+
+    @Test
     fun `transport failure recovers without creating another request chain`() = runBlocking {
         var attempt = 0
         val pauses = mutableListOf<Long>()

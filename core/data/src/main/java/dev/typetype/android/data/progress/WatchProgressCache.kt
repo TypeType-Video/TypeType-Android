@@ -26,7 +26,7 @@ class WatchProgressCache @Inject constructor(
 ) : WatchProgressSource {
     private val _positions = MutableStateFlow<Map<String, Long>>(emptyMap())
     override val positions: StateFlow<Map<String, Long>> = _positions.asStateFlow()
-    private val fetchedAt = HashMap<String, Long>()
+    private val schedule = WatchProgressSchedule(FRESH_FOR_MS, MAX_BATCH_SIZE)
     private var owner: AccountScope? = null
     private val mutex = Mutex()
 
@@ -37,15 +37,12 @@ class WatchProgressCache @Inject constructor(
         val due = mutex.withLock {
             if (owner != scope) {
                 owner = scope
-                fetchedAt.clear()
+                schedule.clear()
                 _positions.value = emptyMap()
             }
-            videoUrls.map(::canonicalVideoIdentity)
-                .distinct()
-                .filter { url -> fetchedAt[url]?.let { now - it > FRESH_FOR_MS } ?: true }
-                .onEach { fetchedAt[it] = now }
+            schedule.dueBatches(videoUrls.map(::canonicalVideoIdentity), now)
         }
-        due.chunked(MAX_BATCH_SIZE).forEach { batch -> fetch(scope, batch) }
+        due.forEach { batch -> fetch(scope, batch) }
     }
 
     private suspend fun fetch(scope: AccountScope, batch: List<String>) {
@@ -58,7 +55,7 @@ class WatchProgressCache @Inject constructor(
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Exception) {
-            mutex.withLock { batch.forEach(fetchedAt::remove) }
+            mutex.withLock { schedule.forget(batch) }
             return
         }
         mutex.withLock {

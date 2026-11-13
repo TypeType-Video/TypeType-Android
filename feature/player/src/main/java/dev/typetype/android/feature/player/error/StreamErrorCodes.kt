@@ -42,17 +42,3 @@ internal fun transportErrorKind(failures: List<Throwable>, networkAvailable: Boo
     failures.any { it is InterruptedIOException } -> StreamErrorKind.ServerSlow
     else -> StreamErrorKind.InstanceUnreachable
 }
-
-internal val StreamErrorKind.isTransient: Boolean
-    get() = this == StreamErrorKind.ProviderBlocked ||
-        this == StreamErrorKind.ServerSlow ||
-        this == StreamErrorKind.ServerUnavailable ||
-        this == StreamErrorKind.RateLimited ||
-        this == StreamErrorKind.InstanceUnreachable ||
-        this == StreamErrorKind.NetworkUnavailable
-
-// Offline failures are retried by the network recovery once the connection is back, not on a timer.
-fun isRetryablePlaybackFailure(failure: Throwable, networkAvailable: Boolean): Boolean {
-    val kind = classifyStreamError(failure, networkAvailable).kind
-    return kind.isTransient && kind != StreamErrorKind.NetworkUnavailable
-}

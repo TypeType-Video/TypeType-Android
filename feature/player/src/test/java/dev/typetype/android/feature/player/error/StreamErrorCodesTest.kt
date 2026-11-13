@@ -6,8 +6,6 @@ import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class StreamErrorCodesTest {
@@ -40,14 +38,5 @@ class StreamErrorCodesTest {
         assertEquals(StreamErrorKind.InstanceUnreachable, classifyStreamError(refused, networkAvailable = true).kind)
         assertEquals(StreamErrorKind.InstanceUnreachable, classifyStreamError(dns, networkAvailable = true).kind)
         assertEquals(StreamErrorKind.ServerSlow, classifyStreamError(slow, networkAvailable = true).kind)
-    }
-
-    @Test
-    fun `only passing failures are retried before showing an error`() {
-        assertTrue(isRetryablePlaybackFailure(server("provider_access_blocked", 503), networkAvailable = true))
-        assertTrue(isRetryablePlaybackFailure(SocketTimeoutException(), networkAvailable = true))
-        assertFalse(isRetryablePlaybackFailure(SocketTimeoutException(), networkAvailable = false))
-        assertFalse(isRetryablePlaybackFailure(server("private_content", 403), networkAvailable = true))
-        assertFalse(isRetryablePlaybackFailure(server("content_unavailable", 404), networkAvailable = true))
     }
 }
