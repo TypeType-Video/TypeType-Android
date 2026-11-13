@@ -64,6 +64,9 @@ class UserErrorMapper @Inject constructor(
             UserErrorKind.SignInAgain -> R.string.error_sign_in_again
             UserErrorKind.PermissionDenied -> R.string.error_permission_denied
             UserErrorKind.ContentUnavailable -> R.string.error_content_unavailable
+            UserErrorKind.LoginCodeExpired -> R.string.error_login_code_expired
+            UserErrorKind.LoginCodeDenied -> R.string.error_login_code_denied
+            UserErrorKind.LoginCodeNotFound -> R.string.error_login_code_not_found
             UserErrorKind.Conflict -> R.string.error_conflict
             UserErrorKind.RateLimited -> R.string.error_rate_limited
             UserErrorKind.ServerUnavailable -> R.string.error_server_unavailable

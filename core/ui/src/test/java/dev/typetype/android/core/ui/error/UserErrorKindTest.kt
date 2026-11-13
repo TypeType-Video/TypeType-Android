@@ -69,6 +69,20 @@ class UserErrorKindTest {
         assertEquals(UserErrorKind.Fallback, classifyUserError(IllegalStateException("unknown")))
     }
 
+    @Test
+    fun `sign-in codes name why they failed instead of missing content`() {
+        assertEquals(UserErrorKind.LoginCodeExpired, classifyUserError(ServerFailure("expired_token", 400)))
+        assertEquals(UserErrorKind.LoginCodeExpired, classifyUserError(ServerFailure("youtube_device_expired", 410)))
+        assertEquals(UserErrorKind.LoginCodeDenied, classifyUserError(ServerFailure("youtube_device_denied", 410)))
+        assertEquals(UserErrorKind.LoginCodeDenied, classifyUserError(ServerFailure("access_denied", 400)))
+        assertEquals(UserErrorKind.LoginCodeNotFound, classifyUserError(ServerFailure("code_not_found", 404)))
+    }
+
+    @Test
+    fun `a server timeout is slow, not offline`() {
+        assertEquals(UserErrorKind.ServerSlow, classifyUserError(serverFailure(408)))
+    }
+
     private fun serverFailure(status: Int) = ServerFailure(null, status)
 
     private class ServerFailure(

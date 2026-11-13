@@ -15,6 +15,9 @@ internal enum class UserErrorKind {
     SignInAgain,
     PermissionDenied,
     ContentUnavailable,
+    LoginCodeExpired,
+    LoginCodeDenied,
+    LoginCodeNotFound,
     Conflict,
     RateLimited,
     ServerUnavailable,
@@ -65,6 +68,10 @@ internal fun classifyUserError(failureCode: String?, statusCode: Int?): UserErro
         "upstream_timeout", "sabr_upstream_timeout" -> UserErrorKind.ServerSlow
         "content_blocked" -> UserErrorKind.ContentBlocked
         "content_unavailable", "private_content" -> UserErrorKind.ContentUnavailable
+        "expired_token", "youtube_device_expired" -> UserErrorKind.LoginCodeExpired
+        "access_denied", "youtube_device_denied" -> UserErrorKind.LoginCodeDenied
+        "code_not_found" -> UserErrorKind.LoginCodeNotFound
+        "too_many_attempts" -> UserErrorKind.RateLimited
         else -> classifyStatus(statusCode)
     }
 
@@ -72,7 +79,7 @@ private fun classifyStatus(status: Int?): UserErrorKind = when (status) {
     401 -> UserErrorKind.SignInAgain
     403 -> UserErrorKind.PermissionDenied
     404, 410 -> UserErrorKind.ContentUnavailable
-    408 -> UserErrorKind.NetworkUnavailable
+    408 -> UserErrorKind.ServerSlow
     409 -> UserErrorKind.Conflict
     429 -> UserErrorKind.RateLimited
     504 -> UserErrorKind.ServerSlow
