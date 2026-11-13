@@ -10,9 +10,13 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class UserErrorMapper @Inject constructor(
-    @ApplicationContext private val context: Context,
+class UserErrorMapper internal constructor(
+    private val context: Context,
+    private val isOnline: () -> Boolean,
 ) {
+    @Inject
+    constructor(@ApplicationContext context: Context) : this(context, { context.hasInternet() })
+
     fun message(failure: Throwable?, fallbackRes: Int, missingRes: Int? = null): String =
         context.getString(resourceFor(classifyUserError(failure, isOnline()), fallbackRes, missingRes))
 
@@ -74,12 +78,12 @@ class UserErrorMapper @Inject constructor(
             UserErrorKind.InstanceIncompatible -> R.string.error_instance_incompatible
             UserErrorKind.Fallback -> fallbackRes
         }
+}
 
-    private fun isOnline(): Boolean {
-        val connectivity = context.getSystemService(ConnectivityManager::class.java) ?: return true
-        val capabilities = connectivity.getNetworkCapabilities(connectivity.activeNetwork) ?: return false
-        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-    }
+private fun Context.hasInternet(): Boolean {
+    val connectivity = getSystemService(ConnectivityManager::class.java) ?: return true
+    val capabilities = connectivity.getNetworkCapabilities(connectivity.activeNetwork) ?: return false
+    return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
 }
 
 data class UserErrorDetails(

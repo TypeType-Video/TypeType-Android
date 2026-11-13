@@ -48,7 +48,11 @@ class UserErrorMapperAndroidTest {
     fun mapsTransportFailureAndPreservesOperationFallback() {
         assertEquals(
             context.getString(R.string.error_network_unavailable),
-            mapper.message(IOException("offline"), R.string.search_failed),
+            UserErrorMapper(context) { false }.message(IOException("offline"), R.string.search_failed),
+        )
+        assertEquals(
+            context.getString(R.string.error_instance_unreachable),
+            UserErrorMapper(context) { true }.message(IOException("refused"), R.string.search_failed),
         )
         assertEquals(
             context.getString(R.string.search_failed),
