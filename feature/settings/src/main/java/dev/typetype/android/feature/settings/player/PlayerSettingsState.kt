@@ -21,6 +21,7 @@ data class PlayerSettingsState(
     val skipPlaylistAutoplayScreen: Boolean = false,
     val audioOnlyPlayback: Boolean = false,
     val pauseInBackgroundEnabled: Boolean = false,
+    val commentGifsAnimated: Boolean = false,
     val danmakuEnabled: Boolean = false,
     val danmakuSpeed: Float = 1f,
     val danmakuSize: Float = 1f,

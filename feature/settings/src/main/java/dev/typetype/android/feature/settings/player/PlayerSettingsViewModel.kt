@@ -46,6 +46,7 @@ class PlayerSettingsViewModel @Inject constructor(
                     skipPlaylistAutoplayScreen = server.skipPlaylistAutoplayScreen,
                     audioOnlyPlayback = prefs.playerAudioOnlyPlayback,
                     pauseInBackgroundEnabled = prefs.playerPauseInBackground,
+                    commentGifsAnimated = prefs.commentGifsAnimated,
                     danmakuEnabled = prefs.danmakuEnabled,
                     danmakuSpeed = prefs.danmakuSpeed,
                     danmakuSize = prefs.danmakuSize,
@@ -93,6 +94,8 @@ class PlayerSettingsViewModel @Inject constructor(
                     preferencesRepository.setPlayerAccessibleControlsEnabled(action.enabled)
                 is PlayerSettingsAction.SetPauseInBackground ->
                     preferencesRepository.setPlayerPauseInBackground(action.enabled)
+                is PlayerSettingsAction.SetCommentGifsAnimated ->
+                    preferencesRepository.setCommentGifsAnimated(action.enabled)
                 is PlayerSettingsAction.SetDanmakuEnabled ->
                     preferencesRepository.setDanmakuEnabled(action.enabled)
                 is PlayerSettingsAction.SetDanmakuSpeed ->

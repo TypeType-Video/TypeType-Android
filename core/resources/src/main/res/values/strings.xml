@@ -895,6 +895,8 @@
     <string name="settings_player_audio_only">Audio-only playback</string>
     <string name="settings_player_audio_only_subtitle">Start videos with the server-provided audio stream when available</string>
     <string name="settings_player_pause_in_background">Pause when leaving the app</string>
+    <string name="settings_player_comment_gifs_animated">Animate GIFs in comments</string>
+    <string name="settings_player_comment_gifs_animated_subtitle">Off shows the first frame. Animated GIFs make long comment threads scroll less smoothly.</string>
     <string name="player_sponsorblock_skipped">Skipped automatically</string>
     <string name="player_sponsorblock_muted">Muted automatically</string>
     <string name="player_sponsorblock_label">SponsorBlock</string>

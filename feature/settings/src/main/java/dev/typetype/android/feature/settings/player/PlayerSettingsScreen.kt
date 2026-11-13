@@ -237,6 +237,14 @@ fun PlayerSettingsScreen(
                         onCheckedChange = { onAction(PlayerSettingsAction.SetPauseInBackground(it)) },
                     )
                 }
+                item {
+                    SwitchRow(
+                        title = stringResource(R.string.settings_player_comment_gifs_animated),
+                        subtitle = stringResource(R.string.settings_player_comment_gifs_animated_subtitle),
+                        checked = state.commentGifsAnimated,
+                        onCheckedChange = { onAction(PlayerSettingsAction.SetCommentGifsAnimated(it)) },
+                    )
+                }
                 if (state.defaultService == 0) {
                     item { Spacer(Modifier.size(4.dp)) }
                     subtitleAndLanguageSettingsItems(state = state, onAction = onAction)

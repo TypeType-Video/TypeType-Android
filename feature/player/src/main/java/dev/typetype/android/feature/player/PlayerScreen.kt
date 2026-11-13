@@ -9,6 +9,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
+import dev.typetype.android.feature.player.components.LocalCommentGifsAnimated
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -163,7 +164,10 @@ fun PlayerScreen(
             modifier = Modifier.fillMaxSize().padding(padding),
             color = MaterialTheme.colorScheme.background,
         ) {
-            CompositionLocalProvider(LocalSeekbarThumbIcon provides state.userSettings.seekbarThumbIcon()) {
+            CompositionLocalProvider(
+                LocalSeekbarThumbIcon provides state.userSettings.seekbarThumbIcon(),
+                LocalCommentGifsAnimated provides state.commentGifsAnimated,
+            ) {
                 when {
                     state.isLoading -> PlayerPlaceholderLayer(hostTransitionProgress) {
                         LoadingState()

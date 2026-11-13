@@ -44,6 +44,7 @@ internal class PlayerPreferenceCoordinator(
             autoplayCountdownSeconds = preferences.playerAutoplayCountdownSeconds,
             audioOnlyPlaybackDefault = preferences.playerAudioOnlyPlayback,
             preferredCodec = preferences.playerPreferredCodec,
+            commentGifsAnimated = preferences.commentGifsAnimated,
             userSettings = userSettings.copy(defaultQuality = automaticQualityCap),
         )
     }
@@ -86,6 +87,7 @@ internal data class PlayerPreferenceState(
     val autoplayCountdownSeconds: Int,
     val audioOnlyPlaybackDefault: Boolean,
     val preferredCodec: String,
+    val commentGifsAnimated: Boolean,
     val userSettings: UserSettings,
 )
 

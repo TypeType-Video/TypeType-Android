@@ -19,6 +19,7 @@ sealed interface PlayerSettingsAction {
     data class SetHoldPlaybackSpeed(val speed: Double) : PlayerSettingsAction
     data class SetAudioOnlyPlayback(val enabled: Boolean) : PlayerSettingsAction
     data class SetPauseInBackground(val enabled: Boolean) : PlayerSettingsAction
+    data class SetCommentGifsAnimated(val enabled: Boolean) : PlayerSettingsAction
     data class SetDanmakuEnabled(val enabled: Boolean) : PlayerSettingsAction
     data class SetDanmakuSpeed(val speed: Float) : PlayerSettingsAction
     data class SetDanmakuSize(val size: Float) : PlayerSettingsAction
