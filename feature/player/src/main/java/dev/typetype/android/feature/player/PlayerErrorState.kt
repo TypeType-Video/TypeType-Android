@@ -30,6 +30,9 @@ fun ErrorState(
         StreamErrorKind.GeoRestricted,
         StreamErrorKind.PaidContent,
         StreamErrorKind.ScheduledPremiere,
+        StreamErrorKind.PrivateContent,
+        StreamErrorKind.AgeRestricted,
+        StreamErrorKind.ContentBlocked,
         -> R.raw.member_only
         StreamErrorKind.Generic,
         StreamErrorKind.AuthenticationExpired,
@@ -43,6 +46,11 @@ fun ErrorState(
         StreamErrorKind.SubtitleInventoryUnavailable,
         StreamErrorKind.ServerContract,
         StreamErrorKind.YouTubeSessionRequired,
+        StreamErrorKind.ProviderBlocked,
+        StreamErrorKind.RateLimited,
+        StreamErrorKind.ServerUnavailable,
+        StreamErrorKind.ServerSlow,
+        StreamErrorKind.InstanceUnreachable,
         -> R.raw.error_cat
     }
     val displayMessage = when (classification.kind) {
@@ -65,7 +73,15 @@ fun ErrorState(
         StreamErrorKind.SubtitleInventoryUnavailable ->
             stringResource(R.string.state_subtitle_inventory_unavailable)
         StreamErrorKind.ServerContract -> stringResource(R.string.state_android_playback_incompatible)
-        StreamErrorKind.NetworkUnavailable -> stringResource(R.string.state_stream_network_unavailable)
+        StreamErrorKind.NetworkUnavailable -> stringResource(R.string.state_stream_offline)
+        StreamErrorKind.InstanceUnreachable -> stringResource(R.string.state_stream_network_unavailable)
+        StreamErrorKind.ServerSlow -> stringResource(R.string.state_stream_server_slow)
+        StreamErrorKind.ServerUnavailable -> stringResource(R.string.error_server_unavailable)
+        StreamErrorKind.RateLimited -> stringResource(R.string.error_rate_limited)
+        StreamErrorKind.ProviderBlocked -> stringResource(R.string.state_stream_provider_blocked)
+        StreamErrorKind.PrivateContent -> stringResource(R.string.state_stream_private)
+        StreamErrorKind.AgeRestricted -> stringResource(R.string.state_stream_age_restricted)
+        StreamErrorKind.ContentBlocked -> stringResource(R.string.state_stream_content_blocked)
         StreamErrorKind.LiveUnsupported -> stringResource(R.string.state_live_playback_unsupported)
         StreamErrorKind.Generic -> stringResource(R.string.state_failed_to_load_stream)
     }

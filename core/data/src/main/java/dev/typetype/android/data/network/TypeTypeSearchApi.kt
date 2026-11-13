@@ -1,5 +1,6 @@
 package dev.typetype.android.data.network
 
+import dev.typetype.android.data.network.dto.ChannelPostsResponse
 import dev.typetype.android.data.network.dto.ChannelPageRequest
 import dev.typetype.android.data.network.dto.ChannelPlaylistsResponse
 import dev.typetype.android.data.network.dto.ChannelResponse
@@ -44,7 +45,14 @@ interface TypeTypeSearchApi {
     suspend fun channelPlaylists(
         @Query("url") url: String,
         @Query("nextpage") nextpage: String? = null,
+        @Query("tab") tab: String? = null,
     ): Response<ChannelPlaylistsResponse>
+
+    @GET("channel/posts")
+    suspend fun channelPosts(
+        @Query("url") url: String,
+        @Query("nextpage") nextpage: String? = null,
+    ): Response<ChannelPostsResponse>
 
     @GET("suggestions")
     suspend fun searchSuggestions(

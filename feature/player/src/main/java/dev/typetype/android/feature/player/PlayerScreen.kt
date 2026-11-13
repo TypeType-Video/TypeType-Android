@@ -8,6 +8,8 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.CompositionLocalProvider
+import dev.typetype.android.feature.player.components.LocalCommentGifsAnimated
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -20,6 +22,8 @@ import androidx.paging.PagingData
 import dev.typetype.android.R
 import dev.typetype.android.domain.comments.Comment
 import dev.typetype.android.feature.player.components.LocalMediaController
+import dev.typetype.android.feature.player.components.LocalSeekbarThumbIcon
+import dev.typetype.android.feature.player.components.seekbarThumbIcon
 import dev.typetype.android.playback.PlaybackCodecSupport
 import dev.typetype.android.playback.PrepareSabrPlayback
 import kotlinx.coroutines.flow.Flow
@@ -39,6 +43,7 @@ fun PlayerRoute(
     onPlayVideo: (videoUrl: String) -> Unit,
     onAutoplayVideo: (videoUrl: String) -> Unit = onPlayVideo,
     onOpenChannel: (channelUrl: String) -> Unit = {},
+    onOpenPlaylist: (playlistUrl: String) -> Unit = {},
     viewModel: PlayerViewModel = hiltViewModel(),
     channelActionsViewModel: PlayerChannelActionsViewModel = hiltViewModel(),
     danmakuViewModel: PlayerDanmakuViewModel = hiltViewModel(),
@@ -67,6 +72,7 @@ fun PlayerRoute(
         onPlayVideo = onPlayVideo,
         onAutoplayVideo = onAutoplayVideo,
         onOpenChannel = onOpenChannel,
+        onOpenPlaylist = onOpenPlaylist,
         modifier = modifier,
         isSubscribed = channelState.isSubscribed(channelUrl),
         subscriptionInFlight = channelState.isUpdating(channelUrl),
@@ -97,6 +103,7 @@ fun PlayerScreen(
     onPlayVideo: (videoUrl: String) -> Unit,
     onAutoplayVideo: (videoUrl: String) -> Unit = onPlayVideo,
     onOpenChannel: (channelUrl: String) -> Unit = {},
+    onOpenPlaylist: (playlistUrl: String) -> Unit = {},
     isSubscribed: Boolean = false,
     subscriptionInFlight: Boolean = false,
     onToggleSubscription: () -> Unit = {},
@@ -157,65 +164,71 @@ fun PlayerScreen(
             modifier = Modifier.fillMaxSize().padding(padding),
             color = MaterialTheme.colorScheme.background,
         ) {
-            when {
-                state.isLoading -> PlayerPlaceholderLayer(hostTransitionProgress) {
-                    LoadingState()
-                }
-                state.error != null -> PlayerPlaceholderLayer(hostTransitionProgress) {
-                    ErrorState(
-                        classification = state.error,
+            CompositionLocalProvider(
+                LocalSeekbarThumbIcon provides state.userSettings.seekbarThumbIcon(),
+                LocalCommentGifsAnimated provides state.commentGifsAnimated,
+            ) {
+                when {
+                    state.isLoading -> PlayerPlaceholderLayer(hostTransitionProgress) {
+                        LoadingState()
+                    }
+                    state.error != null -> PlayerPlaceholderLayer(hostTransitionProgress) {
+                        ErrorState(
+                            classification = state.error,
+                            onNavigateBack = onNavigateBack,
+                            onRetry = { onAction(PlayerAction.OnRetry) },
+                            onOpenAccounts = onOpenAccounts,
+                        )
+                    }
+                    state.stream != null -> LoadedPlayer(
+                        stream = state.stream,
+                        videoUrl = state.videoUrl,
+                        resumeAtMillis = state.resumeAtMillis,
+                        initialPlayWhenReady = state.initialPlayWhenReady,
+                        playbackBindGeneration = state.playbackBindGeneration,
+                        isFavorited = state.isFavorited,
+                        isInWatchLater = state.isInWatchLater,
+                        gestureConfig = state.gestureConfig,
+                        playbackBrightnessPercent = state.playbackBrightnessPercent,
+                        autoplayCountdownSeconds = state.autoplayCountdownSeconds,
+                        audioOnlyPlaybackDefault = state.audioOnlyPlaybackDefault,
+                        preferredCodec = state.preferredCodec,
+                        userSettings = state.userSettings,
+                        playlists = state.playlists,
+                        playlistPickerVisible = state.playlistPickerVisible,
+                        playlistActionInFlight = state.playlistActionInFlight,
+                        downloadInFlight = state.downloadInFlight,
+                        playbackQueue = state.playbackQueue,
+                        navigation = PlayerNavigationControls(
+                            availability = PlayerNavigationAvailability(
+                                previous = state.canPlayPreviousVideo,
+                                next = state.canPlayNextVideo,
+                            ),
+                            onPrevious = { onAction(PlayerAction.OnPlayPreviousVideo) },
+                            onNext = { onAction(PlayerAction.OnPlayNextVideo) },
+                        ),
+                        endScreen = EndScreenActions(onPlayVideo, onOpenChannel, onOpenPlaylist),
+                        commentsFlow = commentsFlow,
+                        commentsRepository = commentsRepository,
+                        prepareSabrPlayback = prepareSabrPlayback,
+                        codecSupport = codecSupport,
+                        loadSubtitleCues = loadSubtitleCues,
+                        isFullscreen = isFullscreen,
+                        hostTransitionProgress = hostTransitionProgress,
+                        onFullscreenChange = onFullscreenChange,
                         onNavigateBack = onNavigateBack,
-                        onRetry = { onAction(PlayerAction.OnRetry) },
                         onOpenAccounts = onOpenAccounts,
+                        onPlayVideo = onPlayVideo,
+                        onAutoplayVideo = onAutoplayVideo,
+                        onOpenChannel = onOpenChannel,
+                        isSubscribed = isSubscribed,
+                        subscriptionInFlight = subscriptionInFlight,
+                        onToggleSubscription = onToggleSubscription,
+                        danmakuState = danmakuState,
+                        onDanmakuAction = onDanmakuAction,
+                        onAction = onAction,
                     )
                 }
-                state.stream != null -> LoadedPlayer(
-                    stream = state.stream,
-                    videoUrl = state.videoUrl,
-                    resumeAtMillis = state.resumeAtMillis,
-                    initialPlayWhenReady = state.initialPlayWhenReady,
-                    playbackBindGeneration = state.playbackBindGeneration,
-                    isFavorited = state.isFavorited,
-                    isInWatchLater = state.isInWatchLater,
-                    gestureConfig = state.gestureConfig,
-                    playbackBrightnessPercent = state.playbackBrightnessPercent,
-                    autoplayCountdownSeconds = state.autoplayCountdownSeconds,
-                    audioOnlyPlaybackDefault = state.audioOnlyPlaybackDefault,
-                    preferredCodec = state.preferredCodec,
-                    userSettings = state.userSettings,
-                    playlists = state.playlists,
-                    playlistPickerVisible = state.playlistPickerVisible,
-                    playlistActionInFlight = state.playlistActionInFlight,
-                    downloadInFlight = state.downloadInFlight,
-                    playbackQueue = state.playbackQueue,
-                    navigation = PlayerNavigationControls(
-                        availability = PlayerNavigationAvailability(
-                            previous = state.canPlayPreviousVideo,
-                            next = state.canPlayNextVideo,
-                        ),
-                        onPrevious = { onAction(PlayerAction.OnPlayPreviousVideo) },
-                        onNext = { onAction(PlayerAction.OnPlayNextVideo) },
-                    ),
-                    commentsFlow = commentsFlow,
-                    commentsRepository = commentsRepository,
-                    prepareSabrPlayback = prepareSabrPlayback,
-                    codecSupport = codecSupport,
-                    loadSubtitleCues = loadSubtitleCues,
-                    isFullscreen = isFullscreen,
-                    hostTransitionProgress = hostTransitionProgress,
-                    onFullscreenChange = onFullscreenChange,
-                    onNavigateBack = onNavigateBack,
-                    onOpenAccounts = onOpenAccounts,
-                    onPlayVideo = onPlayVideo,
-                    onAutoplayVideo = onAutoplayVideo,
-                    onOpenChannel = onOpenChannel,
-                    isSubscribed = isSubscribed,
-                    subscriptionInFlight = subscriptionInFlight,
-                    onToggleSubscription = onToggleSubscription,
-                    danmakuState = danmakuState,
-                    onDanmakuAction = onDanmakuAction,
-                    onAction = onAction,
-                )
             }
         }
     }

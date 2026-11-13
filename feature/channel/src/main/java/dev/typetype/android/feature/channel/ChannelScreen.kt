@@ -32,6 +32,7 @@ import dev.typetype.android.core.ui.components.FullScreenLoader
 import dev.typetype.android.core.ui.components.LazyPaginationFooter
 import dev.typetype.android.core.ui.components.RequestIdRow
 import dev.typetype.android.core.ui.components.VideoCard
+import dev.typetype.android.domain.channel.Channel
 import dev.typetype.android.feature.menu.VideoMenuScope
 import dev.typetype.android.feature.menu.rememberVideoMenuScope
 import dev.typetype.android.feature.search.SearchPlaylistCard
@@ -110,6 +111,7 @@ private fun ChannelContent(
     onAction: (ChannelAction) -> Unit,
 ) {
     var searchExpanded by rememberSaveable { mutableStateOf(false) }
+    val (posts, postActions) = rememberChannelPosts(active = state.tab == ChannelTab.Posts)
     ChannelContentGrid(
         state = state,
         onNavigateBack = onNavigateBack,
@@ -120,6 +122,9 @@ private fun ChannelContent(
         searchExpanded = searchExpanded,
         onSearchExpandedChange = { searchExpanded = it },
         menuScope = rememberVideoMenuScope(onOpenChannel = {}),
+        posts = posts,
+        postActions = postActions,
+        headerAction = { ChannelAllowButton(it) },
     )
 }
 
@@ -135,9 +140,13 @@ internal fun ChannelContentGrid(
     onSearchExpandedChange: (Boolean) -> Unit,
     menuScope: VideoMenuScope,
     modifier: Modifier = Modifier,
+    posts: ChannelPostsState = ChannelPostsState(),
+    postActions: ChannelPostsActions = ChannelPostsActions(),
+    headerAction: @Composable (Channel) -> Unit = {},
 ) {
     val channel = requireNotNull(state.channel)
     val visibleVideos = channel.videos.filterNot(menuScope::isHidden)
+    menuScope.TrackProgress(visibleVideos)
 
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 320.dp),
@@ -157,6 +166,7 @@ internal fun ChannelContentGrid(
                 onNavigateBack = onNavigateBack,
             )
         }
+        item(span = { GridItemSpan(maxLineSpan) }, key = "channel-header-action") { headerAction(channel) }
         if (state.errorMessage != null && !state.loadMoreError) {
             item(span = { GridItemSpan(maxLineSpan) }, key = "channel-error") {
                 ChannelInlineError(state.errorMessage, state.errorRequestId)
@@ -184,9 +194,14 @@ internal fun ChannelContentGrid(
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
         }
-        if (state.tab == ChannelTab.Playlists) {
+        if (state.tab == ChannelTab.Posts) {
+            channelPostsItems(state = posts, actions = postActions, onPlayVideo = onPlayVideo)
+        } else if (state.tab.playlistKind != null) {
+            val courses = state.tab == ChannelTab.Courses
             item(span = { GridItemSpan(maxLineSpan) }) {
-                ChannelSectionTitle(R.string.channel_playlists_section)
+                ChannelSectionTitle(
+                    if (courses) R.string.channel_courses_section else R.string.channel_playlists_section,
+                )
             }
             if (state.playlistsLoading && state.playlists.isEmpty()) {
                 item(span = { GridItemSpan(maxLineSpan) }) { ChannelLoadingRow() }
@@ -212,7 +227,9 @@ internal fun ChannelContentGrid(
             }
             if (state.playlistsLoaded && state.playlists.isEmpty()) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
-                    ChannelEmptyRow(R.string.channel_no_playlists)
+                    ChannelEmptyRow(
+                        if (courses) R.string.channel_no_courses else R.string.channel_no_playlists,
+                    )
                 }
             }
             item(span = { GridItemSpan(maxLineSpan) }, key = "channel-playlists-pagination") {

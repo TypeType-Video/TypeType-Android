@@ -1,4 +1,4 @@
-package dev.typetype.android.feature.player.components
+package dev.typetype.android.core.ui.richtext
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

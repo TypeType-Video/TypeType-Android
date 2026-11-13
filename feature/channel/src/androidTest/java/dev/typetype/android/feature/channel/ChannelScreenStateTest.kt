@@ -111,6 +111,49 @@ class ChannelScreenStateTest {
     }
 
     @Test
+    fun coursesSectionIsHiddenWhenTheChannelHasNoCourses() {
+        showContent(ChannelState(isLoading = false, channel = channel(), supportsYouTubeDiscovery = true))
+
+        composeRule.onNodeWithContentDescription("Channel section").performClick()
+
+        composeRule.onNodeWithText("Playlists").assertIsDisplayed()
+        composeRule.onNodeWithText("Courses").assertDoesNotExist()
+    }
+
+    @Test
+    fun coursesSectionSelectsTheCoursesTab() {
+        val actions = mutableListOf<ChannelAction>()
+        showContent(
+            ChannelState(
+                isLoading = false,
+                channel = channel().copy(hasCourses = true),
+                supportsYouTubeDiscovery = true,
+            ),
+            onAction = actions::add,
+        )
+
+        composeRule.onNodeWithContentDescription("Channel section").performClick()
+        composeRule.onNodeWithText("Courses").performClick()
+
+        assertTrue(actions.contains(ChannelAction.OnSelectTab(ChannelTab.Courses)))
+    }
+
+    @Test
+    fun coursesTabListsCoursesUnderItsOwnTitle() {
+        showContent(
+            ChannelState(
+                isLoading = false,
+                channel = channel().copy(hasCourses = true),
+                supportsYouTubeDiscovery = true,
+                tab = ChannelTab.Courses,
+                playlistsLoaded = true,
+            ),
+        )
+
+        composeRule.onNodeWithText("No courses on this channel").assertIsDisplayed()
+    }
+
+    @Test
     fun topBarSearchSubmitsWithoutPermanentSearchChrome() {
         val actions = mutableListOf<ChannelAction>()
         var state by mutableStateOf(

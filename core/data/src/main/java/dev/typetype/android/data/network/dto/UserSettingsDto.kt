@@ -7,9 +7,12 @@ data class UserSettingsDto(
     val defaultService: Int = 0,
     val defaultQuality: String = "1080p",
     val defaultPlaybackSpeed: Double = 1.0,
+    val holdPlaybackSpeed: Double = 2.0,
     val defaultLandingPage: String = "home",
     val autoplay: Boolean = true,
     val skipPlaylistAutoplayScreen: Boolean = false,
+    val autoplayOnOpen: Boolean = true,
+    val hideUpcomingPlaylistVideos: Boolean = false,
     val volume: Double = 1.0,
     val muted: Boolean = false,
     val subtitlesEnabled: Boolean = false,
@@ -30,8 +33,10 @@ data class UserSettingsDto(
     val hideHomeRecommendations: Boolean = false,
     val hideContinueWatching: Boolean = false,
     val hideRelatedVideos: Boolean = false,
+    val hideEndScreens: Boolean = false,
     val hideComments: Boolean = false,
     val hideShorts: Boolean = false,
+    val hideMembersOnlyContent: Boolean = false,
     val hideSubscriptionLiveStreams: Boolean? = null,
     val disableWatchHistory: Boolean = false,
     val deArrowEnabled: Boolean = false,
@@ -39,6 +44,8 @@ data class UserSettingsDto(
     val deArrowThumbnailMode: String = "dearrow_or_random",
     val deArrowTrustMode: String = "accepted",
     val accessMode: String = "unrestricted",
+    val seekbarIcon: String = "typetype",
+    val seekbarIconUrl: String = "",
 )
 
 @Serializable

@@ -7,7 +7,7 @@ import org.junit.Test
 class CommentRepliesTest {
     @Test
     fun continuationAppendsOnlyNewRepliesInOrder() {
-        val merged = mergeCommentReplies(
+        val merged = mergeCommentsById(
             current = listOf(comment("one"), comment("two")),
             additions = listOf(comment("two"), comment("three")),
         )

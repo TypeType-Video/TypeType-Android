@@ -6,7 +6,6 @@ import dev.typetype.android.core.url.percentEncode
 import dev.typetype.android.data.network.PlaybackNetworkObserver
 import dev.typetype.android.data.network.dto.AudioStreamItem
 import dev.typetype.android.data.network.dto.PreviewFrameItem
-import dev.typetype.android.data.network.dto.SponsorBlockSegmentItem
 import dev.typetype.android.data.network.dto.StreamResponse
 import dev.typetype.android.data.network.dto.StreamSegmentItem
 import dev.typetype.android.data.network.dto.SubtitleItem
@@ -14,9 +13,6 @@ import dev.typetype.android.data.network.dto.toDomainVideo
 import dev.typetype.android.data.network.dto.VideoStreamItem
 import dev.typetype.android.data.network.serverResponseException
 import dev.typetype.android.domain.stream.Chapter
-import dev.typetype.android.domain.stream.SponsorAction
-import dev.typetype.android.domain.stream.SponsorBlockSegment
-import dev.typetype.android.domain.stream.SponsorCategory
 import dev.typetype.android.domain.stream.Stream
 import dev.typetype.android.domain.stream.StreamPlaybackContract
 import dev.typetype.android.domain.stream.StreamAudioSource
@@ -29,7 +25,6 @@ import dev.typetype.android.domain.stream.isServerSabrVideoFormat
 import dev.typetype.android.domain.server.ServerRepository
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.math.roundToLong
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -93,6 +88,7 @@ internal class StreamRepositoryImpl @Inject constructor(
             transientPlaybackRequest(
                 pause = { delay(it) },
                 network = networkMonitor,
+                serverWait = TransientServerWait.Discovery,
             ) {
                 remoteSource.load(scope, videoUrl, provider, playbackBootstrap)
             }
@@ -190,6 +186,7 @@ internal class StreamRepositoryImpl @Inject constructor(
                 it.toDomainSponsorBlockSegment(duration)
             },
             chapters = streamSegments.map { it.toChapter() },
+            endScreenElements = endScreenElements.mapNotNull { it.toDomainEndScreenElement() },
             relatedStreams = relatedStreams.map { it.toDomainVideo() },
             isLive = isLive,
             isPostLive = isPostLive,
@@ -282,22 +279,6 @@ internal class StreamRepositoryImpl @Inject constructor(
         previewUrl = previewUrl,
     )
 
-}
-
-internal fun SponsorBlockSegmentItem.toDomainSponsorBlockSegment(
-    durationSeconds: Long,
-): SponsorBlockSegment? {
-    if (!startTime.isFinite() || !endTime.isFinite()) return null
-    val scale = if (durationSeconds > 0L && endTime > durationSeconds + 30L) 1.0 else 1_000.0
-    val startMs = (startTime * scale).roundToLong().coerceAtLeast(0L)
-    val endMs = (endTime * scale).roundToLong().coerceAtLeast(0L)
-    if (endMs <= startMs) return null
-    return SponsorBlockSegment(
-        startMs = startMs,
-        endMs = endMs,
-        category = SponsorCategory.fromKey(category),
-        action = SponsorAction.fromKey(action),
-    )
 }
 
 internal suspend fun <T> cancellableStreamResult(

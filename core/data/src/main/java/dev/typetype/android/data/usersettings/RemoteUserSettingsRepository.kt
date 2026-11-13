@@ -3,6 +3,7 @@ package dev.typetype.android.data.usersettings
 import dev.typetype.android.data.account.AccountScope
 import dev.typetype.android.data.account.AccountScopedValue
 import dev.typetype.android.data.account.ActiveAccountScope
+import dev.typetype.android.domain.usersettings.PlaybackStartPolicy
 import dev.typetype.android.domain.usersettings.UserSettings
 import dev.typetype.android.domain.usersettings.UserSettingsRepository
 import javax.inject.Inject
@@ -18,7 +19,7 @@ import kotlinx.coroutines.sync.withLock
 class RemoteUserSettingsRepository @Inject constructor(
     private val network: UserSettingsNetworkSource,
     private val activeAccountScope: ActiveAccountScope,
-) : UserSettingsRepository {
+) : UserSettingsRepository, PlaybackStartPolicy {
 
     private val state = MutableStateFlow<AccountScopedValue<UserSettings>?>(null)
     private val mutex = Mutex()
@@ -27,6 +28,8 @@ class RemoteUserSettingsRepository @Inject constructor(
         combine(activeAccountScope.observe(), state) { scope, cached ->
             cached?.value?.takeIf { scope == cached.scope } ?: UserSettings()
         }
+
+    override fun playWhenOpened(): Boolean = state.value?.value?.autoplayOnOpen ?: true
 
     override suspend fun current(): Result<UserSettings> = captureResult {
         mutex.withLock {

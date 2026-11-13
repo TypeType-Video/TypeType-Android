@@ -88,9 +88,12 @@ jobs:
             testDebugUnitTest
             lintDebug
             :app:assembleDebug
-            :app:assembleRelease
           )
-          ./gradlew --stacktrace "${tasks[@]}"
+          cache_args=()
+          if [ "$RUNNER_ENVIRONMENT" = self-hosted ] && [ -n "${GRADLE_USER_HOME:-}" ]; then
+            cache_args=(--project-cache-dir "$GRADLE_USER_HOME/project-cache/android-verify")
+          fi
+          ./gradlew --stacktrace "${cache_args[@]}" "${tasks[@]}"
 
       - name: Upload debug APK
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -111,6 +114,45 @@ jobs:
             **/build/reports/lint-results-debug.html
           if-no-files-found: ignore
           retention-days: 14
+
+  minified:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.publish_release || github.ref != 'refs/heads/main' }}
+    runs-on: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && fromJSON('["self-hosted","stack-android"]') || 'ubuntu-latest' }}
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Java
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-disabled: ${{ runner.environment == 'self-hosted' }}
+
+      - name: Install Android SDK platform
+        if: ${{ runner.environment == 'github-hosted' }}
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install \
+            "platforms;android-37.0" "build-tools;36.0.0" > /dev/null
+
+      - name: Build minified release
+        timeout-minutes: 30
+        run: |
+          cache_args=()
+          if [ "$RUNNER_ENVIRONMENT" = self-hosted ] && [ -n "${GRADLE_USER_HOME:-}" ]; then
+            cache_args=(--project-cache-dir "$GRADLE_USER_HOME/project-cache/android-minified")
+          fi
+          ./gradlew --stacktrace "${cache_args[@]}" :app:assembleRelease
+
+      - name: Check that R8 kept every view model constructor
+        run: |
+          awk '/^dev\.typetype\..*ViewModel:$/ { c = $1; next } /^[^ ]/ { c = "" } c && /<init>\(/ { print "R8 removed the constructor of " c; bad = 1 } END { exit bad }' \
+            app/build/outputs/mapping/release/usage.txt
 
   release:
     if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && inputs.publish_release }}
@@ -182,6 +224,11 @@ jobs:
             :app:assembleRelease
           )
           ./gradlew --stacktrace "${tasks[@]}"
+
+      - name: Check that R8 kept every view model constructor
+        run: |
+          awk '/^dev\.typetype\..*ViewModel:$/ { c = $1; next } /^[^ ]/ { c = "" } c && /<init>\(/ { print "R8 removed the constructor of " c; bad = 1 } END { exit bad }' \
+            app/build/outputs/mapping/release/usage.txt
 
       - name: Upload lint report
         if: ${{ always() }}

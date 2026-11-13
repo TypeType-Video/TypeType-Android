@@ -67,7 +67,7 @@ internal fun ChannelDiscoveryControls(
                 label = stringResource(state.tab.labelResource()),
                 accessibilityLabel = stringResource(R.string.channel_section),
                 leadingIcon = { Icon(Icons.Outlined.VideoLibrary, contentDescription = null) },
-                options = ChannelTab.entries,
+                options = state.availableTabs(),
                 selectedOption = state.tab,
                 optionLabel = { stringResource(it.labelResource()) },
                 onSelect = { onAction(ChannelAction.OnSelectTab(it)) },
@@ -210,6 +210,8 @@ private fun ChannelTab.labelResource(): Int = when (this) {
     ChannelTab.Videos -> R.string.channel_tab_videos
     ChannelTab.Live -> R.string.channel_tab_live
     ChannelTab.Playlists -> R.string.channel_tab_playlists
+    ChannelTab.Courses -> R.string.channel_tab_courses
+    ChannelTab.Posts -> R.string.channel_tab_posts
 }
 
 private fun ChannelSort.labelResource(): Int = when (this) {

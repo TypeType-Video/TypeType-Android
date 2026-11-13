@@ -46,6 +46,8 @@ interface TypeTypeFeedApi {
     suspend fun subscriptionsFeed(
         @Query("limit") limit: Int = 30,
         @Query("cursor") cursor: String? = null,
+        @Query("groupId") groupId: String? = null,
+        @Query("ungrouped") ungrouped: Boolean? = null,
     ): Response<SubscriptionFeedResponse>
 
     @GET("subscriptions/shorts")

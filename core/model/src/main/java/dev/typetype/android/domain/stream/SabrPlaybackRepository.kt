@@ -64,6 +64,8 @@ interface SabrPlaybackRepository {
         startTimeMs: Long,
     ): Result<SabrPlaybackSession>
 
+    suspend fun release(target: SabrPlaybackTarget, sessionId: String): Result<Unit> = Result.success(Unit)
+
     suspend fun refresh(
         target: SabrPlaybackTarget,
         binding: SabrPlaybackBinding,

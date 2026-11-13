@@ -1,6 +1,7 @@
 package dev.typetype.android.feature.subscriptions
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +39,7 @@ internal fun SubscriptionChannelsGrid(
     channels: List<SubscriptionSummary>,
     isLoading: Boolean,
     onOpenChannel: (String) -> Unit,
+    onEditGroups: ((SubscriptionSummary) -> Unit)? = null,
 ) {
     val serverBaseUrl = LocalServerBaseUrl.current
     when {
@@ -59,7 +61,7 @@ internal fun SubscriptionChannelsGrid(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(channels, key = SubscriptionSummary::channelUrl) { channel ->
-                SubscriptionChannelCard(channel, serverBaseUrl, onOpenChannel)
+                SubscriptionChannelCard(channel, serverBaseUrl, onOpenChannel, onEditGroups)
             }
         }
     }
@@ -70,11 +72,16 @@ private fun SubscriptionChannelCard(
     channel: SubscriptionSummary,
     serverBaseUrl: String?,
     onOpenChannel: (String) -> Unit,
+    onEditGroups: ((SubscriptionSummary) -> Unit)?,
 ) {
     Surface(
-        onClick = { onOpenChannel(channel.channelUrl) },
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surface,
+        modifier = Modifier.clip(MaterialTheme.shapes.large).combinedClickable(
+            onClick = { onOpenChannel(channel.channelUrl) },
+            onLongClick = onEditGroups?.let { { it(channel) } },
+            onLongClickLabel = stringResource(R.string.subscription_groups_edit_channel),
+        ),
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp),

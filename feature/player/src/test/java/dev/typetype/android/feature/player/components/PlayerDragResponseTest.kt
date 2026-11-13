@@ -19,4 +19,10 @@ class PlayerDragResponseTest {
         assertEquals(0.25f, steps.update(480f))
         assertEquals(0.5f, steps.update(456f))
     }
+
+    @Test fun `hold starts from the speed chosen on the server`() {
+        val steps = HoldSpeedSteps(24f, initialFactor = 3f)
+        assertEquals(3f, steps.update(0f))
+        assertEquals(3.25f, steps.update(-24f))
+    }
 }

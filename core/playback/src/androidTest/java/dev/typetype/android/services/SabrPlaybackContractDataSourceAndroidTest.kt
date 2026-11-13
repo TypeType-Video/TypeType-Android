@@ -59,8 +59,11 @@ class SabrPlaybackContractDataSourceAndroidTest {
         assertEquals(PlaybackRecoveryCause.Server, IOException("source", failure).playbackRecoveryCause())
         val policy = SabrLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(5))
         assertEquals(500L, policy.getRetryDelayMsFor(failure.toLoadErrorInfo(request)))
-        assertEquals(500L, policy.getRetryDelayMsFor(failure.toLoadErrorInfo(request, 59)))
-        assertEquals(C.TIME_UNSET, policy.getRetryDelayMsFor(failure.toLoadErrorInfo(request, 60)))
+        assertEquals(500L, policy.getRetryDelayMsFor(failure.toLoadErrorInfo(request, MAX_SABR_SEGMENT_RETRIES)))
+        assertEquals(
+            C.TIME_UNSET,
+            policy.getRetryDelayMsFor(failure.toLoadErrorInfo(request, MAX_SABR_SEGMENT_RETRIES + 1)),
+        )
         assertEquals(5, policy.getMinimumLoadableRetryCount(C.DATA_TYPE_MEDIA))
     }
 

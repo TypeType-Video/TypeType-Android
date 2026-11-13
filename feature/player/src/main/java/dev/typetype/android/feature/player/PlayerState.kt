@@ -23,6 +23,7 @@ data class PlayerState(
     val autoplayCountdownSeconds: Int = 10,
     val audioOnlyPlaybackDefault: Boolean? = null,
     val preferredCodec: String = RECOMMENDED_CODEC_KEY,
+    val commentGifsAnimated: Boolean = false,
     val userSettings: UserSettings = UserSettings(),
     val playlistPickerVisible: Boolean = false,
     val playlists: List<Playlist> = emptyList(),

@@ -140,6 +140,16 @@ fun ContentSettingsScreen(
                 }
                 item {
                     ContentVisibilitySwitch(
+                        title = R.string.settings_content_hide_end_screens,
+                        subtitle = R.string.settings_content_hide_end_screens_subtitle,
+                        checked = state.hideEndScreens,
+                        enabled = controlsEnabled,
+                        action = ContentSettingsAction::SetHideEndScreens,
+                        onAction = onAction,
+                    )
+                }
+                item {
+                    ContentVisibilitySwitch(
                         title = R.string.settings_content_hide_comments,
                         subtitle = R.string.settings_content_hide_comments_subtitle,
                         checked = state.hideComments,
@@ -155,6 +165,16 @@ fun ContentSettingsScreen(
                         checked = state.hideShorts,
                         enabled = controlsEnabled,
                         action = ContentSettingsAction::SetHideShorts,
+                        onAction = onAction,
+                    )
+                }
+                item {
+                    ContentVisibilitySwitch(
+                        title = R.string.settings_content_hide_members_only,
+                        subtitle = R.string.settings_content_hide_members_only_subtitle,
+                        checked = state.hideMembersOnlyContent,
+                        enabled = controlsEnabled,
+                        action = ContentSettingsAction::SetHideMembersOnlyContent,
                         onAction = onAction,
                     )
                 }

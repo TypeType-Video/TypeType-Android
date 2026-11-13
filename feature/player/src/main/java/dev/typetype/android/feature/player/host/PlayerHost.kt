@@ -46,6 +46,7 @@ fun PlayerHost(
     reserveNavigationBarInset: Boolean = true,
     accessibleControlsEnabled: Boolean = false,
     onTransitionProgressChange: (Float) -> Unit = {},
+    onOpenPlaylist: (playlistUrl: String) -> Unit = {},
     content: @Composable () -> Unit,
 ) {
     val state by controller.state.collectAsStateWithLifecycle()
@@ -112,6 +113,12 @@ fun PlayerHost(
             player.stop()
             player.clearMediaItems()
             controller.acknowledgePlaybackClear(requestStamp)
+        }
+        LaunchedEffect(state.videoUrl, mediaController) {
+            val player = mediaController ?: return@LaunchedEffect
+            if (player.isPlaying && leavesPlayingVideo(state.videoUrl, player.currentMediaItem?.mediaId)) {
+                player.pause()
+            }
         }
         LaunchedEffect(state.target, isFullscreen) {
             if (state.target != PlayerHostTarget.Expanded && isFullscreen) {
@@ -181,6 +188,10 @@ fun PlayerHost(
                         onOpenChannel = { url ->
                             controller.minimize()
                             onOpenChannel(url)
+                        },
+                        onOpenPlaylist = { url ->
+                            controller.minimize()
+                            onOpenPlaylist(url)
                         },
                         modifier = Modifier.fillMaxSize(),
                     )

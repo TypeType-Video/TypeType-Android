@@ -29,6 +29,7 @@ data class AppPreferences(
     val playerAutoplayCountdownSeconds: Int = 10,
     val playerAudioOnlyPlayback: Boolean = false,
     val playerPauseInBackground: Boolean = false,
+    val commentGifsAnimated: Boolean = false,
     val danmakuEnabled: Boolean = false,
     val danmakuSpeed: Float = 1f,
     val danmakuSize: Float = 1f,

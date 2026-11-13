@@ -31,6 +31,16 @@ class TypeTypeApiHolder @Inject constructor(
         )
     }
 
+    suspend fun requireLiveChat(scope: AccountScope): TypeTypeLiveChatApi = create(scope) { baseUrl, token ->
+        scopedApiFactory.createLiveChat(
+            baseUrl = baseUrl,
+            serverId = scope.serverId,
+            accountId = scope.accountId,
+            token = token,
+            type = TypeTypeLiveChatApi::class.java,
+        )
+    }
+
     suspend fun requireSupport(scope: AccountScope): TypeTypeSupportApi = create(scope) { baseUrl, token ->
         scopedApiFactory.create(
             baseUrl = baseUrl,

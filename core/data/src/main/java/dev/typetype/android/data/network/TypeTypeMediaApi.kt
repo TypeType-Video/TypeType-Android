@@ -1,6 +1,7 @@
 package dev.typetype.android.data.network
 
 import dev.typetype.android.data.network.dto.BulletCommentsPageResponse
+import dev.typetype.android.data.network.dto.CommentSearchResponse
 import dev.typetype.android.data.network.dto.CommentsPageResponse
 import dev.typetype.android.data.network.dto.AudioOnlyStreamResponse
 import dev.typetype.android.data.network.dto.InstanceResponse
@@ -11,8 +12,10 @@ import dev.typetype.android.data.network.dto.SabrPlaybackResponse
 import dev.typetype.android.data.network.dto.SabrPlaybackWindowRequestDto
 import dev.typetype.android.data.network.dto.SabrPlaybackWindowResponseDto
 import dev.typetype.android.data.network.dto.StreamResponse
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
@@ -75,6 +78,9 @@ interface TypeTypeMediaApi {
         @Body body: SabrPlaybackWindowRequestDto,
     ): Response<SabrPlaybackWindowResponseDto>
 
+    @DELETE("sabr/playback/{sessionId}")
+    suspend fun releaseSabrPlayback(@Path("sessionId") sessionId: String): Response<Unit>
+
     @POST("sabr/playback/{sessionId}/window")
     suspend fun sabrPlaybackWindow(
         @Path("sessionId") sessionId: String,
@@ -92,6 +98,16 @@ interface TypeTypeMediaApi {
         @Query("url") videoUrl: String,
         @Query("repliesPage") repliesPage: String,
     ): Response<CommentsPageResponse>
+
+    @GET("comments/search")
+    suspend fun searchComments(
+        @Query("url") videoUrl: String,
+        @Query("q") query: String,
+        @Query("cursor") cursor: String? = null,
+    ): Response<CommentSearchResponse>
+
+    @GET("comments/voice")
+    suspend fun commentVoiceAudio(@Query("url") voiceReplyUrl: String): Response<ResponseBody>
 
     @GET("bullet-comments")
     suspend fun bulletComments(

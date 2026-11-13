@@ -9,6 +9,7 @@ import dev.typetype.android.R
 import dev.typetype.android.core.ui.error.UserErrorMapper
 import dev.typetype.android.data.setup.LocalNetworkTargetResolver
 import dev.typetype.android.domain.server.Server
+import dev.typetype.android.domain.setup.ServerAddress
 import dev.typetype.android.domain.setup.SetupRepository
 import java.util.UUID
 import javax.inject.Inject
@@ -99,13 +100,13 @@ class AddServerViewModel @Inject constructor(
 
     private fun connect(allowCleartextHttp: Boolean) {
         val typedUrl = _state.value.url
-        if (typedUrl.isBlank()) {
-            _state.update {
-                it.copy(
-                    errorMessage = context.getString(R.string.setup_enter_server_url),
-                    errorRequestId = null,
-                )
-            }
+        val inputError = when {
+            typedUrl.isBlank() -> R.string.setup_enter_server_url
+            !allowCleartextHttp && ServerAddress.usesCleartextHttp(typedUrl) -> R.string.setup_cleartext_not_allowed
+            else -> null
+        }
+        if (inputError != null) {
+            _state.update { it.copy(errorMessage = context.getString(inputError), errorRequestId = null) }
             return
         }
         _state.update {

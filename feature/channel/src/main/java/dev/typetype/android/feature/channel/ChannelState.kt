@@ -1,6 +1,7 @@
 package dev.typetype.android.feature.channel
 
 import dev.typetype.android.domain.channel.Channel
+import dev.typetype.android.domain.channel.ChannelPlaylistKind
 import dev.typetype.android.domain.channel.ChannelSort
 import dev.typetype.android.domain.podcast.Podcast
 import dev.typetype.android.domain.search.SearchPlaylist
@@ -9,6 +10,8 @@ enum class ChannelTab {
     Videos,
     Live,
     Playlists,
+    Courses,
+    Posts,
 }
 
 data class ChannelState(
@@ -31,6 +34,7 @@ data class ChannelState(
     val notificationsInFlight: Boolean = false,
     val podcasts: List<Podcast> = emptyList(),
     val podcastsLoading: Boolean = false,
+    val playlistsKind: ChannelPlaylistKind = ChannelPlaylistKind.Playlists,
     val playlists: List<SearchPlaylist> = emptyList(),
     val playlistsLoaded: Boolean = false,
     val playlistsNextPage: String? = null,
@@ -40,6 +44,25 @@ data class ChannelState(
     val playlistsErrorMessage: String? = null,
     val playlistsErrorRequestId: String? = null,
 )
+
+internal val ChannelTab.playlistKind: ChannelPlaylistKind?
+    get() = when (this) {
+        ChannelTab.Playlists -> ChannelPlaylistKind.Playlists
+        ChannelTab.Courses -> ChannelPlaylistKind.Courses
+        ChannelTab.Videos, ChannelTab.Live, ChannelTab.Posts -> null
+    }
+
+internal fun ChannelState.availableTabs(): List<ChannelTab> =
+    ChannelTab.entries.filter {
+        when (it) {
+            ChannelTab.Courses -> channel?.hasCourses == true
+            ChannelTab.Posts -> supportsYouTubeDiscovery
+            ChannelTab.Videos, ChannelTab.Live, ChannelTab.Playlists -> true
+        }
+    }
+
+internal val ChannelTab.listsVideos: Boolean
+    get() = this == ChannelTab.Videos || this == ChannelTab.Live
 
 internal fun String.isYouTubeChannel(): Boolean =
     contains("youtube.com", ignoreCase = true) || startsWith("/channel/") || startsWith("/c/")

@@ -82,8 +82,8 @@ fun ShortsPlayerRoute(
                 onSelectCodec = {
                     viewModel.onAction(PlayerAction.OnSetPreferredCodec(it))
                 },
-                onSaveProgress = {
-                    viewModel.onAction(PlayerAction.OnSaveProgress(it))
+                onSaveProgress = { url, position ->
+                    viewModel.onAction(PlayerAction.OnSaveProgress(url, position))
                 },
             )
         }
@@ -99,7 +99,7 @@ private fun ShortsPlayerSurface(
     onAdvance: () -> Unit,
     onRetry: () -> Unit,
     onSelectCodec: (String) -> Unit,
-    onSaveProgress: (Long) -> Unit,
+    onSaveProgress: (videoUrl: String, positionMillis: Long) -> Unit,
 ) {
     val stream = requireNotNull(state.stream)
     val controller = LocalMediaController.current

@@ -13,6 +13,7 @@ import dev.typetype.android.core.ui.navigation.DiagnosticsRoute
 import dev.typetype.android.core.ui.navigation.ImportDataRoute
 import dev.typetype.android.core.ui.navigation.LicensesRoute
 import dev.typetype.android.core.ui.navigation.PlayerSettingsRoute
+import dev.typetype.android.core.ui.navigation.LinkedAccountsRoute
 import dev.typetype.android.core.ui.navigation.PrivacySettingsRoute
 import dev.typetype.android.core.ui.navigation.ProfileSettingsRoute
 import dev.typetype.android.core.ui.navigation.RecommenderSettingsRoute
@@ -44,6 +45,7 @@ internal fun NavGraphBuilder.settingsDestinations(
             onOpenAppearance = { navController.navigate(AppearanceRoute) },
             onOpenContent = { navController.navigate(ContentSettingsRoute) },
             onOpenRecommendations = { navController.navigate(RecommenderSettingsRoute) },
+            onOpenLinkedAccounts = { navController.navigate(LinkedAccountsRoute) },
             onOpenPlayer = { navController.navigate(PlayerSettingsRoute) },
             onOpenPushNotifications = { navController.navigate(dev.typetype.android.core.ui.navigation.PushNotificationsRoute) },
             onOpenStorage = { navController.navigate(StorageSettingsRoute) },

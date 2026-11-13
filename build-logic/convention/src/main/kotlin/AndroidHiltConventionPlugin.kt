@@ -13,5 +13,6 @@ class AndroidHiltConventionPlugin : Plugin<Project> {
             add("implementation", libs.findLibrary("hilt-android").get())
             add("ksp", libs.findLibrary("hilt-compiler").get())
         }
+        guardHiltKsp()
     }
 }

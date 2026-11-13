@@ -39,10 +39,14 @@ class PlayerSettingsViewModel @Inject constructor(
                     longPressSpeedEnabled = prefs.playerLongPressSpeedEnabled,
                     accessibleControlsEnabled = prefs.playerAccessibleControlsEnabled,
                     autoplayEnabled = server.autoplay,
+                    autoplayOnOpen = server.autoplayOnOpen,
+                    hideUpcomingPlaylistVideos = server.hideUpcomingPlaylistVideos,
+                    holdPlaybackSpeed = server.holdPlaybackSpeed,
                     autoplayCountdownSeconds = prefs.playerAutoplayCountdownSeconds,
                     skipPlaylistAutoplayScreen = server.skipPlaylistAutoplayScreen,
                     audioOnlyPlayback = prefs.playerAudioOnlyPlayback,
                     pauseInBackgroundEnabled = prefs.playerPauseInBackground,
+                    commentGifsAnimated = prefs.commentGifsAnimated,
                     danmakuEnabled = prefs.danmakuEnabled,
                     danmakuSpeed = prefs.danmakuSpeed,
                     danmakuSize = prefs.danmakuSize,
@@ -90,6 +94,8 @@ class PlayerSettingsViewModel @Inject constructor(
                     preferencesRepository.setPlayerAccessibleControlsEnabled(action.enabled)
                 is PlayerSettingsAction.SetPauseInBackground ->
                     preferencesRepository.setPlayerPauseInBackground(action.enabled)
+                is PlayerSettingsAction.SetCommentGifsAnimated ->
+                    preferencesRepository.setCommentGifsAnimated(action.enabled)
                 is PlayerSettingsAction.SetDanmakuEnabled ->
                     preferencesRepository.setDanmakuEnabled(action.enabled)
                 is PlayerSettingsAction.SetDanmakuSpeed ->
@@ -102,6 +108,12 @@ class PlayerSettingsViewModel @Inject constructor(
                     preferencesRepository.setPlayerAutoplayCountdownSeconds(action.seconds)
                 is PlayerSettingsAction.SetSkipPlaylistAutoplayScreen ->
                     updateServer { it.copy(skipPlaylistAutoplayScreen = action.enabled) }
+                is PlayerSettingsAction.SetAutoplayOnOpen ->
+                    updateServer { it.copy(autoplayOnOpen = action.enabled) }
+                is PlayerSettingsAction.SetHideUpcomingPlaylistVideos ->
+                    updateServer { it.copy(hideUpcomingPlaylistVideos = action.hidden) }
+                is PlayerSettingsAction.SetHoldPlaybackSpeed ->
+                    updateServer { it.copy(holdPlaybackSpeed = action.speed) }
                 is PlayerSettingsAction.SetAudioOnlyPlayback ->
                     preferencesRepository.setPlayerAudioOnlyPlayback(action.enabled)
                 is PlayerSettingsAction.SetDefaultQuality ->

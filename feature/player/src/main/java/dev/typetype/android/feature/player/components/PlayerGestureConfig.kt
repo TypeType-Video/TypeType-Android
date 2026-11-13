@@ -6,5 +6,8 @@ data class PlayerGestureConfig(
     val swipeSeekEnabled: Boolean = false,
     val swipeBrightnessVolumeEnabled: Boolean = true,
     val longPressSpeedEnabled: Boolean = true,
+    val longPressSpeed: Float = DEFAULT_LONG_PRESS_SPEED,
     val accessibleControlsEnabled: Boolean = false,
 )
+
+const val DEFAULT_LONG_PRESS_SPEED = 2f

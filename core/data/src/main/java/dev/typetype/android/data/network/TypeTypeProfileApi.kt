@@ -27,6 +27,12 @@ interface TypeTypeProfileApi {
     @DELETE("profile/avatar")
     suspend fun clearAvatar(): Response<Unit>
 
+    @PUT("profile/seekbar-icon")
+    suspend fun uploadSeekbarIcon(@Body body: RequestBody): Response<Unit>
+
+    @DELETE("profile/seekbar-icon")
+    suspend fun deleteSeekbarIcon(): Response<Unit>
+
     @GET("profile/account")
     suspend fun accountIdentity(): Response<AccountIdentityDto>
 

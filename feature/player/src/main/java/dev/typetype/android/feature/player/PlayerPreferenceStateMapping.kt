@@ -6,5 +6,6 @@ internal fun PlayerState.applyPreferences(prefs: PlayerPreferenceState): PlayerS
     autoplayCountdownSeconds = prefs.autoplayCountdownSeconds,
     audioOnlyPlaybackDefault = prefs.audioOnlyPlaybackDefault,
     preferredCodec = prefs.preferredCodec,
+    commentGifsAnimated = prefs.commentGifsAnimated,
     userSettings = prefs.userSettings,
 )

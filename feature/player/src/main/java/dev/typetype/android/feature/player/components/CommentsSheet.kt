@@ -1,56 +1,30 @@
 package dev.typetype.android.feature.player.components
 
 import android.content.Intent
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
-import dev.typetype.android.domain.navigation.sameVideoTimestampMillis
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.core.net.toUri
-import dev.typetype.android.R
+import dev.typetype.android.core.ui.components.ExternalLinkDialog
 import dev.typetype.android.domain.comments.Comment
 import dev.typetype.android.domain.comments.CommentsRepository
+import dev.typetype.android.domain.navigation.sameVideoTimestampMillis
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,88 +38,41 @@ fun CommentsSheet(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val items: LazyPagingItems<Comment> = pagingFlow.collectAsLazyPagingItems()
     val context = LocalContext.current
-    val repliesFailureMessage = stringResource(R.string.comments_replies_failed)
     var pendingUrl by remember { mutableStateOf<String?>(null) }
-    val repliesByCommentId = remember { mutableStateMapOf<String, RepliesState>() }
-    val coroutineScope = rememberCoroutineScope()
+    val replies = rememberCommentRepliesController(videoUrl, commentsRepository::loadReplies)
+    val search = rememberCommentSearchController(videoUrl, commentsRepository::searchComments)
+    val voiceReplyPlayback = rememberVoiceReplyPlayback(commentsRepository::loadVoiceReplyAudio)
+    val onUrlClick: (String) -> Unit = { url ->
+        val timestamp = sameVideoTimestampMillis(url, videoUrl)
+        if (timestamp != null) onTimestampClick(timestamp) else pendingUrl = url
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
-        Box(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.7f)) {
-            CommentsList(
-                items = items,
-                repliesByCommentId = repliesByCommentId,
-                onUrlClick = { url ->
-                    val timestamp = sameVideoTimestampMillis(url, videoUrl)
-                    if (timestamp != null) {
-                        onTimestampClick(timestamp)
-                    } else {
-                        pendingUrl = url
-                    }
-                },
-                onTimestampClick = onTimestampClick,
-                onToggleReplies = { comment ->
-                    val current = repliesByCommentId[comment.id]
-                    when (current) {
-                        is RepliesState.Loaded -> repliesByCommentId.remove(comment.id)
-                        RepliesState.Loading -> Unit
-                        else -> {
-                            val replyCursor = comment.repliesPage ?: return@CommentsList
-                            repliesByCommentId[comment.id] = RepliesState.Loading
-                            coroutineScope.launch {
-                                commentsRepository.loadReplies(videoUrl, replyCursor)
-                                    .fold(
-                                        onSuccess = {
-                                            repliesByCommentId[comment.id] =
-                                                RepliesState.Loaded(
-                                                    replies = it.comments,
-                                                    nextPage = it.nextpage,
-                                                )
-                                        },
-                                        onFailure = {
-                                            repliesByCommentId[comment.id] =
-                                                RepliesState.Failed(repliesFailureMessage)
-                                        },
-                                    )
-                            }
-                        }
-                    }
-                },
-                onLoadMoreReplies = { comment ->
-                    val current = repliesByCommentId[comment.id]
-                        as? RepliesState.Loaded ?: return@CommentsList
-                    val nextPage = current.nextPage ?: return@CommentsList
-                    if (current.isLoadingMore) return@CommentsList
-                    repliesByCommentId[comment.id] = current.copy(
-                        isLoadingMore = true,
-                        loadMoreFailed = false,
+        CompositionLocalProvider(LocalVoiceReplyPlayback provides voiceReplyPlayback) {
+            Column(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.7f)) {
+                CommentsHeader(search = search)
+                if (search.state.query.isEmpty()) {
+                    CommentsList(
+                        items = items,
+                        replies = replies,
+                        onUrlClick = onUrlClick,
+                        onTimestampClick = onTimestampClick,
+                        modifier = Modifier.weight(1f),
                     )
-                    coroutineScope.launch {
-                        commentsRepository.loadReplies(videoUrl, nextPage).fold(
-                            onSuccess = { page ->
-                                val latest = repliesByCommentId[comment.id]
-                                    as? RepliesState.Loaded ?: return@fold
-                                repliesByCommentId[comment.id] = latest.copy(
-                                    replies = mergeCommentReplies(latest.replies, page.comments),
-                                    nextPage = page.nextpage,
-                                    isLoadingMore = false,
-                                )
-                            },
-                            onFailure = {
-                                val latest = repliesByCommentId[comment.id]
-                                    as? RepliesState.Loaded ?: return@fold
-                                repliesByCommentId[comment.id] = latest.copy(
-                                    isLoadingMore = false,
-                                    loadMoreFailed = true,
-                                )
-                            },
-                        )
-                    }
-                },
-            )
+                } else {
+                    CommentSearchResults(
+                        search = search,
+                        replies = replies,
+                        onUrlClick = onUrlClick,
+                        onTimestampClick = onTimestampClick,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
         }
     }
 
@@ -153,111 +80,10 @@ fun CommentsSheet(
         ExternalLinkDialog(
             url = url,
             onConfirm = {
-                val intent = Intent(Intent.ACTION_VIEW, url.toUri())
-                context.startActivity(intent)
+                context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
                 pendingUrl = null
             },
             onDismiss = { pendingUrl = null },
-        )
-    }
-}
-
-@Composable
-private fun CommentsList(
-    items: LazyPagingItems<Comment>,
-    repliesByCommentId: Map<String, RepliesState>,
-    onUrlClick: (String) -> Unit,
-    onTimestampClick: (Long) -> Unit,
-    onToggleReplies: (Comment) -> Unit,
-    onLoadMoreReplies: (Comment) -> Unit,
-) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-    ) {
-        item {
-            Text(
-                text = stringResource(R.string.comments_title),
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(vertical = 8.dp),
-            )
-        }
-        items(
-            count = items.itemCount,
-            key = { index -> items.peek(index)?.id ?: "loading-$index" },
-        ) { index ->
-            val comment = items[index]
-            if (comment != null) {
-                val repliesState = repliesByCommentId[comment.id]
-                CommentRow(
-                    comment = comment,
-                    repliesState = repliesState,
-                    onUrlClick = onUrlClick,
-                    onTimestampClick = onTimestampClick,
-                    onToggleReplies = { onToggleReplies(comment) },
-                    onLoadMoreReplies = { onLoadMoreReplies(comment) },
-                )
-                Spacer(Modifier.height(12.dp))
-            }
-        }
-        item {
-            FooterState(items = items)
-        }
-    }
-}
-
-@Composable
-private fun CommentRow(
-    comment: Comment,
-    repliesState: RepliesState?,
-    onUrlClick: (String) -> Unit,
-    onTimestampClick: (Long) -> Unit,
-    onToggleReplies: () -> Unit,
-    onLoadMoreReplies: () -> Unit,
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        CommentBody(
-            comment = comment,
-            avatarSize = 36.dp,
-            onUrlClick = onUrlClick,
-            onTimestampClick = onTimestampClick,
-        )
-        if (comment.replyCount > 0 && comment.repliesPage != null) {
-            Spacer(Modifier.height(4.dp))
-            Row(
-                modifier = Modifier
-                    .clickable(onClick = onToggleReplies)
-                    .padding(start = 46.dp, top = 4.dp, bottom = 4.dp, end = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    imageVector = if (repliesState is RepliesState.Loaded) Icons.Filled.KeyboardArrowUp
-                    else Icons.Filled.KeyboardArrowDown,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(Modifier.width(4.dp))
-                Text(
-                    text = pluralStringResource(
-                        R.plurals.comments_replies_count,
-                        comment.replyCount,
-                        comment.replyCount,
-                    ),
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        fontWeight = FontWeight.Medium,
-                    ),
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-        }
-        CommentReplies(
-            state = repliesState,
-            onUrlClick = onUrlClick,
-            onTimestampClick = onTimestampClick,
-            onRetry = onToggleReplies,
-            onLoadMore = onLoadMoreReplies,
         )
     }
 }

@@ -29,6 +29,7 @@ import dev.typetype.android.core.ui.navigation.PlayerSettingsRoute
 import dev.typetype.android.core.ui.navigation.PrivacySettingsRoute
 import dev.typetype.android.core.ui.navigation.ProfileSettingsRoute
 import dev.typetype.android.core.ui.navigation.RssFeedsRoute
+import dev.typetype.android.core.ui.navigation.LinkedAccountsRoute
 import dev.typetype.android.core.ui.navigation.PushNotificationsRoute
 import dev.typetype.android.core.ui.navigation.RecommenderSettingsRoute
 import dev.typetype.android.core.ui.navigation.SettingsRoute
@@ -64,6 +65,7 @@ internal fun AdaptiveSettingsHost(
                                 }
                             },
                             onOpenAccounts = { navController.selectSettings(AccountsRoute) },
+                            onOpenLinkedAccounts = { navController.selectSettings(LinkedAccountsRoute) },
                             onOpenProfile = { navController.selectSettings(ProfileSettingsRoute) },
                             onOpenImport = { navController.selectSettings(ImportDataRoute) },
                             onOpenRssFeeds = { navController.selectSettings(RssFeedsRoute) },
@@ -105,6 +107,7 @@ internal fun NavHostController.selectSettings(route: Any) {
 private fun NavDestination.settingsTitle(): Int? = when {
     hasRoute<SettingsRoute>() || hasRoute<AppearanceRoute>() -> R.string.settings_appearance_title
     hasRoute<AccountsRoute>() -> R.string.accounts_title
+    hasRoute<LinkedAccountsRoute>() -> R.string.linked_accounts_title
     hasRoute<ProfileSettingsRoute>() -> R.string.settings_profile_title
     hasRoute<ImportDataRoute>() -> R.string.settings_import_title
     hasRoute<RssFeedsRoute>() -> R.string.rss_settings_title

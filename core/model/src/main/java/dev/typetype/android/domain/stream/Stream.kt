@@ -37,6 +37,7 @@ data class Stream(
     val startPositionMillis: Long,
     val sponsorBlockSegments: List<SponsorBlockSegment> = emptyList(),
     val chapters: List<Chapter> = emptyList(),
+    val endScreenElements: List<EndScreenElement> = emptyList(),
     val relatedStreams: List<Video> = emptyList(),
     val isLive: Boolean = false,
     val isPostLive: Boolean = false,

@@ -11,12 +11,17 @@ internal fun UserSettings.patchFrom(previous: UserSettings): JsonObject = buildJ
     if (defaultPlaybackSpeed != previous.defaultPlaybackSpeed) {
         put("defaultPlaybackSpeed", defaultPlaybackSpeed)
     }
+    if (holdPlaybackSpeed != previous.holdPlaybackSpeed) put("holdPlaybackSpeed", holdPlaybackSpeed)
     if (defaultLandingPage != previous.defaultLandingPage) {
         put("defaultLandingPage", defaultLandingPage)
     }
     if (autoplay != previous.autoplay) put("autoplay", autoplay)
     if (skipPlaylistAutoplayScreen != previous.skipPlaylistAutoplayScreen) {
         put("skipPlaylistAutoplayScreen", skipPlaylistAutoplayScreen)
+    }
+    if (autoplayOnOpen != previous.autoplayOnOpen) put("autoplayOnOpen", autoplayOnOpen)
+    if (hideUpcomingPlaylistVideos != previous.hideUpcomingPlaylistVideos) {
+        put("hideUpcomingPlaylistVideos", hideUpcomingPlaylistVideos)
     }
     if (volume != previous.volume) put("volume", volume)
     if (muted != previous.muted) put("muted", muted)
@@ -92,8 +97,12 @@ internal fun UserSettings.patchFrom(previous: UserSettings): JsonObject = buildJ
     if (hideRelatedVideos != previous.hideRelatedVideos) {
         put("hideRelatedVideos", hideRelatedVideos)
     }
+    if (hideEndScreens != previous.hideEndScreens) put("hideEndScreens", hideEndScreens)
     if (hideComments != previous.hideComments) put("hideComments", hideComments)
     if (hideShorts != previous.hideShorts) put("hideShorts", hideShorts)
+    if (hideMembersOnlyContent != previous.hideMembersOnlyContent) {
+        put("hideMembersOnlyContent", hideMembersOnlyContent)
+    }
     if (
         supportsHideSubscriptionLiveStreams &&
         hideSubscriptionLiveStreams != previous.hideSubscriptionLiveStreams
@@ -114,4 +123,5 @@ internal fun UserSettings.patchFrom(previous: UserSettings): JsonObject = buildJ
         put("deArrowTrustMode", deArrowTrustMode)
     }
     if (accessMode != previous.accessMode) put("accessMode", accessMode)
+    if (seekbarIcon != previous.seekbarIcon) put("seekbarIcon", seekbarIcon)
 }

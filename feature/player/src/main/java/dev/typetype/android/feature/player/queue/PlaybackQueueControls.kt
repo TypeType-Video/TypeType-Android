@@ -46,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.branding.rememberVideoBranding
@@ -61,6 +62,9 @@ internal fun PlaybackQueueControls(
 ) {
     val serverBaseUrl = LocalServerBaseUrl.current
     var sheetVisible by remember { mutableStateOf(false) }
+    val hideUpcomingByDefault by viewModel.hideUpcomingByDefault.collectAsStateWithLifecycle()
+    var upcomingHiddenOverride by remember(state.title) { mutableStateOf<Boolean?>(null) }
+    val upcomingHidden = upcomingHiddenOverride ?: hideUpcomingByDefault
     if (!state.isActive) return
     Row(
         modifier = Modifier
@@ -106,6 +110,8 @@ internal fun PlaybackQueueControls(
         PlaybackQueueSheet(
             state = state,
             serverBaseUrl = serverBaseUrl,
+            upcomingHidden = upcomingHidden,
+            onToggleUpcoming = { upcomingHiddenOverride = !upcomingHidden },
             onPlay = {
                 sheetVisible = false
                 viewModel.play(it)
@@ -125,6 +131,8 @@ internal fun PlaybackQueueControls(
 private fun PlaybackQueueSheet(
     state: PlaybackQueueState,
     serverBaseUrl: String?,
+    upcomingHidden: Boolean,
+    onToggleUpcoming: () -> Unit,
     onPlay: (Int) -> Unit,
     onRetry: () -> Unit,
     onPlayNext: (Int) -> Unit,
@@ -137,6 +145,8 @@ private fun PlaybackQueueSheet(
         Column(modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
             PlaybackQueueSheetHeader(
                 state = state,
+                upcomingHidden = upcomingHidden,
+                onToggleUpcoming = onToggleUpcoming,
                 onShuffle = onShuffle,
                 onCycleRepeat = onCycleRepeat,
             )
@@ -144,7 +154,7 @@ private fun PlaybackQueueSheet(
             HorizontalDivider()
             LazyColumn(modifier = Modifier.weight(1f, fill = false)) {
                 itemsIndexed(
-                    items = state.entries,
+                    items = if (upcomingHidden) state.entries.take(state.currentIndex + 1) else state.entries,
                     key = { _, entry -> entry.videoUrl },
                 ) { index, entry ->
                     PlaybackQueueRow(
