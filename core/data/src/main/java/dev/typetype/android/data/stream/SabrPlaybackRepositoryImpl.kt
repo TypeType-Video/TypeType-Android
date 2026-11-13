@@ -56,6 +56,9 @@ class SabrPlaybackRepositoryImpl @Inject constructor(
         preparer.seek(api, target.requestScope.baseUrl, target, binding, startTimeMs)
     }
 
+    override suspend fun release(target: SabrPlaybackTarget, sessionId: String): Result<Unit> =
+        execute(target) { api -> api.releaseSabrPlayback(sessionId).errorBody()?.close() }
+
     override suspend fun refresh(
         target: SabrPlaybackTarget,
         binding: SabrPlaybackBinding,

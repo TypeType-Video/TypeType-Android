@@ -28,6 +28,7 @@ internal class SabrPlaybackServiceBridge(
     recoveryStatus: PlaybackRecoveryStatus,
 ) : Player.Listener, SabrPlaybackRecoveryDispatcher.Listener, AutoCloseable {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val sessionReleaser = SabrSessionReleaser(repository)
     private val coordinator = SabrPlaybackSeekCoordinator(
         repository = repository,
         scope = scope,
@@ -117,6 +118,7 @@ internal class SabrPlaybackServiceBridge(
             ),
         )
         activeBinding = nextBinding
+        sessionReleaser.hold(mediaItem?.sabrPlaybackSeekState())
     }
 
     override fun onPlayerError(error: PlaybackException) {
@@ -225,6 +227,7 @@ internal class SabrPlaybackServiceBridge(
     }
 
     override fun close() {
+        sessionReleaser.releaseAll()
         player.removeListener(this)
         recoveryDispatcher.setListener(null)
         interruption.close()

@@ -15,6 +15,7 @@ import dev.typetype.android.data.network.dto.StreamResponse
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
@@ -76,6 +77,9 @@ interface TypeTypeMediaApi {
         @Path("sessionId") sessionId: String,
         @Body body: SabrPlaybackWindowRequestDto,
     ): Response<SabrPlaybackWindowResponseDto>
+
+    @DELETE("sabr/playback/{sessionId}")
+    suspend fun releaseSabrPlayback(@Path("sessionId") sessionId: String): Response<Unit>
 
     @POST("sabr/playback/{sessionId}/window")
     suspend fun sabrPlaybackWindow(
