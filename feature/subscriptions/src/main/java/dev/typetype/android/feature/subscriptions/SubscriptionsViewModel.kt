@@ -205,11 +205,7 @@ class SubscriptionsViewModel @Inject constructor(
                         requestJob = viewModelScope.launch { loadFirstPage() }
                     } else {
                         networkRecovery.schedule(failure, SubscriptionsRecoveryRequest.Pagination)
-                        val details = errorMapper.details(
-            failure,
-            R.string.subscriptions_failed,
-            missingRes = R.string.error_subscription_group_not_found,
-        )
+                        val details = feedFailureDetails(failure)
                         _state.update {
                             it.copy(
                                 isLoadingMore = false,
@@ -297,7 +293,7 @@ class SubscriptionsViewModel @Inject constructor(
         if (recoverAfterNetworkChange) {
             networkRecovery.schedule(failure, SubscriptionsRecoveryRequest.Refresh)
         }
-        val details = errorMapper.details(failure, R.string.subscriptions_failed)
+        val details = feedFailureDetails(failure)
         _state.update {
             it.copy(
                 isLoading = false,
@@ -320,6 +316,12 @@ class SubscriptionsViewModel @Inject constructor(
             }
         }
     }
+
+    private fun feedFailureDetails(failure: Throwable) = errorMapper.details(
+        failure,
+        R.string.subscriptions_failed,
+        missingRes = R.string.error_subscription_group_not_found,
+    )
 
     private companion object {
         const val SERVER_REFRESH_POLL_MS = 2_000L
