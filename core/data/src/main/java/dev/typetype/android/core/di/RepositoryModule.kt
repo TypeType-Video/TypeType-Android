@@ -8,15 +8,11 @@ import dev.typetype.android.data.actions.VideoActionsRepositoryImpl
 import dev.typetype.android.data.account.RoomAccountRepository
 import dev.typetype.android.data.account.AccountScopeProvider
 import dev.typetype.android.data.account.ActiveAccountScope
-import dev.typetype.android.data.allowlist.RemoteAllowedChannelsRepository
 import dev.typetype.android.data.auth.AuthRepositoryImpl
-import dev.typetype.android.data.auth.RemoteAccountProfilesRepository
 import dev.typetype.android.data.branding.RemoteDeArrowRepository
-import dev.typetype.android.data.channel.ChannelPostsRepositoryImpl
 import dev.typetype.android.data.channel.ChannelRepositoryImpl
 import dev.typetype.android.data.comments.CommentsRepositoryImpl
 import dev.typetype.android.data.comments.RemoteBulletCommentsRepository
-import dev.typetype.android.data.devicelink.RemoteDeviceLinkRepository
 import dev.typetype.android.data.download.AndroidDownloadRepository
 import dev.typetype.android.data.diagnostics.LocalDiagnosticsRepository
 import dev.typetype.android.data.diagnostics.LocalCrashReportRepository
@@ -26,15 +22,12 @@ import dev.typetype.android.data.imports.RemoteImportRepository
 import dev.typetype.android.data.imports.RemotePortabilityRepository
 import dev.typetype.android.data.imports.RoomYoutubeTakeoutImportRepository
 import dev.typetype.android.data.library.RoomVideoMetaRepository
-import dev.typetype.android.data.linkedsessions.RemoteLinkedSessionsRepository
-import dev.typetype.android.data.livechat.RemoteLiveChatRepository
 import dev.typetype.android.data.notifications.RemoteNotificationsRepository
 import dev.typetype.android.data.network.NetworkAvailabilityObserver
 import dev.typetype.android.data.network.PlaybackNetworkMonitor
 import dev.typetype.android.data.network.PlaybackNetworkObserver
 import dev.typetype.android.data.preferences.DataStorePreferencesRepository
 import dev.typetype.android.data.podcast.RemotePodcastRepository
-import dev.typetype.android.data.progress.WatchProgressCache
 import dev.typetype.android.data.push.RemotePushRepository
 import dev.typetype.android.data.playback.RoomPlaybackResumeRepository
 import dev.typetype.android.data.playback.RoomPlaybackQueueRepository
@@ -56,7 +49,6 @@ import dev.typetype.android.data.stream.StreamRemoteSource
 import dev.typetype.android.data.stream.SabrPlaybackRepositoryImpl
 import dev.typetype.android.data.stream.RemoteAudioOnlyStreamRepository
 import dev.typetype.android.data.stream.RemoteSubtitleRepository
-import dev.typetype.android.data.subscriptions.RemoteSubscriptionGroupsRepository
 import dev.typetype.android.data.subscriptions.RemoteSubscriptionsRepository
 import dev.typetype.android.data.support.RemoteSupportRepository
 import dev.typetype.android.data.version.RemoteComponentVersionsRepository
@@ -64,14 +56,11 @@ import dev.typetype.android.data.youtubesession.RemoteYoutubeSessionRepository
 import dev.typetype.android.data.youtubesession.OkHttpYoutubeRemoteBrowserConnector
 import dev.typetype.android.domain.actions.VideoActionsRepository
 import dev.typetype.android.domain.account.AccountRepository
-import dev.typetype.android.domain.allowlist.AllowedChannelsRepository
 import dev.typetype.android.domain.auth.AuthRepository
 import dev.typetype.android.domain.branding.DeArrowRepository
-import dev.typetype.android.domain.channel.ChannelPostsRepository
 import dev.typetype.android.domain.channel.ChannelRepository
 import dev.typetype.android.domain.comments.BulletCommentsRepository
 import dev.typetype.android.domain.comments.CommentsRepository
-import dev.typetype.android.domain.devicelink.DeviceLinkRepository
 import dev.typetype.android.domain.download.DownloadRepository
 import dev.typetype.android.domain.diagnostics.DiagnosticsRepository
 import dev.typetype.android.domain.diagnostics.CrashReportRepository
@@ -81,13 +70,8 @@ import dev.typetype.android.domain.imports.ImportRepository
 import dev.typetype.android.domain.imports.PortabilityRepository
 import dev.typetype.android.domain.imports.YoutubeTakeoutImportRepository
 import dev.typetype.android.domain.library.VideoMetaRepository
-import dev.typetype.android.domain.linkedsessions.BiliBiliSessionRepository
-import dev.typetype.android.domain.linkedsessions.YoutubeDeviceLoginRepository
-import dev.typetype.android.domain.livechat.LiveChatRepository
 import dev.typetype.android.domain.notifications.NotificationsRepository
 import dev.typetype.android.domain.preferences.PreferencesRepository
-import dev.typetype.android.domain.profiles.AccountProfilesRepository
-import dev.typetype.android.domain.progress.WatchProgressSource
 import dev.typetype.android.domain.push.PushRepository
 import dev.typetype.android.domain.podcast.PodcastRepository
 import dev.typetype.android.domain.playback.PlaybackResumeRepository
@@ -106,7 +90,6 @@ import dev.typetype.android.domain.stream.StreamRepository
 import dev.typetype.android.domain.stream.SabrPlaybackRepository
 import dev.typetype.android.domain.stream.AudioOnlyStreamRepository
 import dev.typetype.android.domain.stream.SubtitleRepository
-import dev.typetype.android.domain.subscriptions.SubscriptionGroupsRepository
 import dev.typetype.android.domain.subscriptions.SubscriptionsRepository
 import dev.typetype.android.domain.support.SupportRepository
 import dev.typetype.android.domain.version.ComponentVersionsRepository
@@ -247,44 +230,6 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindChannelRepository(impl: ChannelRepositoryImpl): ChannelRepository
-
-    @Binds
-    @Singleton
-    abstract fun bindSubscriptionGroupsRepository(
-        impl: RemoteSubscriptionGroupsRepository,
-    ): SubscriptionGroupsRepository
-
-    @Binds
-    @Singleton
-    abstract fun bindAccountProfilesRepository(impl: RemoteAccountProfilesRepository): AccountProfilesRepository
-
-    @Binds
-    @Singleton
-    abstract fun bindYoutubeDeviceLoginRepository(impl: RemoteLinkedSessionsRepository): YoutubeDeviceLoginRepository
-
-    @Binds
-    @Singleton
-    abstract fun bindBiliBiliSessionRepository(impl: RemoteLinkedSessionsRepository): BiliBiliSessionRepository
-
-    @Binds
-    @Singleton
-    abstract fun bindAllowedChannelsRepository(impl: RemoteAllowedChannelsRepository): AllowedChannelsRepository
-
-    @Binds
-    @Singleton
-    abstract fun bindWatchProgressSource(impl: WatchProgressCache): WatchProgressSource
-
-    @Binds
-    @Singleton
-    abstract fun bindDeviceLinkRepository(impl: RemoteDeviceLinkRepository): DeviceLinkRepository
-
-    @Binds
-    @Singleton
-    abstract fun bindLiveChatRepository(impl: RemoteLiveChatRepository): LiveChatRepository
-
-    @Binds
-    @Singleton
-    abstract fun bindChannelPostsRepository(impl: ChannelPostsRepositoryImpl): ChannelPostsRepository
 
     @Binds
     @Singleton
