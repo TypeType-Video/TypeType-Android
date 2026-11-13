@@ -114,6 +114,12 @@ fun PlayerHost(
             player.clearMediaItems()
             controller.acknowledgePlaybackClear(requestStamp)
         }
+        LaunchedEffect(state.videoUrl, mediaController) {
+            val player = mediaController ?: return@LaunchedEffect
+            if (player.isPlaying && leavesPlayingVideo(state.videoUrl, player.currentMediaItem?.mediaId)) {
+                player.pause()
+            }
+        }
         LaunchedEffect(state.target, isFullscreen) {
             if (state.target != PlayerHostTarget.Expanded && isFullscreen) {
                 requestFullscreen(false)
