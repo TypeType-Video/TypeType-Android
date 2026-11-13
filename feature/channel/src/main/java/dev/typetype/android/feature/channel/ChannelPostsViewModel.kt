@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.typetype.android.R
+import dev.typetype.android.core.ui.error.UserErrorMapper
 import dev.typetype.android.core.ui.navigation.ChannelRoute
 import dev.typetype.android.domain.channel.ChannelPostsRepository
 import dev.typetype.android.domain.channel.CommunityPost
@@ -24,12 +26,14 @@ data class ChannelPostsState(
     val isLoadingMore: Boolean = false,
     val failed: Boolean = false,
     val loadMoreFailed: Boolean = false,
+    val errorMessage: String? = null,
 )
 
 @HiltViewModel
 class ChannelPostsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val repository: ChannelPostsRepository,
+    private val errorMapper: UserErrorMapper,
 ) : ViewModel() {
     private val channelUrl = savedStateHandle.toRoute<ChannelRoute>().channelUrl
     private val _state = MutableStateFlow(ChannelPostsState())
@@ -52,7 +56,10 @@ class ChannelPostsViewModel @Inject constructor(
                         )
                     }
                 },
-                onFailure = { _state.update { it.copy(isLoading = false, failed = true) } },
+                onFailure = { failure ->
+                    val message = errorMapper.message(failure, R.string.channel_posts_load_failed)
+                    _state.update { it.copy(isLoading = false, failed = true, errorMessage = message) }
+                },
             )
         }
     }

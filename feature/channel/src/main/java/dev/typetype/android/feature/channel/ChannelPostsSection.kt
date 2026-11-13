@@ -78,7 +78,7 @@ internal fun LazyGridScope.channelPostsItems(
         state.failed && state.posts.isEmpty() -> item(span = { GridItemSpan(maxLineSpan) }) {
             Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = stringResource(R.string.channel_posts_load_failed),
+                    text = state.errorMessage ?: stringResource(R.string.channel_posts_load_failed),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error,
                 )

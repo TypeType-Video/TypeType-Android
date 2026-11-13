@@ -47,6 +47,8 @@ internal class VoiceReplyPlayback(
 ) {
     private var activeUrl by mutableStateOf<String?>(null)
     private var activeState by mutableStateOf(VoiceReplyState.Idle)
+    var failure by mutableStateOf<Throwable?>(null)
+        private set
     private var activeProgress by mutableFloatStateOf(0f)
     private var player: ExoPlayer? = null
     private var loadJob: Job? = null
@@ -87,11 +89,17 @@ internal class VoiceReplyPlayback(
         player?.stop()
         activeUrl = url
         activeState = VoiceReplyState.Loading
+        failure = null
         activeProgress = 0f
         loadJob = scope.launch {
             loadAudio(url).fold(
                 onSuccess = { bytes -> if (activeUrl == url) play(bytes) },
-                onFailure = { if (activeUrl == url) activeState = VoiceReplyState.Error },
+                onFailure = {
+                    if (activeUrl == url) {
+                        failure = it
+                        activeState = VoiceReplyState.Error
+                    }
+                },
             )
         }
     }

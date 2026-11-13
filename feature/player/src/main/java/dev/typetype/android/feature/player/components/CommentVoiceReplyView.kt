@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.error.rememberUserErrorMapper
 import dev.typetype.android.domain.comments.CommentVoiceReply
 
 @Composable
@@ -59,7 +60,7 @@ internal fun CommentVoiceReplyView(reply: CommentVoiceReply) {
                 }
                 if (state == VoiceReplyState.Error) {
                     Text(
-                        text = stringResource(R.string.comments_voice_reply_failed),
+                        text = rememberUserErrorMapper().message(playback?.failure, R.string.comments_voice_reply_failed),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.error,
                         modifier = Modifier.padding(top = 4.dp),

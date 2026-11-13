@@ -5,8 +5,8 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.res.stringResource
 import dev.typetype.android.R
+import dev.typetype.android.core.ui.error.rememberUserErrorMapper
 import dev.typetype.android.domain.comments.Comment
 import dev.typetype.android.domain.comments.CommentsPage
 import kotlinx.coroutines.CoroutineScope
@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 @Stable
 internal class CommentRepliesController(
     private val scope: CoroutineScope,
-    private val failureMessage: String,
+    private val failureMessage: (Throwable) -> String,
     private val loadReplies: suspend (String) -> Result<CommentsPage>,
 ) {
     private val states = mutableStateMapOf<String, RepliesState>()
@@ -57,7 +57,7 @@ internal class CommentRepliesController(
         scope.launch {
             states[comment.id] = loadReplies(cursor).fold(
                 onSuccess = { RepliesState.Loaded(replies = it.comments, nextPage = it.nextpage) },
-                onFailure = { RepliesState.Failed(failureMessage) },
+                onFailure = { RepliesState.Failed(failureMessage(it)) },
             )
         }
     }
@@ -69,8 +69,10 @@ internal fun rememberCommentRepliesController(
     loadReplies: suspend (videoUrl: String, cursor: String) -> Result<CommentsPage>,
 ): CommentRepliesController {
     val scope = rememberCoroutineScope()
-    val failureMessage = stringResource(R.string.comments_replies_failed)
-    return remember(videoUrl, scope, failureMessage) {
-        CommentRepliesController(scope, failureMessage) { cursor -> loadReplies(videoUrl, cursor) }
+    val errorMapper = rememberUserErrorMapper()
+    return remember(videoUrl, scope, errorMapper) {
+        CommentRepliesController(scope, { errorMapper.message(it, R.string.comments_replies_failed) }) { cursor ->
+            loadReplies(videoUrl, cursor)
+        }
     }
 }
