@@ -14,6 +14,8 @@ enum class PlaybackFailureKind {
     SabrServerContract,
     SabrRecoveryExhausted,
     ServerUnavailable,
+    ProviderBlocked,
+    RateLimited,
     MediaDelivery,
     Network,
     UnsupportedFormat,
@@ -36,6 +38,9 @@ internal fun classifyPlaybackCause(error: Throwable, errorCode: Int): PlaybackFa
     }
     if (error.hasFailureCode(SABR_RECOVERY_EXHAUSTED_FAILURE_CODE)) {
         return PlaybackFailureKind.SabrRecoveryExhausted
+    }
+    if (PROVIDER_BLOCKED_FAILURE_CODES.any(error::hasFailureCode)) {
+        return PlaybackFailureKind.ProviderBlocked
     }
     error.findCodedFailure()?.statusCode?.let { statusCode ->
         return classifyHttpPlaybackFailure(responseBody = null, statusCode)
@@ -72,6 +77,7 @@ internal fun classifyHttpPlaybackFailure(
         statusCode == 401 -> PlaybackFailureKind.AuthenticationExpired
         statusCode == 404 || statusCode == 410 -> PlaybackFailureKind.PlaybackSessionExpired
         statusCode == 409 -> PlaybackFailureKind.PlaybackGenerationChanged
+        statusCode == 429 -> PlaybackFailureKind.RateLimited
         statusCode in TRANSIENT_SERVER_STATUS_CODES -> PlaybackFailureKind.ServerUnavailable
         isYouTubeSessionRequiredMessage(responseBody) -> PlaybackFailureKind.YouTubeSessionRequired
         else -> PlaybackFailureKind.MediaDelivery
@@ -119,6 +125,7 @@ private fun Throwable.findHttpFailure(): HttpDataSource.InvalidResponseCodeExcep
 private const val MAX_RESPONSE_BODY_BYTES = 8_192
 private const val MAX_CAUSE_DEPTH = 8
 private val TRANSIENT_SERVER_STATUS_CODES = setOf(502, 503, 504)
+private val PROVIDER_BLOCKED_FAILURE_CODES = listOf("provider_access_blocked", "token_service_unavailable")
 private const val REQUEST_ID_HEADER = "X-Request-ID"
 private const val SABR_CONTRACT_FAILURE_CODE = "youtube_sabr_contract_mismatch"
 private const val SABR_RECOVERY_EXHAUSTED_FAILURE_CODE = "youtube_sabr_recovery_exhausted"
