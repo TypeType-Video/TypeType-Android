@@ -27,9 +27,9 @@ jobs:
         run: |
           set -euo pipefail
           if [ "$PRERELEASE" = "true" ]; then
-            WEBHOOK="$WEBHOOK_RC"; EMOJI="🧪"; COLOR=15105570; INTRO="Beta build, might break, have fun (・ω・)"
+            WEBHOOK="$WEBHOOK_RC"; BOT="The Lab TV"; EMOJI="🧪"; COLOR=15105570; INTRO="Beta build, might break, have fun (・ω・)"
           else
-            WEBHOOK="$WEBHOOK_MAIN"; EMOJI="🚀"; COLOR=5763719; INTRO="New release (｡•̀ᴗ-)✧"
+            WEBHOOK="$WEBHOOK_MAIN"; BOT="Rocket TV"; EMOJI="🚀"; COLOR=5763719; INTRO="New release (｡•̀ᴗ-)✧"
           fi
           [ -n "$WEBHOOK" ] || { echo "webhook secret not set"; exit 0; }
           TITLE="${EMOJI} ${RNAME:-${REPO#*/} ${TAG}}"
@@ -38,6 +38,7 @@ jobs:
             --arg url "$URL" \
             --arg desc "$(printf '%s\n\n%s' "$INTRO" "${BODY:-}" | cut -c1-3900)" \
             --argjson color "$COLOR" \
-            '{username: "TypeType Releases", embeds: [{title: $title, url: $url, description: $desc, color: $color}]}' \
+            --arg bot "$BOT" \
+            '{username: $bot, embeds: [{title: $title, url: $url, description: $desc, color: $color}]}' \
             > payload.json
           curl -fsS -H "Content-Type: application/json" -d @payload.json "$WEBHOOK"
