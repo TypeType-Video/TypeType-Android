@@ -86,6 +86,9 @@
     <string name="tab_live">Live</string>
     <string name="live_popular">Live now on Twitch</string>
     <string name="live_load_failed">Twitch lives could not be loaded</string>
+    <string name="twitch_channel_videos">Videos</string>
+    <string name="twitch_channel_clips">Clips</string>
+    <string name="twitch_channel_empty">Nothing here yet</string>
     <string name="shorts_load_failed">Couldn\'t load Shorts</string>
     <string name="shorts_load_more_failed">Couldn\'t load more Shorts</string>
     <string name="shorts_empty">No Shorts are available yet.</string>
@@ -1774,4 +1777,8 @@
     <string name="channel_notifications_disable">Turn off new video notifications</string>
     <string name="push_battery_hint">Disable battery optimization for reliable notification delivery.</string>
     <string name="push_battery_open_settings">Battery settings</string>
+    <plurals name="twitch_channel_followers">
+        <item quantity="one">%1$s follower</item>
+        <item quantity="other">%1$s followers</item>
+    </plurals>
 </resources>

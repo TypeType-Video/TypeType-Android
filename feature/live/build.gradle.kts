@@ -5,3 +5,7 @@ plugins {
 android {
     namespace = "dev.typetype.android.feature.live"
 }
+
+dependencies {
+    implementation(libs.androidx.navigation.compose)
+}

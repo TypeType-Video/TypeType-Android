@@ -1,6 +1,9 @@
 package dev.typetype.android
 
 import dev.typetype.android.core.ui.navigation.LiveRoute
+import dev.typetype.android.core.ui.navigation.TwitchChannelRoute
+import dev.typetype.android.feature.live.TwitchChannelRouteScreen
+import dev.typetype.android.feature.live.TwitchChannelViewModel
 import dev.typetype.android.feature.live.LiveRouteScreen
 import dev.typetype.android.feature.live.LiveViewModel
 import androidx.compose.animation.AnimatedContentTransitionScope
@@ -176,7 +179,10 @@ fun AppNavHost(
                 )
             }
             composable<LiveRoute> {
-                LiveRouteScreen(viewModel = hiltViewModel<LiveViewModel>(), onPlayVideo = onPlayVideo)
+                LiveRouteScreen(viewModel = hiltViewModel<LiveViewModel>(), onPlayVideo = onPlayVideo, onOpenChannel = onOpenChannel)
+            }
+            composable<TwitchChannelRoute> {
+                TwitchChannelRouteScreen(viewModel = hiltViewModel<TwitchChannelViewModel>(), onPlayVideo = onPlayVideo)
             }
             composable<SearchRoute> {
                 SearchRouteScreen(

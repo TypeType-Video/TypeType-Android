@@ -101,7 +101,7 @@ internal fun PlayerDetails(
             verified = stream.uploaderVerified,
             isSubscribed = isSubscribed,
             subscriptionInFlight = subscriptionInFlight,
-            onCardClick = { if (!twitch) onOpenChannel(stream.uploaderUrl) },
+            onCardClick = { onOpenChannel(stream.uploaderUrl) },
             onSubscribeClick = onToggleSubscription.takeUnless { twitch },
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)

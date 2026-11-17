@@ -24,11 +24,13 @@ import dev.typetype.android.core.ui.components.VideoCardSkeleton
 fun LiveRouteScreen(
     viewModel: LiveViewModel,
     onPlayVideo: (String) -> Unit,
+    onOpenChannel: (String) -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LiveContent(
         state = state,
         onPlayVideo = onPlayVideo,
+        onOpenChannel = onOpenChannel,
         onRetry = viewModel::refresh,
         onLoadMore = viewModel::loadMore,
     )
@@ -39,6 +41,7 @@ internal fun LiveContent(
     state: LiveState,
     onPlayVideo: (String) -> Unit,
     onRetry: () -> Unit,
+    onOpenChannel: (String) -> Unit = {},
     onLoadMore: () -> Unit,
 ) {
     if (state.errorMessage != null && state.videos.isEmpty()) {
@@ -62,6 +65,7 @@ internal fun LiveContent(
             VideoCard(
                 video = video,
                 onClick = { onPlayVideo(video.url) },
+                onChannelClick = { onOpenChannel(video.uploaderUrl) },
             )
         }
         item(key = "live-pagination", span = { GridItemSpan(maxLineSpan) }) {
