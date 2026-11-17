@@ -57,6 +57,16 @@ class LiveChatViewModel @Inject constructor(
                         LiveChatEvent.Connected -> _state.update { it.copy(status = LiveChatStatus.Live) }
                         is LiveChatEvent.Message -> _state.update { it.withMessage(event.message) }
                         LiveChatEvent.Ended -> _state.update { it.copy(status = LiveChatStatus.Ended) }
+                        is LiveChatEvent.Removed -> _state.update { state ->
+                            state.copy(messages = state.messages.filterNot { it.id == event.messageId })
+                        }
+                        is LiveChatEvent.Cleared -> _state.update { state ->
+                            state.copy(
+                                messages = event.author?.let { author ->
+                                    state.messages.filterNot { it.authorName.equals(author, ignoreCase = true) }
+                                }.orEmpty(),
+                            )
+                        }
                     }
                 }
                 null

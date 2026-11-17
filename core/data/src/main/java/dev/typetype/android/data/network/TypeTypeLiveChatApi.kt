@@ -4,6 +4,7 @@ import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.http.Streaming
 
@@ -13,5 +14,12 @@ interface TypeTypeLiveChatApi {
     suspend fun liveChat(
         @Query("url") videoUrl: String,
         @Header("Accept") accept: String = "text/event-stream, application/json",
+    ): Response<ResponseBody>
+
+    @Streaming
+    @GET("twitch/chat/{login}/events")
+    suspend fun twitchChatEvents(
+        @Path("login") login: String,
+        @Header("Accept") accept: String = "text/event-stream",
     ): Response<ResponseBody>
 }

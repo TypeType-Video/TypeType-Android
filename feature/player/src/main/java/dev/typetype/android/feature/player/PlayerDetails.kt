@@ -55,8 +55,8 @@ internal fun PlayerDetails(
         durationSeconds = stream.durationSeconds,
     )
     var liveChatVisible by remember(videoUrl) { mutableStateOf(false) }
-    val liveChatAvailable = stream.isLive && isYouTubeVideoUrl(videoUrl)
     val twitch = TwitchUrls.parse(videoUrl) != null
+    val liveChatAvailable = stream.isLive && (isYouTubeVideoUrl(videoUrl) || twitch)
     Column(
         modifier = modifier.padding(horizontal = 16.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -74,7 +74,9 @@ internal fun PlayerDetails(
         PlaybackSleepTimerControls()
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
         // Twitch videos live outside the server library: favorites, playlists, comments and downloads do not apply.
-        if (!twitch) PlayerInteractionRow(
+        if (twitch) {
+            TwitchLiveChatButton(visible = liveChatAvailable, onClick = { liveChatVisible = true })
+        } else PlayerInteractionRow(
             isFavorited = isFavorited,
             isInWatchLater = isInWatchLater,
             shareUrl = videoUrl,

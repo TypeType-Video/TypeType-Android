@@ -154,6 +154,18 @@ fun PlayerInteractionRow(
     }
 }
 
+// Twitch lives keep only their chat among the watch page actions.
+@Composable
+internal fun TwitchLiveChatButton(visible: Boolean, onClick: () -> Unit) {
+    if (!visible) return
+    PlayerActionButton(
+        icon = Icons.Outlined.Forum,
+        contentDescription = stringResource(R.string.live_chat_title),
+        onClick = onClick,
+        expanded = true,
+    )
+}
+
 @Composable
 private fun PlayerActionButton(
     icon: ImageVector,
