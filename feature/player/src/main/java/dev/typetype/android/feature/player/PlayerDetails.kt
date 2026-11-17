@@ -17,6 +17,7 @@ import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.domain.navigation.isYouTubeVideoUrl
 import dev.typetype.android.domain.playback.PlaybackQueueState
 import dev.typetype.android.domain.stream.Stream
+import dev.typetype.android.domain.twitch.TwitchUrls
 import dev.typetype.android.domain.usersettings.UserSettings
 import dev.typetype.android.feature.menu.rememberVideoMenuScope
 import dev.typetype.android.feature.player.components.AudioOnlyPlaybackState
@@ -55,6 +56,7 @@ internal fun PlayerDetails(
     )
     var liveChatVisible by remember(videoUrl) { mutableStateOf(false) }
     val liveChatAvailable = stream.isLive && isYouTubeVideoUrl(videoUrl)
+    val twitch = TwitchUrls.parse(videoUrl) != null
     Column(
         modifier = modifier.padding(horizontal = 16.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -71,7 +73,8 @@ internal fun PlayerDetails(
         PlaybackQueueControls(playbackQueue)
         PlaybackSleepTimerControls()
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-        PlayerInteractionRow(
+        // Twitch videos live outside the server library: favorites, playlists, comments and downloads do not apply.
+        if (!twitch) PlayerInteractionRow(
             isFavorited = isFavorited,
             isInWatchLater = isInWatchLater,
             shareUrl = videoUrl,
@@ -92,12 +95,12 @@ internal fun PlayerDetails(
         UploaderCard(
             name = stream.uploaderName,
             avatarUrl = stream.uploaderAvatarUrl,
-            subscriberCount = stream.uploaderSubscriberCount,
+            subscriberCount = if (twitch) -1 else stream.uploaderSubscriberCount,
             verified = stream.uploaderVerified,
             isSubscribed = isSubscribed,
             subscriptionInFlight = subscriptionInFlight,
-            onCardClick = { onOpenChannel(stream.uploaderUrl) },
-            onSubscribeClick = onToggleSubscription,
+            onCardClick = { if (!twitch) onOpenChannel(stream.uploaderUrl) },
+            onSubscribeClick = onToggleSubscription.takeUnless { twitch },
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
     }
