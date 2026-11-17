@@ -2,6 +2,7 @@ package dev.typetype.android.data.stream
 
 import dev.typetype.android.core.error.CodedFailure
 import dev.typetype.android.domain.feed.Video
+import dev.typetype.android.domain.stream.Chapter
 import dev.typetype.android.domain.stream.StreamPlaybackContract
 import dev.typetype.android.domain.twitch.TwitchClipPlayback
 import dev.typetype.android.domain.twitch.TwitchClipQuality
@@ -39,6 +40,15 @@ class TwitchStreamLoaderTest {
         assertFalse(stream.isLive)
         assertEquals(3_600L, stream.durationSeconds)
         assertNull(stream.liveTargetOffsetMillis)
+    }
+
+    @Test
+    fun aPastBroadcastCarriesItsGameChaptersOnlyWhenThereAreSeveral() = runBlocking {
+        val playback = TwitchPlayback(video("https://www.twitch.tv/videos/1", 3_600), PLAYLIST, null, live = false)
+        val two = listOf(Chapter("Fortnite", 0, null), Chapter("Chess", 3_641_000, null))
+        assertEquals(two, TwitchStreamLoader(FakeTwitchRepository(vodPlayback = playback, chapterList = two)).load(TwitchTarget.Vod("1")).chapters)
+        val one = TwitchStreamLoader(FakeTwitchRepository(vodPlayback = playback, chapterList = two.take(1)))
+        assertEquals(emptyList<Chapter>(), one.load(TwitchTarget.Vod("1")).chapters)
     }
 
     @Test

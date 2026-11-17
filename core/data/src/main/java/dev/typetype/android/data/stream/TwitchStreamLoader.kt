@@ -8,6 +8,8 @@ import dev.typetype.android.domain.twitch.TwitchRepository
 import dev.typetype.android.domain.twitch.TwitchTarget
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 
 // Twitch plays from TypeType-Live's signed playlists (lives and past broadcasts) or a clip's MP4 file; nothing goes
 // through the server's stream extractor.
@@ -20,9 +22,10 @@ internal class TwitchStreamLoader @Inject constructor(
             val playback = twitch.live(target.login).getOrThrow() ?: throw TwitchOfflineException()
             stream(playback.video, hlsUrl = playback.playlistUrl, live = true)
         }
-        is TwitchTarget.Vod -> {
+        is TwitchTarget.Vod -> coroutineScope {
+            val chapters = async { twitch.chapters(target.id).getOrNull().orEmpty().takeIf { it.size > 1 }.orEmpty() }
             val playback = twitch.vod(target.id).getOrThrow()
-            stream(playback.video, hlsUrl = playback.playlistUrl, live = playback.live)
+            stream(playback.video, hlsUrl = playback.playlistUrl, live = playback.live).copy(chapters = chapters.await())
         }
         is TwitchTarget.Clip -> {
             val clip = twitch.clip(target.slug).getOrThrow()

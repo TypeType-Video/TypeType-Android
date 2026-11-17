@@ -1,6 +1,7 @@
 package dev.typetype.android.domain.twitch
 
 import dev.typetype.android.domain.feed.Video
+import dev.typetype.android.domain.stream.Chapter
 
 interface TwitchRepository {
     suspend fun popular(cursor: String? = null): Result<TwitchPage<Video>>
@@ -18,6 +19,8 @@ interface TwitchRepository {
     suspend fun live(login: String): Result<TwitchPlayback?>
 
     suspend fun vod(id: String): Result<TwitchPlayback>
+
+    suspend fun chapters(id: String): Result<List<Chapter>>
 
     suspend fun clip(slug: String): Result<TwitchClipPlayback>
 

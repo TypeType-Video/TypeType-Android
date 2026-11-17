@@ -1,6 +1,7 @@
 package dev.typetype.android.data.stream
 
 import dev.typetype.android.domain.feed.Video
+import dev.typetype.android.domain.stream.Chapter
 import dev.typetype.android.domain.twitch.TwitchCategory
 import dev.typetype.android.domain.twitch.TwitchChannel
 import dev.typetype.android.domain.twitch.TwitchChatHighlights
@@ -13,6 +14,7 @@ internal class FakeTwitchRepository(
     private val livePlayback: TwitchPlayback? = null,
     private val vodPlayback: TwitchPlayback? = null,
     private val clipPlayback: TwitchClipPlayback? = null,
+    private val chapterList: List<Chapter> = emptyList(),
 ) : TwitchRepository {
     override suspend fun popular(cursor: String?): Result<TwitchPage<Video>> = Result.success(TwitchPage(emptyList(), null))
     override suspend fun categories(cursor: String?): Result<TwitchPage<TwitchCategory>> = Result.success(TwitchPage(emptyList(), null))
@@ -25,5 +27,6 @@ internal class FakeTwitchRepository(
     override suspend fun clip(slug: String): Result<TwitchClipPlayback> = clipPlayback?.let { Result.success(it) } ?: Result.failure(IllegalStateException())
     override suspend fun searchChannels(query: String, cursor: String?): Result<TwitchPage<TwitchChannel>> = Result.success(TwitchPage(emptyList(), null))
     override suspend fun searchLives(query: String, cursor: String?): Result<TwitchPage<Video>> = Result.success(TwitchPage(emptyList(), null))
+    override suspend fun chapters(id: String): Result<List<Chapter>> = Result.success(chapterList)
     override suspend fun chatHighlights(login: String): Result<TwitchChatHighlights> = Result.success(TwitchChatHighlights(null, null))
 }
