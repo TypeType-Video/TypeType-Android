@@ -89,6 +89,9 @@
     <string name="twitch_channel_videos">Videos</string>
     <string name="twitch_channel_clips">Clips</string>
     <string name="twitch_channel_empty">Nothing here yet</string>
+    <string name="live_search_channels">Search Twitch channels</string>
+    <string name="live_channel_live_now">Live now</string>
+    <string name="live_category_all">All</string>
     <string name="shorts_load_failed">Couldn\'t load Shorts</string>
     <string name="shorts_load_more_failed">Couldn\'t load more Shorts</string>
     <string name="shorts_empty">No Shorts are available yet.</string>

@@ -6,9 +6,13 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.error.UserErrorMapper
 import dev.typetype.android.domain.feed.Video
+import dev.typetype.android.domain.twitch.TwitchCategory
+import dev.typetype.android.domain.twitch.TwitchChannel
+import dev.typetype.android.domain.twitch.TwitchPage
 import dev.typetype.android.domain.twitch.TwitchRepository
 import javax.inject.Inject
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -22,6 +26,10 @@ data class LiveState(
     val loadMoreError: Boolean = false,
     val errorMessage: String? = null,
     val errorRequestId: String? = null,
+    val categories: List<TwitchCategory> = emptyList(),
+    val category: String? = null,
+    val query: String = "",
+    val channels: List<TwitchChannel> = emptyList(),
 )
 
 @HiltViewModel
@@ -32,22 +40,47 @@ class LiveViewModel @Inject constructor(
     private val _state = MutableStateFlow(LiveState())
     val state = _state.asStateFlow()
     private var loadJob: Job? = null
+    private var searchJob: Job? = null
 
     init {
         refresh()
+        viewModelScope.launch {
+            twitch.categories().onSuccess { page -> _state.update { it.copy(categories = page.items) } }
+        }
     }
 
     fun refresh() {
         loadJob?.cancel()
         _state.update { it.copy(isLoading = true, errorMessage = null, errorRequestId = null) }
         loadJob = viewModelScope.launch {
-            twitch.popular().fold(
-                onSuccess = { page -> _state.value = LiveState(videos = page.items, cursor = page.cursor) },
+            lives(_state.value.category, null).fold(
+                onSuccess = { page ->
+                    _state.update { it.copy(videos = page.items, cursor = page.cursor, isLoading = false, loadMoreError = false) }
+                },
                 onFailure = { failure ->
                     val details = errorMapper.details(failure, R.string.live_load_failed)
-                    _state.update { it.copy(isLoading = false, errorMessage = details.message, errorRequestId = details.requestId) }
+                    _state.update {
+                        it.copy(videos = emptyList(), isLoading = false, errorMessage = details.message, errorRequestId = details.requestId)
+                    }
                 },
             )
+        }
+    }
+
+    fun selectCategory(slug: String?) {
+        if (slug == _state.value.category) return
+        _state.update { it.copy(category = slug, videos = emptyList(), cursor = null) }
+        refresh()
+    }
+
+    fun search(query: String) {
+        val text = query.trim()
+        searchJob?.cancel()
+        _state.update { it.copy(query = query, channels = if (text.isEmpty()) emptyList() else it.channels) }
+        if (text.isEmpty()) return
+        searchJob = viewModelScope.launch {
+            delay(SEARCH_DEBOUNCE_MS)
+            twitch.searchChannels(text).onSuccess { page -> _state.update { it.copy(channels = page.items) } }
         }
     }
 
@@ -57,7 +90,7 @@ class LiveViewModel @Inject constructor(
         if (current.isLoading || current.isLoadingMore) return
         _state.update { it.copy(isLoadingMore = true, loadMoreError = false) }
         loadJob = viewModelScope.launch {
-            twitch.popular(cursor).fold(
+            lives(current.category, cursor).fold(
                 onSuccess = { page ->
                     _state.update { state ->
                         state.copy(
@@ -71,4 +104,9 @@ class LiveViewModel @Inject constructor(
             )
         }
     }
+
+    private suspend fun lives(category: String?, cursor: String?): Result<TwitchPage<Video>> =
+        if (category == null) twitch.popular(cursor) else twitch.categoryLives(category, cursor)
 }
+
+private const val SEARCH_DEBOUNCE_MS = 300L

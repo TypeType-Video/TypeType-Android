@@ -3,11 +3,15 @@ package dev.typetype.android.feature.live
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import dev.typetype.android.core.ui.components.LocalAnimatedStatePlayback
 import dev.typetype.android.core.ui.theme.TypeTypeTheme
 import dev.typetype.android.domain.feed.Video
+import dev.typetype.android.domain.twitch.TwitchCategory
+import dev.typetype.android.domain.twitch.TwitchChannel
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -39,11 +43,44 @@ class LiveContentTest {
         assertEquals(true, retried)
     }
 
-    private fun show(state: LiveState, onPlayVideo: (String) -> Unit = {}, onRetry: () -> Unit = {}) {
+    @Test
+    fun categoriesFilterAndFoundChannelsOpenTheirPage() {
+        val category = AtomicReference<String>()
+        val channel = AtomicReference<String>()
+        val state = LiveState(
+            videos = listOf(video()),
+            categories = listOf(TwitchCategory(id = "509658", name = "Just Chatting", slug = "just-chatting", boxArtUrl = null, viewers = null)),
+            query = "spa",
+            channels = listOf(TwitchChannel("space", "Space", null, "", null, 0, live = video())),
+        )
+        show(state, onOpenChannel = channel::set, onSelectCategory = category::set)
+
+        composeRule.onNodeWithText("Just Chatting").performClick()
+        composeRule.onNodeWithText("Live now").assertIsDisplayed()
+        composeRule.onAllNodesWithText("Space").onFirst().performClick()
+
+        assertEquals("just-chatting", category.get())
+        assertEquals("https://www.twitch.tv/space", channel.get())
+    }
+
+    private fun show(
+        state: LiveState,
+        onPlayVideo: (String) -> Unit = {},
+        onRetry: () -> Unit = {},
+        onOpenChannel: (String) -> Unit = {},
+        onSelectCategory: (String?) -> Unit = {},
+    ) {
         composeRule.setContent {
             CompositionLocalProvider(LocalAnimatedStatePlayback provides false) {
                 TypeTypeTheme {
-                    LiveContent(state = state, onPlayVideo = onPlayVideo, onRetry = onRetry, onLoadMore = {})
+                    LiveContent(
+                        state = state,
+                        onPlayVideo = onPlayVideo,
+                        onRetry = onRetry,
+                        onOpenChannel = onOpenChannel,
+                        onLoadMore = {},
+                        onSelectCategory = onSelectCategory,
+                    )
                 }
             }
         }

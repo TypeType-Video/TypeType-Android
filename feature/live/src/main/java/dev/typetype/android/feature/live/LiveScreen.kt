@@ -33,6 +33,8 @@ fun LiveRouteScreen(
         onOpenChannel = onOpenChannel,
         onRetry = viewModel::refresh,
         onLoadMore = viewModel::loadMore,
+        onSearch = viewModel::search,
+        onSelectCategory = viewModel::selectCategory,
     )
 }
 
@@ -43,6 +45,8 @@ internal fun LiveContent(
     onRetry: () -> Unit,
     onOpenChannel: (String) -> Unit = {},
     onLoadMore: () -> Unit,
+    onSearch: (String) -> Unit = {},
+    onSelectCategory: (String?) -> Unit = {},
 ) {
     if (state.errorMessage != null && state.videos.isEmpty()) {
         AnimatedError(message = state.errorMessage, requestId = state.errorRequestId, onRetry = onRetry)
@@ -55,6 +59,13 @@ internal fun LiveContent(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
+        item(key = "live-search", span = { GridItemSpan(maxLineSpan) }) { LiveSearchField(state.query, onSearch) }
+        items(state.channels, key = { "channel-${it.login}" }, span = { GridItemSpan(maxLineSpan) }) { channel ->
+            LiveChannelRow(channel, onOpen = { onOpenChannel(channel.url) })
+        }
+        item(key = "live-categories", span = { GridItemSpan(maxLineSpan) }) {
+            LiveCategoryChips(state.categories, state.category, onSelectCategory)
+        }
         item(key = "live-header", span = { GridItemSpan(maxLineSpan) }) {
             SectionHeader(text = stringResource(R.string.live_popular))
         }
