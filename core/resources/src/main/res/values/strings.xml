@@ -1059,6 +1059,9 @@
     <string name="family_list_home_empty">Nothing from the family list yet</string>
     <string name="family_list_no_results">No family-list results. Try a channel you already trust.</string>
     <string name="home_section_trending">Trending</string>
+    <string name="home_layout_label">Home page layout</string>
+    <string name="home_layout_grid">As usual</string>
+    <string name="home_layout_rows">By category</string>
     <string name="home_section_recommended">Recommended</string>
     <string name="algo_title">Recommendations</string>
     <string name="algo_entry_subtitle">Choose the algorithm, its settings, your interests and the data it reads</string>
