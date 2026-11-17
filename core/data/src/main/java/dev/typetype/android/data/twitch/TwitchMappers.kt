@@ -1,6 +1,7 @@
 package dev.typetype.android.data.twitch
 
 import dev.typetype.android.data.network.dto.TwitchChannelDto
+import dev.typetype.android.data.network.dto.TwitchChatHighlightsDto
 import dev.typetype.android.data.network.dto.TwitchClipDto
 import dev.typetype.android.data.network.dto.TwitchClipQualityDto
 import dev.typetype.android.data.network.dto.TwitchGameDto
@@ -10,7 +11,11 @@ import dev.typetype.android.data.network.dto.TwitchVideoDto
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.twitch.TwitchCategory
 import dev.typetype.android.domain.twitch.TwitchChannel
+import dev.typetype.android.domain.twitch.TwitchChatHighlights
 import dev.typetype.android.domain.twitch.TwitchClipQuality
+import dev.typetype.android.domain.twitch.TwitchPinnedMessage
+import dev.typetype.android.domain.twitch.TwitchPoll
+import dev.typetype.android.domain.twitch.TwitchPollChoice
 import dev.typetype.android.domain.twitch.TwitchUrls
 import java.net.URI
 import java.util.Calendar
@@ -117,3 +122,17 @@ private fun video(
 }
 
 private val UTC_TIME = Regex("""(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?Z""")
+
+internal fun TwitchChatHighlightsDto.toDomain() = TwitchChatHighlights(
+    poll = poll?.takeIf { it.id.isNotBlank() && it.choices.isNotEmpty() }?.let { dto ->
+        TwitchPoll(
+            id = dto.id,
+            title = dto.title,
+            votes = dto.votes,
+            choices = dto.choices.map { TwitchPollChoice(it.id, it.title, it.votes) },
+        )
+    },
+    pinned = pinned?.takeIf { it.id.isNotBlank() && it.text.isNotBlank() }?.let { dto ->
+        TwitchPinnedMessage(dto.id, dto.text, dto.displayName.ifBlank { dto.login })
+    },
+)

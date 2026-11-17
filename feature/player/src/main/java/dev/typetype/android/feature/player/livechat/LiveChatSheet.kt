@@ -53,9 +53,15 @@ import dev.typetype.android.domain.livechat.LiveChatMessage
 internal fun LiveChatSheet(videoUrl: String, onDismiss: () -> Unit) {
     val viewModel: LiveChatViewModel = hiltViewModel(key = "live-chat")
     val state by viewModel.state.collectAsStateWithLifecycle()
-    DisposableEffect(viewModel, videoUrl) {
+    val highlightsViewModel: TwitchChatHighlightsViewModel = hiltViewModel(key = "live-chat-highlights")
+    val highlights by highlightsViewModel.state.collectAsStateWithLifecycle()
+    DisposableEffect(viewModel, highlightsViewModel, videoUrl) {
         viewModel.start(videoUrl)
-        onDispose { viewModel.stop() }
+        highlightsViewModel.start(videoUrl)
+        onDispose {
+            viewModel.stop()
+            highlightsViewModel.stop()
+        }
     }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -64,6 +70,7 @@ internal fun LiveChatSheet(videoUrl: String, onDismiss: () -> Unit) {
     ) {
         Column(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.7f)) {
             LiveChatHeader(status = state.status, onRetry = { viewModel.retry(videoUrl) })
+            TwitchChatHighlightsCards(highlights, onHide = highlightsViewModel::hide)
             LiveChatMessages(messages = state.messages, modifier = Modifier.weight(1f))
         }
     }

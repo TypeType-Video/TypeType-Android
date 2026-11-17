@@ -10,6 +10,7 @@ import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.server.ServerRepository
 import dev.typetype.android.domain.twitch.TwitchCategory
 import dev.typetype.android.domain.twitch.TwitchChannel
+import dev.typetype.android.domain.twitch.TwitchChatHighlights
 import dev.typetype.android.domain.twitch.TwitchClipPlayback
 import dev.typetype.android.domain.twitch.TwitchPage
 import dev.typetype.android.domain.twitch.TwitchPlayback
@@ -88,6 +89,9 @@ class RemoteTwitchRepository @Inject constructor(
 
     override suspend fun searchLives(query: String, cursor: String?): Result<TwitchPage<Video>> =
         call { twitchSearchStreams(query.trim(), after = cursor) }.map { page -> page.map { it.toVideo() } }
+
+    override suspend fun chatHighlights(login: String): Result<TwitchChatHighlights> =
+        call { twitchChatHighlights(login) }.map { it.toDomain() }
 
     private suspend fun <T : Any> call(block: suspend TypeTypeApi.() -> Response<T>): Result<T> = suspendRunCatching {
         val (_, response) = request(block)

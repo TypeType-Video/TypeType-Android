@@ -29,3 +29,11 @@ data class TwitchPlayback(val video: Video, val playlistUrl: String, val audioPl
 data class TwitchClipQuality(val height: Int, val frameRate: Int, val url: String)
 
 data class TwitchClipPlayback(val video: Video, val qualities: List<TwitchClipQuality>)
+
+data class TwitchPollChoice(val id: String, val title: String, val votes: Long)
+
+data class TwitchPoll(val id: String, val title: String, val votes: Long, val choices: List<TwitchPollChoice>)
+
+data class TwitchPinnedMessage(val id: String, val text: String, val author: String)
+
+data class TwitchChatHighlights(val poll: TwitchPoll?, val pinned: TwitchPinnedMessage?)

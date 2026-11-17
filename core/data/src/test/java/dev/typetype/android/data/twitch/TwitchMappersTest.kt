@@ -1,6 +1,10 @@
 package dev.typetype.android.data.twitch
 
+import dev.typetype.android.data.network.dto.TwitchChatHighlightsDto
 import dev.typetype.android.data.network.dto.TwitchClipQualityDto
+import dev.typetype.android.data.network.dto.TwitchPinnedMessageDto
+import dev.typetype.android.data.network.dto.TwitchPollChoiceDto
+import dev.typetype.android.data.network.dto.TwitchPollDto
 import dev.typetype.android.data.network.dto.TwitchStreamDto
 import dev.typetype.android.data.network.dto.TwitchUserDto
 import dev.typetype.android.data.network.dto.TwitchVideoDto
@@ -65,5 +69,19 @@ class TwitchMappersTest {
     fun badTimesAreIgnored() {
         assertEquals(0L, twitchMillis("soon"))
         assertEquals(1_794_938_400_000L, twitchMillis("2026-11-17T18:00:00.5Z"))
+    }
+
+    @Test
+    fun highlightsKeepARealPollAndPinOnly() {
+        val highlights = TwitchChatHighlightsDto(
+            poll = TwitchPollDto(id = "p1", title = "Next boss?", votes = 3, choices = listOf(TwitchPollChoiceDto("a", "Lion", 3))),
+            pinned = TwitchPinnedMessageDto(id = "m1", text = "Addons in discord", login = "streamelements", displayName = "StreamElements"),
+        ).toDomain()
+        assertEquals("Next boss?", highlights.poll?.title)
+        assertEquals("StreamElements", highlights.pinned?.author)
+
+        val empty = TwitchChatHighlightsDto(poll = TwitchPollDto(id = "p2"), pinned = TwitchPinnedMessageDto(id = "m2")).toDomain()
+        assertNull(empty.poll)
+        assertNull(empty.pinned)
     }
 }

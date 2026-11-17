@@ -24,4 +24,6 @@ interface TwitchRepository {
     suspend fun searchChannels(query: String, cursor: String? = null): Result<TwitchPage<TwitchChannel>>
 
     suspend fun searchLives(query: String, cursor: String? = null): Result<TwitchPage<Video>>
+
+    suspend fun chatHighlights(login: String): Result<TwitchChatHighlights>
 }

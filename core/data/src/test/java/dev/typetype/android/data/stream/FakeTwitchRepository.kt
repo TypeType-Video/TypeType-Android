@@ -3,6 +3,7 @@ package dev.typetype.android.data.stream
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.twitch.TwitchCategory
 import dev.typetype.android.domain.twitch.TwitchChannel
+import dev.typetype.android.domain.twitch.TwitchChatHighlights
 import dev.typetype.android.domain.twitch.TwitchClipPlayback
 import dev.typetype.android.domain.twitch.TwitchPage
 import dev.typetype.android.domain.twitch.TwitchPlayback
@@ -24,4 +25,5 @@ internal class FakeTwitchRepository(
     override suspend fun clip(slug: String): Result<TwitchClipPlayback> = clipPlayback?.let { Result.success(it) } ?: Result.failure(IllegalStateException())
     override suspend fun searchChannels(query: String, cursor: String?): Result<TwitchPage<TwitchChannel>> = Result.success(TwitchPage(emptyList(), null))
     override suspend fun searchLives(query: String, cursor: String?): Result<TwitchPage<Video>> = Result.success(TwitchPage(emptyList(), null))
+    override suspend fun chatHighlights(login: String): Result<TwitchChatHighlights> = Result.success(TwitchChatHighlights(null, null))
 }
