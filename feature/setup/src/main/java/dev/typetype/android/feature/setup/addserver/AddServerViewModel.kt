@@ -147,6 +147,7 @@ class AddServerViewModel @Inject constructor(
                         rss = probe.rss,
                         push = probe.push,
                         recommender = probe.recommender,
+                        twitchEnabled = probe.twitchEnabled,
                     )
                     setupRepository.persistServer(server)
                     _state.update {
