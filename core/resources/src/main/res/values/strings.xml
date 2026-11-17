@@ -1472,6 +1472,7 @@
     <string name="state_go_back">Go back</string>
     <string name="state_authentication_expired_message">Your session expired. Open accounts to sign in again or start a new guest session.</string>
     <string name="state_couldnt_load_video">Couldn\'t load this video</string>
+    <string name="state_stream_ended">The stream has ended.</string>
     <string name="state_something_went_wrong">Something went wrong</string>
     <string name="state_failed_to_load_stream">Failed to load stream.</string>
     <string name="state_youtube_session_required_message">This instance needs a connected YouTube session to play this video.</string>

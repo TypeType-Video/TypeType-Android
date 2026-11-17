@@ -11,6 +11,7 @@ internal fun streamErrorKindFor(code: String?, status: Int?): StreamErrorKind? =
     "age_restricted" -> StreamErrorKind.AgeRestricted
     "content_blocked" -> StreamErrorKind.ContentBlocked
     "content_unavailable" -> StreamErrorKind.ContentUnavailable
+    "twitch_offline" -> StreamErrorKind.StreamEnded
     "provider_access_blocked", "token_service_unavailable" -> StreamErrorKind.ProviderBlocked
     "upstream_timeout", "sabr_upstream_timeout" -> StreamErrorKind.ServerSlow
     "rate_limited" -> StreamErrorKind.RateLimited
