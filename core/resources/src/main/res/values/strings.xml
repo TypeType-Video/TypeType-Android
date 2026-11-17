@@ -2,6 +2,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name" translatable="false">TypeType</string>
     <string name="video_views_short">%1$s views</string>
+    <string name="video_watching_short">%1$s watching</string>
     <string name="video_premieres_at">Premieres %1$s</string>
     <string name="video_views_hidden_by_provider">Views hidden by provider</string>
     <string name="welcome_title">Welcome aboard</string>
@@ -82,6 +83,9 @@
     <string name="tab_shorts">Shorts</string>
     <string name="tab_subscriptions">Subscriptions</string>
     <string name="tab_library">Library</string>
+    <string name="tab_live">Live</string>
+    <string name="live_popular">Live now on Twitch</string>
+    <string name="live_load_failed">Twitch lives could not be loaded</string>
     <string name="shorts_load_failed">Couldn\'t load Shorts</string>
     <string name="shorts_load_more_failed">Couldn\'t load more Shorts</string>
     <string name="shorts_empty">No Shorts are available yet.</string>

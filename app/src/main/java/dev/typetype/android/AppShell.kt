@@ -76,6 +76,7 @@ fun AppShell(
     avatarUrl: String? = null,
     avatarFallbackLetter: String? = null,
     showShorts: Boolean = true,
+    showLive: Boolean = false,
     accessiblePlayerControls: Boolean = false,
     onPlayVideo: (videoUrl: String) -> Unit,
     onOpenChannel: (channelUrl: String) -> Unit,
@@ -86,7 +87,7 @@ fun AppShell(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     val isShorts = currentDestination.matchesRoute(ShortsRoute)
-    val navigationTabs = visibleTopLevelTabs(showShorts)
+    val navigationTabs = visibleTopLevelTabs(showShorts, showLive)
     val isTopLevel = topLevelTabs.any { currentDestination.matchesRoute(it.route) }
     val showsNavigation = !isShorts && (
         isTopLevel ||

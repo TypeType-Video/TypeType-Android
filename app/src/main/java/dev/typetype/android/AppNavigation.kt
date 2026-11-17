@@ -51,6 +51,7 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import dev.typetype.android.core.ui.navigation.LibraryLandingRoute
 import dev.typetype.android.core.ui.navigation.HomeRoute
 import dev.typetype.android.core.ui.navigation.LibraryRoute
+import dev.typetype.android.core.ui.navigation.LiveRoute
 import dev.typetype.android.core.ui.navigation.ShortsRoute
 import dev.typetype.android.core.ui.navigation.SubscriptionsRoute
 import dev.typetype.android.core.ui.components.ProfileAvatar
@@ -65,11 +66,12 @@ internal val topLevelTabs = listOf(
     TopLevelTab(HomeRoute, R.string.tab_home, R.drawable.ic_home),
     TopLevelTab(ShortsRoute, R.string.tab_shorts, R.drawable.ic_shorts),
     TopLevelTab(SubscriptionsRoute, R.string.tab_subscriptions, R.drawable.ic_subscriptions),
+    TopLevelTab(LiveRoute, R.string.tab_live, R.drawable.ic_live),
     TopLevelTab(LibraryRoute, R.string.tab_library, R.drawable.ic_library),
 )
 
-internal fun visibleTopLevelTabs(showShorts: Boolean): List<TopLevelTab> =
-    topLevelTabs.filter { showShorts || it.route != ShortsRoute }
+internal fun visibleTopLevelTabs(showShorts: Boolean, showLive: Boolean = false): List<TopLevelTab> =
+    topLevelTabs.filter { (showShorts || it.route != ShortsRoute) && (showLive || it.route != LiveRoute) }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

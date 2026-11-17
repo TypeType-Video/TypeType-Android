@@ -105,6 +105,7 @@ dependencies {
     implementation(project(":feature:setup"))
     implementation(project(":feature:channel"))
     implementation(project(":feature:library"))
+    implementation(project(":feature:live"))
     implementation(project(":feature:subscriptions"))
     implementation(project(":feature:settings"))
     implementation(project(":feature:player"))
