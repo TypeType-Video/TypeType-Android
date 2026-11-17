@@ -71,12 +71,17 @@ class RemoteTwitchRepository @Inject constructor(
         )
     }
 
-    override suspend fun clip(slug: String): Result<TwitchClipPlayback> =
-        call { twitchClip(segment(slug)) }.map { body ->
-            val qualities = body.qualities.mapNotNull { it.toQuality() }.sortedByDescending { it.height }
-            require(qualities.isNotEmpty()) { "Twitch clip without a playable quality" }
-            TwitchClipPlayback(body.clip.toVideo(), qualities)
-        }
+    override suspend fun clip(slug: String): Result<TwitchClipPlayback> = suspendRunCatching {
+        val (base, response) = request { twitchClip(segment(slug)) }
+        response.requireSuccessfulResponse()
+        val body = response.body() ?: error("Empty Twitch clip body")
+        // Clip files are served by Live under the instance origin, like the playlists.
+        val qualities = body.qualities.mapNotNull { quality ->
+            quality.toQuality()?.let { it.copy(url = twitchPlaylistUrl(base, it.url) ?: return@mapNotNull null) }
+        }.sortedByDescending { it.height }
+        require(qualities.isNotEmpty()) { "Twitch clip without a playable quality" }
+        TwitchClipPlayback(body.clip.toVideo(), qualities)
+    }
 
     override suspend fun searchChannels(query: String, cursor: String?): Result<TwitchPage<TwitchChannel>> =
         call { twitchSearchChannels(query.trim(), after = cursor) }.map { page -> page.map { it.toChannel() } }
