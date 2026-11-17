@@ -88,6 +88,7 @@ class StreamRepositoryLiveTest {
         activeAccountScope = FixedAccountScope,
         serverRepository = FixedServerRepository,
         networkMonitor = AlwaysAvailablePlaybackNetworkObserver,
+        twitch = TwitchStreamLoader(FakeTwitchRepository()),
     )
 
     private class FixedStreamRemoteSource(

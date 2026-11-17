@@ -44,6 +44,8 @@ data class Stream(
     val isLiveContent: Boolean = false,
     val requiresMembership: Boolean = false,
     val category: String? = null,
+    // Where a live settles behind its edge when the source asks for it; null keeps the playlist's own target.
+    val liveTargetOffsetMillis: Long? = null,
 )
 
 data class StreamStoryboard(

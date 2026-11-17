@@ -23,6 +23,7 @@ import dev.typetype.android.domain.stream.StreamVideoSource
 import dev.typetype.android.domain.stream.isServerSabrAudioFormat
 import dev.typetype.android.domain.stream.isServerSabrVideoFormat
 import dev.typetype.android.domain.server.ServerRepository
+import dev.typetype.android.domain.twitch.TwitchUrls
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
@@ -36,6 +37,7 @@ internal class StreamRepositoryImpl @Inject constructor(
     private val activeAccountScope: AccountScopeProvider,
     private val serverRepository: ServerRepository,
     private val networkMonitor: PlaybackNetworkObserver,
+    private val twitch: TwitchStreamLoader,
 ) : StreamRepository {
     private val playbackPrefetchCache = PlaybackStreamPrefetchCache()
 
@@ -81,6 +83,7 @@ internal class StreamRepositoryImpl @Inject constructor(
         videoUrl: String,
         playbackBootstrap: Boolean,
     ): Result<Stream> = cancellableStreamResult {
+        TwitchUrls.parse(videoUrl)?.let { target -> return@cancellableStreamResult twitch.load(target) }
         val scope = activeAccountScope.require()
         val server = serverRepository.getServer(scope.serverId) ?: error("Instance not found")
         val provider = videoUrl.streamProvider()
