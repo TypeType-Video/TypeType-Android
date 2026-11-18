@@ -60,6 +60,7 @@ fun LinkedAccountsRoute(onNavigateBack: () -> Unit, viewModel: LinkedAccountsVie
             ) {
                 item { YoutubeCard(state, viewModel) }
                 item { BiliBiliCard(state, viewModel) }
+                item { TwitchLinkCard() }
             }
         }
     }
@@ -156,7 +157,7 @@ private fun BiliBiliCard(state: LinkedAccountsState, viewModel: LinkedAccountsVi
 }
 
 @Composable
-private fun LinkedCard(
+internal fun LinkedCard(
     title: String,
     status: String?,
     error: String?,
@@ -174,6 +175,6 @@ private fun LinkedCard(
     }
 }
 
-private fun Context.openUrl(url: String) {
+internal fun Context.openUrl(url: String) {
     runCatching { startActivity(Intent(Intent.ACTION_VIEW, url.toUri())) }
 }

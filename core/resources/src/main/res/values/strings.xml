@@ -575,6 +575,13 @@
     <string name="linked_accounts_subtitle">Sign in to YouTube or BiliBili through your instance</string>
     <string name="linked_accounts_youtube">YouTube</string>
     <string name="linked_accounts_bilibili">BiliBili</string>
+    <string name="linked_accounts_twitch">Twitch</string>
+    <string name="linked_accounts_twitch_start">Connect Twitch</string>
+    <string name="linked_accounts_twitch_code_hint">Open twitch.tv/activate and enter this code</string>
+    <string name="linked_accounts_twitch_open">Open Twitch</string>
+    <string name="linked_accounts_twitch_connected_as">Connected as %1$s</string>
+    <string name="linked_accounts_twitch_expired">The code expired. Start again for a new one.</string>
+    <string name="linked_accounts_twitch_failed">Twitch could not be reached</string>
     <string name="linked_accounts_connected">Connected</string>
     <string name="linked_accounts_needs_reconnect">Needs to sign in again</string>
     <string name="linked_accounts_not_connected">Not connected</string>
