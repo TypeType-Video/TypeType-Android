@@ -28,6 +28,19 @@ class TwitchStreamLoaderTest {
     }
 
     @Test
+    fun aLiveOffersItsRecordingWhichOpensFromWhereItWasAsked() = runBlocking {
+        val recording = "https://www.twitch.tv/videos/9"
+        val live = TwitchPlayback(video("https://www.twitch.tv/space"), PLAYLIST, null, live = true, startOverUrl = recording)
+        assertEquals(recording, TwitchStreamLoader(FakeTwitchRepository(livePlayback = live)).load(TwitchTarget.Live("space")).startOverUrl)
+
+        val growing = TwitchPlayback(video(recording, 3_600), PLAYLIST, null, live = true)
+        val stream = TwitchStreamLoader(FakeTwitchRepository(vodPlayback = growing)).load(TwitchTarget.Vod("9"))
+        assertTrue(stream.holdsStartPosition)
+        assertFalse(stream.isLive)
+        assertNull(stream.liveTargetOffsetMillis)
+    }
+
+    @Test
     fun anOfflineChannelFailsWithItsOwnCode() = runBlocking {
         val failure = runCatching { TwitchStreamLoader(FakeTwitchRepository()).load(TwitchTarget.Live("space")) }.exceptionOrNull()
         assertEquals("twitch_offline", (failure as CodedFailure).failureCode)

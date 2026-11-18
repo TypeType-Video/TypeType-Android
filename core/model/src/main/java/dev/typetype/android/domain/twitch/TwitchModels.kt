@@ -24,7 +24,13 @@ data class TwitchChannel(
     val url: String get() = TwitchUrls.live(login)
 }
 
-data class TwitchPlayback(val video: Video, val playlistUrl: String, val audioPlaylistUrl: String?, val live: Boolean)
+data class TwitchPlayback(
+    val video: Video,
+    val playlistUrl: String,
+    val audioPlaylistUrl: String?,
+    val live: Boolean,
+    val startOverUrl: String? = null,
+)
 
 data class TwitchClipQuality(val height: Int, val frameRate: Int, val url: String)
 

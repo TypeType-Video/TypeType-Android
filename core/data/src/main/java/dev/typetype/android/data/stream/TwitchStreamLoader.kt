@@ -20,12 +20,14 @@ internal class TwitchStreamLoader @Inject constructor(
     suspend fun load(target: TwitchTarget): Stream = when (target) {
         is TwitchTarget.Live -> {
             val playback = twitch.live(target.login).getOrThrow() ?: throw TwitchOfflineException()
-            stream(playback.video, hlsUrl = playback.playlistUrl, live = true)
+            stream(playback.video, hlsUrl = playback.playlistUrl, live = true).copy(startOverUrl = playback.startOverUrl)
         }
         is TwitchTarget.Vod -> coroutineScope {
             val chapters = async { twitch.chapters(target.id).getOrNull().orEmpty().takeIf { it.size > 1 }.orEmpty() }
             val playback = twitch.vod(target.id).getOrThrow()
-            stream(playback.video, hlsUrl = playback.playlistUrl, live = playback.live).copy(chapters = chapters.await())
+            // A recording in progress plays like a past broadcast from where it was opened, with no live target to chase.
+            stream(playback.video, hlsUrl = playback.playlistUrl, live = false)
+                .copy(chapters = chapters.await(), holdsStartPosition = playback.live)
         }
         is TwitchTarget.Clip -> {
             val clip = twitch.clip(target.slug).getOrThrow()

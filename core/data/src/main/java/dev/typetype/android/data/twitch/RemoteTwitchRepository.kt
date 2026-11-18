@@ -16,6 +16,7 @@ import dev.typetype.android.domain.twitch.TwitchClipPlayback
 import dev.typetype.android.domain.twitch.TwitchPage
 import dev.typetype.android.domain.twitch.TwitchPlayback
 import dev.typetype.android.domain.twitch.TwitchRepository
+import dev.typetype.android.domain.twitch.TwitchUrls
 import dev.typetype.android.domain.twitch.TwitchVideoComment
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -59,6 +60,7 @@ class RemoteTwitchRepository @Inject constructor(
             playlistUrl = twitchPlaylistUrl(base, body.hlsUrl) ?: error("Twitch live without a playlist"),
             audioPlaylistUrl = twitchPlaylistUrl(base, body.audioUrl),
             live = true,
+            startOverUrl = body.channel.live?.archive?.id?.takeIf { it.isNotBlank() }?.let(TwitchUrls::vod),
         )
     }
 

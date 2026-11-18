@@ -34,6 +34,7 @@ object MergedStreamMediaKeys {
     const val EXTRA_ACCOUNT_ID = "typetype.account_id"
     const val EXTRA_SERVER_BASE_URL = "typetype.server_base_url"
     const val EXTRA_RESUME_POSITION_MILLIS = "typetype.resume_position_millis"
+    const val EXTRA_HOLD_START_POSITION = "typetype.hold_start_position"
     const val EXTRA_IS_LIVE_CONTENT = "typetype.is_live_content"
     const val EXTRA_VIDEO_TITLE = "typetype.video_title"
     const val EXTRA_VIDEO_THUMBNAIL = "typetype.video_thumbnail"

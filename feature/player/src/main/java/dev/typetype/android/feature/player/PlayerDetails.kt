@@ -2,6 +2,7 @@ package dev.typetype.android.feature.player
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -79,8 +80,11 @@ internal fun PlayerDetails(
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
         // Twitch videos live outside the server library: favorites, playlists, comments and downloads do not apply.
         if (twitch) {
-            TwitchLiveChatButton(visible = liveChatAvailable, onClick = { liveChatVisible = true })
-            TwitchLiveChatButton(visible = vodChatAvailable, onClick = { vodChatVisible = true }, replay = true)
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                TwitchLiveChatButton(visible = liveChatAvailable, onClick = { liveChatVisible = true })
+                TwitchLiveChatButton(visible = vodChatAvailable, onClick = { vodChatVisible = true }, replay = true)
+                stream.startOverUrl?.let { url -> TwitchStartOverButton(onClick = { onAction(PlayerAction.OnStartOver(url)) }) }
+            }
         } else PlayerInteractionRow(
             isFavorited = isFavorited,
             isInWatchLater = isInWatchLater,

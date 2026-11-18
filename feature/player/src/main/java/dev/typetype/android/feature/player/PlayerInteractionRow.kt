@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.WatchLater
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
@@ -161,6 +162,17 @@ internal fun TwitchLiveChatButton(visible: Boolean, onClick: () -> Unit, replay:
     PlayerActionButton(
         icon = Icons.Outlined.Forum,
         contentDescription = stringResource(if (replay) R.string.vod_chat_title else R.string.live_chat_title),
+        onClick = onClick,
+        expanded = true,
+    )
+}
+
+// Twitch rewinds a live into its recording in progress; here it opens from the start, and the live is one tap back.
+@Composable
+internal fun TwitchStartOverButton(onClick: () -> Unit) {
+    PlayerActionButton(
+        icon = Icons.Filled.Replay,
+        contentDescription = stringResource(R.string.player_start_over),
         onClick = onClick,
         expanded = true,
     )
