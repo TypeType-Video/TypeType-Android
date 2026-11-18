@@ -43,6 +43,7 @@ import dev.typetype.android.core.ui.navigation.PodcastRoute
 import dev.typetype.android.core.ui.navigation.PublicPlaylistRoute
 import dev.typetype.android.core.ui.navigation.SearchRoute
 import dev.typetype.android.core.ui.navigation.ShortsRoute
+import dev.typetype.android.core.ui.navigation.TwitchChannelRoute
 import dev.typetype.android.core.ui.player.PlayerHostController
 import dev.typetype.android.core.ui.player.PlayerHostTarget
 import dev.typetype.android.feature.player.components.LocalMediaController
@@ -92,6 +93,7 @@ fun AppShell(
     val showsNavigation = !isShorts && (
         isTopLevel ||
             currentDestination?.hasRoute<ChannelRoute>() == true ||
+            currentDestination?.hasRoute<TwitchChannelRoute>() == true ||
             currentDestination?.hasRoute<PlaylistRoute>() == true ||
             currentDestination?.hasRoute<PublicPlaylistRoute>() == true ||
             currentDestination?.hasRoute<PodcastRoute>() == true ||
