@@ -32,6 +32,7 @@ data class InstanceResponse(
     val rss: RssInstanceCapabilityDto? = null,
     val pushNotifications: PushCapabilityDto? = null,
     val recommender: RecommenderCapabilityDto? = null,
+    val twitch: TwitchCapabilityDto? = null,
 )
 
 @Serializable
@@ -50,6 +51,9 @@ data class PushCapabilityDto(
     val eventTypes: List<String> = emptyList(),
     val maxDevicesPerAccount: Int = 0,
 )
+
+@Serializable
+data class TwitchCapabilityDto(val enabled: Boolean = false)
 
 @Serializable
 data class RecommenderCapabilityDto(

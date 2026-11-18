@@ -20,4 +20,5 @@ interface TypeTypeApi :
     TypeTypeAccountProfilesApi,
     TypeTypeLinkedSessionsApi,
     TypeTypeAllowedChannelsApi,
-    TypeTypeDeviceLinkApi
+    TypeTypeDeviceLinkApi,
+    TypeTypeTwitchApi

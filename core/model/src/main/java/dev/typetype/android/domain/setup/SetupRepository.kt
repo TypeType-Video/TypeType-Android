@@ -37,4 +37,5 @@ data class ProbeResult(
     val rss: RssCapability,
     val push: PushCapability,
     val recommender: RecommenderCapability = RecommenderCapability(),
+    val twitchEnabled: Boolean = false,
 )

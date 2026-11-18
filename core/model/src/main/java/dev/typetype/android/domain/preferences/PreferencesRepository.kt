@@ -36,4 +36,5 @@ interface PreferencesRepository {
     suspend fun setDanmakuEnabled(enabled: Boolean)
     suspend fun setDanmakuSpeed(speed: Float)
     suspend fun setDanmakuSize(size: Float)
+    suspend fun setHomeLayout(layout: HomeLayout)
 }

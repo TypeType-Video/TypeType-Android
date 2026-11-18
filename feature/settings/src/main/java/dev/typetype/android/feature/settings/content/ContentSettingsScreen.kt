@@ -190,10 +190,43 @@ fun ContentSettingsScreen(
                         )
                     }
                 }
+                if (state.supportsWatchedSettings) {
+                    item {
+                        ContentVisibilitySwitch(
+                            title = R.string.settings_content_hide_watched_subscriptions,
+                            subtitle = R.string.settings_content_hide_watched_subscriptions_subtitle,
+                            checked = state.hideWatchedSubscriptionVideos,
+                            enabled = controlsEnabled,
+                            action = ContentSettingsAction::SetHideWatchedSubscriptionVideos,
+                            onAction = onAction,
+                        )
+                    }
+                    item {
+                        DropdownRow(
+                            title = stringResource(R.string.settings_watched_threshold),
+                            subtitle = stringResource(R.string.settings_watched_threshold_subtitle),
+                            options = watchedThresholdOptions(),
+                            selectedKey = state.watchedThresholdPercent.toString(),
+                            onSelect = { onAction(ContentSettingsAction.SetWatchedThreshold(it.toInt())) },
+                            enabled = controlsEnabled,
+                        )
+                    }
+                }
             }
         }
     }
 }
+
+@Composable
+private fun watchedThresholdOptions() = WATCHED_THRESHOLDS.map { percent ->
+    percent.toString() to if (percent == 0) {
+        stringResource(R.string.settings_watched_threshold_last_minute)
+    } else {
+        stringResource(R.string.settings_watched_threshold_percent, percent)
+    }
+}
+
+private val WATCHED_THRESHOLDS = listOf(0, 50, 60, 70, 80, 90, 95, 100)
 
 @Composable
 private fun landingPageOptions() = listOf(

@@ -27,6 +27,7 @@ import dev.typetype.android.core.ui.components.LazyPaginationFooter
 import dev.typetype.android.core.ui.components.SectionHeader
 import dev.typetype.android.core.ui.components.VideoCard
 import dev.typetype.android.core.ui.components.VideoCardSkeleton
+import dev.typetype.android.domain.preferences.HomeLayout
 import dev.typetype.android.feature.menu.VideoMenuScope
 import dev.typetype.android.feature.menu.rememberVideoMenuScope
 
@@ -128,14 +129,14 @@ internal fun HomeContent(
                 }
             }
             if (showRecommendations && recommender.personalized && state.feedKind == HomeFeedKind.Recommended) {
-                recommendedRows(
-                    recommender = recommender,
-                    videos = visibleVideos,
-                    menuScope = menuScope,
-                    onPlayVideo = onPlayVideo,
-                    onOpenChannel = onOpenChannel,
-                    onAction = onAction,
-                )
+                item(key = "home-layout", span = { GridItemSpan(maxLineSpan) }) {
+                    HomeLayoutToggle(layout = state.layout, onLayout = { onAction(HomeAction.SetLayout(it)) })
+                }
+                if (state.layout == HomeLayout.Grid) {
+                    recommendedGrid(recommender, visibleVideos, menuScope, onPlayVideo, onOpenChannel, onAction)
+                } else {
+                    recommendedRows(recommender, visibleVideos, menuScope, onPlayVideo, onOpenChannel, onAction)
+                }
                 item(key = "home-page-feedback", span = { GridItemSpan(maxLineSpan) }) {
                     HomePageFeedback(
                         verdict = recommender.pageVerdict,

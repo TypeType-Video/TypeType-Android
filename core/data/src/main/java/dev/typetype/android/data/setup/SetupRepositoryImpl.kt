@@ -79,6 +79,7 @@ class SetupRepositoryImpl @Inject constructor(
                     experimental = it.experimental,
                 )
             } ?: RecommenderCapability(),
+            twitchEnabled = resolved.instance.twitch?.enabled == true,
         )
     }
 

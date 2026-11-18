@@ -5,6 +5,8 @@ import dev.typetype.android.data.network.TypeTypeApiHolder
 import dev.typetype.android.domain.livechat.LiveChatEvent
 import dev.typetype.android.domain.livechat.LiveChatRepository
 import dev.typetype.android.domain.livechat.LiveChatRequestException
+import dev.typetype.android.domain.twitch.TwitchTarget
+import dev.typetype.android.domain.twitch.TwitchUrls
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
@@ -25,7 +27,9 @@ class RemoteLiveChatRepository @Inject constructor(
 ) : LiveChatRepository {
     override fun connect(videoUrl: String): Flow<LiveChatEvent> = flow {
         val scope = activeAccountScope.require()
-        val response = apiHolder.requireLiveChat(scope).liveChat(videoUrl)
+        val twitchLogin = (TwitchUrls.parse(videoUrl) as? TwitchTarget.Live)?.login
+        val api = apiHolder.requireLiveChat(scope)
+        val response = if (twitchLogin != null) api.twitchChatEvents(twitchLogin) else api.liveChat(videoUrl)
         if (!response.isSuccessful) {
             response.errorBody()?.close()
             throw LiveChatRequestException(response.code(), "Live chat request failed (HTTP ${response.code()})")
@@ -38,13 +42,21 @@ class RemoteLiveChatRepository @Inject constructor(
                 // A blocked socket read only returns when the server writes, so closing the body is what stops it.
                 val closer = launch { closeOnCancel(it) }
                 try {
-                    val parser = LiveChatSseParser(json)
                     val source = it.source()
-                    while (true) {
-                        val line = source.readUtf8Line() ?: break
-                        parser.accept(line.removeSuffix("\r"))?.let { event -> emit(event) }
+                    if (twitchLogin != null) {
+                        val parser = TwitchChatSseParser(json)
+                        while (true) {
+                            val line = source.readUtf8Line() ?: break
+                            parser.accept(line.removeSuffix("\r"))?.let { event -> emit(event) }
+                        }
+                    } else {
+                        val parser = LiveChatSseParser(json)
+                        while (true) {
+                            val line = source.readUtf8Line() ?: break
+                            parser.accept(line.removeSuffix("\r"))?.let { event -> emit(event) }
+                        }
+                        parser.finish()?.let { event -> emit(event) }
                     }
-                    parser.finish()?.let { event -> emit(event) }
                 } finally {
                     closer.cancel()
                 }

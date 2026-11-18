@@ -23,6 +23,7 @@ import dev.typetype.android.domain.stream.StreamVideoSource
 import dev.typetype.android.domain.stream.isServerSabrAudioFormat
 import dev.typetype.android.domain.stream.isServerSabrVideoFormat
 import dev.typetype.android.domain.server.ServerRepository
+import dev.typetype.android.domain.twitch.TwitchUrls
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
@@ -36,6 +37,7 @@ internal class StreamRepositoryImpl @Inject constructor(
     private val activeAccountScope: AccountScopeProvider,
     private val serverRepository: ServerRepository,
     private val networkMonitor: PlaybackNetworkObserver,
+    private val twitch: TwitchStreamLoader,
 ) : StreamRepository {
     private val playbackPrefetchCache = PlaybackStreamPrefetchCache()
 
@@ -81,6 +83,7 @@ internal class StreamRepositoryImpl @Inject constructor(
         videoUrl: String,
         playbackBootstrap: Boolean,
     ): Result<Stream> = cancellableStreamResult {
+        TwitchUrls.parse(videoUrl)?.let { target -> return@cancellableStreamResult twitch.load(target) }
         val scope = activeAccountScope.require()
         val server = serverRepository.getServer(scope.serverId) ?: error("Instance not found")
         val provider = videoUrl.streamProvider()
@@ -139,9 +142,10 @@ internal class StreamRepositoryImpl @Inject constructor(
             hlsUrl = resolvedHlsUrl.takeIf { !serverSabr && it.isNotBlank() },
             dashMpdUrl = dashMpdUrl.takeIf { !serverSabr && it.isNotBlank() },
             progressiveUrl = pickBestProgressiveStream(baseUrl, videoStreams).takeUnless { serverSabr },
+            // The server manifests only rebuild on-demand videos; a Bilibili or NicoNico live plays its own playlist.
             serverDashManifestUrl = serverManifestUrl(baseUrl, "streams/manifest", videoUrl)
-                .takeUnless { serverSabr || serverYoutube },
-            serverHlsManifestUrl = hlsUrl.takeIf { !serverSabr && !serverYoutube && it.isNotBlank() }
+                .takeUnless { serverSabr || serverYoutube || isLive },
+            serverHlsManifestUrl = hlsUrl.takeIf { !serverSabr && !serverYoutube && !isLive && it.isNotBlank() }
                 ?.let { serverManifestUrl(baseUrl, "streams/hls-manifest", videoUrl) },
             serverSabrManifestUrl = resolveServerUrl(baseUrl, firstSabrManifestUrl()),
             sabrVideoStreams = (videoOnlyStreams + videoStreams)

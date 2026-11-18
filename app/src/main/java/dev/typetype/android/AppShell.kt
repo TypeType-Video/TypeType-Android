@@ -43,6 +43,7 @@ import dev.typetype.android.core.ui.navigation.PodcastRoute
 import dev.typetype.android.core.ui.navigation.PublicPlaylistRoute
 import dev.typetype.android.core.ui.navigation.SearchRoute
 import dev.typetype.android.core.ui.navigation.ShortsRoute
+import dev.typetype.android.core.ui.navigation.TwitchChannelRoute
 import dev.typetype.android.core.ui.player.PlayerHostController
 import dev.typetype.android.core.ui.player.PlayerHostTarget
 import dev.typetype.android.feature.player.components.LocalMediaController
@@ -76,6 +77,7 @@ fun AppShell(
     avatarUrl: String? = null,
     avatarFallbackLetter: String? = null,
     showShorts: Boolean = true,
+    showLive: Boolean = false,
     accessiblePlayerControls: Boolean = false,
     onPlayVideo: (videoUrl: String) -> Unit,
     onOpenChannel: (channelUrl: String) -> Unit,
@@ -86,11 +88,12 @@ fun AppShell(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     val isShorts = currentDestination.matchesRoute(ShortsRoute)
-    val navigationTabs = visibleTopLevelTabs(showShorts)
+    val navigationTabs = visibleTopLevelTabs(showShorts, showLive)
     val isTopLevel = topLevelTabs.any { currentDestination.matchesRoute(it.route) }
     val showsNavigation = !isShorts && (
         isTopLevel ||
             currentDestination?.hasRoute<ChannelRoute>() == true ||
+            currentDestination?.hasRoute<TwitchChannelRoute>() == true ||
             currentDestination?.hasRoute<PlaylistRoute>() == true ||
             currentDestination?.hasRoute<PublicPlaylistRoute>() == true ||
             currentDestination?.hasRoute<PodcastRoute>() == true ||

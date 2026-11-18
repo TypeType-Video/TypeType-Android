@@ -64,6 +64,7 @@ fun PlayableSource.toRequestMetadata(
             (sabrSession?.startTimeMs ?: resumePositionMillis).coerceAtLeast(0L),
         )
         putBoolean(MergedStreamMediaKeys.EXTRA_IS_LIVE_CONTENT, isLiveContent)
+        putBoolean(MergedStreamMediaKeys.EXTRA_HOLD_START_POSITION, stream?.holdsStartPosition == true)
         putBoolean(
             MergedStreamMediaKeys.EXTRA_AUDIO_ONLY_PREFER_ORIGINAL,
             preferOriginalAudio,

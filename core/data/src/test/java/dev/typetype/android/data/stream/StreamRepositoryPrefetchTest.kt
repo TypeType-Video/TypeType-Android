@@ -26,6 +26,7 @@ class StreamRepositoryPrefetchTest {
             activeAccountScope = FixedAccountScope,
             serverRepository = FixedServerRepository,
             networkMonitor = AlwaysAvailablePlaybackNetworkObserver,
+            twitch = TwitchStreamLoader(FakeTwitchRepository()),
         )
 
         repository.prefetchPlaybackStream(VIDEO_URL).getOrThrow()

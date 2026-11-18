@@ -94,6 +94,12 @@ internal fun UserSettings.patchFrom(previous: UserSettings): JsonObject = buildJ
     if (hideContinueWatching != previous.hideContinueWatching) {
         put("hideContinueWatching", hideContinueWatching)
     }
+    if (supportsWatchedSettings && hideWatchedSubscriptionVideos != previous.hideWatchedSubscriptionVideos) {
+        put("hideWatchedSubscriptionVideos", hideWatchedSubscriptionVideos)
+    }
+    if (supportsWatchedSettings && watchedThresholdPercent != previous.watchedThresholdPercent) {
+        put("watchedThresholdPercent", watchedThresholdPercent)
+    }
     if (hideRelatedVideos != previous.hideRelatedVideos) {
         put("hideRelatedVideos", hideRelatedVideos)
     }

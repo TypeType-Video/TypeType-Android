@@ -179,6 +179,7 @@ private fun Video.metadataText(): String {
     val scheduledAt = releaseTimeMillis()?.takeIf { it > nowMillis }
     val badge = badgeStatusAt(nowMillis)
     val views = when {
+        viewCount >= 0L && badge == VideoBadgeStatus.Live -> stringResource(R.string.video_watching_short, formatRelatedViews(viewCount))
         viewCount >= 0L -> stringResource(R.string.video_views_short, formatRelatedViews(viewCount))
         scheduledAt != null &&
             (badge == VideoBadgeStatus.Premiere || badge == VideoBadgeStatus.Upcoming) ->

@@ -100,6 +100,7 @@ class PlaybackService : MediaSessionService() {
         )
         val audioOnlyDefaultPolicy = AudioOnlyDefaultPolicy()
         player.addListener(audioOnlyDefaultPolicy)
+        player.addListener(RecordingStartHolder(player))
         audioOnlyPlaybackBridge = playbackBridge
         playbackResumeRecorder = PlaybackResumeRecorder(
             player,

@@ -20,6 +20,11 @@ class StreamErrorCodesTest {
     }
 
     @Test
+    fun `an offline Twitch channel is a stream that has ended, not a missing video`() {
+        assertEquals(StreamErrorKind.StreamEnded, classifyStreamError(server("twitch_offline", 404)).kind)
+    }
+
+    @Test
     fun `server side trouble is never shown as a missing video or a lost connection`() {
         assertEquals(StreamErrorKind.ProviderBlocked, classifyStreamError(server("provider_access_blocked", 503)).kind)
         assertEquals(StreamErrorKind.ServerSlow, classifyStreamError(server("upstream_timeout", 504)).kind)

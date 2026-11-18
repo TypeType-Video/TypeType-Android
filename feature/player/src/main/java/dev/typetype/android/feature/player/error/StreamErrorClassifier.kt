@@ -109,6 +109,7 @@ enum class StreamErrorKind {
     Generic,
     AuthenticationExpired,
     ContentUnavailable,
+    StreamEnded,
     MemberOnly,
     PaidContent,
     ScheduledPremiere,

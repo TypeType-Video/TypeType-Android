@@ -17,6 +17,8 @@ sealed interface ContentSettingsAction {
     data class SetHideShorts(val hidden: Boolean) : Update
     data class SetHideMembersOnlyContent(val hidden: Boolean) : Update
     data class SetHideSubscriptionLiveStreams(val hidden: Boolean) : Update
+    data class SetHideWatchedSubscriptionVideos(val hidden: Boolean) : Update
+    data class SetWatchedThreshold(val percent: Int) : Update
     data class SetDeArrowEnabled(val enabled: Boolean) : Update
     data class SetDeArrowTitleMode(val mode: String) : Update
     data class SetDeArrowThumbnailMode(val mode: String) : Update
@@ -37,6 +39,9 @@ internal fun UserSettings.updatedBy(action: ContentSettingsAction.Update): UserS
         is ContentSettingsAction.SetHideMembersOnlyContent -> copy(hideMembersOnlyContent = action.hidden)
         is ContentSettingsAction.SetHideSubscriptionLiveStreams ->
             copy(hideSubscriptionLiveStreams = action.hidden)
+        is ContentSettingsAction.SetHideWatchedSubscriptionVideos ->
+            copy(hideWatchedSubscriptionVideos = action.hidden)
+        is ContentSettingsAction.SetWatchedThreshold -> copy(watchedThresholdPercent = action.percent)
         is ContentSettingsAction.SetDeArrowEnabled -> copy(deArrowEnabled = action.enabled)
         is ContentSettingsAction.SetDeArrowTitleMode -> copy(deArrowTitleMode = action.mode)
         is ContentSettingsAction.SetDeArrowThumbnailMode -> copy(deArrowThumbnailMode = action.mode)

@@ -2,6 +2,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name" translatable="false">TypeType</string>
     <string name="video_views_short">%1$s views</string>
+    <string name="video_watching_short">%1$s watching</string>
     <string name="video_premieres_at">Premieres %1$s</string>
     <string name="video_views_hidden_by_provider">Views hidden by provider</string>
     <string name="welcome_title">Welcome aboard</string>
@@ -82,6 +83,18 @@
     <string name="tab_shorts">Shorts</string>
     <string name="tab_subscriptions">Subscriptions</string>
     <string name="tab_library">Library</string>
+    <string name="tab_live">Live</string>
+    <string name="live_popular">Live now on Twitch</string>
+    <string name="live_load_failed">Twitch lives could not be loaded</string>
+    <string name="twitch_channel_videos">Videos</string>
+    <string name="twitch_channel_clips">Clips</string>
+    <string name="twitch_channel_empty">Nothing here yet</string>
+    <string name="live_search_channels">Search Twitch channels</string>
+    <string name="live_channel_live_now">Live now</string>
+    <string name="live_category_all">All</string>
+    <string name="live_followed">Followed channels live</string>
+    <string name="twitch_channel_follow">Follow</string>
+    <string name="twitch_channel_following">Following</string>
     <string name="shorts_load_failed">Couldn\'t load Shorts</string>
     <string name="shorts_load_more_failed">Couldn\'t load more Shorts</string>
     <string name="shorts_empty">No Shorts are available yet.</string>
@@ -276,6 +289,12 @@
     <string name="settings_content_hide_members_only_subtitle">Hide videos that need a channel membership</string>
     <string name="settings_content_hide_subscription_lives">Hide subscription live streams</string>
     <string name="settings_content_hide_subscription_lives_subtitle">Remove live and upcoming streams from subscriptions</string>
+    <string name="settings_content_hide_watched_subscriptions">Hide watched videos in Subscriptions</string>
+    <string name="settings_content_hide_watched_subscriptions_subtitle">Videos you have watched no longer show in your subscriptions feed</string>
+    <string name="settings_watched_threshold">Count as watched</string>
+    <string name="settings_watched_threshold_subtitle">How much of a video you need to watch before it shows as watched</string>
+    <string name="settings_watched_threshold_last_minute">Last minute (default)</string>
+    <string name="settings_watched_threshold_percent">%1$d%%</string>
     <string name="settings_content_update_failure_title">Content settings</string>
     <string name="settings_content_update_failed">Couldn\'t update content settings</string>
     <string name="accent_red">Red</string>
@@ -556,9 +575,16 @@
     <string name="accounts_subtitle">Switch instance or account</string>
     <string name="accounts_add_instance">Add an instance</string>
     <string name="linked_accounts_title">Linked accounts</string>
-    <string name="linked_accounts_subtitle">Sign in to YouTube or BiliBili through your instance</string>
+    <string name="linked_accounts_subtitle">Sign in to YouTube, BiliBili or Twitch through your instance</string>
     <string name="linked_accounts_youtube">YouTube</string>
     <string name="linked_accounts_bilibili">BiliBili</string>
+    <string name="linked_accounts_twitch">Twitch</string>
+    <string name="linked_accounts_twitch_start">Connect Twitch</string>
+    <string name="linked_accounts_twitch_code_hint">Open twitch.tv/activate and enter this code</string>
+    <string name="linked_accounts_twitch_open">Open Twitch</string>
+    <string name="linked_accounts_twitch_connected_as">Connected as %1$s</string>
+    <string name="linked_accounts_twitch_expired">The code expired. Start again for a new one.</string>
+    <string name="linked_accounts_twitch_failed">Twitch could not be reached</string>
     <string name="linked_accounts_connected">Connected</string>
     <string name="linked_accounts_needs_reconnect">Needs to sign in again</string>
     <string name="linked_accounts_not_connected">Not connected</string>
@@ -607,7 +633,17 @@
     <string name="accounts_switch_failed">Couldn\'t switch account</string>
     <string name="accounts_forget_failed">Couldn\'t forget account</string>
     <string name="live_chat_title">Live chat</string>
+    <string name="vod_chat_title">Chat replay</string>
+    <string name="player_start_over">Start over</string>
+    <string name="vod_chat_unavailable">The chat replay is not available for this video</string>
     <string name="live_chat_empty">No messages yet</string>
+    <string name="live_chat_pinned_by">Pinned · %1$s</string>
+    <string name="live_chat_poll_choice">%1$s, %2$d%%</string>
+    <string name="live_chat_hide_highlight">Hide</string>
+    <string name="live_chat_send_hint">Send a message</string>
+    <string name="live_chat_send">Send</string>
+    <string name="live_chat_send_failed">Twitch refused the message</string>
+    <string name="live_chat_vote">Vote for %1$s</string>
     <string name="live_chat_connecting">Connecting…</string>
     <string name="live_chat_live">Live</string>
     <string name="live_chat_reconnecting">Reconnecting…</string>
@@ -1059,6 +1095,9 @@
     <string name="family_list_home_empty">Nothing from the family list yet</string>
     <string name="family_list_no_results">No family-list results. Try a channel you already trust.</string>
     <string name="home_section_trending">Trending</string>
+    <string name="home_layout_label">Home page layout</string>
+    <string name="home_layout_grid">As usual</string>
+    <string name="home_layout_rows">By category</string>
     <string name="home_section_recommended">Recommended</string>
     <string name="algo_title">Recommendations</string>
     <string name="algo_entry_subtitle">Choose the algorithm, its settings, your interests and the data it reads</string>
@@ -1456,6 +1495,7 @@
     <string name="state_go_back">Go back</string>
     <string name="state_authentication_expired_message">Your session expired. Open accounts to sign in again or start a new guest session.</string>
     <string name="state_couldnt_load_video">Couldn\'t load this video</string>
+    <string name="state_stream_ended">The stream has ended.</string>
     <string name="state_something_went_wrong">Something went wrong</string>
     <string name="state_failed_to_load_stream">Failed to load stream.</string>
     <string name="state_youtube_session_required_message">This instance needs a connected YouTube session to play this video.</string>
@@ -1767,4 +1807,12 @@
     <string name="channel_notifications_disable">Turn off new video notifications</string>
     <string name="push_battery_hint">Disable battery optimization for reliable notification delivery.</string>
     <string name="push_battery_open_settings">Battery settings</string>
+    <plurals name="twitch_channel_followers">
+        <item quantity="one">%1$s follower</item>
+        <item quantity="other">%1$s followers</item>
+    </plurals>
+    <plurals name="live_chat_poll_votes">
+        <item quantity="one">%1$d vote</item>
+        <item quantity="other">%1$d votes</item>
+    </plurals>
 </resources>

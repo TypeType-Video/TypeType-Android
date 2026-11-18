@@ -114,6 +114,12 @@ class ServerCapabilitiesTest {
         assertTrue(refreshed.recommender.available)
     }
 
+    @Test
+    fun twitchFollowsTheInstanceAndStaysOffWhenMissing() {
+        assertTrue(server.withCapabilities(decode(BASE_INSTANCE.dropLast(1) + ",\"twitch\":{\"enabled\":true}}")).twitchEnabled)
+        assertFalse(server.withCapabilities(decode(BASE_INSTANCE)).twitchEnabled)
+    }
+
     private fun decode(value: String): InstanceResponse = json.decodeFromString(value)
 
     private companion object {

@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.WatchLater
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
@@ -152,6 +153,29 @@ fun PlayerInteractionRow(
             onDismiss = { shareSheetOpen = false },
         )
     }
+}
+
+// Twitch keeps only its chat among the watch page actions: the live chat, or the chat replay of a past broadcast.
+@Composable
+internal fun TwitchLiveChatButton(visible: Boolean, onClick: () -> Unit, replay: Boolean = false) {
+    if (!visible) return
+    PlayerActionButton(
+        icon = Icons.Outlined.Forum,
+        contentDescription = stringResource(if (replay) R.string.vod_chat_title else R.string.live_chat_title),
+        onClick = onClick,
+        expanded = true,
+    )
+}
+
+// Twitch rewinds a live into its recording in progress; here it opens from the start, and the live is one tap back.
+@Composable
+internal fun TwitchStartOverButton(onClick: () -> Unit) {
+    PlayerActionButton(
+        icon = Icons.Filled.Replay,
+        contentDescription = stringResource(R.string.player_start_over),
+        onClick = onClick,
+        expanded = true,
+    )
 }
 
 @Composable

@@ -51,21 +51,20 @@ interface HistoryDao {
 
     @Query(
         "SELECT url FROM history WHERE serverId = :serverId AND accountId = :accountId " +
-            "AND durationSeconds > 0 AND progressSeconds * 10 >= durationSeconds * 9",
+            "AND progressSeconds > 0 AND durationSeconds > 0 AND $WATCHED",
     )
-    fun observeWatchedUrls(serverId: String, accountId: String): Flow<List<String>>
+    fun observeWatchedUrls(serverId: String, accountId: String, threshold: Int): Flow<List<String>>
 
     @Query(
         "SELECT * FROM history WHERE serverId = :serverId AND accountId = :accountId " +
-            "AND progressSeconds > 0 AND durationSeconds > 0 " +
-            "AND ((durationSeconds > 60 AND progressSeconds < durationSeconds - 60) " +
-            "OR (durationSeconds <= 60 AND progressSeconds * 10 < durationSeconds * 9)) " +
+            "AND progressSeconds > 0 AND durationSeconds > 0 AND NOT $WATCHED " +
             "ORDER BY watchedAtMillis DESC, id DESC LIMIT :limit",
     )
     fun observeContinueWatching(
         serverId: String,
         accountId: String,
         limit: Int,
+        threshold: Int,
     ): Flow<List<HistoryEntity>>
 
     @Query(
@@ -113,3 +112,11 @@ interface HistoryDao {
         items.forEach { upsert(it) }
     }
 }
+
+// The web's rule (lib/watch-progress.ts isVideoWatched): the share chosen in the profile settings, or else the last
+// minute of the video (the last tenth of a video shorter than a minute).
+private const val WATCHED =
+    "(CASE WHEN :threshold BETWEEN 50 AND 100 " +
+        "THEN MIN(progressSeconds, durationSeconds) * 100 >= durationSeconds * :threshold " +
+        "WHEN durationSeconds > 60 THEN progressSeconds >= durationSeconds - 60 " +
+        "ELSE progressSeconds * 10 >= durationSeconds * 9 END)"

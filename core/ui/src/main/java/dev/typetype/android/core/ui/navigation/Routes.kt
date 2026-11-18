@@ -33,6 +33,12 @@ data object SubscriptionsRoute
 data object LibraryRoute
 
 @Serializable
+data object LiveRoute
+
+@Serializable
+data class TwitchChannelRoute(val login: String)
+
+@Serializable
 data class LibraryLandingRoute(val tab: String)
 
 @Serializable

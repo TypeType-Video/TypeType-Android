@@ -2,6 +2,7 @@ package dev.typetype.android.feature.home
 
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.library.HistoryItem
+import dev.typetype.android.domain.preferences.HomeLayout
 import dev.typetype.android.domain.server.Server
 
 enum class HomeFeedKind { Recommended, Trending }
@@ -21,4 +22,5 @@ data class HomeState(
     val loadMoreError: Boolean = false,
     val defaultService: Int = 0,
     val recommender: HomeRecommenderState = HomeRecommenderState(),
+    val layout: HomeLayout = HomeLayout.Rows,
 )
