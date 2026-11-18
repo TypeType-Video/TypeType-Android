@@ -1,6 +1,7 @@
 package dev.typetype.android.feature.player.livechat
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,13 +36,17 @@ import dev.typetype.android.domain.twitch.TwitchPinnedMessage
 import dev.typetype.android.domain.twitch.TwitchPoll
 
 @Composable
-internal fun TwitchChatHighlightsCards(highlights: TwitchChatHighlights, onHide: (String) -> Unit) {
+internal fun TwitchChatHighlightsCards(
+    highlights: TwitchChatHighlights,
+    onHide: (String) -> Unit,
+    onVote: ((pollId: String, choiceId: String) -> Unit)? = null,
+) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         highlights.pinned?.let { PinnedCard(it, onHide = { onHide(it.id) }) }
-        highlights.poll?.let { PollCard(it, onHide = { onHide(it.id) }) }
+        highlights.poll?.let { poll -> PollCard(poll, onHide = { onHide(poll.id) }, onVote = onVote?.let { vote -> { choice -> vote(poll.id, choice) } }) }
     }
 }
 
@@ -75,7 +80,7 @@ private fun PinnedCard(pinned: TwitchPinnedMessage, onHide: () -> Unit) {
 }
 
 @Composable
-private fun PollCard(poll: TwitchPoll, onHide: () -> Unit) {
+private fun PollCard(poll: TwitchPoll, onHide: () -> Unit, onVote: ((String) -> Unit)?) {
     val total = poll.choices.sumOf { it.votes }
     val best = poll.choices.maxOfOrNull { it.votes } ?: 0
     HighlightCard(onHide) {
@@ -84,7 +89,7 @@ private fun PollCard(poll: TwitchPoll, onHide: () -> Unit) {
             poll.choices.forEach { choice ->
                 val percent = if (total > 0) Math.round(choice.votes * 100.0 / total).toInt() else 0
                 val label = stringResource(R.string.live_chat_poll_choice, choice.title, percent)
-                PollRow(label, percent, leading = best > 0 && choice.votes == best)
+                PollRow(label, percent, leading = best > 0 && choice.votes == best, onVote = onVote?.let { { it(choice.id) } })
             }
             Text(
                 pluralStringResource(R.plurals.live_chat_poll_votes, poll.votes.toInt().coerceAtLeast(0), poll.votes),
@@ -96,9 +101,11 @@ private fun PollCard(poll: TwitchPoll, onHide: () -> Unit) {
 }
 
 @Composable
-private fun PollRow(label: String, percent: Int, leading: Boolean) {
+private fun PollRow(label: String, percent: Int, leading: Boolean, onVote: (() -> Unit)?) {
     val fill = if (leading) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-    Column(Modifier.clearAndSetSemantics { contentDescription = label }) {
+    val voteLabel = stringResource(R.string.live_chat_vote, label)
+    val semantics = Modifier.clearAndSetSemantics { contentDescription = if (onVote != null) voteLabel else label }
+    Column(if (onVote != null) semantics.clickable(onClickLabel = voteLabel, onClick = onVote) else semantics) {
         Text(label, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
         Box(
             Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp))

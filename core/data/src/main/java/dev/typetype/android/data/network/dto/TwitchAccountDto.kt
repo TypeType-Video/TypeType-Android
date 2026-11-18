@@ -31,3 +31,9 @@ data class TwitchFollowStateDto(
     val following: Boolean = false,
     val followedAt: String? = null,
 )
+
+@Serializable
+data class TwitchChatSendRequest(val message: String)
+
+@Serializable
+data class TwitchPollVoteRequest(val pollId: String, val choiceId: String)

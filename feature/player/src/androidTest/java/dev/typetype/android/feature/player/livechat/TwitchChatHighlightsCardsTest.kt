@@ -39,4 +39,19 @@ class TwitchChatHighlightsCardsTest {
 
         assertEquals("p1", hidden.get())
     }
+
+    @Test
+    fun aLinkedAccountVotesForAChoice() {
+        val vote = AtomicReference<String>()
+        val poll = TwitchPoll("p1", "Next boss?", 4, listOf(TwitchPollChoice("a", "Lion", 3), TwitchPollChoice("b", "Dragon", 1)))
+        composeRule.setContent {
+            TypeTypeTheme {
+                TwitchChatHighlightsCards(TwitchChatHighlights(poll, null), onHide = {}, onVote = { pollId, choice -> vote.set("$pollId:$choice") })
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Vote for Dragon, 25%").performClick()
+
+        assertEquals("p1:b", vote.get())
+    }
 }

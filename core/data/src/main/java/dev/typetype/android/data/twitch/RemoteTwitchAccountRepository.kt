@@ -4,7 +4,9 @@ import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.network.TypeTypeApi
 import dev.typetype.android.data.network.TypeTypeApiHolder
+import dev.typetype.android.data.network.dto.TwitchChatSendRequest
 import dev.typetype.android.data.network.dto.TwitchDevicePollRequest
+import dev.typetype.android.data.network.dto.TwitchPollVoteRequest
 import dev.typetype.android.data.network.requireSuccessfulResponse
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.twitch.TwitchAccountRepository
@@ -47,22 +49,25 @@ class RemoteTwitchAccountRepository @Inject constructor(
             }
         }
 
-    override suspend fun unlink(): Result<Unit> = suspendRunCatching {
-        val scope = activeAccountScope.require()
-        val response = withContext(Dispatchers.IO) { apiHolder.require(scope).twitchUnlink() }
-        activeAccountScope.verify(scope)
-        response.requireSuccessfulResponse()
-    }
+    override suspend fun unlink(): Result<Unit> = write { twitchUnlink() }
 
     override suspend fun followedLives(cursor: String?): Result<TwitchPage<Video>> = call { twitchFollowedLives(cursor) }
         .map { page -> TwitchPage(page.items.map { it.toVideo() }, page.cursor?.takeIf { page.hasMore && it.isNotBlank() }) }
 
     override suspend fun isFollowing(login: String): Result<Boolean> = call { twitchFollowState(login) }.map { it.following }
 
-    override suspend fun setFollowing(login: String, follow: Boolean): Result<Unit> = suspendRunCatching {
+    override suspend fun setFollowing(login: String, follow: Boolean): Result<Unit> =
+        write { if (follow) twitchFollow(login) else twitchUnfollow(login) }
+
+    override suspend fun sendChat(login: String, message: String): Result<Unit> =
+        write { twitchSendChat(login, TwitchChatSendRequest(message)) }
+
+    override suspend fun votePoll(pollId: String, choiceId: String): Result<Unit> =
+        write { twitchVotePoll(TwitchPollVoteRequest(pollId, choiceId)) }
+
+    private suspend fun write(block: suspend TypeTypeApi.() -> Response<Unit>): Result<Unit> = suspendRunCatching {
         val scope = activeAccountScope.require()
-        val api = apiHolder.require(scope)
-        val response = withContext(Dispatchers.IO) { if (follow) api.twitchFollow(login) else api.twitchUnfollow(login) }
+        val response = withContext(Dispatchers.IO) { apiHolder.require(scope).block() }
         activeAccountScope.verify(scope)
         response.requireSuccessfulResponse()
     }

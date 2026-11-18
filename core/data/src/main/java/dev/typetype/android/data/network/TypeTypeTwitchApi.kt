@@ -4,6 +4,7 @@ import dev.typetype.android.data.network.dto.TwitchAccountStatusDto
 import dev.typetype.android.data.network.dto.TwitchChannelDto
 import dev.typetype.android.data.network.dto.TwitchChatAssetsDto
 import dev.typetype.android.data.network.dto.TwitchChatHighlightsDto
+import dev.typetype.android.data.network.dto.TwitchChatSendRequest
 import dev.typetype.android.data.network.dto.TwitchClipDto
 import dev.typetype.android.data.network.dto.TwitchClipPlaybackDto
 import dev.typetype.android.data.network.dto.TwitchDeviceCodeDto
@@ -14,6 +15,7 @@ import dev.typetype.android.data.network.dto.TwitchGameDto
 import dev.typetype.android.data.network.dto.TwitchGameStreamsDto
 import dev.typetype.android.data.network.dto.TwitchLiveDto
 import dev.typetype.android.data.network.dto.TwitchPageDto
+import dev.typetype.android.data.network.dto.TwitchPollVoteRequest
 import dev.typetype.android.data.network.dto.TwitchStreamDto
 import dev.typetype.android.data.network.dto.TwitchVideoChapterDto
 import dev.typetype.android.data.network.dto.TwitchVideoCommentDto
@@ -109,6 +111,12 @@ interface TypeTypeTwitchApi {
 
     @POST("twitch/account/poll")
     suspend fun twitchPollDevice(@Body body: TwitchDevicePollRequest): Response<TwitchDevicePollDto>
+
+    @POST("twitch/chat/{login}/messages")
+    suspend fun twitchSendChat(@Path("login") login: String, @Body body: TwitchChatSendRequest): Response<Unit>
+
+    @POST("twitch/polls/vote")
+    suspend fun twitchVotePoll(@Body body: TwitchPollVoteRequest): Response<Unit>
 
     @DELETE("twitch/account")
     suspend fun twitchUnlink(): Response<Unit>

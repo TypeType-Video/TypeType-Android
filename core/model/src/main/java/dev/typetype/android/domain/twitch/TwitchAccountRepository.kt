@@ -35,4 +35,8 @@ interface TwitchAccountRepository {
     suspend fun isFollowing(login: String): Result<Boolean>
 
     suspend fun setFollowing(login: String, follow: Boolean): Result<Unit>
+
+    suspend fun sendChat(login: String, message: String): Result<Unit>
+
+    suspend fun votePoll(pollId: String, choiceId: String): Result<Unit>
 }

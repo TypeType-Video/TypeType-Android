@@ -3,6 +3,7 @@ package dev.typetype.android.feature.player.livechat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.typetype.android.domain.twitch.TwitchAccountRepository
 import dev.typetype.android.domain.twitch.TwitchChatHighlights
 import dev.typetype.android.domain.twitch.TwitchRepository
 import dev.typetype.android.domain.twitch.TwitchTarget
@@ -20,7 +21,13 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class TwitchChatHighlightsViewModel @Inject constructor(
     private val twitch: TwitchRepository,
+    private val accounts: TwitchAccountRepository,
 ) : ViewModel() {
+    // A vote needs the linked Twitch account; a poll is voted once, further votes would cost channel points.
+    private val _canVote = MutableStateFlow(false)
+    val canVote: StateFlow<Boolean> = _canVote.asStateFlow()
+    private val _voted = MutableStateFlow<Set<String>>(emptySet())
+    val voted: StateFlow<Set<String>> = _voted.asStateFlow()
     private val highlights = MutableStateFlow(TwitchChatHighlights(null, null))
     private val hidden = MutableStateFlow<Set<String>>(emptySet())
     private val _state = MutableStateFlow(TwitchChatHighlights(null, null))
@@ -31,6 +38,7 @@ class TwitchChatHighlightsViewModel @Inject constructor(
     fun start(videoUrl: String) {
         job?.cancel()
         val login = (TwitchUrls.parse(videoUrl) as? TwitchTarget.Live)?.login ?: return
+        viewModelScope.launch { _canVote.value = accounts.status().getOrNull()?.linked == true }
         job = viewModelScope.launch {
             while (isActive) {
                 twitch.chatHighlights(login).onSuccess { found ->
@@ -40,6 +48,12 @@ class TwitchChatHighlightsViewModel @Inject constructor(
                 delay(REFRESH_MS)
             }
         }
+    }
+
+    fun vote(pollId: String, choiceId: String) {
+        if (pollId in _voted.value) return
+        _voted.update { it + pollId }
+        viewModelScope.launch { accounts.votePoll(pollId, choiceId).onFailure { _voted.update { it - pollId } } }
     }
 
     fun stop() {

@@ -70,8 +70,15 @@ internal fun LiveChatSheet(videoUrl: String, onDismiss: () -> Unit) {
     ) {
         Column(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.7f)) {
             LiveChatHeader(status = state.status, onRetry = { viewModel.retry(videoUrl) })
-            TwitchChatHighlightsCards(highlights, onHide = highlightsViewModel::hide)
+            val canVote by highlightsViewModel.canVote.collectAsStateWithLifecycle()
+            val voted by highlightsViewModel.voted.collectAsStateWithLifecycle()
+            TwitchChatHighlightsCards(
+                highlights,
+                onHide = highlightsViewModel::hide,
+                onVote = highlightsViewModel::vote.takeIf { canVote && highlights.poll?.id !in voted },
+            )
             LiveChatMessages(messages = state.messages, modifier = Modifier.weight(1f))
+            TwitchChatComposer(videoUrl)
         }
     }
 }
