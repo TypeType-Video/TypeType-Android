@@ -236,6 +236,7 @@ internal fun NavDestination?.matchesRoute(route: Any): Boolean {
         HomeRoute -> destination.hasRoute<HomeRoute>()
         ShortsRoute -> destination.hasRoute<ShortsRoute>()
         SubscriptionsRoute -> destination.hasRoute<SubscriptionsRoute>()
+        LiveRoute -> destination.hasRoute<LiveRoute>()
         LibraryRoute -> destination.hasRoute<LibraryRoute>() ||
             destination.hasRoute<LibraryLandingRoute>()
         else -> false

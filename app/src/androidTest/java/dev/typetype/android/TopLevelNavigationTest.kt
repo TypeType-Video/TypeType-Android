@@ -11,7 +11,10 @@ import androidx.navigation.compose.rememberNavController
 import dev.typetype.android.core.ui.navigation.ChannelRoute
 import dev.typetype.android.core.ui.navigation.HomeRoute
 import dev.typetype.android.core.ui.navigation.LibraryRoute
+import dev.typetype.android.core.ui.navigation.LiveRoute
+import dev.typetype.android.core.ui.navigation.ShortsRoute
 import dev.typetype.android.core.ui.navigation.SubscriptionsRoute
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -48,5 +51,27 @@ class TopLevelNavigationTest {
             controller.navigateTopLevel(SubscriptionsRoute, SubscriptionsRoute::class.qualifiedName)
         }
         composeRule.onNodeWithText("Subscriptions").assertExists()
+    }
+
+    @Test
+    fun everyTabIsRecognizedOnItsOwnDestination() {
+        composeRule.setContent {
+            controller = rememberNavController()
+            NavHost(controller, startDestination = HomeRoute) {
+                composable<HomeRoute> { Text("Home") }
+                composable<ShortsRoute> { Text("Shorts") }
+                composable<SubscriptionsRoute> { Text("Subscriptions") }
+                composable<LiveRoute> { Text("Live") }
+                composable<LibraryRoute> { Text("Library") }
+            }
+        }
+        topLevelTabs.forEach { tab ->
+            composeRule.runOnIdle {
+                controller.navigateTopLevel(tab.route, controller.currentDestination?.route)
+            }
+            composeRule.runOnIdle {
+                assertTrue(tab.route.toString(), controller.currentDestination.matchesRoute(tab.route))
+            }
+        }
     }
 }
