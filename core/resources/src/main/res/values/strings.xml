@@ -286,6 +286,12 @@
     <string name="settings_content_hide_members_only_subtitle">Hide videos that need a channel membership</string>
     <string name="settings_content_hide_subscription_lives">Hide subscription live streams</string>
     <string name="settings_content_hide_subscription_lives_subtitle">Remove live and upcoming streams from subscriptions</string>
+    <string name="settings_content_hide_watched_subscriptions">Hide watched videos in Subscriptions</string>
+    <string name="settings_content_hide_watched_subscriptions_subtitle">Videos you have watched no longer show in your subscriptions feed</string>
+    <string name="settings_watched_threshold">Count as watched</string>
+    <string name="settings_watched_threshold_subtitle">How much of a video you need to watch before it shows as watched</string>
+    <string name="settings_watched_threshold_last_minute">Last minute (default)</string>
+    <string name="settings_watched_threshold_percent">%1$d%%</string>
     <string name="settings_content_update_failure_title">Content settings</string>
     <string name="settings_content_update_failed">Couldn\'t update content settings</string>
     <string name="accent_red">Red</string>

@@ -77,7 +77,8 @@ class HistoryPagingDaoTest {
 
         assertEquals(listOf("Alpha", "Beta"), result.data.map { it.title })
         assertEquals(3, dao.observeCount(SERVER_ID, ACCOUNT_ID).first())
-        assertEquals(listOf("url-a"), dao.observeWatchedUrls(SERVER_ID, ACCOUNT_ID).first())
+        assertEquals(setOf("url-z", "url-a"), dao.observeWatchedUrls(SERVER_ID, ACCOUNT_ID, threshold = 0).first().toSet())
+        assertEquals(listOf("url-a"), dao.observeWatchedUrls(SERVER_ID, ACCOUNT_ID, threshold = 90).first())
     }
 
     private fun history(

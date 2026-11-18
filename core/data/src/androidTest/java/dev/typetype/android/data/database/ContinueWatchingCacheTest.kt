@@ -56,9 +56,14 @@ class ContinueWatchingCacheTest {
         dao.upsert(history(id = "older-active", duration = 60, progress = 53, watchedAt = 2))
         dao.upsert(history(id = "newer-active", duration = 120, progress = 59, watchedAt = 3))
 
-        val items = dao.observeContinueWatching(SERVER_ID, ACCOUNT_ID, limit = 2).first()
+        val items = dao.observeContinueWatching(SERVER_ID, ACCOUNT_ID, limit = 2, threshold = 0).first()
+        val untilTheEnd = dao.observeContinueWatching(SERVER_ID, ACCOUNT_ID, limit = 5, threshold = 100).first()
 
         assertEquals(listOf("newer-active", "older-active"), items.map { it.id })
+        assertEquals(
+            listOf("long-finished", "short-finished", "newer-active", "older-active"),
+            untilTheEnd.map { it.id },
+        )
     }
 
     private fun history(

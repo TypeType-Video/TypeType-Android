@@ -28,6 +28,25 @@ class VideoMenuScopeTest {
         assertFalse(scope.stateFor(wrapped).isWatched)
     }
 
+    @Test
+    fun `watched videos leave the subscriptions feed only when the profile asks`() {
+        val url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        fun scope(hide: Boolean) = VideoMenuScope(
+            watchedUrls = setOf(url),
+            blockedVideoUrls = emptySet(),
+            blockedChannelUrls = emptySet(),
+            blockedKeywords = emptySet(),
+            visibility = ContentVisibility(hideWatchedSubscriptionVideos = hide),
+            favorites = emptySet(),
+            watchLater = emptySet(),
+            onAction = { _, _ -> },
+        )
+
+        assertTrue(scope(hide = true).isHiddenFromSubscriptions(video(url)))
+        assertFalse(scope(hide = false).isHiddenFromSubscriptions(video(url)))
+        assertFalse(scope(hide = true).isHidden(video(url)))
+    }
+
     private fun video(url: String) = Video(
         id = "dQw4w9WgXcQ",
         url = url,

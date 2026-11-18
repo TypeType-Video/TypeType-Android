@@ -21,6 +21,7 @@ import dev.typetype.android.core.ui.share.ShareChooserSheet
 import dev.typetype.android.domain.actions.titleMatchesBlockedKeyword
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.navigation.canonicalVideoIdentity
+import dev.typetype.android.domain.usersettings.UserSettings
 
 @Stable
 class VideoMenuScope(
@@ -61,9 +62,22 @@ class VideoMenuScope(
             visibility.hideMembersOnlyContent && video.requiresMembership
 
     val familyListOnly: Boolean get() = visibility.familyListOnly
+
+    fun isHiddenFromSubscriptions(video: Video): Boolean =
+        isHidden(video) || visibility.hideWatchedSubscriptionVideos && canonicalVideoIdentity(video.url) in watchedUrls
 }
 
-data class ContentVisibility(val hideMembersOnlyContent: Boolean = false, val familyListOnly: Boolean = false)
+data class ContentVisibility(
+    val hideMembersOnlyContent: Boolean = false,
+    val familyListOnly: Boolean = false,
+    val hideWatchedSubscriptionVideos: Boolean = false,
+)
+
+internal fun UserSettings.contentVisibility() = ContentVisibility(
+    hideMembersOnlyContent = hideMembersOnlyContent,
+    familyListOnly = accessMode == "allow_list",
+    hideWatchedSubscriptionVideos = hideWatchedSubscriptionVideos,
+)
 
 @Composable
 fun rememberVideoMenuScope(
