@@ -12,7 +12,9 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -36,7 +38,7 @@ import dev.typetype.android.domain.twitch.TwitchChannel
 @Composable
 fun TwitchChannelRouteScreen(viewModel: TwitchChannelViewModel, onPlayVideo: (String) -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    TwitchChannelContent(state, onPlayVideo, viewModel::select, viewModel::retry, viewModel::loadMore)
+    TwitchChannelContent(state, onPlayVideo, viewModel::select, viewModel::retry, viewModel::loadMore, viewModel::toggleFollow)
 }
 
 @Composable
@@ -46,6 +48,7 @@ internal fun TwitchChannelContent(
     onSelect: (TwitchChannelTab) -> Unit,
     onRetry: () -> Unit,
     onLoadMore: () -> Unit,
+    onToggleFollow: () -> Unit = {},
 ) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 280.dp),
@@ -56,7 +59,7 @@ internal fun TwitchChannelContent(
     ) {
         // Always present, so the header arriving after the videos does not push the grid out of view.
         item(key = "channel-header", span = { GridItemSpan(maxLineSpan) }) {
-            state.channel?.let { ChannelHeader(it) } ?: Spacer(Modifier.height(HEADER_HEIGHT))
+            state.channel?.let { ChannelHeader(it, state, onToggleFollow) } ?: Spacer(Modifier.height(HEADER_HEIGHT))
         }
         item(key = "channel-tabs", span = { GridItemSpan(maxLineSpan) }) {
             SecondaryTabRow(selectedTabIndex = state.tab.ordinal) {
@@ -85,7 +88,7 @@ internal fun TwitchChannelContent(
 }
 
 @Composable
-private fun ChannelHeader(channel: TwitchChannel) {
+private fun ChannelHeader(channel: TwitchChannel, state: TwitchChannelState, onToggleFollow: () -> Unit) {
     Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
         ProfileAvatar(imageUrl = channel.avatarUrl, fallbackLetter = channel.displayName.take(1), contentDescription = null, modifier = Modifier.size(64.dp))
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -97,6 +100,10 @@ private fun ChannelHeader(channel: TwitchChannel) {
             )
             if (channel.description.isNotBlank()) {
                 Text(channel.description, style = MaterialTheme.typography.bodySmall, maxLines = 3, overflow = TextOverflow.Ellipsis)
+            }
+            if (state.followable) {
+                val label = stringResource(if (state.following) R.string.twitch_channel_following else R.string.twitch_channel_follow)
+                if (state.following) OutlinedButton(onClick = onToggleFollow) { Text(label) } else Button(onClick = onToggleFollow) { Text(label) }
             }
         }
     }

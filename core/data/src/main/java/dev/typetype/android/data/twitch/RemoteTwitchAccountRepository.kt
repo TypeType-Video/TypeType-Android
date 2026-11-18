@@ -6,10 +6,12 @@ import dev.typetype.android.data.network.TypeTypeApi
 import dev.typetype.android.data.network.TypeTypeApiHolder
 import dev.typetype.android.data.network.dto.TwitchDevicePollRequest
 import dev.typetype.android.data.network.requireSuccessfulResponse
+import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.twitch.TwitchAccountRepository
 import dev.typetype.android.domain.twitch.TwitchAccountStatus
 import dev.typetype.android.domain.twitch.TwitchLinkCode
 import dev.typetype.android.domain.twitch.TwitchLinkPoll
+import dev.typetype.android.domain.twitch.TwitchPage
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
@@ -48,6 +50,19 @@ class RemoteTwitchAccountRepository @Inject constructor(
     override suspend fun unlink(): Result<Unit> = suspendRunCatching {
         val scope = activeAccountScope.require()
         val response = withContext(Dispatchers.IO) { apiHolder.require(scope).twitchUnlink() }
+        activeAccountScope.verify(scope)
+        response.requireSuccessfulResponse()
+    }
+
+    override suspend fun followedLives(cursor: String?): Result<TwitchPage<Video>> = call { twitchFollowedLives(cursor) }
+        .map { page -> TwitchPage(page.items.map { it.toVideo() }, page.cursor?.takeIf { page.hasMore && it.isNotBlank() }) }
+
+    override suspend fun isFollowing(login: String): Result<Boolean> = call { twitchFollowState(login) }.map { it.following }
+
+    override suspend fun setFollowing(login: String, follow: Boolean): Result<Unit> = suspendRunCatching {
+        val scope = activeAccountScope.require()
+        val api = apiHolder.require(scope)
+        val response = withContext(Dispatchers.IO) { if (follow) api.twitchFollow(login) else api.twitchUnfollow(login) }
         activeAccountScope.verify(scope)
         response.requireSuccessfulResponse()
     }

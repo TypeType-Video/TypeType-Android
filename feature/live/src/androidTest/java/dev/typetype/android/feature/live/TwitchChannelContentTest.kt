@@ -42,6 +42,29 @@ class TwitchChannelContentTest {
         assertEquals(TwitchChannelTab.Clips, chosen.get())
     }
 
+    @Test
+    fun aLinkedAccountCanFollowTheChannel() {
+        var toggled = false
+        composeRule.setContent {
+            CompositionLocalProvider(LocalAnimatedStatePlayback provides false) {
+                TypeTypeTheme {
+                    TwitchChannelContent(
+                        state = TwitchChannelState(channel = channel(), isLoading = false, followable = true, following = false),
+                        onPlayVideo = {},
+                        onSelect = {},
+                        onRetry = {},
+                        onLoadMore = {},
+                        onToggleFollow = { toggled = true },
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithText("Follow").performClick()
+
+        assertEquals(true, toggled)
+    }
+
     private fun channel() = TwitchChannel(
         login = "space",
         displayName = "Space",

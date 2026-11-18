@@ -9,6 +9,7 @@ import dev.typetype.android.R
 import dev.typetype.android.core.ui.error.UserErrorMapper
 import dev.typetype.android.core.ui.navigation.TwitchChannelRoute
 import dev.typetype.android.domain.feed.Video
+import dev.typetype.android.domain.twitch.TwitchAccountRepository
 import dev.typetype.android.domain.twitch.TwitchChannel
 import dev.typetype.android.domain.twitch.TwitchRepository
 import javax.inject.Inject
@@ -29,12 +30,15 @@ data class TwitchChannelState(
     val isLoadingMore: Boolean = false,
     val loadMoreError: Boolean = false,
     val errorMessage: String? = null,
+    val followable: Boolean = false,
+    val following: Boolean = false,
 )
 
 @HiltViewModel
 class TwitchChannelViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val twitch: TwitchRepository,
+    private val accounts: TwitchAccountRepository,
     private val errorMapper: UserErrorMapper,
 ) : ViewModel() {
     private val login = savedStateHandle.toRoute<TwitchChannelRoute>().login
@@ -47,6 +51,22 @@ class TwitchChannelViewModel @Inject constructor(
         viewModelScope.launch {
             twitch.channel(login).onSuccess { channel -> _state.update { it.copy(channel = channel) } }
             load(TwitchChannelTab.Videos)
+            loadFollow()
+        }
+    }
+
+    // A Twitch channel is followed with the linked Twitch account; without one there is nothing to follow it with.
+    private suspend fun loadFollow() {
+        if (accounts.status().getOrNull()?.linked != true) return
+        accounts.isFollowing(login).onSuccess { following -> _state.update { it.copy(followable = true, following = following) } }
+    }
+
+    fun toggleFollow() {
+        val current = _state.value
+        if (!current.followable) return
+        _state.update { it.copy(following = !current.following) }
+        viewModelScope.launch {
+            accounts.setFollowing(login, !current.following).onFailure { _state.update { it.copy(following = current.following) } }
         }
     }
 

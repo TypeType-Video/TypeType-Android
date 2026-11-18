@@ -1,5 +1,7 @@
 package dev.typetype.android.domain.twitch
 
+import dev.typetype.android.domain.feed.Video
+
 data class TwitchAccountStatus(val linked: Boolean, val name: String?)
 
 data class TwitchLinkCode(
@@ -27,4 +29,10 @@ interface TwitchAccountRepository {
     suspend fun poll(deviceCode: String): Result<TwitchLinkPoll>
 
     suspend fun unlink(): Result<Unit>
+
+    suspend fun followedLives(cursor: String? = null): Result<TwitchPage<Video>>
+
+    suspend fun isFollowing(login: String): Result<Boolean>
+
+    suspend fun setFollowing(login: String, follow: Boolean): Result<Unit>
 }

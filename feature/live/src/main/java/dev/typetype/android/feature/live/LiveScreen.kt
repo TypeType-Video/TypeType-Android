@@ -63,6 +63,14 @@ internal fun LiveContent(
         items(state.channels, key = { "channel-${it.login}" }, span = { GridItemSpan(maxLineSpan) }) { channel ->
             LiveChannelRow(channel, onOpen = { onOpenChannel(channel.url) })
         }
+        if (state.followed.isNotEmpty()) {
+            item(key = "followed-header", span = { GridItemSpan(maxLineSpan) }) {
+                SectionHeader(text = stringResource(R.string.live_followed))
+            }
+            items(state.followed, key = { "followed-${it.url}" }, contentType = { "live-video" }) { video ->
+                VideoCard(video = video, onClick = { onPlayVideo(video.url) }, onChannelClick = { onOpenChannel(video.uploaderUrl) })
+            }
+        }
         item(key = "live-categories", span = { GridItemSpan(maxLineSpan) }) {
             LiveCategoryChips(state.categories, state.category, onSelectCategory)
         }

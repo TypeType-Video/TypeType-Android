@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.typetype.android.R
 import dev.typetype.android.core.ui.error.UserErrorMapper
 import dev.typetype.android.domain.feed.Video
+import dev.typetype.android.domain.twitch.TwitchAccountRepository
 import dev.typetype.android.domain.twitch.TwitchCategory
 import dev.typetype.android.domain.twitch.TwitchChannel
 import dev.typetype.android.domain.twitch.TwitchPage
@@ -30,11 +31,13 @@ data class LiveState(
     val category: String? = null,
     val query: String = "",
     val channels: List<TwitchChannel> = emptyList(),
+    val followed: List<Video> = emptyList(),
 )
 
 @HiltViewModel
 class LiveViewModel @Inject constructor(
     private val twitch: TwitchRepository,
+    private val accounts: TwitchAccountRepository,
     private val errorMapper: UserErrorMapper,
 ) : ViewModel() {
     private val _state = MutableStateFlow(LiveState())
@@ -46,6 +49,10 @@ class LiveViewModel @Inject constructor(
         refresh()
         viewModelScope.launch {
             twitch.categories().onSuccess { page -> _state.update { it.copy(categories = page.items) } }
+        }
+        viewModelScope.launch {
+            if (accounts.status().getOrNull()?.linked != true) return@launch
+            accounts.followedLives().onSuccess { page -> _state.update { it.copy(followed = page.items) } }
         }
     }
 
