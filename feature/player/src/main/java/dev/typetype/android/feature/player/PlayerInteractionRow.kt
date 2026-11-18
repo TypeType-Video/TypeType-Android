@@ -154,13 +154,13 @@ fun PlayerInteractionRow(
     }
 }
 
-// Twitch lives keep only their chat among the watch page actions.
+// Twitch keeps only its chat among the watch page actions: the live chat, or the chat replay of a past broadcast.
 @Composable
-internal fun TwitchLiveChatButton(visible: Boolean, onClick: () -> Unit) {
+internal fun TwitchLiveChatButton(visible: Boolean, onClick: () -> Unit, replay: Boolean = false) {
     if (!visible) return
     PlayerActionButton(
         icon = Icons.Outlined.Forum,
-        contentDescription = stringResource(R.string.live_chat_title),
+        contentDescription = stringResource(if (replay) R.string.vod_chat_title else R.string.live_chat_title),
         onClick = onClick,
         expanded = true,
     )

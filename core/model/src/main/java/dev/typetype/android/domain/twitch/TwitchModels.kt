@@ -37,3 +37,11 @@ data class TwitchPoll(val id: String, val title: String, val votes: Long, val ch
 data class TwitchPinnedMessage(val id: String, val text: String, val author: String)
 
 data class TwitchChatHighlights(val poll: TwitchPoll?, val pinned: TwitchPinnedMessage?)
+
+data class TwitchVideoComment(
+    val id: String,
+    val offsetSeconds: Long,
+    val author: String?,
+    val text: String,
+    val moderator: Boolean,
+)

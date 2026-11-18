@@ -81,3 +81,13 @@ data class TwitchPinnedMessageDto(
 
 @Serializable
 data class TwitchChatHighlightsDto(val poll: TwitchPollDto? = null, val pinned: TwitchPinnedMessageDto? = null)
+
+@Serializable
+data class TwitchVideoCommentDto(
+    val id: String = "",
+    val offset: Long = 0,
+    val login: String? = null,
+    val displayName: String? = null,
+    val text: String = "",
+    val badges: List<String> = emptyList(),
+)

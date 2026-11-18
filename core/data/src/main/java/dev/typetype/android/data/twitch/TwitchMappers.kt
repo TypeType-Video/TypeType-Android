@@ -7,6 +7,7 @@ import dev.typetype.android.data.network.dto.TwitchClipQualityDto
 import dev.typetype.android.data.network.dto.TwitchGameDto
 import dev.typetype.android.data.network.dto.TwitchStreamDto
 import dev.typetype.android.data.network.dto.TwitchUserDto
+import dev.typetype.android.data.network.dto.TwitchVideoCommentDto
 import dev.typetype.android.data.network.dto.TwitchVideoDto
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.twitch.TwitchCategory
@@ -17,6 +18,7 @@ import dev.typetype.android.domain.twitch.TwitchPinnedMessage
 import dev.typetype.android.domain.twitch.TwitchPoll
 import dev.typetype.android.domain.twitch.TwitchPollChoice
 import dev.typetype.android.domain.twitch.TwitchUrls
+import dev.typetype.android.domain.twitch.TwitchVideoComment
 import java.net.URI
 import java.util.Calendar
 import java.util.TimeZone
@@ -135,4 +137,12 @@ internal fun TwitchChatHighlightsDto.toDomain() = TwitchChatHighlights(
     pinned = pinned?.takeIf { it.id.isNotBlank() && it.text.isNotBlank() }?.let { dto ->
         TwitchPinnedMessage(dto.id, dto.text, dto.displayName.ifBlank { dto.login })
     },
+)
+
+internal fun TwitchVideoCommentDto.toDomain() = TwitchVideoComment(
+    id = id,
+    offsetSeconds = offset,
+    author = displayName?.ifBlank { null } ?: login,
+    text = text,
+    moderator = badges.any { it.startsWith("moderator/") || it.startsWith("broadcaster/") },
 )

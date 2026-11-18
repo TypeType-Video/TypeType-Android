@@ -105,7 +105,7 @@ private fun LiveChatHeader(status: LiveChatStatus, onRetry: () -> Unit) {
 }
 
 @Composable
-private fun LiveChatMessages(messages: List<LiveChatMessage>, modifier: Modifier) {
+internal fun LiveChatMessages(messages: List<LiveChatMessage>, modifier: Modifier) {
     val listState = rememberLazyListState()
     val following by remember {
         derivedStateOf {

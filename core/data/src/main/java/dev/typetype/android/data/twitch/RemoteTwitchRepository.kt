@@ -16,6 +16,7 @@ import dev.typetype.android.domain.twitch.TwitchClipPlayback
 import dev.typetype.android.domain.twitch.TwitchPage
 import dev.typetype.android.domain.twitch.TwitchPlayback
 import dev.typetype.android.domain.twitch.TwitchRepository
+import dev.typetype.android.domain.twitch.TwitchVideoComment
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
@@ -97,6 +98,10 @@ class RemoteTwitchRepository @Inject constructor(
 
     override suspend fun chatHighlights(login: String): Result<TwitchChatHighlights> =
         call { twitchChatHighlights(login) }.map { it.toDomain() }
+
+    override suspend fun videoComments(id: String, offsetSeconds: Long?, cursor: String?): Result<TwitchPage<TwitchVideoComment>> =
+        call { twitchVideoComments(segment(id), offset = offsetSeconds.takeIf { cursor == null }, cursor = cursor) }
+            .map { page -> page.map { it.toDomain() } }
 
     private suspend fun <T : Any> call(block: suspend TypeTypeApi.() -> Response<T>): Result<T> = suspendRunCatching {
         val (_, response) = request(block)

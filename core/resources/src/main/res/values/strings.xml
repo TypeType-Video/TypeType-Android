@@ -623,6 +623,8 @@
     <string name="accounts_switch_failed">Couldn\'t switch account</string>
     <string name="accounts_forget_failed">Couldn\'t forget account</string>
     <string name="live_chat_title">Live chat</string>
+    <string name="vod_chat_title">Chat replay</string>
+    <string name="vod_chat_unavailable">The chat replay is not available for this video</string>
     <string name="live_chat_empty">No messages yet</string>
     <string name="live_chat_pinned_by">Pinned · %1$s</string>
     <string name="live_chat_poll_choice">%1$s, %2$d%%</string>

@@ -16,6 +16,7 @@ import dev.typetype.android.data.network.dto.TwitchLiveDto
 import dev.typetype.android.data.network.dto.TwitchPageDto
 import dev.typetype.android.data.network.dto.TwitchStreamDto
 import dev.typetype.android.data.network.dto.TwitchVideoChapterDto
+import dev.typetype.android.data.network.dto.TwitchVideoCommentDto
 import dev.typetype.android.data.network.dto.TwitchVideoDto
 import dev.typetype.android.data.network.dto.TwitchVideoPlaybackDto
 import retrofit2.Response
@@ -73,6 +74,13 @@ interface TypeTypeTwitchApi {
 
     @GET("twitch/videos/{id}/chapters")
     suspend fun twitchVideoChapters(@Path("id") id: String): Response<List<TwitchVideoChapterDto>>
+
+    @GET("twitch/videos/{id}/comments")
+    suspend fun twitchVideoComments(
+        @Path("id") id: String,
+        @Query("offset") offset: Long? = null,
+        @Query("cursor") cursor: String? = null,
+    ): Response<TwitchPageDto<TwitchVideoCommentDto>>
 
     @GET("twitch/clips/{slug}")
     suspend fun twitchClip(@Path("slug") slug: String): Response<TwitchClipPlaybackDto>

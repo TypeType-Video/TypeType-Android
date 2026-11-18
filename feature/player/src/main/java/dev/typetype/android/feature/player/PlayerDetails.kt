@@ -17,6 +17,7 @@ import dev.typetype.android.core.ui.branding.rememberVideoBranding
 import dev.typetype.android.domain.navigation.isYouTubeVideoUrl
 import dev.typetype.android.domain.playback.PlaybackQueueState
 import dev.typetype.android.domain.stream.Stream
+import dev.typetype.android.domain.twitch.TwitchTarget
 import dev.typetype.android.domain.twitch.TwitchUrls
 import dev.typetype.android.domain.usersettings.UserSettings
 import dev.typetype.android.feature.menu.rememberVideoMenuScope
@@ -25,6 +26,7 @@ import dev.typetype.android.feature.player.components.DescriptionSection
 import dev.typetype.android.feature.player.components.RelatedStreamsSection
 import dev.typetype.android.feature.player.components.UploaderCard
 import dev.typetype.android.feature.player.livechat.LiveChatSheet
+import dev.typetype.android.feature.player.livechat.TwitchVodChatSheet
 import dev.typetype.android.feature.player.queue.PlaybackQueueControls
 import dev.typetype.android.feature.player.sleep.PlaybackSleepTimerControls
 
@@ -55,6 +57,8 @@ internal fun PlayerDetails(
         durationSeconds = stream.durationSeconds,
     )
     var liveChatVisible by remember(videoUrl) { mutableStateOf(false) }
+    var vodChatVisible by remember(videoUrl) { mutableStateOf(false) }
+    val vodChatAvailable = TwitchUrls.parse(videoUrl) is TwitchTarget.Vod
     val twitch = TwitchUrls.parse(videoUrl) != null
     val liveChatAvailable = stream.isLive && (isYouTubeVideoUrl(videoUrl) || twitch)
     Column(
@@ -76,6 +80,7 @@ internal fun PlayerDetails(
         // Twitch videos live outside the server library: favorites, playlists, comments and downloads do not apply.
         if (twitch) {
             TwitchLiveChatButton(visible = liveChatAvailable, onClick = { liveChatVisible = true })
+            TwitchLiveChatButton(visible = vodChatAvailable, onClick = { vodChatVisible = true }, replay = true)
         } else PlayerInteractionRow(
             isFavorited = isFavorited,
             isInWatchLater = isInWatchLater,
@@ -105,6 +110,9 @@ internal fun PlayerDetails(
             onSubscribeClick = onToggleSubscription.takeUnless { twitch },
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+    }
+    if (vodChatVisible && vodChatAvailable) {
+        TwitchVodChatSheet(videoUrl = videoUrl, player = player, onDismiss = { vodChatVisible = false })
     }
     if (liveChatVisible && liveChatAvailable) {
         LiveChatSheet(videoUrl = videoUrl, onDismiss = { liveChatVisible = false })
