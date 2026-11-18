@@ -575,7 +575,7 @@
     <string name="accounts_subtitle">Switch instance or account</string>
     <string name="accounts_add_instance">Add an instance</string>
     <string name="linked_accounts_title">Linked accounts</string>
-    <string name="linked_accounts_subtitle">Sign in to YouTube or BiliBili through your instance</string>
+    <string name="linked_accounts_subtitle">Sign in to YouTube, BiliBili or Twitch through your instance</string>
     <string name="linked_accounts_youtube">YouTube</string>
     <string name="linked_accounts_bilibili">BiliBili</string>
     <string name="linked_accounts_twitch">Twitch</string>
