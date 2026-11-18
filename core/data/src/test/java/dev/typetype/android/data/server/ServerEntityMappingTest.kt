@@ -45,6 +45,7 @@ class ServerEntityMappingTest {
         assertEquals("unifiedpush", restored.push.provider)
         assertTrue(restored.push.eventTypes.isEmpty())
         assertFalse(restored.recommender.available)
+        assertFalse(restored.twitchEnabled)
     }
 
     @Test
@@ -66,5 +67,18 @@ class ServerEntityMappingTest {
         assertTrue(restored.recommender.installed)
         assertTrue(restored.recommender.enabled)
         assertTrue(restored.recommender.experimental)
+    }
+
+    @Test
+    fun preservesTwitchCapabilityAcrossRoomMapping() {
+        val server = Server(
+            id = "server",
+            baseUrl = "https://example.test/api/",
+            displayName = "Test",
+            addedAt = 1L,
+            twitchEnabled = true,
+        )
+
+        assertTrue(ServerEntity.fromDomain(server).toDomain().twitchEnabled)
     }
 }

@@ -33,4 +33,5 @@ data class AppPreferences(
     val danmakuEnabled: Boolean = false,
     val danmakuSpeed: Float = 1f,
     val danmakuSize: Float = 1f,
+    val homeLayout: HomeLayout = HomeLayout.Rows,
 )

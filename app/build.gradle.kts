@@ -22,8 +22,8 @@ android {
 
     defaultConfig {
         applicationId = "dev.typetype.android"
-        versionCode = 11119
-        versionName = "1.13.0-beta.4"
+        versionCode = 11121
+        versionName = "1.14.0-beta.1"
     }
 
     signingConfigs {
@@ -105,6 +105,7 @@ dependencies {
     implementation(project(":feature:setup"))
     implementation(project(":feature:channel"))
     implementation(project(":feature:library"))
+    implementation(project(":feature:live"))
     implementation(project(":feature:subscriptions"))
     implementation(project(":feature:settings"))
     implementation(project(":feature:player"))

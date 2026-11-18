@@ -41,7 +41,7 @@ fun UploaderCard(
     isSubscribed: Boolean = false,
     subscriptionInFlight: Boolean = false,
     onCardClick: () -> Unit = {},
-    onSubscribeClick: () -> Unit = {},
+    onSubscribeClick: (() -> Unit)? = {},
 ) {
     val serverBaseUrl = LocalServerBaseUrl.current
     Row(
@@ -81,34 +81,37 @@ fun UploaderCard(
                 )
             }
         }
-        Spacer(Modifier.width(8.dp))
-        Button(
-            onClick = onSubscribeClick,
-            enabled = !subscriptionInFlight,
-            shape = RoundedCornerShape(20.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = if (isSubscribed) {
-                    MaterialTheme.colorScheme.surfaceVariant
-                } else {
-                    MaterialTheme.colorScheme.onBackground
-                },
-                contentColor = if (isSubscribed) {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                } else {
-                    MaterialTheme.colorScheme.background
-                },
-            ),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                horizontal = 16.dp,
-                vertical = 6.dp,
-            ),
-        ) {
-            Text(
-                text = stringResource(
-                    if (isSubscribed) R.string.channel_subscribed else R.string.channel_subscribe,
+        if (onSubscribeClick != null) {
+            val onSubscribe = onSubscribeClick
+            Spacer(Modifier.width(8.dp))
+            Button(
+                onClick = onSubscribe,
+                enabled = !subscriptionInFlight,
+                shape = RoundedCornerShape(20.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isSubscribed) {
+                        MaterialTheme.colorScheme.surfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.onBackground
+                    },
+                    contentColor = if (isSubscribed) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.background
+                    },
                 ),
-                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-            )
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    horizontal = 16.dp,
+                    vertical = 6.dp,
+                ),
+            ) {
+                Text(
+                    text = stringResource(
+                        if (isSubscribed) R.string.channel_subscribed else R.string.channel_subscribe,
+                    ),
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                )
+            }
         }
     }
 }

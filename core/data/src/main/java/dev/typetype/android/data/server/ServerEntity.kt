@@ -42,6 +42,7 @@ data class ServerEntity(
     @ColumnInfo(defaultValue = "0") val recommenderInstalled: Boolean = false,
     @ColumnInfo(defaultValue = "0") val recommenderEnabled: Boolean = false,
     @ColumnInfo(defaultValue = "0") val recommenderExperimental: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val twitchEnabled: Boolean = false,
 ) {
     fun toDomain(): Server = Server(
         id = id,
@@ -84,6 +85,7 @@ data class ServerEntity(
             enabled = recommenderEnabled,
             experimental = recommenderExperimental,
         ),
+        twitchEnabled = twitchEnabled,
     )
 
     companion object {
@@ -122,6 +124,7 @@ data class ServerEntity(
             recommenderInstalled = server.recommender.installed,
             recommenderEnabled = server.recommender.enabled,
             recommenderExperimental = server.recommender.experimental,
+            twitchEnabled = server.twitchEnabled,
         )
     }
 }

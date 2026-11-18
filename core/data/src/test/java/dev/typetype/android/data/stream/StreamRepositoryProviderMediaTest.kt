@@ -80,6 +80,7 @@ class StreamRepositoryProviderMediaTest {
         activeAccountScope = FixedAccountScope,
         serverRepository = FixedServerRepository,
         networkMonitor = AlwaysAvailablePlaybackNetworkObserver,
+        twitch = TwitchStreamLoader(FakeTwitchRepository()),
     )
 
     private class FixedStreamRemoteSource(

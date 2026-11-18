@@ -147,6 +147,7 @@ class PlayerViewModel @Inject constructor(
             PlayerAction.OnPlayNextVideo -> navigationController.playNext(
                 _state.value.stream?.relatedStreams?.firstOrNull()?.url,
             )
+            is PlayerAction.OnStartOver -> navigationController.playNext(action.recordingUrl)
             PlayerAction.OnCancelQueueAutoplay -> playbackQueueCoordinator.cancelAutoplay()
             PlayerAction.OnToggleQueueAutoplayPause ->
                 playbackQueueCoordinator.toggleAutoplayPause()

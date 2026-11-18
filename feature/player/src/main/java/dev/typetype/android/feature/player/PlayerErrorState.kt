@@ -37,6 +37,7 @@ fun ErrorState(
         StreamErrorKind.Generic,
         StreamErrorKind.AuthenticationExpired,
         StreamErrorKind.ContentUnavailable,
+        StreamErrorKind.StreamEnded,
         StreamErrorKind.LiveUnsupported,
         StreamErrorKind.NetworkUnavailable,
         StreamErrorKind.SabrInvalidIndex,
@@ -55,6 +56,7 @@ fun ErrorState(
     }
     val displayMessage = when (classification.kind) {
         StreamErrorKind.ContentUnavailable -> stringResource(R.string.error_content_unavailable)
+        StreamErrorKind.StreamEnded -> stringResource(R.string.state_stream_ended)
         StreamErrorKind.MemberOnly -> stringResource(R.string.state_member_only_message)
         StreamErrorKind.PaidContent -> stringResource(R.string.video_paid_message)
         StreamErrorKind.ScheduledPremiere -> stringResource(R.string.video_scheduled_message)

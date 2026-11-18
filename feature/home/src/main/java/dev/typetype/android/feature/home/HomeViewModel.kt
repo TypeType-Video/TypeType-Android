@@ -11,6 +11,7 @@ import dev.typetype.android.domain.feed.HomeFeedRepository
 import dev.typetype.android.domain.library.LibraryRepository
 import dev.typetype.android.domain.library.VideoMetaRepository
 import dev.typetype.android.domain.library.cacheVideos
+import dev.typetype.android.domain.preferences.PreferencesRepository
 import dev.typetype.android.domain.recommendations.RecommenderFeedbackRepository
 import dev.typetype.android.domain.recommendations.RecommenderSettingsRepository
 import dev.typetype.android.domain.server.Server
@@ -40,6 +41,7 @@ class HomeViewModel @Inject constructor(
     private val errorMapper: UserErrorMapper,
     recommenderSettings: RecommenderSettingsRepository,
     recommenderFeedback: RecommenderFeedbackRepository,
+    private val preferencesRepository: PreferencesRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
@@ -77,6 +79,11 @@ class HomeViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
+            preferencesRepository.observe().collect { prefs ->
+                _state.update { it.copy(layout = prefs.homeLayout) }
+            }
+        }
+        viewModelScope.launch {
             userSettingsRepository.observe().collect { settings ->
                 _state.update {
                     it.copy(
@@ -104,6 +111,7 @@ class HomeViewModel @Inject constructor(
             is HomeAction.RatePage -> recommender.ratePage(action.good)
             is HomeAction.ChoosePageReason -> recommender.choosePageReason(action.reason)
             is HomeAction.SendPageVerdict -> recommender.sendPageVerdict(action.comment)
+            is HomeAction.SetLayout -> viewModelScope.launch { preferencesRepository.setHomeLayout(action.layout) }
         }
     }
 

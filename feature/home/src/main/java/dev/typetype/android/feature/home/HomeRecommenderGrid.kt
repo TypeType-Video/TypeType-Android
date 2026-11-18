@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridScope
+import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -37,11 +38,32 @@ internal fun LazyGridScope.recommendedRows(
                             onPlayVideo = onPlayVideo,
                             onOpenChannel = onOpenChannel,
                             onAction = onAction,
+                            modifier = Modifier.width(ROW_CARD_WIDTH),
                         )
                     }
                 }
             }
         }
+    }
+}
+
+internal fun LazyGridScope.recommendedGrid(
+    recommender: HomeRecommenderState,
+    videos: List<Video>,
+    menuScope: VideoMenuScope,
+    onPlayVideo: (String) -> Unit,
+    onOpenChannel: (String) -> Unit,
+    onAction: (HomeAction) -> Unit,
+) {
+    gridItems(recommender.flatVideos(videos), key = { "grid-${it.url}" }, contentType = { "grid-video" }) { video ->
+        RecommendedVideo(
+            video = video,
+            refusal = recommender.refused[video.url],
+            menuScope = menuScope,
+            onPlayVideo = onPlayVideo,
+            onOpenChannel = onOpenChannel,
+            onAction = onAction,
+        )
     }
 }
 
@@ -53,8 +75,9 @@ private fun RecommendedVideo(
     onPlayVideo: (String) -> Unit,
     onOpenChannel: (String) -> Unit,
     onAction: (HomeAction) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Column(modifier = Modifier.width(ROW_CARD_WIDTH)) {
+    Column(modifier = modifier) {
         if (refusal != null) {
             RefusedVideoCard(
                 refusal = refusal,
@@ -72,6 +95,11 @@ private fun RecommendedVideo(
             NotForMeButton(onClick = { onAction(HomeAction.NotForMe(video)) })
         }
     }
+}
+
+internal fun HomeRecommenderState.flatVideos(videos: List<Video>): List<Video> {
+    val byUrl = videos.associateBy { it.url }
+    return rows.flatMap { it.videoUrls }.distinct().mapNotNull(byUrl::get)
 }
 
 internal fun HomeRecommenderState.hasContinueRow(): Boolean =

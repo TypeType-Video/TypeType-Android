@@ -67,6 +67,7 @@ internal fun Server.withCapabilities(instance: InstanceResponse): Server = copy(
     } ?: RssCapability(),
     push = instance.pushNotifications.toCapability(),
     recommender = instance.recommender.toCapability(),
+    twitchEnabled = instance.twitch?.enabled == true,
 )
 
 private fun PushCapabilityDto?.toCapability(): PushCapability = PushCapability(

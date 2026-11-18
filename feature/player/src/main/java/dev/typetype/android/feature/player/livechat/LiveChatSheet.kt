@@ -53,9 +53,15 @@ import dev.typetype.android.domain.livechat.LiveChatMessage
 internal fun LiveChatSheet(videoUrl: String, onDismiss: () -> Unit) {
     val viewModel: LiveChatViewModel = hiltViewModel(key = "live-chat")
     val state by viewModel.state.collectAsStateWithLifecycle()
-    DisposableEffect(viewModel, videoUrl) {
+    val highlightsViewModel: TwitchChatHighlightsViewModel = hiltViewModel(key = "live-chat-highlights")
+    val highlights by highlightsViewModel.state.collectAsStateWithLifecycle()
+    DisposableEffect(viewModel, highlightsViewModel, videoUrl) {
         viewModel.start(videoUrl)
-        onDispose { viewModel.stop() }
+        highlightsViewModel.start(videoUrl)
+        onDispose {
+            viewModel.stop()
+            highlightsViewModel.stop()
+        }
     }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -64,7 +70,15 @@ internal fun LiveChatSheet(videoUrl: String, onDismiss: () -> Unit) {
     ) {
         Column(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.7f)) {
             LiveChatHeader(status = state.status, onRetry = { viewModel.retry(videoUrl) })
+            val canVote by highlightsViewModel.canVote.collectAsStateWithLifecycle()
+            val voted by highlightsViewModel.voted.collectAsStateWithLifecycle()
+            TwitchChatHighlightsCards(
+                highlights,
+                onHide = highlightsViewModel::hide,
+                onVote = highlightsViewModel::vote.takeIf { canVote && highlights.poll?.id !in voted },
+            )
             LiveChatMessages(messages = state.messages, modifier = Modifier.weight(1f))
+            TwitchChatComposer(videoUrl)
         }
     }
 }
@@ -98,7 +112,7 @@ private fun LiveChatHeader(status: LiveChatStatus, onRetry: () -> Unit) {
 }
 
 @Composable
-private fun LiveChatMessages(messages: List<LiveChatMessage>, modifier: Modifier) {
+internal fun LiveChatMessages(messages: List<LiveChatMessage>, modifier: Modifier) {
     val listState = rememberLazyListState()
     val following by remember {
         derivedStateOf {

@@ -191,6 +191,12 @@ object TypeTypeDatabaseMigrations {
         }
     }
 
+    val MIGRATION_24_25 = object : Migration(24, 25) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `servers` ADD COLUMN `twitchEnabled` INTEGER NOT NULL DEFAULT 0")
+        }
+    }
+
     val ALL = arrayOf(
         MIGRATION_7_8,
         MIGRATION_11_12,
@@ -205,5 +211,6 @@ object TypeTypeDatabaseMigrations {
         MIGRATION_21_22,
         MIGRATION_22_23,
         MIGRATION_23_24,
+        MIGRATION_24_25,
     )
 }

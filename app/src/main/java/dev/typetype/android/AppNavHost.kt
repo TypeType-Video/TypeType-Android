@@ -1,5 +1,11 @@
 package dev.typetype.android
 
+import dev.typetype.android.core.ui.navigation.LiveRoute
+import dev.typetype.android.core.ui.navigation.TwitchChannelRoute
+import dev.typetype.android.feature.live.TwitchChannelRouteScreen
+import dev.typetype.android.feature.live.TwitchChannelViewModel
+import dev.typetype.android.feature.live.LiveRouteScreen
+import dev.typetype.android.feature.live.LiveViewModel
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
@@ -122,6 +128,7 @@ fun AppNavHost(
         avatarUrl = avatarUrl,
         avatarFallbackLetter = avatarFallback,
         showShorts = !deArrowSettings.hideShorts,
+        showLive = currentServer?.twitchEnabled == true,
         accessiblePlayerControls = appPreferences.playerAccessibleControlsEnabled,
         onPlayVideo = onPlayVideo,
         onOpenChannel = onOpenChannel,
@@ -170,6 +177,12 @@ fun AppNavHost(
                     onPlayVideo = onPlayVideo,
                     onOpenChannel = onOpenChannel,
                 )
+            }
+            composable<LiveRoute> {
+                LiveRouteScreen(viewModel = hiltViewModel<LiveViewModel>(), onPlayVideo = onPlayVideo, onOpenChannel = onOpenChannel)
+            }
+            composable<TwitchChannelRoute> {
+                TwitchChannelRouteScreen(viewModel = hiltViewModel<TwitchChannelViewModel>(), onPlayVideo = onPlayVideo)
             }
             composable<SearchRoute> {
                 SearchRouteScreen(

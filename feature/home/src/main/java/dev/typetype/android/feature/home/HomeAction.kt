@@ -1,6 +1,7 @@
 package dev.typetype.android.feature.home
 
 import dev.typetype.android.domain.feed.Video
+import dev.typetype.android.domain.preferences.HomeLayout
 import dev.typetype.android.domain.recommendations.PageRefusalReason
 import dev.typetype.android.domain.recommendations.VideoRefusalReason
 
@@ -15,4 +16,5 @@ sealed interface HomeAction {
     data class RatePage(val good: Boolean) : HomeAction
     data class ChoosePageReason(val reason: PageRefusalReason) : HomeAction
     data class SendPageVerdict(val comment: String) : HomeAction
+    data class SetLayout(val layout: HomeLayout) : HomeAction
 }

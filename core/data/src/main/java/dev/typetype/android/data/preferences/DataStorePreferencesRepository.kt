@@ -14,6 +14,7 @@ import dev.typetype.android.domain.preferences.AppearanceMotion
 import dev.typetype.android.domain.preferences.AppearancePersonality
 import dev.typetype.android.domain.preferences.AppearanceTheme
 import dev.typetype.android.domain.preferences.AppPreferences
+import dev.typetype.android.domain.preferences.HomeLayout
 import dev.typetype.android.domain.preferences.MangaHeadlineMarker
 import dev.typetype.android.domain.preferences.MangaPaper
 import dev.typetype.android.domain.preferences.PreferencesRepository
@@ -73,6 +74,7 @@ class DataStorePreferencesRepository @Inject constructor(
             danmakuEnabled = prefs[KEY_DANMAKU_ENABLED] ?: false,
             danmakuSpeed = (prefs[KEY_DANMAKU_SPEED] ?: 1f).coerceIn(0.5f, 2f),
             danmakuSize = (prefs[KEY_DANMAKU_SIZE] ?: 1f).coerceIn(0.5f, 2f),
+            homeLayout = prefs.enum(KEY_HOME_LAYOUT, HomeLayout.Rows),
         )
     }
 
@@ -189,6 +191,8 @@ class DataStorePreferencesRepository @Inject constructor(
         dataStore.edit { it[KEY_DANMAKU_SIZE] = size.coerceIn(0.5f, 2f) }
     }
 
+    override suspend fun setHomeLayout(layout: HomeLayout) = store(KEY_HOME_LAYOUT, layout.name)
+
     private suspend fun store(key: Preferences.Key<String>, value: String) {
         dataStore.edit { it[key] = value }
     }
@@ -230,6 +234,7 @@ class DataStorePreferencesRepository @Inject constructor(
         val KEY_DANMAKU_ENABLED = booleanPreferencesKey("player_danmaku_enabled")
         val KEY_DANMAKU_SPEED = floatPreferencesKey("player_danmaku_speed")
         val KEY_DANMAKU_SIZE = floatPreferencesKey("player_danmaku_size")
+        val KEY_HOME_LAYOUT = stringPreferencesKey("home_layout")
         const val DEFAULT_AUTOPLAY_COUNTDOWN_SECONDS = 10
         const val MAX_AUTOPLAY_COUNTDOWN_SECONDS = 60
         val ALLOWED_DOUBLE_TAP_SEEK_SECONDS = setOf(5, 10, 15, 20, 30)

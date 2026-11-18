@@ -38,6 +38,8 @@ data class UserSettingsDto(
     val hideShorts: Boolean = false,
     val hideMembersOnlyContent: Boolean = false,
     val hideSubscriptionLiveStreams: Boolean? = null,
+    val hideWatchedSubscriptionVideos: Boolean? = null,
+    val watchedThresholdPercent: Int? = null,
     val disableWatchHistory: Boolean = false,
     val deArrowEnabled: Boolean = false,
     val deArrowTitleMode: String = "dearrow",

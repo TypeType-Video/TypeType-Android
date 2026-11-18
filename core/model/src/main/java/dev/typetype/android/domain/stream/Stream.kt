@@ -44,6 +44,12 @@ data class Stream(
     val isLiveContent: Boolean = false,
     val requiresMembership: Boolean = false,
     val category: String? = null,
+    // Where a live settles behind its edge when the source asks for it; null keeps the playlist's own target.
+    val liveTargetOffsetMillis: Long? = null,
+    // A Twitch live's recording in progress, which the web rewinds into; the watch page offers to start over there.
+    val startOverUrl: String? = null,
+    // Media3 moves a growing playlist to its live edge once loaded; a recording keeps the position it was opened at.
+    val holdsStartPosition: Boolean = false,
 )
 
 data class StreamStoryboard(

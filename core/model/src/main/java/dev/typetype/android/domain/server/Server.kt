@@ -26,4 +26,5 @@ data class Server(
     val rss: RssCapability = RssCapability(),
     val push: PushCapability = PushCapability(),
     val recommender: RecommenderCapability = RecommenderCapability(),
+    val twitchEnabled: Boolean = false,
 )
