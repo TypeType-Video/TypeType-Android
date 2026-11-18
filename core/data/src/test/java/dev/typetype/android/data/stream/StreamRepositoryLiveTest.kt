@@ -42,6 +42,17 @@ class StreamRepositoryLiveTest {
     }
 
     @Test
+    fun `a bilibili live plays its own playlist rather than a server manifest`() = runBlocking {
+        val repository = repository(response(isLive = true, hasLiveManifest = false, hlsUrl = "/media/m1_live"))
+
+        val stream = repository.loadPlaybackStream("https://live.bilibili.com/1874910086").getOrThrow()
+
+        assertEquals("${BASE_URL}media/m1_live", stream.hlsUrl)
+        assertNull(stream.serverHlsManifestUrl)
+        assertNull(stream.serverDashManifestUrl)
+    }
+
+    @Test
     fun `youtube live response without a server manifest is rejected`() = runBlocking {
         val repository = repository(
             response(

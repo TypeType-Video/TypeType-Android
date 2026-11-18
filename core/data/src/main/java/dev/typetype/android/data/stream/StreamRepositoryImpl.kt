@@ -142,9 +142,10 @@ internal class StreamRepositoryImpl @Inject constructor(
             hlsUrl = resolvedHlsUrl.takeIf { !serverSabr && it.isNotBlank() },
             dashMpdUrl = dashMpdUrl.takeIf { !serverSabr && it.isNotBlank() },
             progressiveUrl = pickBestProgressiveStream(baseUrl, videoStreams).takeUnless { serverSabr },
+            // The server manifests only rebuild on-demand videos; a Bilibili or NicoNico live plays its own playlist.
             serverDashManifestUrl = serverManifestUrl(baseUrl, "streams/manifest", videoUrl)
-                .takeUnless { serverSabr || serverYoutube },
-            serverHlsManifestUrl = hlsUrl.takeIf { !serverSabr && !serverYoutube && it.isNotBlank() }
+                .takeUnless { serverSabr || serverYoutube || isLive },
+            serverHlsManifestUrl = hlsUrl.takeIf { !serverSabr && !serverYoutube && !isLive && it.isNotBlank() }
                 ?.let { serverManifestUrl(baseUrl, "streams/hls-manifest", videoUrl) },
             serverSabrManifestUrl = resolveServerUrl(baseUrl, firstSabrManifestUrl()),
             sabrVideoStreams = (videoOnlyStreams + videoStreams)
