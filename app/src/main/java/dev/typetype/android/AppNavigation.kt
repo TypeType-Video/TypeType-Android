@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -170,8 +171,16 @@ internal fun AppBottomBar(
                     onClick = { onTabClick(tab) },
                     icon = { Icon(painterResource(tab.iconRes), contentDescription = null,
                         modifier = Modifier.size(if (expanded) 32.dp else 24.dp)) },
-                    label = { Text(stringResource(tab.labelRes), style = if (expanded)
-                        MaterialTheme.typography.titleSmall else MaterialTheme.typography.labelMedium) },
+                    label = {
+                        val style = if (expanded) MaterialTheme.typography.titleSmall else MaterialTheme.typography.labelMedium
+                        // Five tabs leave little width: a long label shrinks instead of wrapping.
+                        Text(
+                            text = stringResource(tab.labelRes),
+                            style = style,
+                            maxLines = 1,
+                            autoSize = TextAutoSize.StepBased(minFontSize = 9.sp, maxFontSize = style.fontSize),
+                        )
+                    },
                 )
             }
         }
