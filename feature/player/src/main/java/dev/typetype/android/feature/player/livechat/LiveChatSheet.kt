@@ -1,5 +1,6 @@
 package dev.typetype.android.feature.player.livechat
 
+import dev.typetype.android.domain.twitch.TwitchChatAssets
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -77,7 +78,7 @@ internal fun LiveChatSheet(videoUrl: String, onDismiss: () -> Unit) {
                 onHide = highlightsViewModel::hide,
                 onVote = highlightsViewModel::vote.takeIf { canVote && highlights.poll?.id !in voted },
             )
-            LiveChatMessages(messages = state.messages, modifier = Modifier.weight(1f))
+            LiveChatMessages(state.messages, Modifier.weight(1f), state.assets, state.selfLogin)
             TwitchChatComposer(videoUrl)
         }
     }
@@ -112,7 +113,12 @@ private fun LiveChatHeader(status: LiveChatStatus, onRetry: () -> Unit) {
 }
 
 @Composable
-internal fun LiveChatMessages(messages: List<LiveChatMessage>, modifier: Modifier) {
+internal fun LiveChatMessages(
+    messages: List<LiveChatMessage>,
+    modifier: Modifier,
+    assets: TwitchChatAssets = TwitchChatAssets(),
+    selfLogin: String = "",
+) {
     val listState = rememberLazyListState()
     val following by remember {
         derivedStateOf {
@@ -139,7 +145,9 @@ internal fun LiveChatMessages(messages: List<LiveChatMessage>, modifier: Modifie
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        items(messages, key = { it.id }) { LiveChatMessageRow(it) }
+        items(messages, key = { it.id }) { message ->
+            if (message.login != null) TwitchChatLine(message, assets, selfLogin) else LiveChatMessageRow(message)
+        }
     }
 }
 

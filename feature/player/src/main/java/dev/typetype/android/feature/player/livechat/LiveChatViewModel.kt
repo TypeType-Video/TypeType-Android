@@ -1,5 +1,11 @@
 package dev.typetype.android.feature.player.livechat
 
+import dev.typetype.android.domain.twitch.TwitchAccountRepository
+import dev.typetype.android.domain.twitch.TwitchChatAssets
+import dev.typetype.android.domain.twitch.TwitchRepository
+import dev.typetype.android.domain.twitch.TwitchTarget
+import dev.typetype.android.domain.twitch.TwitchUrls
+import kotlinx.coroutines.coroutineScope
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,11 +28,15 @@ enum class LiveChatStatus { Connecting, Live, Reconnecting, Ended, Failed }
 data class LiveChatState(
     val messages: List<LiveChatMessage> = emptyList(),
     val status: LiveChatStatus = LiveChatStatus.Connecting,
+    val assets: TwitchChatAssets = TwitchChatAssets(),
+    val selfLogin: String = "",
 )
 
 @HiltViewModel
 class LiveChatViewModel @Inject constructor(
     private val repository: LiveChatRepository,
+    private val twitch: TwitchRepository,
+    private val accounts: TwitchAccountRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(LiveChatState())
     val state: StateFlow<LiveChatState> = _state.asStateFlow()
@@ -35,7 +45,19 @@ class LiveChatViewModel @Inject constructor(
     fun start(videoUrl: String) {
         job?.cancel()
         _state.value = LiveChatState()
-        job = viewModelScope.launch { follow(videoUrl) }
+        job = viewModelScope.launch {
+            (TwitchUrls.parse(videoUrl) as? TwitchTarget.Live)?.let { live -> launch { loadTwitchAssets(live.login) } }
+            follow(videoUrl)
+        }
+    }
+
+    private suspend fun loadTwitchAssets(login: String) = coroutineScope {
+        launch { twitch.chatAssets(login).onSuccess { assets -> _state.update { it.copy(assets = assets) } } }
+        launch {
+            accounts.status().getOrNull()?.name?.takeIf { it.isNotBlank() }?.let { name ->
+                _state.update { it.copy(selfLogin = name) }
+            }
+        }
     }
 
     fun stop() {
