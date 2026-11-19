@@ -1,5 +1,8 @@
 package dev.typetype.android.feature.player.livechat
 
+import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import dev.typetype.android.domain.twitch.TwitchChatAssets
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -52,6 +55,19 @@ import dev.typetype.android.domain.livechat.LiveChatMessage
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun LiveChatSheet(videoUrl: String, onDismiss: () -> Unit) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) {
+        LiveChatPanel(videoUrl, Modifier.fillMaxWidth().fillMaxHeight(0.7f))
+    }
+}
+
+// The chat itself, in the sheet for YouTube or docked under a Twitch live where it fills the rest of the screen.
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun LiveChatPanel(videoUrl: String, modifier: Modifier) {
     val viewModel: LiveChatViewModel = hiltViewModel(key = "live-chat")
     val state by viewModel.state.collectAsStateWithLifecycle()
     val highlightsViewModel: TwitchChatHighlightsViewModel = hiltViewModel(key = "live-chat-highlights")
@@ -64,23 +80,21 @@ internal fun LiveChatSheet(videoUrl: String, onDismiss: () -> Unit) {
             highlightsViewModel.stop()
         }
     }
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = MaterialTheme.colorScheme.surface,
-    ) {
-        Column(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.7f)) {
+    // While typing, the keyboard leaves room for the last lines and the message only.
+    val typing = WindowInsets.isImeVisible
+    Column(modifier = modifier) {
+        val canVote by highlightsViewModel.canVote.collectAsStateWithLifecycle()
+        val voted by highlightsViewModel.voted.collectAsStateWithLifecycle()
+        if (!typing) {
             LiveChatHeader(status = state.status, onRetry = { viewModel.retry(videoUrl) })
-            val canVote by highlightsViewModel.canVote.collectAsStateWithLifecycle()
-            val voted by highlightsViewModel.voted.collectAsStateWithLifecycle()
             TwitchChatHighlightsCards(
                 highlights,
                 onHide = highlightsViewModel::hide,
                 onVote = highlightsViewModel::vote.takeIf { canVote && highlights.poll?.id !in voted },
             )
-            LiveChatMessages(state.messages, Modifier.weight(1f), state.assets, state.selfLogin)
-            TwitchChatComposer(videoUrl)
         }
+        LiveChatMessages(state.messages, Modifier.weight(1f), state.assets, state.selfLogin)
+        TwitchChatComposer(videoUrl)
     }
 }
 

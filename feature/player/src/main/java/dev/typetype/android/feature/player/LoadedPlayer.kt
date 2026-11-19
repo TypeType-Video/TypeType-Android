@@ -1,5 +1,11 @@
 package dev.typetype.android.feature.player
 
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.imePadding
+import dev.typetype.android.domain.twitch.TwitchTarget
+import dev.typetype.android.domain.twitch.TwitchUrls
+import dev.typetype.android.feature.player.livechat.LiveChatPanel
+import dev.typetype.android.feature.player.twitch.TwitchLiveDetails
 import android.graphics.Rect
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
@@ -207,8 +213,14 @@ internal fun LoadedPlayer(
                 },
             ),
     ) {
+        // A Twitch live is watched with its chat: the chat is docked under the video (beside it on a wide screen) and
+        // the details above it shrink to what a live needs.
+        val twitchLive = (TwitchUrls.parse(videoUrl) as? TwitchTarget.Live)?.login?.takeIf { stream.isLive }
         PlayerContentLayout(
             isFullscreen = isFullscreen,
+            docked = twitchLive?.let {
+                { dockedModifier -> LiveChatPanel(videoUrl, dockedModifier.navigationBarsPadding().imePadding()) }
+            },
             isInPip = isInPip,
             hostTransitionProgress = hostTransitionProgress,
             viewport = { viewportModifier ->
@@ -289,7 +301,9 @@ internal fun LoadedPlayer(
                 )
             },
             details = { detailsModifier ->
-                PlayerDetails(
+                if (twitchLive != null) {
+                    TwitchLiveDetails(stream, twitchLive, onOpenChannel, detailsModifier)
+                } else PlayerDetails(
                     stream = stream,
                     videoUrl = videoUrl,
                     player = controller,

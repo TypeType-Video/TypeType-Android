@@ -95,6 +95,7 @@
     <string name="live_followed">Followed channels live</string>
     <string name="twitch_channel_follow">Follow</string>
     <string name="twitch_channel_following">Following</string>
+    <string name="twitch_live_for">Live for %1$s</string>
     <string name="shorts_load_failed">Couldn\'t load Shorts</string>
     <string name="shorts_load_more_failed">Couldn\'t load more Shorts</string>
     <string name="shorts_empty">No Shorts are available yet.</string>
