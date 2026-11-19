@@ -28,7 +28,7 @@ object TwitchChatColor {
 
     private fun hash(text: String): Int {
         var value = 0
-        text.codePoints().forEach { value = value * 31 + it }
+        codePoints(text).forEach { value = value * 31 + it }
         return abs(value % DEFAULTS.size)
     }
 

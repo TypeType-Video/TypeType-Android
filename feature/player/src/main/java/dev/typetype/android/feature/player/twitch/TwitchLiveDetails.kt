@@ -1,6 +1,5 @@
 package dev.typetype.android.feature.player.twitch
 
-import android.icu.text.CompactDecimalFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -101,8 +100,11 @@ internal fun TwitchLiveDetails(stream: Stream, login: String, onOpenChannel: (St
     }
 }
 
-private fun compact(count: Long): String =
-    CompactDecimalFormat.getInstance(Locale.getDefault(), CompactDecimalFormat.CompactStyle.SHORT).format(count.coerceAtLeast(0))
+private fun compact(count: Long): String = when {
+    count >= 1_000_000 -> "%.1fM".format(Locale.US, count / 1_000_000.0)
+    count >= 1_000 -> "%.1fK".format(Locale.US, count / 1_000.0)
+    else -> count.coerceAtLeast(0).toString()
+}.replace(".0", "")
 
 private fun uptime(startedAtMillis: Long, now: Long): String? {
     if (startedAtMillis <= 0) return null

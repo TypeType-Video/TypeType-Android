@@ -35,7 +35,7 @@ object TwitchChatParts {
         emotes: Map<String, ChatEmote> = emptyMap(),
         selfLogin: String = "",
     ): List<ChatPart> {
-        val points = text.codePoints().toArray()
+        val points = codePoints(text)
         fun slice(from: Int, to: Int) = String(points, from, to - from)
         val ranges = native.filter { it.start >= 0 && it.end < points.size && it.start <= it.end }.sortedBy { it.start }
         val builder = Builder(emotes, selfLogin.lowercase())
@@ -115,4 +115,17 @@ object TwitchChatParts {
             if (last is ChatPart.Text) parts[parts.lastIndex] = ChatPart.Text(last.text + text) else parts += ChatPart.Text(text)
         }
     }
+}
+
+// String.codePoints() needs API 24; the app still runs on 23.
+internal fun codePoints(text: String): IntArray {
+    val out = IntArray(text.codePointCount(0, text.length))
+    var index = 0
+    var count = 0
+    while (index < text.length) {
+        val point = text.codePointAt(index)
+        out[count++] = point
+        index += Character.charCount(point)
+    }
+    return out
 }
