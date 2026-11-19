@@ -1,5 +1,10 @@
 package dev.typetype.android.data.twitch
 
+import dev.typetype.android.data.network.dto.TwitchChatAssetsDto
+import dev.typetype.android.domain.livechat.ChatEmote
+import dev.typetype.android.domain.livechat.ChatImage
+import dev.typetype.android.domain.twitch.TwitchChatAssets
+import dev.typetype.android.domain.twitch.TwitchLiveInfo
 import dev.typetype.android.data.network.dto.TwitchChannelDto
 import dev.typetype.android.data.network.dto.TwitchChatHighlightsDto
 import dev.typetype.android.data.network.dto.TwitchClipDto
@@ -64,7 +69,23 @@ internal fun TwitchChannelDto.toChannel(): TwitchChannel = TwitchChannel(
     bannerUrl = bannerUrl?.ifBlank { null },
     followers = followers,
     live = live?.toVideo(),
+    liveInfo = live?.let {
+        TwitchLiveInfo(it.title, it.viewers, twitchMillis(it.startedAt), it.game?.name?.ifBlank { null }, it.tags)
+    },
 )
+
+internal fun mergeChatAssets(channel: TwitchChatAssetsDto?, global: TwitchChatAssetsDto?): TwitchChatAssets {
+    val emotes = LinkedHashMap<String, ChatEmote>()
+    for (emote in channel?.emotes.orEmpty() + global?.emotes.orEmpty()) {
+        if (emote.name.isBlank() || emote.url.isBlank()) continue
+        emotes.putIfAbsent(emote.name, ChatEmote(emote.name, emote.url2x ?: emote.url, emote.zeroWidth))
+    }
+    val badges = HashMap<String, ChatImage>()
+    for ((id, badge) in global?.badges.orEmpty() + channel?.badges.orEmpty()) {
+        if (badge.url.isNotBlank()) badges[id] = ChatImage(badge.title, badge.url2x ?: badge.url)
+    }
+    return TwitchChatAssets(emotes, badges)
+}
 
 internal fun TwitchGameDto.toCategory(): TwitchCategory =
     TwitchCategory(id = id, name = name, slug = slug, boxArtUrl = boxArtUrl?.ifBlank { null }, viewers = viewers)
