@@ -1,5 +1,6 @@
 package dev.typetype.android.data.twitch
 
+import dev.typetype.android.domain.livechat.ChatEmoteRange
 import dev.typetype.android.data.network.dto.TwitchChatAssetsDto
 import dev.typetype.android.domain.livechat.ChatEmote
 import dev.typetype.android.domain.livechat.ChatImage
@@ -166,4 +167,8 @@ internal fun TwitchVideoCommentDto.toDomain() = TwitchVideoComment(
     author = displayName?.ifBlank { null } ?: login,
     text = text,
     moderator = badges.any { it.startsWith("moderator/") || it.startsWith("broadcaster/") },
+    login = login?.ifBlank { null },
+    color = color,
+    emotes = emotes.map { ChatEmoteRange(it.id, it.start, it.end) },
+    badges = badges,
 )

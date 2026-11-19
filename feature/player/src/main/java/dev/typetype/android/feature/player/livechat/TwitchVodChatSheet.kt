@@ -27,43 +27,49 @@ import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun TwitchVodChatSheet(videoUrl: String, player: Player?, onDismiss: () -> Unit) {
-    val viewModel: TwitchVodChatViewModel = hiltViewModel(key = "vod-chat")
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    LaunchedEffect(viewModel, videoUrl, player) {
-        viewModel.start(videoUrl)
-        while (true) {
-            player?.let { viewModel.onPosition(it.currentPosition) }
-            delay(POSITION_TICK_MS)
-        }
-    }
+internal fun TwitchVodChatSheet(videoUrl: String, channelUrl: String?, player: Player?, onDismiss: () -> Unit) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
-        Column(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.7f)) {
-            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                Text(
-                    text = stringResource(R.string.vod_chat_title),
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                )
-                val status = when {
-                    state.unavailable -> R.string.vod_chat_unavailable
-                    !state.ready -> R.string.live_chat_connecting
-                    else -> null
-                }
-                status?.let {
-                    Text(
-                        text = stringResource(it),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                    )
-                }
-            }
-            LiveChatMessages(messages = state.messages, modifier = Modifier.weight(1f))
+        TwitchVodChatPanel(videoUrl, channelUrl, player, Modifier.fillMaxWidth().fillMaxHeight(0.7f))
+    }
+}
+
+// The chat replay follows the playback position; docked beside a past broadcast it plays along like the live one did.
+@Composable
+internal fun TwitchVodChatPanel(videoUrl: String, channelUrl: String?, player: Player?, modifier: Modifier) {
+    val viewModel: TwitchVodChatViewModel = hiltViewModel(key = "vod-chat")
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    LaunchedEffect(viewModel, videoUrl, player) {
+        viewModel.start(videoUrl, channelUrl)
+        while (true) {
+            player?.let { viewModel.onPosition(it.currentPosition) }
+            delay(POSITION_TICK_MS)
         }
+    }
+    Column(modifier = modifier) {
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Text(
+                text = stringResource(R.string.vod_chat_title),
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+            )
+            val status = when {
+                state.unavailable -> R.string.vod_chat_unavailable
+                !state.ready -> R.string.live_chat_connecting
+                else -> null
+            }
+            status?.let {
+                Text(
+                    text = stringResource(it),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                )
+            }
+        }
+        LiveChatMessages(state.messages, Modifier.weight(1f), state.assets)
     }
 }
 

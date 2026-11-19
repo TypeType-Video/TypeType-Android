@@ -1,6 +1,7 @@
 package dev.typetype.android.domain.twitch
 
 import dev.typetype.android.domain.livechat.ChatEmote
+import dev.typetype.android.domain.livechat.ChatEmoteRange
 import dev.typetype.android.domain.livechat.ChatImage
 
 import dev.typetype.android.domain.feed.Video
@@ -54,6 +55,10 @@ data class TwitchVideoComment(
     val author: String?,
     val text: String,
     val moderator: Boolean,
+    val login: String? = null,
+    val color: String? = null,
+    val emotes: List<ChatEmoteRange> = emptyList(),
+    val badges: List<String> = emptyList(),
 )
 
 data class TwitchLiveInfo(
