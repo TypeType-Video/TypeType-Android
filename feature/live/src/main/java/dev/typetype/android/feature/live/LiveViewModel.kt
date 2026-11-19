@@ -32,6 +32,8 @@ data class LiveState(
     val query: String = "",
     val channels: List<TwitchChannel> = emptyList(),
     val followed: List<Video> = emptyList(),
+    val replays: List<Video> = emptyList(),
+    val followedChannels: List<TwitchChannel> = emptyList(),
 )
 
 @HiltViewModel
@@ -50,9 +52,15 @@ class LiveViewModel @Inject constructor(
         viewModelScope.launch {
             twitch.categories().onSuccess { page -> _state.update { it.copy(categories = page.items) } }
         }
+        // The linked account's own rows, as on the web: who is live now, the past broadcasts of the channels it
+        // follows (the way to reach a channel that is offline), and the channels themselves.
         viewModelScope.launch {
             if (accounts.status().getOrNull()?.linked != true) return@launch
-            accounts.followedLives().onSuccess { page -> _state.update { it.copy(followed = page.items) } }
+            launch { accounts.followedLives().onSuccess { page -> _state.update { it.copy(followed = page.items) } } }
+            launch { accounts.followedVideos().onSuccess { page -> _state.update { it.copy(replays = page.items) } } }
+            launch {
+                accounts.followedChannels().onSuccess { page -> _state.update { it.copy(followedChannels = page.items) } }
+            }
         }
     }
 

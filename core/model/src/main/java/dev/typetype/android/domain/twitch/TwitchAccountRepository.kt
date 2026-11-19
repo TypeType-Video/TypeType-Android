@@ -32,6 +32,10 @@ interface TwitchAccountRepository {
 
     suspend fun followedLives(cursor: String? = null): Result<TwitchPage<Video>>
 
+    suspend fun followedVideos(cursor: String? = null): Result<TwitchPage<Video>>
+
+    suspend fun followedChannels(cursor: String? = null): Result<TwitchPage<TwitchChannel>>
+
     suspend fun isFollowing(login: String): Result<Boolean>
 
     suspend fun setFollowing(login: String, follow: Boolean): Result<Unit>

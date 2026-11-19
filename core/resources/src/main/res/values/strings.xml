@@ -91,6 +91,9 @@
     <string name="twitch_channel_empty">Nothing here yet</string>
     <string name="live_search_channels">Search Twitch channels</string>
     <string name="live_channel_live_now">Live now</string>
+    <string name="live_channel_live_description">%1$s, live now</string>
+    <string name="live_followed_replays">Past broadcasts of followed channels</string>
+    <string name="live_followed_channels">Followed channels</string>
     <string name="live_category_all">All</string>
     <string name="live_followed">Followed channels live</string>
     <string name="twitch_channel_follow">Follow</string>
