@@ -8,6 +8,11 @@ data class LiveChatMessage(
     val authorName: String?,
     val authorAvatarUrl: String?,
     val moderator: Boolean,
+    val login: String? = null,
+    val color: String? = null,
+    val emotes: List<ChatEmoteRange> = emptyList(),
+    val badges: List<String> = emptyList(),
+    val action: Boolean = false,
 )
 
 sealed interface LiveChatEvent {

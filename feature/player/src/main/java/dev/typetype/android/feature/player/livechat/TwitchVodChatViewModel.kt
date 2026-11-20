@@ -1,5 +1,7 @@
 package dev.typetype.android.feature.player.livechat
 
+import kotlinx.coroutines.flow.update
+import dev.typetype.android.domain.twitch.TwitchChatAssets
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,6 +19,7 @@ data class VodChatState(
     val messages: List<LiveChatMessage> = emptyList(),
     val ready: Boolean = false,
     val unavailable: Boolean = false,
+    val assets: TwitchChatAssets = TwitchChatAssets(),
 )
 
 @HiltViewModel
@@ -30,12 +33,16 @@ class TwitchVodChatViewModel @Inject constructor(
     private var loading = false
     private var retryAtMs = 0L
 
-    fun start(videoUrl: String) {
+    fun start(videoUrl: String, channelUrl: String? = null) {
         val id = (TwitchUrls.parse(videoUrl) as? TwitchTarget.Vod)?.id
         if (id == videoId) return
         videoId = id
         window = VodChatWindow()
         _state.value = VodChatState()
+        val login = channelUrl?.let { (TwitchUrls.parse(it) as? TwitchTarget.Live)?.login } ?: return
+        viewModelScope.launch {
+            twitch.chatAssets(login).onSuccess { assets -> _state.update { it.copy(assets = assets) } }
+        }
     }
 
     fun onPosition(positionMs: Long) {
@@ -57,7 +64,7 @@ class TwitchVodChatViewModel @Inject constructor(
                 },
                 onFailure = {
                     retryAtMs = System.currentTimeMillis() + RETRY_DELAY_MS
-                    if (target === window && !window.loaded) _state.value = VodChatState(unavailable = true)
+                    if (target === window && !window.loaded) _state.update { it.copy(unavailable = true) }
                 },
             )
             loading = false
@@ -66,12 +73,18 @@ class TwitchVodChatViewModel @Inject constructor(
 
     private fun publish(seconds: Long) {
         if (!window.loaded) return
-        _state.value = VodChatState(
-            messages = window.visible(seconds).map {
-                LiveChatMessage(id = it.id, text = it.text, authorName = it.author, authorAvatarUrl = null, moderator = it.moderator)
-            },
-            ready = true,
-        )
+        _state.update { state ->
+            state.copy(
+                messages = window.visible(seconds).map {
+                    LiveChatMessage(
+                        id = it.id, text = it.text, authorName = it.author, authorAvatarUrl = null, moderator = it.moderator,
+                        login = it.login, color = it.color, emotes = it.emotes, badges = it.badges,
+                    )
+                },
+                ready = true,
+                unavailable = false,
+            )
+        }
     }
 }
 

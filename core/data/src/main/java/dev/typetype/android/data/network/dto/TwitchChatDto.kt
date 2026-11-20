@@ -88,6 +88,8 @@ data class TwitchVideoCommentDto(
     val offset: Long = 0,
     val login: String? = null,
     val displayName: String? = null,
+    val color: String? = null,
     val text: String = "",
+    val emotes: List<TwitchChatEmoteDto> = emptyList(),
     val badges: List<String> = emptyList(),
 )
