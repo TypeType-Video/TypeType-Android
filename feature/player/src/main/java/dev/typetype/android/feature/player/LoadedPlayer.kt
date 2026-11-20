@@ -1,11 +1,5 @@
 package dev.typetype.android.feature.player
 
-import dev.typetype.android.feature.player.livechat.TwitchVodChatPanel
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.imePadding
-import dev.typetype.android.domain.twitch.TwitchTarget
-import dev.typetype.android.domain.twitch.TwitchUrls
-import dev.typetype.android.feature.player.livechat.LiveChatPanel
 import dev.typetype.android.feature.player.twitch.TwitchLiveDetails
 import android.graphics.Rect
 import androidx.activity.compose.LocalActivity
@@ -135,39 +129,18 @@ internal fun LoadedPlayer(
         onPlayVideo = onAutoplayVideo,
     )
 
-    LaunchedEffect(
-        stream.id,
-        stream.requestScope,
-        controller,
-        playbackBindGeneration,
-        codecFallbackGeneration,
-        selections.selectedCodec,
-        selections.selectedQuality,
-        selections.selectedAudioKey,
-        userSettings.defaultAudioLanguage,
-        userSettings.defaultQuality,
-        userSettings.preferOriginalLanguage,
-        initialPlayWhenReady,
-    ) {
-        controller?.let { ctrl ->
-            bindStreamToController(
-                controller = ctrl,
-                stream = stream,
-                videoUrl = videoUrl,
-                startMillis = resumeAtMillis,
-                selectedQuality = selections.selectedQuality,
-                selectedAudioKey = selections.selectedAudioKey,
-                selectedSubtitleKey = selections.selectedSubtitleKey,
-                defaultAudioLanguage = userSettings.defaultAudioLanguage,
-                automaticQualityCap = userSettings.defaultQuality,
-                preferOriginalLanguage = userSettings.preferOriginalLanguage,
-                initialPlayWhenReady = initialPlayWhenReady,
-                codecSupport = codecSupport,
-                prepareSabrPlayback = prepareSabrPlayback,
-                selectedCodec = selections.selectedCodec,
-            )
-        }
-    }
+    PlayerStreamBindingEffect(
+        controller = controller,
+        stream = stream,
+        videoUrl = videoUrl,
+        resumeAtMillis = resumeAtMillis,
+        selections = selections,
+        userSettings = userSettings,
+        bindGenerations = playbackBindGeneration to codecFallbackGeneration,
+        initialPlayWhenReady = initialPlayWhenReady,
+        codecSupport = codecSupport,
+        prepareSabrPlayback = prepareSabrPlayback,
+    )
 
     LaunchedEffect(controller, selections.selectedSpeed) {
         controller?.setPlaybackSpeed(selections.selectedSpeed)
@@ -214,21 +187,10 @@ internal fun LoadedPlayer(
                 },
             ),
     ) {
-        // A Twitch live is watched with its chat: the chat is docked under the video (beside it on a wide screen) and
-        // the details above it shrink to what a live needs.
-        val twitchLive = (TwitchUrls.parse(videoUrl) as? TwitchTarget.Live)?.login?.takeIf { stream.isLive }
-        val twitchVod = TwitchUrls.parse(videoUrl) is TwitchTarget.Vod
+        val twitch = twitchWatch(videoUrl, stream)
         PlayerContentLayout(
             isFullscreen = isFullscreen,
-            docked = when {
-                twitchLive != null -> { dockedModifier ->
-                    LiveChatPanel(videoUrl, dockedModifier.navigationBarsPadding().imePadding())
-                }
-                twitchVod -> { dockedModifier ->
-                    TwitchVodChatPanel(videoUrl, stream.uploaderUrl, controller, dockedModifier.navigationBarsPadding())
-                }
-                else -> null
-            },
+            docked = twitch.dockedChat(videoUrl, stream, controller),
             isInPip = isInPip,
             hostTransitionProgress = hostTransitionProgress,
             viewport = { viewportModifier ->
@@ -309,8 +271,8 @@ internal fun LoadedPlayer(
                 )
             },
             details = { detailsModifier ->
-                if (twitchLive != null) {
-                    TwitchLiveDetails(stream, twitchLive, onOpenChannel, detailsModifier)
+                if (twitch.liveLogin != null) {
+                    TwitchLiveDetails(stream, twitch.liveLogin, onOpenChannel, detailsModifier)
                 } else PlayerDetails(
                     stream = stream,
                     videoUrl = videoUrl,
@@ -329,7 +291,7 @@ internal fun LoadedPlayer(
                     onOpenChannel = onOpenChannel,
                     onToggleSubscription = onToggleSubscription,
                     modifier = detailsModifier,
-                    chatDocked = twitchVod,
+                    chatDocked = twitch.vod,
                 )
             },
         )
