@@ -1,5 +1,6 @@
 package dev.typetype.android.feature.player
 
+import dev.typetype.android.feature.player.twitch.TwitchLiveDetails
 import android.graphics.Rect
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
@@ -128,39 +129,18 @@ internal fun LoadedPlayer(
         onPlayVideo = onAutoplayVideo,
     )
 
-    LaunchedEffect(
-        stream.id,
-        stream.requestScope,
-        controller,
-        playbackBindGeneration,
-        codecFallbackGeneration,
-        selections.selectedCodec,
-        selections.selectedQuality,
-        selections.selectedAudioKey,
-        userSettings.defaultAudioLanguage,
-        userSettings.defaultQuality,
-        userSettings.preferOriginalLanguage,
-        initialPlayWhenReady,
-    ) {
-        controller?.let { ctrl ->
-            bindStreamToController(
-                controller = ctrl,
-                stream = stream,
-                videoUrl = videoUrl,
-                startMillis = resumeAtMillis,
-                selectedQuality = selections.selectedQuality,
-                selectedAudioKey = selections.selectedAudioKey,
-                selectedSubtitleKey = selections.selectedSubtitleKey,
-                defaultAudioLanguage = userSettings.defaultAudioLanguage,
-                automaticQualityCap = userSettings.defaultQuality,
-                preferOriginalLanguage = userSettings.preferOriginalLanguage,
-                initialPlayWhenReady = initialPlayWhenReady,
-                codecSupport = codecSupport,
-                prepareSabrPlayback = prepareSabrPlayback,
-                selectedCodec = selections.selectedCodec,
-            )
-        }
-    }
+    PlayerStreamBindingEffect(
+        controller = controller,
+        stream = stream,
+        videoUrl = videoUrl,
+        resumeAtMillis = resumeAtMillis,
+        selections = selections,
+        userSettings = userSettings,
+        bindGenerations = playbackBindGeneration to codecFallbackGeneration,
+        initialPlayWhenReady = initialPlayWhenReady,
+        codecSupport = codecSupport,
+        prepareSabrPlayback = prepareSabrPlayback,
+    )
 
     LaunchedEffect(controller, selections.selectedSpeed) {
         controller?.setPlaybackSpeed(selections.selectedSpeed)
@@ -207,8 +187,10 @@ internal fun LoadedPlayer(
                 },
             ),
     ) {
+        val twitch = twitchWatch(videoUrl, stream)
         PlayerContentLayout(
             isFullscreen = isFullscreen,
+            docked = twitch.dockedChat(videoUrl, stream, controller),
             isInPip = isInPip,
             hostTransitionProgress = hostTransitionProgress,
             viewport = { viewportModifier ->
@@ -289,7 +271,9 @@ internal fun LoadedPlayer(
                 )
             },
             details = { detailsModifier ->
-                PlayerDetails(
+                if (twitch.liveLogin != null) {
+                    TwitchLiveDetails(stream, twitch.liveLogin, onOpenChannel, detailsModifier)
+                } else PlayerDetails(
                     stream = stream,
                     videoUrl = videoUrl,
                     player = controller,
@@ -307,6 +291,7 @@ internal fun LoadedPlayer(
                     onOpenChannel = onOpenChannel,
                     onToggleSubscription = onToggleSubscription,
                     modifier = detailsModifier,
+                    chatDocked = twitch.vod,
                 )
             },
         )

@@ -30,5 +30,7 @@ interface TwitchRepository {
 
     suspend fun chatHighlights(login: String): Result<TwitchChatHighlights>
 
+    suspend fun chatAssets(login: String): Result<TwitchChatAssets>
+
     suspend fun videoComments(id: String, offsetSeconds: Long?, cursor: String?): Result<TwitchPage<TwitchVideoComment>>
 }

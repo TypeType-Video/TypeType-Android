@@ -1,5 +1,6 @@
 package dev.typetype.android.data.stream
 
+import dev.typetype.android.domain.twitch.TwitchChatAssets
 import dev.typetype.android.domain.feed.Video
 import dev.typetype.android.domain.stream.Chapter
 import dev.typetype.android.domain.twitch.TwitchCategory
@@ -32,4 +33,5 @@ internal class FakeTwitchRepository(
     override suspend fun videoComments(id: String, offsetSeconds: Long?, cursor: String?): Result<TwitchPage<TwitchVideoComment>> =
         Result.success(TwitchPage(emptyList(), null))
     override suspend fun chatHighlights(login: String): Result<TwitchChatHighlights> = Result.success(TwitchChatHighlights(null, null))
+    override suspend fun chatAssets(login: String): Result<TwitchChatAssets> = Result.success(TwitchChatAssets())
 }

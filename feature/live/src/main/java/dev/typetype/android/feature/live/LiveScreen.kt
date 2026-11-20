@@ -1,5 +1,6 @@
 package dev.typetype.android.feature.live
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -64,11 +65,27 @@ internal fun LiveContent(
             LiveChannelRow(channel, onOpen = { onOpenChannel(channel.url) })
         }
         if (state.followed.isNotEmpty()) {
-            item(key = "followed-header", span = { GridItemSpan(maxLineSpan) }) {
-                SectionHeader(text = stringResource(R.string.live_followed))
+            item(key = "followed", span = { GridItemSpan(maxLineSpan) }) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SectionHeader(text = stringResource(R.string.live_followed))
+                    LiveVideoRail(state.followed, onPlayVideo, onOpenChannel)
+                }
             }
-            items(state.followed, key = { "followed-${it.url}" }, contentType = { "live-video" }) { video ->
-                VideoCard(video = video, onClick = { onPlayVideo(video.url) }, onChannelClick = { onOpenChannel(video.uploaderUrl) })
+        }
+        if (state.replays.isNotEmpty()) {
+            item(key = "replays", span = { GridItemSpan(maxLineSpan) }) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SectionHeader(text = stringResource(R.string.live_followed_replays))
+                    LiveVideoRail(state.replays, onPlayVideo, onOpenChannel)
+                }
+            }
+        }
+        if (state.followedChannels.isNotEmpty()) {
+            item(key = "followed-channels", span = { GridItemSpan(maxLineSpan) }) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SectionHeader(text = stringResource(R.string.live_followed_channels))
+                    LiveChannelRail(state.followedChannels, onOpenChannel)
+                }
             }
         }
         item(key = "live-categories", span = { GridItemSpan(maxLineSpan) }) {

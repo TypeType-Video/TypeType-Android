@@ -50,6 +50,7 @@ internal fun PlayerDetails(
     onOpenChannel: (String) -> Unit,
     onToggleSubscription: () -> Unit,
     modifier: Modifier = Modifier,
+    chatDocked: Boolean = false,
 ) {
     val branding = rememberVideoBranding(
         sourceUrl = videoUrl,
@@ -59,7 +60,7 @@ internal fun PlayerDetails(
     )
     var liveChatVisible by remember(videoUrl) { mutableStateOf(false) }
     var vodChatVisible by remember(videoUrl) { mutableStateOf(false) }
-    val vodChatAvailable = TwitchUrls.parse(videoUrl) is TwitchTarget.Vod
+    val vodChatAvailable = TwitchUrls.parse(videoUrl) is TwitchTarget.Vod && !chatDocked
     val twitch = TwitchUrls.parse(videoUrl) != null
     val liveChatAvailable = stream.isLive && (isYouTubeVideoUrl(videoUrl) || twitch)
     Column(
@@ -116,7 +117,7 @@ internal fun PlayerDetails(
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
     }
     if (vodChatVisible && vodChatAvailable) {
-        TwitchVodChatSheet(videoUrl = videoUrl, player = player, onDismiss = { vodChatVisible = false })
+        TwitchVodChatSheet(videoUrl, stream.uploaderUrl, player, onDismiss = { vodChatVisible = false })
     }
     if (liveChatVisible && liveChatAvailable) {
         LiveChatSheet(videoUrl = videoUrl, onDismiss = { liveChatVisible = false })
