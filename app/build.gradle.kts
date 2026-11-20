@@ -22,8 +22,8 @@ android {
 
     defaultConfig {
         applicationId = "dev.typetype.android"
-        versionCode = 11121
-        versionName = "1.14.0-beta.1"
+        versionCode = 11122
+        versionName = "1.14.0-beta.2"
     }
 
     signingConfigs {

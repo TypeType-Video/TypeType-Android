@@ -1,5 +1,6 @@
 package dev.typetype.android.data.twitch
 
+import dev.typetype.android.domain.twitch.TwitchChannel
 import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.network.TypeTypeApi
@@ -53,6 +54,12 @@ class RemoteTwitchAccountRepository @Inject constructor(
 
     override suspend fun followedLives(cursor: String?): Result<TwitchPage<Video>> = call { twitchFollowedLives(cursor) }
         .map { page -> TwitchPage(page.items.map { it.toVideo() }, page.cursor?.takeIf { page.hasMore && it.isNotBlank() }) }
+
+    override suspend fun followedVideos(cursor: String?): Result<TwitchPage<Video>> = call { twitchFollowedVideos(cursor) }
+        .map { page -> TwitchPage(page.items.map { it.toVideo() }, page.cursor?.takeIf { page.hasMore && it.isNotBlank() }) }
+
+    override suspend fun followedChannels(cursor: String?): Result<TwitchPage<TwitchChannel>> = call { twitchFollows(cursor) }
+        .map { page -> TwitchPage(page.items.map { it.toChannel() }, page.cursor?.takeIf { page.hasMore && it.isNotBlank() }) }
 
     override suspend fun isFollowing(login: String): Result<Boolean> = call { twitchFollowState(login) }.map { it.following }
 

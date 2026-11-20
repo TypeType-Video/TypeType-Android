@@ -1,5 +1,9 @@
 package dev.typetype.android.data.twitch
 
+import dev.typetype.android.data.network.dto.TwitchChatAssetsDto
+import dev.typetype.android.domain.twitch.TwitchChatAssets
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import dev.typetype.android.core.error.suspendRunCatching
 import dev.typetype.android.data.account.ActiveAccountScope
 import dev.typetype.android.data.network.TypeTypeApi
@@ -30,6 +34,9 @@ class RemoteTwitchRepository @Inject constructor(
     private val activeAccountScope: ActiveAccountScope,
     private val serverRepository: ServerRepository,
 ) : TwitchRepository {
+    @Volatile
+    private var globalChatAssets: TwitchChatAssetsDto? = null
+
     override suspend fun popular(cursor: String?): Result<TwitchPage<Video>> =
         call { twitchStreams(cursor) }.map { page -> page.map { it.toVideo() } }
 
@@ -100,6 +107,15 @@ class RemoteTwitchRepository @Inject constructor(
 
     override suspend fun chatHighlights(login: String): Result<TwitchChatHighlights> =
         call { twitchChatHighlights(login) }.map { it.toDomain() }
+
+    // The global set is the same for every channel and large: it is fetched once per app run.
+    override suspend fun chatAssets(login: String): Result<TwitchChatAssets> = suspendRunCatching {
+        coroutineScope {
+            val global = async { globalChatAssets ?: call { twitchChatAssets() }.getOrNull()?.also { globalChatAssets = it } }
+            val channel = async { call { twitchChannelChatAssets(segment(login)) }.getOrNull() }
+            mergeChatAssets(channel.await(), global.await())
+        }
+    }
 
     override suspend fun videoComments(id: String, offsetSeconds: Long?, cursor: String?): Result<TwitchPage<TwitchVideoComment>> =
         call { twitchVideoComments(segment(id), offset = offsetSeconds.takeIf { cursor == null }, cursor = cursor) }

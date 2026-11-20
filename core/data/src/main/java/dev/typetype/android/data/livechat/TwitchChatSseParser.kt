@@ -1,5 +1,6 @@
 package dev.typetype.android.data.livechat
 
+import dev.typetype.android.domain.livechat.ChatEmoteRange
 import dev.typetype.android.data.network.dto.TwitchChatEventDto
 import dev.typetype.android.domain.livechat.LiveChatEvent
 import dev.typetype.android.domain.livechat.LiveChatMessage
@@ -32,6 +33,11 @@ internal class TwitchChatSseParser(private val json: Json) {
                         authorName = event.displayName?.ifBlank { null } ?: event.login,
                         authorAvatarUrl = null,
                         moderator = event.badges.any { it.startsWith("moderator/") || it.startsWith("broadcaster/") },
+                        login = event.login,
+                        color = event.color,
+                        emotes = event.emotes.map { ChatEmoteRange(it.id, it.start, it.end) },
+                        badges = event.badges,
+                        action = event.action,
                     ),
                 )
             }

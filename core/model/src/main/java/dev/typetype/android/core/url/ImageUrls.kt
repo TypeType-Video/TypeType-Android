@@ -28,8 +28,13 @@ private fun needsImageProxy(source: String): Boolean {
     return host.endsWith("ggpht.com") ||
         host.endsWith("googleusercontent.com") ||
         host.endsWith("hdslb.com") ||
-        host.endsWith("ytimg.com")
+        host.endsWith("ytimg.com") ||
+        host == "static-cdn.jtvnw.net" ||
+        host in TWITCH_CHAT_IMAGE_HOSTS
 }
+
+// The web proxies the same Twitch hosts: avatars, previews and emotes, and the BTTV, FFZ and 7TV emote CDNs.
+private val TWITCH_CHAT_IMAGE_HOSTS = setOf("cdn.7tv.app", "cdn.betterttv.net", "cdn.frankerfacez.com")
 
 // Bilibili covers and avatars are several hundred kilobytes at full size; its image service scales
 // them on request, to the sizes the web client asks for.

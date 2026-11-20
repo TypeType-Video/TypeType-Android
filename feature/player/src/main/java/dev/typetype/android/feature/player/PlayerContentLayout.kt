@@ -60,6 +60,7 @@ fun PlayerContentLayout(
     viewport: @Composable (Modifier) -> Unit,
     details: @Composable (Modifier) -> Unit,
     recommendations: @Composable (Modifier) -> Unit = {},
+    docked: (@Composable (Modifier) -> Unit)? = null,
 ) {
     val currentViewport by rememberUpdatedState(viewport)
     val retainedViewport = remember {
@@ -95,7 +96,35 @@ fun PlayerContentLayout(
                     )
                     .fillMaxSize(),
             )
-            PlayerContentLayoutMode.SingleColumn -> {
+            PlayerContentLayoutMode.SingleColumn -> if (docked != null) {
+                // A live chat fills what the video and the details leave, so the column does not scroll.
+                Column(modifier = Modifier.fillMaxSize().testTag(PLAYER_SINGLE_COLUMN_LAYOUT_TAG)) {
+                    retainedViewport(
+                        Modifier
+                            .playerViewportTransition(
+                                progress = hostTransitionProgress,
+                                miniWidthPx = miniWidthPx,
+                                miniHeightPx = miniHeightPx,
+                                miniStartPx = miniStartPx,
+                                miniTopPx = miniTopPx,
+                            )
+                            .fillMaxWidth()
+                            .aspectRatio(VIDEO_ASPECT_RATIO)
+                            .testTag(PLAYER_VIEWPORT_TAG),
+                    )
+                    val hidden = if (detailsHidden) Modifier.clearAndSetSemantics { } else Modifier
+                    details(
+                        Modifier.fillMaxWidth()
+                            .playerDetailsTransition(hostTransitionProgress, singleColumnDetailsTravelPx)
+                            .then(hidden),
+                    )
+                    docked(
+                        Modifier.weight(1f).fillMaxWidth()
+                            .playerDetailsTransition(hostTransitionProgress, singleColumnDetailsTravelPx)
+                            .then(hidden),
+                    )
+                }
+            } else {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -168,14 +197,16 @@ fun PlayerContentLayout(
                                 .then(if (detailsHidden) Modifier.clearAndSetSemantics { } else Modifier),
                         )
                     }
-                    recommendations(
-                        Modifier
-                            .weight(DETAILS_PANE_WEIGHT)
-                            .fillMaxHeight()
-                            .verticalScroll(rememberScrollState())
-                            .playerDetailsTransition(hostTransitionProgress)
-                            .then(if (detailsHidden) Modifier.clearAndSetSemantics { } else Modifier),
-                    )
+                    val sidePane = Modifier
+                        .weight(DETAILS_PANE_WEIGHT)
+                        .fillMaxHeight()
+                        .playerDetailsTransition(hostTransitionProgress)
+                        .then(if (detailsHidden) Modifier.clearAndSetSemantics { } else Modifier)
+                    if (docked != null) {
+                        docked(sidePane)
+                    } else {
+                        recommendations(sidePane.verticalScroll(rememberScrollState()))
+                    }
                 }
             }
         }

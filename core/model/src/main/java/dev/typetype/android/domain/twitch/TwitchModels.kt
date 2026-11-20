@@ -1,5 +1,9 @@
 package dev.typetype.android.domain.twitch
 
+import dev.typetype.android.domain.livechat.ChatEmote
+import dev.typetype.android.domain.livechat.ChatEmoteRange
+import dev.typetype.android.domain.livechat.ChatImage
+
 import dev.typetype.android.domain.feed.Video
 
 data class TwitchCategory(
@@ -20,6 +24,7 @@ data class TwitchChannel(
     val bannerUrl: String?,
     val followers: Long,
     val live: Video?,
+    val liveInfo: TwitchLiveInfo? = null,
 ) {
     val url: String get() = TwitchUrls.live(login)
 }
@@ -50,4 +55,23 @@ data class TwitchVideoComment(
     val author: String?,
     val text: String,
     val moderator: Boolean,
+    val login: String? = null,
+    val color: String? = null,
+    val emotes: List<ChatEmoteRange> = emptyList(),
+    val badges: List<String> = emptyList(),
+)
+
+data class TwitchLiveInfo(
+    val title: String,
+    val viewers: Long,
+    val startedAtMillis: Long,
+    val category: String?,
+    val tags: List<String>,
+)
+
+// The emotes of BTTV, FFZ and 7TV keyed by the word that shows them, and the chat badges keyed as Twitch sends them
+// on a message ("moderator/1"); the channel's own come before the global ones.
+data class TwitchChatAssets(
+    val emotes: Map<String, ChatEmote> = emptyMap(),
+    val badges: Map<String, ChatImage> = emptyMap(),
 )
